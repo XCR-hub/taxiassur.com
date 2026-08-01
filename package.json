@@ -58,7 +58,7 @@
     "server:scan-documents-clamav": "node scripts/scan-supabase-documents-clamav.cjs",
     "d1:apply-schema": "npx wrangler d1 execute taxiassur-prod --remote --file cloudflare/d1/schema-public-cache.sql",
     "d1:build-public-cache": "node scripts/d1-build-public-cache.cjs --out cloudflare/d1/generated/public-cache.sql",
-    "d1:import-public-cache": "npm run d1:build-public-cache && npx wrangler d1 execute taxiassur-prod --remote --file cloudflare/d1/generated/public-cache.sql",
+    "d1:import-public-cache": "npm run d1:build-public-cache && npm run d1:apply-schema && npx wrangler d1 execute taxiassur-prod --remote --file cloudflare/d1/generated/public-cache.sql",
     "recovery:list": "node scripts/disaster-recovery.js list",
     "recovery:verify": "node scripts/disaster-recovery.js verify",
     "recovery:restore": "node scripts/disaster-recovery.js restore",
@@ -74,10 +74,11 @@
     "secrets:list": "supabase secrets list",
     "configure:bolt-webhook": "bash scripts/configure-bolt-webhook.sh",
     "d1:export-public-cache": "node scripts/d1-export-public-cache.cjs",
-    "d1:refresh-public-cache": "npm run d1:export-public-cache -- --out cloudflare/d1/generated/supabase-public-cache && node scripts/d1-build-public-cache.cjs --backup cloudflare/d1/generated/supabase-public-cache --out cloudflare/d1/generated/public-cache.sql && npx wrangler d1 execute taxiassur-prod --remote --file cloudflare/d1/schema-public-cache.sql && npx wrangler d1 execute taxiassur-prod --remote --file cloudflare/d1/generated/public-cache.sql",
+    "d1:refresh-public-cache": "npm run d1:export-public-cache -- --out cloudflare/d1/generated/supabase-public-cache && node scripts/d1-build-public-cache.cjs --backup cloudflare/d1/generated/supabase-public-cache --out cloudflare/d1/generated/public-cache.sql && npx wrangler d1 execute taxiassur-prod --remote --file cloudflare/d1/schema-public-cache.sql && npx wrangler d1 execute taxiassur-prod --remote --file cloudflare/d1/generated/public-cache.sql && npm run d1:verify-public-cache-metadata",
     "cloudflare:ai-robots": "node scripts/configure-cloudflare-ai-robots.cjs",
     "cloudflare:ai-robots:fix": "powershell -ExecutionPolicy Bypass -File scripts/apply-cloudflare-ai-robots-fix.ps1",
-    "seo:quality-audit": "node scripts/seo-quality-audit.cjs"
+    "seo:quality-audit": "node scripts/seo-quality-audit.cjs",
+    "d1:verify-public-cache-metadata": "node scripts/verify-d1-public-cache-metadata.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

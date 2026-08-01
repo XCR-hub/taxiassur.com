@@ -17,6 +17,7 @@ database_id = "ced89fdb-d3b3-4a3b-aef1-04c827ef339d"
 
 - `public_content_cache` : articles, pages villes, FAQ, actualites.
 - `gsc_metrics_cache` : pages et requetes Google Search Console.
+- `public_cache_metadata` : horodatage de generation, volumes importes et tables couvertes par le dernier cache.
 
 Les donnees sont stockees sous forme de cache denormalise avec colonnes d'index principales et un champ `payload` JSON complet. Ce choix evite une migration PostgreSQL vers SQLite trop fragile au depart.
 
@@ -40,9 +41,15 @@ npm run d1:build-public-cache
 npm run d1:import-public-cache
 ```
 
-Le fichier genere est ignore par Git : `cloudflare/d1/generated/public-cache.sql`.
+Le fichier genere est ignore par Git : `cloudflare/d1/generated/public-cache.sql`. L import applique le schema avant les donnees afin que `public_cache_metadata` existe toujours avant le chargement.
 
 ## Verification
+
+Verification directe des metadonnees D1 apres import :
+
+```powershell
+npm run d1:verify-public-cache-metadata
+```
 
 Endpoint de sante :
 

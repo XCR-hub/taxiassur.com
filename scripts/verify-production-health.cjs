@@ -8,6 +8,10 @@ const { collectPublicRuntimeConfigIssues, readRuntimeConfigValue } = require('./
 const SITE_URL = (process.env.SITE_URL || 'https://taxiassur.com').replace(/\/$/, '');
 const COUNT_TOLERANCE = Math.max(0, Number(process.env.PUBLIC_MIRROR_COUNT_TOLERANCE || 5));
 const GSC_COUNT_TOLERANCE = Math.max(COUNT_TOLERANCE, Number(process.env.PUBLIC_MIRROR_GSC_COUNT_TOLERANCE || 25));
+const REQUIRE_D1_CACHE_METADATA = process.env.REQUIRE_D1_CACHE_METADATA === '1';
+const REQUIRE_POSTGRES_IMPORT_METADATA = process.env.REQUIRE_POSTGRES_IMPORT_METADATA === '1';
+const MAX_D1_CACHE_AGE_HOURS = Math.max(1, Number(process.env.MAX_D1_CACHE_AGE_HOURS || 26));
+const MAX_POSTGRES_IMPORT_AGE_HOURS = Math.max(1, Number(process.env.MAX_POSTGRES_IMPORT_AGE_HOURS || 36));
 const EXPECTED_COMMIT_INPUT = process.env.EXPECTED_COMMIT;
 const SKIP_COMMIT_CHECK =
   process.env.SKIP_DEPLOY_COMMIT_CHECK === '1' ||
@@ -138,6 +142,16 @@ function addCheck(checks, name, ok, details = {}) {
   checks.push({ name, ok: Boolean(ok), details });
 }
 
+function parseIsoDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date : null;
+}
+
+function ageHours(date) {
+  return (Date.now() - date.getTime()) / 3600000;
+}
+
 function toleranceForTable(table) {
   return table.startsWith('gsc_') ? GSC_COUNT_TOLERANCE : COUNT_TOLERANCE;
 }
@@ -249,9 +263,48 @@ async function main() {
   addCheck(checks, 'D1 health is OK', d1Health.ok && d1Health.json?.ok === true, {
     status: d1Health.status,
   });
+
+  const d1Metadata = d1Health.json?.metadata || {};
+  const d1GeneratedAt = parseIsoDate(d1Metadata.generated_at);
+  const d1CacheAgeHours = d1GeneratedAt ? ageHours(d1GeneratedAt) : null;
+  addCheck(checks, 'D1 cache metadata is available when required', !REQUIRE_D1_CACHE_METADATA || (d1Metadata.available === true && Boolean(d1GeneratedAt)), {
+    required: REQUIRE_D1_CACHE_METADATA,
+    available: d1Metadata.available === true,
+    generated_at: d1Metadata.generated_at || null,
+  });
+  addCheck(checks, 'D1 cache metadata is fresh when available', d1Metadata.available !== true || (Boolean(d1GeneratedAt) && d1CacheAgeHours <= MAX_D1_CACHE_AGE_HOURS), {
+    available: d1Metadata.available === true,
+    generated_at: d1Metadata.generated_at || null,
+    age_hours: d1CacheAgeHours === null ? null : Number(d1CacheAgeHours.toFixed(2)),
+    max_age_hours: MAX_D1_CACHE_AGE_HOURS,
+    imported_rows: d1Metadata.imported_rows ?? null,
+  });
   addCheck(checks, 'PostgreSQL public proxy health is OK', postgresHealth.ok && postgresHealth.json?.ok === true, {
     status: postgresHealth.status,
     public_health_ok: postgresHealth.json?.public_health?.ok === true,
+  });
+
+  const postgresTableDetails = Array.isArray(postgresHealth.json?.table_details) ? postgresHealth.json.table_details : [];
+  const postgresImportAges = postgresTableDetails
+    .filter((row) => ALL_TABLES.includes(row.source_table))
+    .map((row) => ({
+      table: row.source_table,
+      imported_at: row.imported_at || null,
+      age_hours: parseIsoDate(row.imported_at) ? ageHours(parseIsoDate(row.imported_at)) : null,
+    }));
+  const postgresImportMetadataComplete = ALL_TABLES.every((table) => postgresImportAges.some((row) => row.table === table && row.age_hours !== null));
+  const postgresImportFresh = postgresImportAges.length > 0 && postgresImportAges.every((row) => row.age_hours !== null && row.age_hours <= MAX_POSTGRES_IMPORT_AGE_HOURS);
+  addCheck(checks, 'PostgreSQL mirror import metadata is available when required', !REQUIRE_POSTGRES_IMPORT_METADATA || postgresImportMetadataComplete, {
+    required: REQUIRE_POSTGRES_IMPORT_METADATA,
+    tables: postgresImportAges.map((row) => ({ table: row.table, imported_at: row.imported_at })),
+  });
+  addCheck(checks, 'PostgreSQL mirror imports are fresh when metadata is available', postgresImportAges.length === 0 || postgresImportFresh, {
+    max_age_hours: MAX_POSTGRES_IMPORT_AGE_HOURS,
+    tables: postgresImportAges.map((row) => ({
+      table: row.table,
+      imported_at: row.imported_at,
+      age_hours: row.age_hours === null ? null : Number(row.age_hours.toFixed(2)),
+    })),
   });
   addCheck(checks, 'D1 blog sample is non-empty', d1Sample.ok && Array.isArray(d1Sample.json?.items) && d1Sample.json.items.length > 0, {
     status: d1Sample.status,

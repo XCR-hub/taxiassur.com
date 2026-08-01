@@ -9,6 +9,7 @@ on:
       - main
     paths:
       - 'scripts/d1-*.cjs'
+      - 'scripts/verify-d1-public-cache-metadata.cjs'
       - 'cloudflare/d1/**'
       - '.github/workflows/refresh-cloudflare-d1-cache.yml'
 
@@ -72,6 +73,11 @@ jobs:
 
       - name: Import D1 public cache
         run: npx wrangler d1 execute taxiassur-prod --remote --file "$PUBLIC_IMPORT_SQL"
+
+      - name: Verify D1 cache metadata
+        env:
+          MAX_D1_CACHE_AGE_HOURS: '2'
+        run: npm run d1:verify-public-cache-metadata
 
       - name: Verify production public cache
         env:

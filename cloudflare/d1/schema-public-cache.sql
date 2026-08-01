@@ -44,3 +44,9 @@ CREATE INDEX IF NOT EXISTS idx_gsc_metrics_cache_query_date
 
 CREATE INDEX IF NOT EXISTS idx_gsc_metrics_cache_date
   ON gsc_metrics_cache (date DESC);
+
+CREATE TABLE IF NOT EXISTS public_cache_metadata (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);

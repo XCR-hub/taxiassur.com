@@ -156,6 +156,25 @@ function verifyAutonomousSitemapGeneration() {
     file: generatorPath,
   });
 }
+function verifyPublicCacheHealthMetadata() {
+  const d1HealthPath = path.resolve('functions/api/d1/health.js');
+  const postgresHealthPath = path.resolve('functions/api/postgres-public/health.js');
+  const productionHealthPath = path.resolve('scripts/verify-production-health.cjs');
+  const d1HealthSource = readFileSync(d1HealthPath, 'utf8');
+  const postgresHealthSource = readFileSync(postgresHealthPath, 'utf8');
+  const productionHealthSource = readFileSync(productionHealthPath, 'utf8');
+
+  addCheck('D1 health exposes cache metadata and freshness', d1HealthSource.includes('public_cache_metadata') && d1HealthSource.includes('freshness') && d1HealthSource.includes('generated_at'), {
+    file: d1HealthPath,
+  });
+  addCheck('PostgreSQL public health exposes mirror import metadata', postgresHealthSource.includes('/api/tables') && postgresHealthSource.includes('table_details'), {
+    file: postgresHealthPath,
+  });
+  addCheck('production verifier can require public cache freshness metadata', productionHealthSource.includes('REQUIRE_D1_CACHE_METADATA') && productionHealthSource.includes('REQUIRE_POSTGRES_IMPORT_METADATA'), {
+    file: productionHealthPath,
+  });
+}
+
 function publicItemKey(item) {
   const payload = item?.payload && typeof item.payload === 'object' ? item.payload : {};
   return String(item?.source_id || item?.id || item?.slug || payload.id || payload.slug || '');
@@ -247,6 +266,7 @@ async function main() {
   verifyLocalSourceOrder();
   verifyPublicSeoRuntimeNoSupabaseFallback();
   verifyAutonomousSitemapGeneration();
+  verifyPublicCacheHealthMetadata();
   await verifyLiveSources();
 
   const report = {
