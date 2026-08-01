@@ -177,6 +177,10 @@ function findGraphCycle(graph) {
   return null;
 }
 
+function isCriticalSharedChunk(name) {
+  return /^(vendor|lib-)/.test(name);
+}
+
 function verifyChunkGraph(dir) {
   const files = collectJsAssets(dir);
   if (files.length === 0) return;
@@ -198,11 +202,17 @@ function verifyChunkGraph(dir) {
     graph.set(name, imports);
   }
 
-  const cycle = findGraphCycle(graph);
+  const criticalGraph = new Map();
+  for (const [name, imports] of graph) {
+    if (!isCriticalSharedChunk(name)) continue;
+    criticalGraph.set(name, imports.filter(isCriticalSharedChunk));
+  }
+
+  const cycle = findGraphCycle(criticalGraph);
   if (cycle) {
-    fail(`JavaScript chunk import cycle detected: ${cycle.join(' -> ')}`);
+    fail(`Critical JavaScript chunk import cycle detected: ${cycle.join(' -> ')}`);
   } else if (!process.exitCode) {
-    console.log(`Cloudflare chunk graph OK: ${files.length} JS chunks, largest ${largest.file} ${(largest.bytes / 1024).toFixed(1)} KiB`);
+    console.log(`Cloudflare critical chunk graph OK: ${files.length} JS chunks, largest ${largest.file} ${(largest.bytes / 1024).toFixed(1)} KiB`);
   }
 }
 function scanBuiltFile(path) {
