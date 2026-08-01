@@ -1,3 +1,4 @@
 npm run security:scan-secrets
+npm run verify:deployment-independence
 npm run verify:client-compliance
 SKIP_LIVE_BACKOFFICE_AUTH_CHECK=1 npm run verify:backoffice-auth

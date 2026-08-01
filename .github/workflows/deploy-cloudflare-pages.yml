@@ -45,6 +45,9 @@ jobs:
           SKIP_LIVE_BACKOFFICE_AUTH_CHECK: '1'
         run: npm run verify:backoffice-auth
 
+      - name: Deployment independence guard
+        run: npm run verify:deployment-independence
+
       - name: SEO leadership guard
         env:
           SKIP_LIVE_SEO_CHECK: '1'

@@ -43,8 +43,10 @@ const commitMessage = args.find((arg) => !arg.startsWith("--")) || process.env.P
 const skipGit = flags.has("--skip-git");
 const withBolt = flags.has("--with-bolt") || process.env.PUBLISH_WITH_BOLT === "1";
 const skipBolt = flags.has("--skip-bolt") || !withBolt;
-const skipNetlify = flags.has("--skip-netlify");
+const withNetlify = flags.has("--netlify") || process.env.PUBLISH_WITH_NETLIFY === "1";
+const skipNetlify = flags.has("--skip-netlify") || !withNetlify;
 const skipSupabase = flags.has("--skip-supabase");
+const withCloudflare = flags.has("--cloudflare") || process.env.PUBLISH_WITH_CLOUDFLARE === "1";
 const withVercel = flags.has("--vercel") || process.env.PUBLISH_WITH_VERCEL === "1";
 const skipVercel = flags.has("--skip-vercel") || !withVercel;
 const vercelSkipDomain = flags.has("--vercel-skip-domain") || process.env.VERCEL_SKIP_DOMAIN === "1";
@@ -308,6 +310,16 @@ async function triggerNetlify() {
   }
 }
 
+function announceCloudflarePrimary() {
+  log("\n== Cloudflare Pages ==");
+  if (withCloudflare) {
+    log("Primary deployment path: git push to main triggers .github/workflows/deploy-cloudflare-pages.yml.");
+    log("For a direct local deploy with Cloudflare credentials, run: npm run deploy:cloudflare:prod");
+  } else {
+    log("Primary deployment path is Cloudflare Pages via GitHub Actions; Netlify/Vercel legacy deploys are skipped by default.");
+  }
+}
+
 function publishVercel() {
   if (skipVercel) {
     log("\n== Vercel skipped ==");
@@ -341,6 +353,7 @@ async function main() {
 
   buildAndVerify();
   publishGit();
+  announceCloudflarePrimary();
   await triggerNetlify();
   publishVercel();
   await triggerBolt();

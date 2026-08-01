@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { execFileSync } = require('node:child_process');
-const { readFileSync, statSync } = require('node:fs');
+const { existsSync, readFileSync, statSync } = require('node:fs');
 const path = require('node:path');
 
 const root = process.cwd();
@@ -59,6 +59,8 @@ function scanFile(file) {
   if (isSkipped(file)) return [];
 
   const absolutePath = path.join(root, file);
+  if (!existsSync(absolutePath)) return [];
+
   const size = statSync(absolutePath).size;
   if (size > MAX_TEXT_FILE_BYTES) return [];
 

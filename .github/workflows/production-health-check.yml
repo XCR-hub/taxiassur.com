@@ -24,6 +24,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Verify deployment independence
+        run: npm run verify:deployment-independence
+
       - name: Verify production site and public caches
         env:
           SITE_URL: https://taxiassur.com
