@@ -6,6 +6,7 @@ import { ModalProvider } from './contexts/ModalContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import GlobalErrorBoundary from './components/GlobalErrorBoundary';
+import PrivacyConsentBanner from './components/PrivacyConsentBanner';
 
 const PerformanceOptimizer = lazy(() => import('./components/PerformanceOptimizer'));
 
@@ -105,6 +106,7 @@ function App() {
                   <PerformanceOptimizer />
                 </Suspense>
               )}
+              <PrivacyConsentBanner />
             </ModalProvider>
           </ToastProvider>
         </ThemeProvider>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { logger } from '@/lib/logger';
+import { hasAnalyticsConsent } from '@/lib/privacy-consent';
 
 // Gestion des popups et modales
 import { z } from 'zod';
@@ -164,13 +165,15 @@ export class PopupManager {
     if (!config || !config.analytics.trackViews) return;
 
     // Track in analytics
-    if (typeof gtag !== 'undefined') {
+    if (hasAnalyticsConsent() && typeof gtag !== 'undefined') {
       gtag('event', `popup_${event}`, {
         event_category: 'popup',
         event_label: popupId,
         value: event === 'convert' ? config.analytics.goalValue : 1
       });
     }
+
+    if (!hasAnalyticsConsent()) return;
 
     // Store local analytics
     const analytics = JSON.parse(localStorage.getItem('popup_analytics') || '{}');

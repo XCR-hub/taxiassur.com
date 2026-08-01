@@ -1,4 +1,5 @@
 import { logger } from '@/lib/logger';
+import { hasAnalyticsConsent, loadConsentedThirdPartyTags, readPublicEnv } from '@/lib/privacy-consent';
 
 /**
  * Google Analytics Integration
@@ -22,7 +23,7 @@ export interface AnalyticsMetrics {
  * Nécessite la configuration de VITE_GA_MEASUREMENT_ID
  */
 export async function getRealAnalytics(): Promise<AnalyticsMetrics | null> {
-  const GA_ID = import.meta.env.VITE_GA_MEASUREMENT_ID;
+  const GA_ID = readPublicEnv('VITE_GA_MEASUREMENT_ID') || readPublicEnv('VITE_GTAG_ID');
 
   if (!GA_ID) {
     logger.log('⚠️ Google Analytics non configuré - utilisation données de simulation');
@@ -130,35 +131,22 @@ export async function getSearchConsoleData() {
  * Initialise Google Analytics 4
  */
 export function initializeAnalytics() {
-  const GA_ID = import.meta.env.VITE_GA_MEASUREMENT_ID;
+  const GA_ID = readPublicEnv('VITE_GA_MEASUREMENT_ID') || readPublicEnv('VITE_GTAG_ID');
 
-  if (!GA_ID) {
-    logger.log('⚠️ Google Analytics non configuré');
+  if (!GA_ID || !hasAnalyticsConsent()) {
+    logger.log('Google Analytics non charge sans consentement audience');
     return;
   }
 
-  // Charger le script GA4
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
-  document.head.appendChild(script);
-
-  // Initialiser gtag
-  window.dataLayer = window.dataLayer || [];
-  function gtag(...args: any[]) {
-    window.dataLayer.push(arguments);
-  }
-  gtag('js', new Date());
-  gtag('config', GA_ID);
-
-  logger.log('✅ Google Analytics initialisé');
+  loadConsentedThirdPartyTags();
+  logger.log('Google Analytics charge apres consentement');
 }
 
 /**
  * Track un événement personnalisé
  */
 export function trackEvent(eventName: string, params?: Record<string, any>) {
-  if (typeof window.gtag === 'function') {
+  if (hasAnalyticsConsent() && typeof window.gtag === 'function') {
     window.gtag('event', eventName, params);
   }
 }

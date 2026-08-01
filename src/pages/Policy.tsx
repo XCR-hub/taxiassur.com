@@ -4,6 +4,10 @@ import Footer from '../components/Footer';
 import Seo from '../components/Seo';
 
 const Policy: React.FC = () => {
+  const openPrivacyChoices = () => {
+    window.dispatchEvent(new Event('taxiassur:open-privacy-consent'));
+  };
+
   return (
     <div className="min-h-screen bg-black">
       <Seo
@@ -105,10 +109,17 @@ const Policy: React.FC = () => {
               <section>
                 <h2 className="text-xl font-semibold text-white mb-4">Cookies</h2>
                 <p className="leading-relaxed">
-                  Notre site utilise des cookies techniques nécessaires à son fonctionnement. 
-                  Aucun cookie publicitaire ou de tracking n'est utilisé sans votre consentement 
-                  préalable.
+                  Notre site utilise des cookies techniques nécessaires à son fonctionnement.
+                  Les mesures d'audience, tags marketing et personnalisations comportementales
+                  restent désactivées sans votre consentement préalable.
                 </p>
+                <button
+                  type="button"
+                  onClick={openPrivacyChoices}
+                  className="mt-4 rounded-md border border-amber-500 px-4 py-2 text-sm font-semibold text-amber-200 hover:bg-amber-500/10"
+                >
+                  Modifier mes choix cookies
+                </button>
               </section>
 
               <section>

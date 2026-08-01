@@ -1,5 +1,6 @@
 // Advanced conversion optimization utilities
 import { SecureLead } from './security';
+import { hasAnalyticsConsent, hasBehavioralPersonalizationConsent, hasMarketingConsent } from './privacy-consent';
 
 // A/B testing framework
 export class ABTestManager {
@@ -147,7 +148,7 @@ export class ConversionTracker {
     });
 
     // Send to analytics
-    if (typeof gtag !== 'undefined') {
+    if (hasAnalyticsConsent() && typeof gtag !== 'undefined') {
       gtag('event', event, {
         event_category: 'conversion',
         event_label: data?.label || '',
@@ -155,7 +156,7 @@ export class ConversionTracker {
       });
     }
 
-    if (typeof fbq !== 'undefined') {
+    if (hasMarketingConsent() && typeof fbq !== 'undefined') {
       fbq('track', this.mapEventToFacebook(event), data);
     }
   }
@@ -192,6 +193,10 @@ export class ConversionTracker {
 export class SmartPrefill {
   static getLocationData(): Promise<{ city?: string; region?: string; country?: string }> {
     return new Promise((resolve) => {
+      if (!hasBehavioralPersonalizationConsent()) {
+        resolve({});
+        return;
+      }
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           async (position) => {

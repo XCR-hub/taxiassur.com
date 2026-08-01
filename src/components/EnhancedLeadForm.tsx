@@ -75,14 +75,9 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
 
   const prefillSmartData = async () => {
     const { previousFormData } = SmartPrefill.detectUserIntent();
-    const locationData = await SmartPrefill.getLocationData();
-    
+
     if (previousFormData) {
       setFormData(prev => ({ ...prev, ...previousFormData }));
-    }
-    
-    if (locationData.city && !formData.city) {
-      setFormData(prev => ({ ...prev, city: locationData.city || '' }));
     }
   };
 

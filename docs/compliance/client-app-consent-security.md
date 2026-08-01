@@ -27,6 +27,20 @@ Revocation is available from the client portal through `revoke_client_marketing_
 
 No hidden phone contact import, mailbox scraping or cross-site navigation tracking should be added. Partner/cross-sell and behavioral personalization require explicit opt-in.
 
+
+## Public analytics and marketing tags
+
+The public site must not load Google Tag Manager, Google Analytics or marketing pixels from `index.html` before consent.
+Runtime choices are stored under `taxiassur_privacy_consent` and managed by `src/lib/privacy-consent.ts` plus `src/components/PrivacyConsentBanner.tsx`.
+
+Allowed public choices are separate:
+
+- analytics measurement
+- marketing tags
+- behavioral personalization limited to TaxiAssur navigation
+
+Visitors can reopen choices from `/policy?privacy=1` or the policy page button. Refusal removes local analytics and behavioral storage keys. Public lead forms must not request browser geolocation automatically; geolocation prefill is allowed only after behavioral personalization consent.
+
 ## Turnstile
 
 Frontend:

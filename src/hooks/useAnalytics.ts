@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { logger } from '@/lib/logger';
+import { hasAnalyticsConsent, hasMarketingConsent } from '@/lib/privacy-consent';
 
 interface AnalyticsEvent {
   action: string;
@@ -16,7 +17,7 @@ export const useAnalytics = () => {
   useEffect(() => {
     // Initialize analytics if configured
     if (provider === 'ga4' && gtagId) {
-      // GA4 is already loaded via script tag in index.html
+      // GA4 is loaded by the consent manager after opt-in
       logger.log('GA4 Analytics initialized');
     }
   }, [provider, gtagId]);
@@ -24,7 +25,7 @@ export const useAnalytics = () => {
   const track = (event: string, parameters?: Record<string, any>) => {
     try {
       // Google Analytics 4
-      if (provider === 'ga4' && typeof gtag !== 'undefined') {
+      if (hasAnalyticsConsent() && provider === 'ga4' && typeof gtag !== 'undefined') {
         gtag('event', event, {
           event_category: parameters?.category || 'engagement',
           event_label: parameters?.label || '',
@@ -34,19 +35,21 @@ export const useAnalytics = () => {
       }
 
       // Meta Pixel
-      if (typeof fbq !== 'undefined') {
+      if (hasMarketingConsent() && typeof fbq !== 'undefined') {
         const fbEvent = mapEventToFacebook(event);
         fbq('track', fbEvent, parameters);
       }
 
       // Matomo
-      if (provider === 'matomo' && typeof _paq !== 'undefined') {
+      if (hasAnalyticsConsent() && provider === 'matomo' && typeof _paq !== 'undefined') {
         _paq.push(['trackEvent', 
           parameters?.category || 'Engagement', 
           event, 
           parameters?.label || ''
         ]);
       }
+
+      if (!hasAnalyticsConsent()) return;
 
       // Local storage for internal analytics
       const localEvents = JSON.parse(localStorage.getItem('taxiassur_events') || '[]');
@@ -150,7 +153,7 @@ export const useAnalytics = () => {
 // Global analytics functions for use outside React components
 export const trackEvent = (event: string, parameters?: Record<string, any>) => {
   try {
-    if (typeof gtag !== 'undefined') {
+    if (hasAnalyticsConsent() && typeof gtag !== 'undefined') {
       gtag('event', event, parameters);
     }
   } catch (error) {

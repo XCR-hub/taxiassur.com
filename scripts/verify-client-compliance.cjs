@@ -144,6 +144,44 @@ const requiredChecks = [
     ],
   },
   {
+    label: 'public privacy consent manager gates third-party tags',
+    file: 'src/lib/privacy-consent.ts',
+    patterns: [
+      'PRIVACY_CONSENT_STORAGE_KEY',
+      'hasAnalyticsConsent',
+      'hasMarketingConsent',
+      'hasBehavioralPersonalizationConsent',
+      'loadConsentedThirdPartyTags',
+      'googletagmanager.com/gtag/js',
+      'googletagmanager.com/gtm.js',
+    ],
+  },
+  {
+    label: 'public privacy banner is mounted globally',
+    file: 'src/App.tsx',
+    patterns: ['PrivacyConsentBanner', '<PrivacyConsentBanner />'],
+  },
+  {
+    label: 'privacy policy lets visitors change cookie choices',
+    file: 'src/pages/Policy.tsx',
+    patterns: ['openPrivacyChoices', 'taxiassur:open-privacy-consent', 'Modifier mes choix cookies'],
+  },
+  {
+    label: 'adaptive traffic source storage requires consent',
+    file: 'src/lib/adaptive-content.ts',
+    patterns: ['hasAnalyticsConsent', 'hasBehavioralPersonalizationConsent', 'saveTrafficSource', 'getSavedTrafficSource'],
+  },
+  {
+    label: 'analytics hook respects analytics and marketing consent',
+    file: 'src/hooks/useAnalytics.ts',
+    patterns: ['hasAnalyticsConsent', 'hasMarketingConsent', 'localStorage.setItem', 'fbq'],
+  },
+  {
+    label: 'conversion geolocation prefill requires behavioral consent',
+    file: 'src/lib/conversion.ts',
+    patterns: ['hasBehavioralPersonalizationConsent', 'navigator.geolocation.getCurrentPosition', 'resolve({})'],
+  },
+  {
     label: 'document antivirus worker and installer are exposed',
     file: 'package.json',
     patterns: ['server:install-clamav-document-scan', 'server:scan-documents-clamav'],
@@ -151,7 +189,13 @@ const requiredChecks = [
   {
     label: 'compliance operations doc is present',
     file: 'docs/compliance/client-app-consent-security.md',
-    patterns: ['No hidden phone contact import', 'TaxiAssurDocumentClamAVScan', 'Current infrastructure dependency'],
+    patterns: [
+      'No hidden phone contact import',
+      'TaxiAssurDocumentClamAVScan',
+      'Current infrastructure dependency',
+      'Public analytics and marketing tags',
+      'taxiassur_privacy_consent',
+    ],
   },
 ];
 
@@ -161,6 +205,18 @@ const forbiddenPatterns = [
   { pattern: /webkitContacts/i, label: 'webkit contact API' },
   { pattern: /scrapeContacts|harvestContacts|importPhoneContacts/i, label: 'hidden contact harvesting' },
   { pattern: /mailboxScrap|scrapeMailbox|harvestEmails/i, label: 'mailbox scraping' },
+  { pattern: /(?:chrome|browser)\.history|history\.search|getVisits/i, label: 'browser history access' },
+  { pattern: /navigator\.sendBeacon\s*\(/i, label: 'silent beacon tracking without consent' },
+  {
+    pattern: /googletagmanager\.com\/(?:gtm\.js|gtag\/js|ns\.html)/i,
+    label: 'direct Google tag load before consent',
+    allowedFiles: ['src/lib/privacy-consent.ts'],
+  },
+  {
+    pattern: /SmartPrefill\.getLocationData\s*\(/i,
+    label: 'automatic browser geolocation prefill',
+    allowedFiles: ['src/lib/conversion.ts'],
+  },
 ];
 
 function readText(relativePath) {
@@ -176,11 +232,15 @@ function walk(relativeDir, out = []) {
     if (stats.isDirectory()) {
       if (entry === 'node_modules' || entry === 'dist') continue;
       walk(relativePath, out);
-    } else if (/\.(ts|tsx|js|jsx|cjs|mjs|sql|md|json)$/.test(entry)) {
+    } else if (/\.(ts|tsx|js|jsx|cjs|mjs|sql|md|json|html)$/.test(entry)) {
       out.push(relativePath.replace(/\\/g, '/'));
     }
   }
   return out;
+}
+
+function isAllowedFinding(item, file) {
+  return item.allowedFiles?.includes(file) === true;
 }
 
 function runRequiredChecks() {
@@ -198,6 +258,7 @@ function runRequiredChecks() {
 
 function runForbiddenChecks() {
   const scanFiles = [
+    'index.html',
     ...walk('src'),
     ...walk('supabase/functions'),
     ...walk('scripts'),
@@ -207,6 +268,7 @@ function runForbiddenChecks() {
   for (const file of scanFiles) {
     const text = readText(file);
     for (const item of forbiddenPatterns) {
+      if (isAllowedFinding(item, file)) continue;
       if (item.pattern.test(text)) {
         findings.push({ file, label: item.label, pattern: String(item.pattern) });
       }

@@ -1,3 +1,5 @@
+import { hasAnalyticsConsent, hasBehavioralPersonalizationConsent } from './privacy-consent';
+
 /**
  * ADAPTIVE CONTENT SYSTEM
  * Adapte automatiquement le contenu selon la source de trafic
@@ -196,11 +198,14 @@ export function useAdaptiveContent(): {
     setSource(detectedSource);
     setIsReady(true);
 
-    // Track dans analytics
-    if (typeof window !== 'undefined' && window.gtag) {
+    if (hasAnalyticsConsent() && typeof window !== 'undefined' && window.gtag) {
       window.gtag('event', 'traffic_source_detected', {
         source: detectedSource
       });
+    }
+
+    if (hasBehavioralPersonalizationConsent()) {
+      saveTrafficSource(detectedSource);
     }
   }, []);
 
@@ -215,6 +220,8 @@ export function useAdaptiveContent(): {
  * Sauvegarde la source de trafic pour personnalisation future
  */
 export function saveTrafficSource(source: TrafficSource): void {
+  if (!hasBehavioralPersonalizationConsent()) return;
+
   try {
     localStorage.setItem('traffic_source', source);
     localStorage.setItem('traffic_source_timestamp', Date.now().toString());
@@ -227,6 +234,8 @@ export function saveTrafficSource(source: TrafficSource): void {
  * Récupère la source de trafic sauvegardée
  */
 export function getSavedTrafficSource(): TrafficSource | null {
+  if (!hasBehavioralPersonalizationConsent()) return null;
+
   try {
     const saved = localStorage.getItem('traffic_source');
     const timestamp = localStorage.getItem('traffic_source_timestamp');

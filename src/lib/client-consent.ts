@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { hasBehavioralPersonalizationConsent, setBehavioralPersonalizationConsent } from './privacy-consent';
 
 export type ClientConsentKey =
   | 'marketing_email'
@@ -30,19 +31,11 @@ export function normalizeEmail(email: string): string {
 }
 
 export function isBehavioralPersonalizationAllowed(): boolean {
-  if (typeof window === 'undefined') return false;
-  return localStorage.getItem(BEHAVIORAL_CONSENT_STORAGE_KEY) === 'granted';
+  return hasBehavioralPersonalizationConsent();
 }
 
 export function setLocalBehavioralPersonalizationConsent(allowed: boolean): void {
-  if (typeof window === 'undefined') return;
-
-  if (allowed) {
-    localStorage.setItem(BEHAVIORAL_CONSENT_STORAGE_KEY, 'granted');
-  } else {
-    localStorage.setItem(BEHAVIORAL_CONSENT_STORAGE_KEY, 'revoked');
-    localStorage.removeItem('behavioral_metrics');
-  }
+  setBehavioralPersonalizationConsent(allowed);
 }
 
 export async function loadClientConsentState(email: string): Promise<ClientConsentState> {
