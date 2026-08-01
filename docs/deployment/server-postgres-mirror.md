@@ -10,9 +10,9 @@ Ce miroir n'est pas encore la base primaire du site public.
 
 - La synchronisation Supabase REST -> PostgreSQL local est operationnelle via la tache planifiee `TaxiAssur Supabase REST to PostgreSQL Sync`.
 - La tache est configuree en repetition toutes les 60 minutes (`PT1H`), avec `MultipleInstances IgnoreNew` pour eviter les chevauchements si une sync est encore en cours.
-- Dernier rapport serveur verifie : `ok`, 444 tables OK sur 444, 0 echec, 239174 lignes synchronisees, 0 ligne JSON invalide.
-- Derniere sauvegarde PostgreSQL post-sync verifiee : `taxiassur_20260801-124741.dump` dans `F:\TaxiAssur\Backups\PostgreSQL`.
-- Les compteurs publics PostgreSQL sont alignes avec D1 : 779 articles blog, 376 pages villes, 152 FAQ, 2981 actualites, 1433 pages GSC et 1943 requetes GSC.
+- Dernier rapport serveur verifie : `ok`, 444 tables OK sur 444, 0 echec, 239237 lignes synchronisees, 0 ligne JSON invalide.
+- Derniere sauvegarde PostgreSQL post-sync verifiee : `taxiassur_20260801-134530.dump` dans `F:\TaxiAssur\Backups\PostgreSQL`.
+- Les compteurs publics PostgreSQL sont alignes avec D1 : 779 articles blog, 376 pages villes, 153 FAQ, 2981 actualites, 1433 pages GSC et 1943 requetes GSC.
 - Les scripts serveur corriges sont maintenant versionnes dans le depot :
   - `scripts/server-sync-supabase-rest-to-postgres.ps1` ;
   - `scripts/server-backup-taxiassur-postgres.ps1` ;
@@ -52,14 +52,19 @@ Depuis le poste local :
 powershell -ExecutionPolicy Bypass -File scripts\verify-server-postgres-mirror.ps1 -UseStoredCredentials
 ```
 
-Le script utilise les identifiants Windows stockes avec `-UseStoredCredentials`, ou demande les identifiants via `Get-Credential` si le switch est absent. Il ouvre une session WinRM, puis verifie :
+Le script utilise les identifiants Windows stockes avec `-UseStoredCredentials`, ou demande les identifiants via `Get-Credential` si le switch est absent. Il ouvre une session WinRM, ecrit un rapport JSON local, affiche un resume lisible, puis sort en erreur si un garde-fou critique echoue.
 
-- presence des dossiers `F:\TaxiAssur`, `PostgreSQL`, `Scripts`, `Secrets`, `Backups` ;
-- services PostgreSQL/TaxiAssur ;
-- taches planifiees TaxiAssur/Supabase/PostgreSQL ;
-- derniers rapports JSON ;
-- derniers fichiers de sauvegarde ;
-- espace disque.
+Il verifie maintenant :
+
+- presence des dossiers `F:\TaxiAssur`, `PostgreSQL`, `PostgreSQL\runtime\pgsql`, `Scripts`, `Secrets`, `Backups` et `Logs` ;
+- service PostgreSQL actif ;
+- binaires PostgreSQL runtime `psql.exe`, `pg_isready.exe` et `pg_dump.exe` ;
+- tache `TaxiAssur Supabase REST to PostgreSQL Sync` presente, saine, cadencee a 60 minutes et configuree avec `MultipleInstances IgnoreNew` ;
+- dernier rapport `F:\TaxiAssur\Logs\supabase-postgres-sync-latest.json` parseable, `ok`, sans table echouee, sans ligne JSON invalide et frais de moins de 4 heures ;
+- dernier dump PostgreSQL frais, non trivial et stocke sous `F:\TaxiAssur\Backups\PostgreSQL` ;
+- espace libre du disque `F:` superieur au seuil minimal.
+
+Options utiles : `-MaxSyncAgeHours`, `-ExpectedSyncIntervalMinutes`, `-MaxRunningSyncHours`, `-MinDataDriveFreeGB`, `-MinPostgresBackupBytes`, `-PrintRawReport`.
 
 Le rapport local est ecrit ici :
 

@@ -14,11 +14,11 @@ Reduire progressivement la dependance a Supabase tout en gardant le site, les le
 - La generation du sitemap de build lit les endpoints publics PostgreSQL puis D1, pagine les contenus publics et conserve le sitemap existant si les sources publiques sont indisponibles.
 - Les endpoints publics `postgres-public/list` et `d1/list` supportent `limit`/`offset` avec tri stable pour eviter les doublons ou les variations entre builds.
 - Les endpoints de sante exposent les metadonnees de fraicheur du cache D1 et du miroir PostgreSQL public ; les workflows Cloudflare Pages, D1 et health check les exigent en mode strict.
-- Les compteurs publics verifies en production sont : 779 articles blog, 376 pages villes, 152 FAQ, 2981 actualites, 1433 pages GSC et 1943 requetes GSC.
+- Les compteurs publics verifies en production sont : 779 articles blog, 376 pages villes, 153 FAQ, 2981 actualites, 1433 pages GSC et 1943 requetes GSC.
 - Le workflow GitHub `Refresh Cloudflare D1 Cache` fonctionne avec le secret dedie `CLOUDFLARE_D1_API_TOKEN`.
 - Le serveur `192.168.1.70` heberge un miroir PostgreSQL local sous `F:\TaxiAssur`.
 - La sync Supabase REST -> PostgreSQL local est cadencee toutes les 60 minutes et les compteurs publics PostgreSQL/D1 sont alignes en production.
-- Dernier etat fonctionnel du miroir serveur : sync `ok`, 444 tables OK sur 444, 239174 lignes synchronisees, sauvegarde `taxiassur_20260801-124741.dump`.
+- Dernier etat fonctionnel du miroir serveur : sync `ok`, 444 tables OK sur 444, 239237 lignes synchronisees, sauvegarde `taxiassur_20260801-134530.dump`.
 - Une API Node de lecture seule est prete dans `server/postgres-read-api.mjs` et installable via `scripts/install-server-postgres-read-api.ps1`.
 - La verification production controle le site, D1, le proxy PostgreSQL, l'alignement des compteurs publics et l'absence de tags Google avant consentement.
 - Les workflows GitHub executent maintenant `verify:client-compliance`, `verify:production` apres deploiement Cloudflare, et `Production Health Check` toutes les 2 heures.
@@ -109,7 +109,7 @@ Les exports de sauvegarde peuvent etre stockes dans Nextcloud. En revanche, les 
 
 ### Phase 2 - Prochaine etape sure
 
-- Verifier regulierement le miroir avec `scripts/verify-server-postgres-mirror.ps1`.
+- Verifier regulierement le miroir avec `npm run server:verify-postgres-mirror -- -UseStoredCredentials` ; ce check echoue si la sync, la tache horaire, le dump ou l espace disque ne sont pas sains.
 - Redeployer les scripts de sync/backup serveur avec `npm run server:deploy-postgres-sync -- -UseStoredCredentials`.
 - Installer et tester l'API interne en lecture seule devant PostgreSQL local.
 - Exposer cette API uniquement via un tunnel/reverse proxy securise, jamais directement via l'IP LAN.

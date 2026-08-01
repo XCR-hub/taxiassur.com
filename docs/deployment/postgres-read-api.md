@@ -118,7 +118,7 @@ TAXIASSUR_POSTGRES_READ_API_TOKEN=<server token from F:\TaxiAssur\Secrets\taxias
 TAXIASSUR_POSTGRES_READ_API_URL=https://postgres-read-api.taxiassur.com
 ```
 
-The proxy allows only public SEO tables and filters unpublished rows before returning data. The frontend public cache order is now D1 first, PostgreSQL mirror second, then the existing Supabase/local fallback in the calling content loaders.
+The proxy allows only public SEO tables and filters unpublished rows before returning data. The public SEO runtime now reads the PostgreSQL mirror first and keeps D1 as the fallback cache; public pages do not fall back directly to Supabase SEO tables in the browser.
 
 ## Production Verification
 
