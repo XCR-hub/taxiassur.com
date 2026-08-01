@@ -144,9 +144,20 @@ function canonicalUrls(html) {
     .filter(Boolean);
 }
 
+function decodeHtmlEntities(value) {
+  return String(value || '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(parseInt(code, 10)));
+}
+
 function titleOf(html) {
   const match = html.match(/<title>([\s\S]*?)<\/title>/i);
-  return match ? match[1].replace(/\s+/g, ' ').trim() : '';
+  return match ? decodeHtmlEntities(match[1]).replace(/\s+/g, ' ').trim() : '';
 }
 
 function controller(ms) {
