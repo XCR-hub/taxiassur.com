@@ -113,6 +113,23 @@ function verifyPublicSeoRuntimeNoSupabaseFallback() {
     findings: directClientImports,
   });
 }
+
+function verifyAutonomousSitemapGeneration() {
+  const generatorPath = path.resolve('scripts/generate-clean-sitemap.js');
+  const optionalPath = path.resolve('scripts/generate-sitemap-optional.js');
+  const generatorSource = readFileSync(generatorPath, 'utf8');
+  const optionalSource = readFileSync(optionalPath, 'utf8');
+
+  addCheck('sitemap generator does not import Supabase client', !generatorSource.includes('@supabase/supabase-js') && !generatorSource.includes('createClient('), {
+    file: generatorPath,
+  });
+  addCheck('sitemap generator reads public PostgreSQL then D1 endpoints', generatorSource.includes('/api/postgres-public') && generatorSource.includes('/api/d1') && generatorSource.includes("DEFAULT_SOURCE_ORDER = ['postgres-public', 'd1']"), {
+    file: generatorPath,
+  });
+  addCheck('optional sitemap build is not gated by Supabase environment', !optionalSource.includes('VITE_SUPABASE_URL') && !optionalSource.includes('SUPABASE'), {
+    file: optionalPath,
+  });
+}
 function rowsFromHealth(json) {
   const tables = json?.tables || {};
   return {
@@ -182,6 +199,7 @@ async function verifyLiveSources() {
 async function main() {
   verifyLocalSourceOrder();
   verifyPublicSeoRuntimeNoSupabaseFallback();
+  verifyAutonomousSitemapGeneration();
   await verifyLiveSources();
 
   const report = {
