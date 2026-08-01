@@ -170,6 +170,13 @@ if (existsSync(envConfigPath)) {
   }
 }
 
+const sitemapPath = 'dist/sitemap.xml';
+if (existsSync(sitemapPath)) {
+  const sitemap = readFileSync(sitemapPath, 'utf8');
+  const overEncoded = sitemap.match(/<loc>[^<]*%25[^<]*<\/loc>/i);
+  if (overEncoded) fail(`${sitemapPath} contains over-encoded URL ${overEncoded[0]}`);
+  if (!process.exitCode) console.log('Cloudflare sitemap URL encoding OK');
+}
 const seoContentMapPath = 'dist/seo-content-map.json';
 if (!existsSync(seoContentMapPath)) {
   fail('Missing dist/seo-content-map.json for edge SEO metadata');

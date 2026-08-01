@@ -132,6 +132,7 @@ function checkSitemapRules(label, locs) {
   addCheck(`${label} excludes /m/ mirror URLs`, locs.every((url) => !url.includes('/m/')));
   addCheck(`${label} excludes legacy /ville/ URLs`, locs.every((url) => !url.includes('/ville/')));
   addCheck(`${label} excludes query-string duplicates`, locs.every((url) => !url.includes('?')));
+  addCheck(`${label} has no over-encoded percent URLs`, locs.every((url) => !/%25/i.test(url)));
 }
 
 function canonicalUrls(html) {

@@ -141,6 +141,24 @@ function decodeXml(value) {
     .replace(/&apos;/g, "'");
 }
 
+function decodePercentValue(value) {
+  let current = String(value || '').trim();
+  for (let index = 0; index < 6; index += 1) {
+    try {
+      const decoded = decodeURIComponent(current);
+      if (decoded === current) return current.normalize('NFC');
+      current = decoded;
+    } catch {
+      return current.normalize('NFC');
+    }
+  }
+  return current.normalize('NFC');
+}
+
+function cleanSlugValue(value) {
+  return decodePercentValue(value).replace(/^\/+|\/+$/g, '');
+}
+
 function escapeXml(value) {
   return encodeURI(value)
     .replace(/[^\x00-\x7F]/g, (char) => encodeURIComponent(char))
@@ -202,12 +220,12 @@ function addSeoMapEntry(map, route, entry) {
 }
 
 function hasBrokenSlugEncoding(slug) {
-  const value = String(slug || '').trim();
-  return BROKEN_SLUG_PATTERNS.some((pattern) => pattern.test(value));
+  const value = cleanSlugValue(slug);
+  return /%[0-9a-f]{2}/i.test(value) || BROKEN_SLUG_PATTERNS.some((pattern) => pattern.test(value));
 }
 
 function isIndexableContentSlug(slug) {
-  const value = String(slug || '').trim();
+  const value = cleanSlugValue(slug);
   if (!value) return false;
   if (hasBrokenSlugEncoding(value)) return false;
   if (TIMESTAMPED_SLUG_RE.test(value)) return false;
@@ -215,7 +233,7 @@ function isIndexableContentSlug(slug) {
 }
 
 function isIndexableCitySlug(slug) {
-  const value = String(slug || '').trim();
+  const value = cleanSlugValue(slug);
   if (!value) return false;
   if (CITY_UUID_SLUG_RE.test(value)) return false;
   if (hasBrokenSlugEncoding(value)) return false;
@@ -225,12 +243,14 @@ function isIndexableCitySlug(slug) {
 
 function isPublicSitemapLoc(loc) {
   try {
-    const url = new URL(loc);
+    const url = new URL(decodeXml(loc), SITE_URL);
     if (`${url.protocol}//${url.host}` !== SITE_URL) return false;
     if (url.search) return false;
-    if (url.pathname.includes('/m/')) return false;
-    if (url.pathname.includes('/ville/')) return false;
-    if (/^\/(?:admin|backoffice|api|espace-client|espace-prospect)(?:\/|$)/i.test(url.pathname)) return false;
+    const pathname = decodePercentValue(url.pathname);
+    if (/%25/i.test(url.pathname)) return false;
+    if (pathname.includes('/m/')) return false;
+    if (pathname.includes('/ville/')) return false;
+    if (/^\/(?:admin|backoffice|api|espace-client|espace-prospect)(?:\/|$)/i.test(pathname)) return false;
     return true;
   } catch {
     return false;
@@ -238,12 +258,16 @@ function isPublicSitemapLoc(loc) {
 }
 
 function toCityPath(slug) {
-  return slug.startsWith('assurance-taxi-') ? `/${slug}` : `/assurance-taxi-${slug}`;
+  const value = cleanSlugValue(slug);
+  return value.startsWith('assurance-taxi-') ? `/${value}` : `/assurance-taxi-${value}`;
 }
 
 function normalizeLoc(pathOrUrl) {
-  const loc = pathOrUrl.startsWith('http') ? pathOrUrl : `${SITE_URL}${pathOrUrl}`;
-  return decodeXml(loc).replace(/\/$/, loc === `${SITE_URL}/` ? '/' : '');
+  const raw = decodeXml(pathOrUrl.startsWith('http') ? pathOrUrl : `${SITE_URL}${pathOrUrl}`);
+  const url = new URL(raw, SITE_URL);
+  const pathname = decodePercentValue(url.pathname);
+  const canonicalPath = pathname === '/' ? '/' : pathname.replace(/\/+$/, '');
+  return `${SITE_URL}${canonicalPath}`;
 }
 
 function upsertUrl(urlsByLoc, pathOrUrl, lastmod, changefreq, priority) {
@@ -378,7 +402,7 @@ function buildSeoContentMap(cityPages, blogPosts, newsArticles) {
   const routes = {};
 
   for (const row of cityPages) {
-    const slug = String(field(row, 'slug') || '').trim();
+    const slug = cleanSlugValue(field(row, 'slug'));
     if (!isIndexableCitySlug(slug)) continue;
     const city = field(row, 'city_name') || field(row, 'city') || field(row, 'name') || slug.replace(/^assurance-taxi-/, '').replace(/-/g, ' ');
     const route = toCityPath(slug);
@@ -393,7 +417,7 @@ function buildSeoContentMap(cityPages, blogPosts, newsArticles) {
   }
 
   for (const row of blogPosts) {
-    const slug = String(field(row, 'slug') || '').trim();
+    const slug = cleanSlugValue(field(row, 'slug'));
     if (!isIndexableContentSlug(slug)) continue;
     const title = cleanTitle(field(row, 'title'), 'Article assurance taxi');
     addSeoMapEntry(routes, `/blog/${slug}`, {
@@ -406,7 +430,7 @@ function buildSeoContentMap(cityPages, blogPosts, newsArticles) {
   }
 
   for (const row of newsArticles) {
-    const slug = String(field(row, 'slug') || '').trim();
+    const slug = cleanSlugValue(field(row, 'slug'));
     if (!isIndexableContentSlug(slug)) continue;
     const title = cleanTitle(field(row, 'title'), 'Actualite assurance taxi');
     addSeoMapEntry(routes, `/actualites/${slug}`, {
@@ -454,19 +478,19 @@ async function generateSitemap() {
   ]);
 
   for (const row of cityPages) {
-    const slug = String(field(row, 'slug') || '').trim();
+    const slug = cleanSlugValue(field(row, 'slug'));
     if (!isIndexableCitySlug(slug)) continue;
     upsertUrl(urlsByLoc, toCityPath(slug), field(row, 'updated_at') || field(row, 'published_at') || field(row, 'created_at'), 'weekly', '0.7');
   }
 
   for (const row of blogPosts) {
-    const slug = String(field(row, 'slug') || '').trim();
+    const slug = cleanSlugValue(field(row, 'slug'));
     if (!isIndexableContentSlug(slug)) continue;
     upsertUrl(urlsByLoc, `/blog/${slug}`, field(row, 'updated_at') || field(row, 'published_at') || field(row, 'created_at'), 'monthly', '0.6');
   }
 
   for (const row of newsArticles) {
-    const slug = String(field(row, 'slug') || '').trim();
+    const slug = cleanSlugValue(field(row, 'slug'));
     if (!isIndexableContentSlug(slug)) continue;
     upsertUrl(urlsByLoc, `/actualites/${slug}`, field(row, 'updated_at') || field(row, 'published_at') || field(row, 'created_at'), 'monthly', '0.5');
   }
