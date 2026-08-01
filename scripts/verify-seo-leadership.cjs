@@ -7,6 +7,7 @@ const SITE_URL = (process.env.SITE_URL || 'https://taxiassur.com').replace(/\/$/
 const SKIP_LIVE = ['1', 'true', 'yes'].includes(String(process.env.SKIP_LIVE_SEO_CHECK || '').toLowerCase());
 const LIVE_TIMEOUT_MS = Number(process.env.SEO_LIVE_TIMEOUT_MS || 12000);
 const MIN_SITEMAP_URLS = Number(process.env.MIN_SITEMAP_URLS || 800);
+const REQUIRE_SEO_CONTENT_MAP = ['1', 'true', 'yes'].includes(String(process.env.REQUIRE_SEO_CONTENT_MAP || '').toLowerCase());
 
 const checks = [];
 const warnings = [];
@@ -17,6 +18,14 @@ function relPath(file) {
 
 function read(file) {
   return fs.readFileSync(relPath(file), 'utf8');
+}
+
+function readJson(file) {
+  try {
+    return JSON.parse(read(file));
+  } catch {
+    return null;
+  }
 }
 
 function exists(file) {
@@ -82,6 +91,28 @@ function blockedAiAgentsFromRobots(robots) {
   }
 
   return AI_ROBOT_AGENTS.filter((agent) => blocked.has(agent));
+}
+
+function seoMapRoutes(map) {
+  return Object.entries(map?.routes || {}).filter(([, entry]) => entry?.title && entry?.description);
+}
+
+function checkSeoContentMap(label, map) {
+  const routes = seoMapRoutes(map);
+  addCheck(`${label} contains dynamic route metadata`, routes.length >= 300, `${routes.length} routes`);
+  addCheck(`${label} includes blog metadata`, routes.some(([route]) => route.startsWith('/blog/')));
+  addCheck(`${label} includes news metadata`, routes.some(([route]) => route.startsWith('/actualites/')));
+  addCheck(`${label} includes city metadata`, routes.some(([route]) => route.startsWith('/assurance-taxi-')));
+  addCheck(`${label} descriptions are populated`, routes.every(([, entry]) => String(entry.description || '').trim().length >= 50));
+}
+
+function dynamicSeoSampleRoutes(map) {
+  const routes = Object.keys(map?.routes || {});
+  return [
+    routes.find((route) => route.startsWith('/actualites/')),
+    routes.find((route) => route.startsWith('/blog/')),
+    routes.find((route) => route.startsWith('/assurance-taxi-')),
+  ].filter(Boolean);
 }
 
 function sitemapSource() {
@@ -162,6 +193,12 @@ function checkLocalFiles() {
   const locSet = new Set(locs);
   checkSitemapRules(localSitemap.label, locs);
 
+  if (localSitemap.file === 'dist/sitemap.xml') {
+    addCheck('build SEO content map exists', exists('dist/seo-content-map.json'));
+    const buildSeoMap = exists('dist/seo-content-map.json') ? readJson('dist/seo-content-map.json') : null;
+    if (buildSeoMap) checkSeoContentMap('build SEO content map', buildSeoMap);
+  }
+
   const requiredUrls = [
     '/',
     '/assurance-taxi',
@@ -209,6 +246,7 @@ async function checkLiveSite() {
     ['/llms.txt', 'llms.txt'],
     ['/ai.txt', 'ai.txt'],
   ];
+  let liveSeoMap = null;
 
   for (const [route, label] of staticFiles) {
     const result = await fetchText(`${SITE_URL}${route}?seo-health=${Date.now()}`);
@@ -225,6 +263,22 @@ async function checkLiveSite() {
       checkSitemapRules('live sitemap', liveLocs);
       addCheck('live sitemap includes /villes', result.text.includes('<loc>https://taxiassur.com/villes</loc>'));
     }
+  }
+
+  const seoMapResult = await fetchText(`${SITE_URL}/seo-content-map.json?seo-health=${Date.now()}`);
+  if (REQUIRE_SEO_CONTENT_MAP) {
+    addCheck('live SEO content map reachable', seoMapResult.ok, `status ${seoMapResult.status}`);
+  }
+  const looksLikeJson = seoMapResult.text.trim().startsWith('{');
+  if (seoMapResult.ok && looksLikeJson) {
+    try {
+      liveSeoMap = JSON.parse(seoMapResult.text);
+      checkSeoContentMap('live SEO content map', liveSeoMap);
+    } catch {
+      addCheck('live SEO content map parses as JSON', false);
+    }
+  } else if (REQUIRE_SEO_CONTENT_MAP) {
+    addCheck('live SEO content map is required JSON', false, `status ${seoMapResult.status}`);
   }
 
   const routes = [
@@ -249,6 +303,21 @@ async function checkLiveSite() {
     addCheck(`live ${route} has edge SEO marker`, result.text.includes('name="taxiassur:seo-edge"') || result.text.includes("name='taxiassur:seo-edge'"));
     if (route !== '/') {
       addCheck(`live ${route} does not keep root canonical`, !canonicals.includes(`${SITE_URL}/`), canonicals.join(', ') || 'no canonical');
+    }
+  }
+
+  if (liveSeoMap?.routes) {
+    const sampleRoutes = dynamicSeoSampleRoutes(liveSeoMap);
+    if (REQUIRE_SEO_CONTENT_MAP) {
+      addCheck('live SEO content map exposes dynamic samples', sampleRoutes.length >= 3, `${sampleRoutes.length}/3 samples`);
+    }
+    for (const route of sampleRoutes) {
+      const expectedTitle = liveSeoMap.routes[route]?.title;
+      const result = await fetchText(`${SITE_URL}${route}?seo-health=${Date.now()}`);
+      addCheck(`live ${route} returns HTML for SEO content map`, result.ok && /<html/i.test(result.text), `status ${result.status}`);
+      if (!result.ok) continue;
+      const pageTitle = titleOf(result.text);
+      addCheck(`live ${route} uses SEO content map title`, pageTitle === expectedTitle, pageTitle || 'no title');
     }
   }
 }

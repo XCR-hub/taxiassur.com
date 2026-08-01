@@ -169,6 +169,25 @@ if (existsSync(envConfigPath)) {
     console.log(`Runtime public config OK: ${envConfigPath}`);
   }
 }
+
+const seoContentMapPath = 'dist/seo-content-map.json';
+if (!existsSync(seoContentMapPath)) {
+  fail('Missing dist/seo-content-map.json for edge SEO metadata');
+} else {
+  try {
+    const seoContentMap = JSON.parse(readFileSync(seoContentMapPath, 'utf8'));
+    const routes = Object.entries(seoContentMap?.routes || {}).filter(([, entry]) => entry?.title && entry?.description);
+    if (routes.length < 300) fail(`${seoContentMapPath} contains too few dynamic routes: ${routes.length}`);
+    if (!routes.some(([route]) => route.startsWith('/blog/'))) fail(`${seoContentMapPath} has no blog routes`);
+    if (!routes.some(([route]) => route.startsWith('/actualites/'))) fail(`${seoContentMapPath} has no news routes`);
+    if (!routes.some(([route]) => route.startsWith('/assurance-taxi-'))) fail(`${seoContentMapPath} has no city routes`);
+    const shortDescription = routes.find(([, entry]) => String(entry.description || '').trim().length < 50);
+    if (shortDescription) fail(`${seoContentMapPath} has a short description on ${shortDescription[0]}`);
+    if (!process.exitCode) console.log(`Cloudflare SEO content map OK: ${routes.length} dynamic routes`);
+  } catch (error) {
+    fail(`${seoContentMapPath} is not valid JSON: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
 const forbiddenDistSignatures = [
   'VITE_SUPABASE_SERVICE_ROLE_KEY',
   'VITE_ADMIN_PASSWORD',

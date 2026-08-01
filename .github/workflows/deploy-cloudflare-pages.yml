@@ -123,6 +123,7 @@ jobs:
         if: steps.cloudflare.outputs.ready == 'true'
         env:
           SITE_URL: https://taxiassur.com
+          REQUIRE_SEO_CONTENT_MAP: '1'
         run: npm run verify:seo-leadership
 
       - name: Verify public publication automations

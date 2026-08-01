@@ -2,6 +2,9 @@ const SITE_ORIGIN = 'https://taxiassur.com';
 const APEX_HOST = 'taxiassur.com';
 const WWW_HOST = 'www.taxiassur.com';
 const OG_IMAGE = `${SITE_ORIGIN}/logo-600x300.png`;
+const SEO_CONTENT_MAP_PATH = '/seo-content-map.json';
+let seoContentMapCache = null;
+let seoContentMapLoaded = false;
 
 const STATIC_ROUTE_META = {
   '/': {
@@ -192,7 +195,7 @@ export async function onRequest(context) {
   }
 
   const response = await context.next();
-  const meta = getRouteMeta(url);
+  const meta = await getRouteMeta(url, context);
   if (!meta || context.request.method !== 'GET') return response;
 
   const contentType = response.headers.get('content-type') || '';
@@ -221,12 +224,15 @@ function normalizePathname(pathname) {
   return pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
 }
 
-function getRouteMeta(url) {
+async function getRouteMeta(url, context) {
   const pathname = normalizePathname(url.pathname);
 
   if (STATIC_ROUTE_META[pathname]) {
     return { ...STATIC_ROUTE_META[pathname], canonicalPath: pathname };
   }
+
+  const mappedMeta = await getMappedContentMeta(pathname, context);
+  if (mappedMeta) return mappedMeta;
 
   if (pathname.startsWith('/blog/')) {
     const title = titleFromSlug(pathname.replace('/blog/', ''));
@@ -263,6 +269,53 @@ function getRouteMeta(url) {
   }
 
   return null;
+}
+
+async function getMappedContentMeta(pathname, context) {
+  if (!isMappedContentPath(pathname)) return null;
+  const contentMap = await loadSeoContentMap(context);
+  const entry = contentMap?.routes?.[pathname];
+  if (!entry?.title || !entry?.description) return null;
+
+  return {
+    title: entry.title,
+    description: entry.description,
+    section: entry.section || sectionForPath(pathname),
+    canonicalPath: pathname,
+    city: entry.city,
+    priority: entry.priority || 'content',
+  };
+}
+
+function isMappedContentPath(pathname) {
+  return pathname.startsWith('/blog/') || pathname.startsWith('/actualites/') || pathname.startsWith('/assurance-taxi-') || pathname.startsWith('/villes/');
+}
+
+function sectionForPath(pathname) {
+  if (pathname.startsWith('/blog/')) return 'Blog';
+  if (pathname.startsWith('/actualites/')) return 'Actualites';
+  if (pathname.startsWith('/assurance-taxi-') || pathname.startsWith('/villes/')) return 'Villes';
+  return 'TaxiAssur';
+}
+
+async function loadSeoContentMap(context) {
+  if (seoContentMapLoaded) return seoContentMapCache;
+  seoContentMapLoaded = true;
+
+  try {
+    const assets = context?.env?.ASSETS;
+    if (!assets?.fetch) return null;
+
+    const response = await assets.fetch(new Request(`${SITE_ORIGIN}${SEO_CONTENT_MAP_PATH}`));
+    if (!response.ok) return null;
+    const json = await response.json();
+    if (!json || typeof json !== 'object' || !json.routes || typeof json.routes !== 'object') return null;
+    seoContentMapCache = json;
+    return seoContentMapCache;
+  } catch {
+    seoContentMapCache = null;
+    return null;
+  }
 }
 
 function createCityMeta(canonicalPath, city) {

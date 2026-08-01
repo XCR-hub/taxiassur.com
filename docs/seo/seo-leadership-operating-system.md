@@ -18,7 +18,7 @@ Aucune modification technique ne peut garantir une position numero 1 Google. Le 
 - `public/sitemap.xml` sert de baseline de secours ; le build genere le sitemap publie dans `dist/sitemap.xml` depuis les sources publiques PostgreSQL puis D1.
 - `public/robots.txt` bloque les zones privees et les doublons legacy `/ville/`.
 - `public/llms.txt` et `public/ai.txt` exposent les pages publiques de reference aux assistants IA.
-- `npm run verify:seo-leadership` controle les signaux locaux, le sitemap de build quand il existe, le sitemap live et les canonicals HTML reelles en production.
+- `npm run verify:seo-leadership` controle les signaux locaux, le sitemap de build quand il existe, le sitemap live et les canonicals HTML reelles en production. En production, le workflow exige aussi `seo-content-map.json` pour que Cloudflare injecte les vrais titres/descriptions des pages dynamiques au lieu de les reconstruire depuis les slugs.
 - `npm run seo:quality-audit` repere les slugs casses, les doublons, les URLs trop longues et les clusters de pages a risque.
 
 ## Cycle de publication automatique

@@ -34,6 +34,11 @@ function parseArgs(argv) {
       index += 1;
     } else if (arg.startsWith('--baseline=')) {
       parsed.baseline = arg.slice('--baseline='.length);
+    } else if (arg === '--seo-map') {
+      parsed.seoMap = argv[index + 1];
+      index += 1;
+    } else if (arg.startsWith('--seo-map=')) {
+      parsed.seoMap = arg.slice('--seo-map='.length);
     }
   }
   return parsed;
@@ -46,6 +51,10 @@ function resolveProjectPath(value, fallback) {
 const cliArgs = parseArgs(process.argv.slice(2));
 const BASELINE_SITEMAP_PATH = resolveProjectPath(cliArgs.baseline, path.join('public', 'sitemap.xml'));
 const OUTPUT_SITEMAP_PATH = resolveProjectPath(cliArgs.out, path.join('public', 'sitemap.xml'));
+const OUTPUT_SEO_MAP_PATH = resolveProjectPath(
+  cliArgs.seoMap,
+  path.join(path.dirname(OUTPUT_SITEMAP_PATH), 'seo-content-map.json'),
+);
 
 const staticPages = [
   { url: '/', priority: '1.0', changefreq: 'daily' },
@@ -140,6 +149,56 @@ function escapeXml(value) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
+}
+
+function stripHtml(value) {
+  return String(value || '')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function compactText(value, maxLength) {
+  const text = stripHtml(value);
+  if (!text || text.length <= maxLength) return text;
+  const cut = text.slice(0, Math.max(1, maxLength - 3)).replace(/\s+\S*$/, '').trim();
+  return `${cut || text.slice(0, maxLength - 3)}...`;
+}
+
+function cleanTitle(value, fallback) {
+  return compactText(value, 85) || fallback;
+}
+
+function withBrandSuffix(title, suffix) {
+  if (/TaxiAssur/i.test(title)) return title;
+  return `${title} | ${suffix}`;
+}
+
+function descriptionFor(row, fallback) {
+  const primary = compactText(
+    field(row, 'meta_description') || field(row, 'excerpt') || field(row, 'description') || field(row, 'content'),
+    170,
+  );
+  if (primary.length >= 50) return primary;
+  return compactText(fallback, 170);
+}
+
+function addSeoMapEntry(map, route, entry) {
+  if (!route || !route.startsWith('/')) return;
+  const title = cleanTitle(entry.title, 'TaxiAssur');
+  const description = compactText(entry.description, 170);
+  if (!title || !description) return;
+
+  map[route] = {
+    title,
+    description,
+    section: entry.section || 'TaxiAssur',
+    priority: entry.priority || 'content',
+    ...(entry.city ? { city: entry.city } : {}),
+    ...(entry.updated_at ? { updated_at: entry.updated_at } : {}),
+  };
 }
 
 function hasBrokenSlugEncoding(slug) {
@@ -315,6 +374,64 @@ function readExistingLocalSitemap() {
   return parseExistingSitemap(fs.readFileSync(BASELINE_SITEMAP_PATH, 'utf8'));
 }
 
+function buildSeoContentMap(cityPages, blogPosts, newsArticles) {
+  const routes = {};
+
+  for (const row of cityPages) {
+    const slug = String(field(row, 'slug') || '').trim();
+    if (!isIndexableCitySlug(slug)) continue;
+    const city = field(row, 'city_name') || field(row, 'city') || field(row, 'name') || slug.replace(/^assurance-taxi-/, '').replace(/-/g, ' ');
+    const route = toCityPath(slug);
+    addSeoMapEntry(routes, route, {
+      title: field(row, 'meta_title') || field(row, 'title') || `Assurance taxi ${city} - Devis professionnel | TaxiAssur`,
+      description: descriptionFor(row, `Comparez votre assurance taxi a ${city} avec TaxiAssur : garanties professionnelles, devis, documents et accompagnement courtier.`),
+      section: `Assurance taxi ${city}`,
+      priority: 'local',
+      city,
+      updated_at: field(row, 'updated_at') || field(row, 'published_at') || field(row, 'created_at'),
+    });
+  }
+
+  for (const row of blogPosts) {
+    const slug = String(field(row, 'slug') || '').trim();
+    if (!isIndexableContentSlug(slug)) continue;
+    const title = cleanTitle(field(row, 'title'), 'Article assurance taxi');
+    addSeoMapEntry(routes, `/blog/${slug}`, {
+      title: withBrandSuffix(title, 'Blog TaxiAssur'),
+      description: descriptionFor(row, 'Guide TaxiAssur pour chauffeurs de taxi : assurance professionnelle, garanties, sinistres, tarifs et bonnes pratiques.'),
+      section: 'Blog',
+      priority: 'content',
+      updated_at: field(row, 'updated_at') || field(row, 'published_at') || field(row, 'created_at'),
+    });
+  }
+
+  for (const row of newsArticles) {
+    const slug = String(field(row, 'slug') || '').trim();
+    if (!isIndexableContentSlug(slug)) continue;
+    const title = cleanTitle(field(row, 'title'), 'Actualite assurance taxi');
+    addSeoMapEntry(routes, `/actualites/${slug}`, {
+      title: withBrandSuffix(title, 'Actualites TaxiAssur'),
+      description: descriptionFor(row, 'Actualite TaxiAssur utile aux chauffeurs de taxi : assurance professionnelle, reglementation, mobilite et gestion des risques.'),
+      section: 'Actualites',
+      priority: 'content',
+      updated_at: field(row, 'updated_at') || field(row, 'published_at') || field(row, 'created_at'),
+    });
+  }
+
+  return Object.fromEntries(Object.entries(routes).sort(([a], [b]) => a.localeCompare(b)));
+}
+
+function writeSeoContentMap(routes) {
+  fs.mkdirSync(path.dirname(OUTPUT_SEO_MAP_PATH), { recursive: true });
+  fs.writeFileSync(
+    OUTPUT_SEO_MAP_PATH,
+    `${JSON.stringify({ generated_at: new Date().toISOString(), routes }, null, 2)}\n`,
+    'utf8',
+  );
+  console.log(`SEO content map generated: ${OUTPUT_SEO_MAP_PATH}`);
+  console.log(`SEO content map routes: ${Object.keys(routes).length}`);
+}
+
 async function generateSitemap() {
   console.log('Generating autonomous sitemap from public PostgreSQL/D1 sources...');
 
@@ -354,6 +471,8 @@ async function generateSitemap() {
     upsertUrl(urlsByLoc, `/actualites/${slug}`, field(row, 'updated_at') || field(row, 'published_at') || field(row, 'created_at'), 'monthly', '0.5');
   }
 
+  const seoContentMap = buildSeoContentMap(cityPages, blogPosts, newsArticles);
+
   const urls = Array.from(urlsByLoc.values()).sort((a, b) => {
     if (a.loc === `${SITE_URL}/`) return -1;
     if (b.loc === `${SITE_URL}/`) return 1;
@@ -380,6 +499,7 @@ async function generateSitemap() {
 
   fs.mkdirSync(path.dirname(OUTPUT_SITEMAP_PATH), { recursive: true });
   fs.writeFileSync(OUTPUT_SITEMAP_PATH, xml, 'utf8');
+  writeSeoContentMap(seoContentMap);
 
   console.log(`Sitemap generated: ${OUTPUT_SITEMAP_PATH}`);
   console.log(`Total URLs: ${urls.length}`);
