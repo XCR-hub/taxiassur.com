@@ -10,15 +10,16 @@ Ce miroir n'est pas encore la base primaire du site public.
 
 - La synchronisation Supabase REST -> PostgreSQL local est operationnelle via la tache planifiee `TaxiAssur Supabase REST to PostgreSQL Sync`.
 - La tache est configuree en repetition toutes les 60 minutes (`PT1H`), avec `MultipleInstances IgnoreNew` pour eviter les chevauchements si une sync est encore en cours.
-- Dernier rapport serveur verifie : `ok`, 444 tables OK sur 444, 0 echec, 239237 lignes synchronisees, 0 ligne JSON invalide.
-- Derniere sauvegarde PostgreSQL post-sync verifiee : `taxiassur_20260801-134530.dump` dans `F:\TaxiAssur\Backups\PostgreSQL`.
-- Les compteurs publics PostgreSQL sont alignes avec D1 : 779 articles blog, 376 pages villes, 153 FAQ, 2981 actualites, 1433 pages GSC et 1943 requetes GSC.
+- Dernier rapport serveur verifie : `ok`, 444 tables OK sur 444, 0 echec, 239375 lignes synchronisees, 0 ligne JSON invalide.
+- Derniere sauvegarde PostgreSQL post-sync verifiee : `taxiassur_20260801-154028.dump` dans `F:\TaxiAssur\Backups\PostgreSQL`.
+- Les compteurs publics PostgreSQL sont alignes avec D1 : 780 articles blog, 376 pages villes, 153 FAQ, 2981 actualites, 1433 pages GSC et 1943 requetes GSC.
 - Les scripts serveur corriges sont maintenant versionnes dans le depot :
   - `scripts/server-sync-supabase-rest-to-postgres.ps1` ;
   - `scripts/server-backup-taxiassur-postgres.ps1` ;
   - `scripts/deploy-server-postgres-sync.ps1` ;
   - `scripts/verify-server-postgres-mirror.ps1`.
 - Le parser `.env` ne doit pas utiliser `ConvertFrom-StringData` pour ces fichiers, car les chemins Windows comme `F:\TaxiAssur\...` peuvent etre interpretes comme des sequences d echappement.
+- L'export REST reduit automatiquement la taille de page lorsqu'une table volumineuse renvoie une erreur HTTP 500, ce qui evite les echecs sur `email_inbox` et `email_messages` sans tronquer les tables.
 
 Pour redeployer les scripts serveur avec les identifiants Windows deja stockes :
 

@@ -22,7 +22,9 @@ function Read-AdminCredential([string]$UserName) {
 }
 
 function Save-Report($Report) {
-  $Report | ConvertTo-Json -Depth 14 | Set-Content -LiteralPath $ReportPath -Encoding UTF8
+  $json = $Report | ConvertTo-Json -Depth 14
+  $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+  [System.IO.File]::WriteAllText($ReportPath, "$json`n", $utf8NoBom)
 }
 
 function Add-Check($Checks, [string]$Name, [bool]$Ok, $Details) {
@@ -109,7 +111,14 @@ try {
 
     $services = Get-Service | Where-Object {
       $_.Name -like '*Postgre*' -or $_.DisplayName -like '*Postgre*' -or $_.Name -like '*TaxiAssur*'
-    } | Select-Object Name,DisplayName,Status,StartType
+    } | ForEach-Object {
+      [pscustomobject]@{
+        Name = $_.Name
+        DisplayName = $_.DisplayName
+        Status = $_.Status.ToString()
+        StartType = $_.StartType.ToString()
+      }
+    }
 
     $tasks = @()
     try {

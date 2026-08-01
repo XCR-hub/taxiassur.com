@@ -116,10 +116,11 @@ function Export-SupabaseTable([string]$restUrl, [string]$serviceRoleKey, [string
   $writer = [System.IO.StreamWriter]::new($outFile, $false, $utf8NoBom)
   $offset = 0
   $rowCount = 0L
+  $currentPageSize = [math]::Max(1, $pageSize)
+  $minimumPageSize = 50
   try {
     while ($true) {
       $encodedTable = [System.Uri]::EscapeDataString($table)
-      $url = "$restUrl/$encodedTable`?select=*&limit=$pageSize&offset=$offset"
       $headers = @{
         apikey = $serviceRoleKey
         Accept = "application/json"
@@ -127,15 +128,29 @@ function Export-SupabaseTable([string]$restUrl, [string]$serviceRoleKey, [string
       if ($serviceRoleKey -notlike 'sb_secret_*') {
         $headers.Authorization = "Bearer $serviceRoleKey"
       }
-      $rows = Invoke-RestMethod -Uri $url -Headers $headers -Method Get -TimeoutSec 180
+
+      while ($true) {
+        $url = "$restUrl/$encodedTable`?select=*&limit=$currentPageSize&offset=$offset"
+        try {
+          $rows = Invoke-RestMethod -Uri $url -Headers $headers -Method Get -TimeoutSec 180 -ErrorAction Stop
+          break
+        } catch {
+          if ($currentPageSize -le $minimumPageSize) { throw }
+          $nextPageSize = [math]::Max($minimumPageSize, [math]::Floor($currentPageSize / 2))
+          Add-Log ("REST retry {0} offset {1}: page {2} -> {3} after error: {4}" -f $table,$offset,$currentPageSize,$nextPageSize,$_.Exception.Message)
+          $currentPageSize = $nextPageSize
+          Start-Sleep -Seconds 2
+        }
+      }
+
       $pageRows = @($rows)
       if ($null -eq $rows) { $pageRows = @() }
       foreach ($row in $pageRows) {
         $writer.WriteLine(($row | ConvertTo-Json -Compress -Depth 100))
         $rowCount++
       }
-      if ($pageRows.Count -lt $pageSize) { break }
-      $offset += $pageSize
+      if ($pageRows.Count -lt $currentPageSize) { break }
+      $offset += $currentPageSize
     }
   } finally {
     $writer.Dispose()
