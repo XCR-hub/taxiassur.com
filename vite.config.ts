@@ -5,15 +5,6 @@ import { visualizer } from 'rollup-plugin-visualizer';
 import path from 'path'
 import fs from 'fs'
 
-const importsSupabaseClient = (id: string): boolean => {
-  try {
-    const source = fs.readFileSync(id, 'utf8');
-    return /from\s+['"](?:\.\/|@\/lib\/)supabase(?:['"]|\.ts['"])/.test(source)
-      || /from\s+['"](?:\.\/|@\/lib\/)supabase-instance(?:['"]|\.ts['"])/.test(source);
-  } catch {
-    return false;
-  }
-};
 const skipBrokenPublicFiles = () => ({
   name: 'skip-broken-public-files',
   buildStart() {
@@ -119,29 +110,21 @@ export default defineConfig(({ mode }) => ({
     chunkSizeWarningLimit: 500,
     modulePreload: {
       polyfill: false,
-      resolveDependencies: (_filename, deps) => {
-        return deps.filter(dep =>
-          dep.includes('vendor-react')
-        );
-      }
     },
     rollupOptions: {
       external: ['@sentry/react'],
       output: {
         manualChunks(id) {
-          // Vendor chunks first to avoid circular dependencies
+          // Keep React in vendor and split only leaf vendor packages to avoid vendor-to-vendor cycles.
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('scheduler')) {
-              return 'vendor-react';
-            }
-            if (id.includes('router')) {
-              return 'vendor-router';
+            if (id.includes('supabase')) {
+              return 'vendor-supabase';
             }
             if (id.includes('lucide')) {
               return 'vendor-icons';
             }
-            if (id.includes('supabase')) {
-              return 'vendor-supabase';
+            if (id.includes('react-router') || id.includes('@remix-run/router')) {
+              return 'vendor-router';
             }
             return 'vendor';
           }
@@ -171,21 +154,7 @@ export default defineConfig(({ mode }) => ({
             ) {
               return 'lib-heavy';
             }
-            // Supabase-dependent libs: separate to avoid misplacing helpers that import the client
-            if (importsSupabaseClient(id)) {
-              return 'lib-supabase';
-            }
-            if (
-              id.includes('leads') ||
-              id.includes('auth') ||
-              id.includes('supabase-instance') ||
-              id.includes('supabase.ts') ||
-              id.includes('document-utils') ||
-              id.includes('commercial-workflow') ||
-              id.includes('crm-pipeline')
-            ) {
-              return 'lib-supabase';
-            }
+            // Keep lightweight project libraries together; the previous lib-supabase split created Rollup cycles.
             return 'lib-core';
           }
 
