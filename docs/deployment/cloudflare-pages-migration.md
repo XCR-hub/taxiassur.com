@@ -69,7 +69,7 @@ The deployment workflow also runs:
 - `npm run verify:client-compliance`;
 - `npm run build:cloudflare`;
 - `npm run verify:production` after Cloudflare Pages deployment, with the deployed commit expected to match `github.sha` and strict freshness checks for the D1 public cache and PostgreSQL mirror;
-- `npm run verify:backoffice-auth` before and after deployment. The production run fetches the live Cloudflare Pages JavaScript assets and confirms that the backoffice bundle still contains the password reset flow, the CRM sidebar marker, a browser-safe Supabase anon key, and an `admin_users` REST bootstrap that does not return 401/403.
+- `npm run verify:backoffice-auth` before and after deployment. The production run fetches the live Cloudflare Pages JavaScript assets and confirms that the backoffice bundle still contains the password reset flow, the CRM sidebar marker, a browser-safe Supabase anon key, an `admin_users` REST bootstrap that does not return 401/403, and the required active admin users from `REQUIRED_BACKOFFICE_ADMIN_EMAILS` (`master@taxiassur.com` by default).
 
 `public/_headers` also keeps the operational frontend fresh:
 

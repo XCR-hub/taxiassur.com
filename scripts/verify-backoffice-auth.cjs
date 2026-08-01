@@ -9,6 +9,10 @@ const SKIP_LIVE = process.env.SKIP_LIVE_BACKOFFICE_AUTH_CHECK === '1';
 const REPORT_PATH = process.env.BACKOFFICE_AUTH_REPORT || '';
 const configuredMaxLiveJsAssets = Number.parseInt(process.env.BACKOFFICE_AUTH_MAX_LIVE_JS_ASSETS || '80', 10);
 const MAX_LIVE_JS_ASSETS = Number.isFinite(configuredMaxLiveJsAssets) && configuredMaxLiveJsAssets > 0 ? configuredMaxLiveJsAssets : 80;
+const REQUIRED_ADMIN_EMAILS = (process.env.REQUIRED_BACKOFFICE_ADMIN_EMAILS || 'master@taxiassur.com')
+  .split(',')
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean);
 const checks = [];
 
 const PASSWORD_RESET_MARKERS = [
@@ -285,6 +289,22 @@ async function verifyLiveGuards() {
       status: adminUsers.status,
       rows: Array.isArray(adminUsers.json) ? adminUsers.json.length : null,
     });
+
+    for (const email of REQUIRED_ADMIN_EMAILS) {
+      const requiredUser = await fetchJson(
+        `required-admin-user-${email}`,
+        `${supabaseUrl}/rest/v1/admin_users?select=id,email,full_name,role,is_active&email=ilike.${encodeURIComponent(email)}&is_active=eq.true&limit=1`,
+        12000,
+        { apikey: supabaseAnonKey, authorization: `Bearer ${supabaseAnonKey}` },
+      );
+      const row = Array.isArray(requiredUser.json) ? requiredUser.json[0] : null;
+      addCheck(`required active admin user exists: ${email}`, requiredUser.ok && Boolean(row), {
+        status: requiredUser.status,
+        rows: Array.isArray(requiredUser.json) ? requiredUser.json.length : null,
+        role: row?.role || null,
+        is_active: row?.is_active ?? null,
+      });
+    }
   }
 }
 
