@@ -156,6 +156,11 @@ function verifyAutonomousSitemapGeneration() {
     file: generatorPath,
   });
 }
+function publicItemKey(item) {
+  const payload = item?.payload && typeof item.payload === 'object' ? item.payload : {};
+  return String(item?.source_id || item?.id || item?.slug || payload.id || payload.slug || '');
+}
+
 function rowsFromHealth(json) {
   const tables = json?.tables || {};
   return {
@@ -174,11 +179,13 @@ async function verifyLiveSources() {
     return;
   }
 
-  const [postgresHealth, postgresSample, d1Health, d1Sample] = await Promise.all([
+  const [postgresHealth, postgresSample, postgresOffsetSample, d1Health, d1Sample, d1OffsetSample] = await Promise.all([
     fetchJson('postgres-health', `${SITE_URL}/api/postgres-public/health?ts=${Date.now()}`),
     fetchJson('postgres-blog-sample', `${SITE_URL}/api/postgres-public/list?table=blog_posts&limit=1&ts=${Date.now()}`),
+    fetchJson('postgres-blog-offset-sample', `${SITE_URL}/api/postgres-public/list?table=blog_posts&limit=1&offset=1&ts=${Date.now()}`),
     fetchJson('d1-health', `${SITE_URL}/api/d1/health?ts=${Date.now()}`),
     fetchJson('d1-blog-sample', `${SITE_URL}/api/d1/list?table=blog_posts&limit=1&ts=${Date.now()}`),
+    fetchJson('d1-blog-offset-sample', `${SITE_URL}/api/d1/list?table=blog_posts&limit=1&offset=1&ts=${Date.now()}`),
   ]);
 
   addCheck('PostgreSQL public API health is OK', postgresHealth.ok && postgresHealth.json?.ok === true, {
@@ -204,6 +211,20 @@ async function verifyLiveSources() {
     status: d1Sample.status,
     source: sourceHeader(d1Sample.headers),
     items: d1Sample.json?.items?.length || 0,
+  });
+
+  const postgresFirstKey = publicItemKey(postgresSample.json?.items?.[0]);
+  const postgresOffsetKey = publicItemKey(postgresOffsetSample.json?.items?.[0]);
+  addCheck('PostgreSQL public API honors list offset', postgresOffsetSample.ok && postgresFirstKey && postgresOffsetKey && postgresFirstKey !== postgresOffsetKey, {
+    status: postgresOffsetSample.status,
+    source: sourceHeader(postgresOffsetSample.headers),
+  });
+
+  const d1FirstKey = publicItemKey(d1Sample.json?.items?.[0]);
+  const d1OffsetKey = publicItemKey(d1OffsetSample.json?.items?.[0]);
+  addCheck('D1 fallback honors list offset', d1OffsetSample.ok && d1FirstKey && d1OffsetKey && d1FirstKey !== d1OffsetKey, {
+    status: d1OffsetSample.status,
+    source: sourceHeader(d1OffsetSample.headers),
   });
 
   const pgRows = rowsFromHealth(postgresHealth.json);
