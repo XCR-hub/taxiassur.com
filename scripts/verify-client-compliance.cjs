@@ -126,6 +126,9 @@ const requiredChecks = [
       'scheduled_at',
       'dry_run',
       'last_error',
+      'isAuthorizedWorkerRequest',
+      'extractBearerToken',
+      'Unauthorized',
     ],
   },
   {

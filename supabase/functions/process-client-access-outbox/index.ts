@@ -45,6 +45,18 @@ function safeError(error: unknown): string {
   return message.slice(0, 1000);
 }
 
+function extractBearerToken(req: Request): string {
+  const authHeader = req.headers.get("Authorization") || "";
+  const match = authHeader.match(/^Bearer\s+(.+)$/i);
+  return match?.[1]?.trim() || "";
+}
+
+function isAuthorizedWorkerRequest(req: Request, serviceRoleKey: string): boolean {
+  const bearerToken = extractBearerToken(req);
+  const apiKey = req.headers.get("apikey") || req.headers.get("Apikey") || "";
+  return bearerToken === serviceRoleKey || apiKey === serviceRoleKey;
+}
+
 async function callSendClientAccess(
   supabaseUrl: string,
   supabaseKey: string,
@@ -86,17 +98,21 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const payload = req.method === "GET" ? {} : await req.json().catch(() => ({}));
-    const limit = clampLimit((payload as JsonObject).limit);
-    const dryRun = (payload as JsonObject).dry_run === true;
-    const now = new Date().toISOString();
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
     if (!supabaseUrl || !supabaseKey) {
       throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required");
     }
+
+    if (!isAuthorizedWorkerRequest(req, supabaseKey)) {
+      return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+    }
+
+    const payload = req.method === "GET" ? {} : await req.json().catch(() => ({}));
+    const limit = clampLimit((payload as JsonObject).limit);
+    const dryRun = (payload as JsonObject).dry_run === true;
+    const now = new Date().toISOString();
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
