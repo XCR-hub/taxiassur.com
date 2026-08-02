@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useParams, Link } from 'react-router-dom';
-import { Upload, CheckCircle, AlertCircle, FileText, Loader2, X, Download, User, Phone, Mail, MapPin, Car, Shield, CreditCard, Ligature as FileSignature, Clock, CheckCircle2, XCircle, Eye, ChevronRight, Lock, RefreshCw, Building, Calendar, Euro, FileCheck, Send, AlertTriangle } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { Upload, CheckCircle, AlertCircle, FileText, Loader2, X, Download, User, Phone, Mail, MapPin, Car, Shield, CreditCard, Ligature as FileSignature, Clock, CheckCircle2, XCircle, ChevronRight, Lock, RefreshCw, Euro, FileCheck, AlertTriangle } from 'lucide-react';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
 import ClientQuotesViewer from '../components/client/ClientQuotesViewer';
 import ClientSubscriptionForm from '../components/client/ClientSubscriptionForm';
-import CompanyDocumentsLibrary from '../components/client/CompanyDocumentsLibrary';
 import ClientPaymentButton from '../components/client/ClientPaymentButton';
 import ClientMoneticoPayment from '../components/client/ClientMoneticoPayment';
 import DragDropUploader from '../components/client/DragDropUploader';
@@ -111,6 +111,33 @@ function getProspectDocumentTypes(vehicleType?: string) {
   return TAXI_DOCUMENT_TYPES;
 }
 
+interface ProspectPayment {
+  id: string;
+  amount: string | number;
+  reference: string;
+  description?: string;
+  status: string;
+  payment_date?: string;
+}
+
+interface FinalClientDocument {
+  id: string;
+  document_type: string;
+  file_name: string;
+  file_url: string;
+  uploaded_at: string;
+  custom_label?: string;
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) return message;
+  }
+  return fallback;
+}
+
 type TabType = 'documents' | 'devis' | 'paiement' | 'contrat';
 
 const EspaceProspect: React.FC = () => {
@@ -124,7 +151,7 @@ const EspaceProspect: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [anonClient, setAnonClient] = useState<any>(null);
+  const [anonClient, setAnonClient] = useState<SupabaseClient | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>(() => {
     // Lire le paramètre tab de l'URL au chargement
     const tabParam = searchParams.get('tab');
@@ -134,9 +161,9 @@ const EspaceProspect: React.FC = () => {
     return 'documents';
   });
   const [refreshing, setRefreshing] = useState(false);
-  const [pendingPayments, setPendingPayments] = useState<any[]>([]);
-  const [allPayments, setAllPayments] = useState<any[]>([]);
-  const [finalDocuments, setFinalDocuments] = useState<any[]>([]);
+  const [pendingPayments, setPendingPayments] = useState<ProspectPayment[]>([]);
+  const [allPayments, setAllPayments] = useState<ProspectPayment[]>([]);
+  const [finalDocuments, setFinalDocuments] = useState<FinalClientDocument[]>([]);
 
   const documentTypes = useMemo(
     () => getProspectDocumentTypes(leadInfo?.vehicle_type),
@@ -162,8 +189,12 @@ const EspaceProspect: React.FC = () => {
   useEffect(() => {
     const initClient = () => {
       try {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://drohhxrkoequjphvabvq.supabase.co';
-        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
+        const supabaseUrl = getSupabaseUrl();
+        const supabaseKey = getSupabaseAnonKey();
+
+        if (!supabaseUrl || !supabaseKey) {
+          throw new Error('Configuration Supabase publique manquante pour l espace prospect');
+        }
 
         const client = createClient(supabaseUrl, supabaseKey, {
           auth: {
@@ -174,7 +205,7 @@ const EspaceProspect: React.FC = () => {
         });
 
         setAnonClient(client);
-      } catch (err) {
+      } catch {
         setError('Erreur de configuration');
         setLoading(false);
       }
@@ -294,7 +325,7 @@ const EspaceProspect: React.FC = () => {
             setSuccess('✅ Nouveau document ajouté !');
             setTimeout(() => setSuccess(null), 3000);
           } else if (payload.eventType === 'UPDATE') {
-            const newRecord = payload.new as any;
+            const newRecord = payload.new as Partial<UploadedDocument>;
             if (newRecord.validated) {
               setSuccess('✅ Document validé par notre équipe !');
               setTimeout(() => setSuccess(null), 3000);
@@ -414,7 +445,7 @@ const EspaceProspect: React.FC = () => {
 
     } catch (err) {
       console.error('❌ [UPLOAD] Global error:', err);
-      const errorMessage = err.message || "Erreur inconnue lors de l'upload";
+      const errorMessage = getErrorMessage(err, "Erreur inconnue lors de l'upload");
       setError(`❌ Upload échoué: ${errorMessage}`);
       // Scroll vers le haut pour afficher l'erreur
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -424,26 +455,6 @@ const EspaceProspect: React.FC = () => {
     }
   };
 
-  const acceptQuote = async () => {
-    if (!leadInfo?.id || !anonClient) return;
-
-    try {
-      const { error } = await anonClient
-        .from('crm_leads')
-        .update({
-          quote_accepted_at: new Date().toISOString(),
-          current_stage_key: 'contract'
-        })
-        .eq('access_token', token);
-
-      if (error) throw error;
-
-      setSuccess('Devis accepte ! Vous recevrez votre contrat par email.');
-      await loadLeadInfo();
-    } catch (err) {
-      setError(err.message || 'Erreur lors de la validation du devis');
-    }
-  };
 
   const getDocumentStatus = (docType: string): DocumentStatus => {
     // Chercher le document uploadé dans crm_lead_documents
@@ -802,7 +813,6 @@ const EspaceProspect: React.FC = () => {
             {documentTypes.map((docType) => {
               const status = getDocumentStatus(docType.id);
               const uploaded = getUploadedDoc(docType.id);
-              const isUploading = uploading === docType.id;
               const Icon = docType.icon;
               const needsReupload = status.status === 'rejected';
 

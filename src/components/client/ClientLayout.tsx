@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, FileText, Shield, CreditCard, Bell, User, LogOut, Menu, X, Home, Gift, ShieldCheck
+  LayoutDashboard, FileText, Shield, CreditCard, Bell, User, LogOut, Menu, X, Home, Gift, ShieldCheck, ClipboardList
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -48,6 +48,7 @@ export default function ClientLayout({ children, email }: ClientLayoutProps) {
 
       setUnreadCount(count || 0);
     } catch {
+      setUnreadCount(0);
     }
   };
 
@@ -63,6 +64,7 @@ export default function ClientLayout({ children, email }: ClientLayoutProps) {
     { icon: FileText,        label: 'Documents',       path: '/client/documents' },
     { icon: Shield,          label: 'Sinistres',       path: '/client/sinistres' },
     { icon: CreditCard,      label: 'Paiements',       path: '/client/paiements' },
+    { icon: ClipboardList,   label: 'Demandes',        path: '/client/demandes' },
     { icon: Bell,            label: 'Notifications',   path: '/client/notifications', badge: unreadCount },
     { icon: Gift,            label: 'Parrainage',      path: '/client/parrainage' },
     { icon: ShieldCheck,     label: 'Confidentialite', path: '/client/confidentialite' },
@@ -172,7 +174,7 @@ export default function ClientLayout({ children, email }: ClientLayoutProps) {
           <div className="p-3 border-t border-gray-100">
             <div className="bg-gray-900 rounded-xl p-3 text-white">
               <div className="text-xs font-bold mb-0.5">Support client</div>
-              <div className="text-gray-400 text-xs">Lun–Ven, 9h–18h</div>
+              <div className="text-gray-400 text-xs">Lun-Ven, 9h-18h</div>
               <a href="tel:0180855786" className="block font-bold text-yellow-400 hover:text-yellow-300 text-sm mt-1 transition-colors">
                 01 80 85 57 86
               </a>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useParams, Link } from 'react-router-dom';
-import { Upload, CheckCircle, AlertCircle, FileText, Loader2, X, Download } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { Upload, CheckCircle, AlertCircle, FileText, Loader2, X } from 'lucide-react';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
 import ComplementaryDocuments from '@/components/client/ComplementaryDocuments';
 
 interface DocumentType {
@@ -11,6 +12,12 @@ interface DocumentType {
   required: boolean;
 }
 
+interface ProspectLeadInfo {
+  id: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+}
 interface UploadedDocument {
   id: string;
   document_type: string;
@@ -19,6 +26,15 @@ interface UploadedDocument {
   file_size: number;
   uploaded_at: string;
   status: string;
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) return message;
+  }
+  return fallback;
 }
 
 const DOCUMENT_TYPES: DocumentType[] = [
@@ -77,19 +93,23 @@ const ProspectDocuments: React.FC = () => {
   const params = useParams<{ token: string }>();
   const token = params.token || searchParams.get('token');
 
-  const [leadInfo, setLeadInfo] = useState<any>(null);
+  const [leadInfo, setLeadInfo] = useState<ProspectLeadInfo | null>(null);
   const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
   const [uploading, setUploading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [anonClient, setAnonClient] = useState<any>(null);
+  const [anonClient, setAnonClient] = useState<SupabaseClient | null>(null);
 
   useEffect(() => {
     const initClient = () => {
       try {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://drohhxrkoequjphvabvq.supabase.co';
-        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
+        const supabaseUrl = getSupabaseUrl();
+        const supabaseKey = getSupabaseAnonKey();
+
+        if (!supabaseUrl || !supabaseKey) {
+          throw new Error('Configuration Supabase publique manquante pour l espace prospect');
+        }
 
         console.log('🔧 Initializing anon client for prospect documents');
         console.log('URL:', supabaseUrl);
@@ -216,7 +236,7 @@ const ProspectDocuments: React.FC = () => {
       setSuccess(`Document "${file.name}" uploadé avec succès !`);
       await loadDocuments();
     } catch (err) {
-      setError(err.message || 'Erreur lors de l\'upload');
+      setError(getErrorMessage(err, 'Erreur lors de l\'upload'));
     } finally {
       setUploading(null);
     }

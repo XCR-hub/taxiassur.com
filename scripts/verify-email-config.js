@@ -12,7 +12,7 @@ const EXPECTED_FROM_EMAIL = 'team@taxiassur.com';
 const FUNCTIONS_DIR = 'supabase/functions';
 
 console.log('🔍 VÉRIFICATION CONFIGURATION EMAIL\n');
-console.log('='=repeat(60));
+console.log('='.repeat(60));
 
 // Fonctions d'envoi d'emails à vérifier
 const emailFunctions = [

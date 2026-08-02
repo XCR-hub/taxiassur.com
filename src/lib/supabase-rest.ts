@@ -1,7 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
 
-const FALLBACK_SUPABASE_URL = 'https://drohhxrkoequjphvabvq.supabase.co';
 const AUTH_RETRY_STATUSES = new Set([401, 403]);
 
 interface SupabaseRestOptions {
@@ -11,7 +10,11 @@ interface SupabaseRestOptions {
 }
 
 function getBaseUrl(): string {
-  return (getSupabaseUrl() || FALLBACK_SUPABASE_URL).replace(/\/$/, '');
+  const url = getSupabaseUrl();
+  if (!url) {
+    throw new Error('Configuration Supabase publique manquante pour le backoffice');
+  }
+  return url.replace(/\/$/, '');
 }
 
 function getAnonKey(): string {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FileText, Shield, CreditCard, Bell, TrendingUp, Calendar, CheckCircle, Clock, AlertCircle, ChevronRight, Package, Phone, Mail } from 'lucide-react';
+import { FileText, Shield, CreditCard, Bell, TrendingUp, Calendar, CheckCircle, Clock, AlertCircle, ChevronRight, Package, Phone, Mail, ClipboardList } from 'lucide-react';
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
 import { supabase } from '@/lib/supabase';
@@ -53,6 +53,7 @@ export default function ClientDashboard() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [sinistresCount, setSinistresCount] = useState(0);
+  const [openRequestsCount, setOpenRequestsCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const emailParam = email ? `?email=${encodeURIComponent(email)}` : '';
 
@@ -76,7 +77,8 @@ export default function ClientDashboard() {
         setUserData(data as UserData);
         if (data.lead_id) {
           loadRecentActivity(data.lead_id);
-          loadSinistresCount(data.lead_id);
+          loadSinistresCount();
+          loadOpenRequestsCount(data.lead_id);
         }
       }
     } catch (error) {
@@ -86,7 +88,7 @@ export default function ClientDashboard() {
     }
   };
 
-  const loadSinistresCount = async (_leadId: string) => {
+  const loadSinistresCount = async () => {
     try {
       const { data } = await supabase
         .rpc('get_client_claims_by_email', { p_email: email.toLowerCase().trim() });
@@ -95,6 +97,21 @@ export default function ClientDashboard() {
         setSinistresCount(active.length);
       }
     } catch {
+      setSinistresCount(0);
+    }
+  };
+
+  const loadOpenRequestsCount = async (leadId: string) => {
+    try {
+      const { count } = await supabase
+        .from('lead_client_requests')
+        .select('id', { count: 'exact', head: true })
+        .eq('lead_id', leadId)
+        .in('status', ['pending', 'in_progress']);
+
+      setOpenRequestsCount(count || 0);
+    } catch {
+      setOpenRequestsCount(0);
     }
   };
 
@@ -217,6 +234,14 @@ export default function ClientDashboard() {
       link: `/client/sinistres${emailParam}`
     },
     {
+      icon: ClipboardList,
+      label: 'Demandes',
+      value: String(openRequestsCount),
+      sublabel: openRequestsCount === 0 ? 'Aucune en cours' : 'En cours',
+      color: openRequestsCount > 0 ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500',
+      link: `/client/demandes${emailParam}`
+    },
+    {
       icon: Bell,
       label: 'Notifications',
       value: String(userData.notification_count),
@@ -279,7 +304,7 @@ export default function ClientDashboard() {
           )}
 
           {/* Stats grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             {stats.map((stat, index) => {
               const Icon = stat.icon;
               return (
@@ -304,7 +329,7 @@ export default function ClientDashboard() {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h2 className="text-xl font-bold mb-1">Votre Dossier</h2>
-                <p className="text-sm opacity-80 mb-4">Géré par TaxiAssur — Courtier ORIAS</p>
+                <p className="text-sm opacity-80 mb-4">Géré par TaxiAssur - Courtier ORIAS</p>
                 <div className="space-y-2 text-sm">
                   {userData.company_name && (
                     <div className="flex items-center gap-2">
@@ -342,7 +367,7 @@ export default function ClientDashboard() {
           </div>
 
           {/* Quick actions */}
-          <div className="grid sm:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <a
               href={`/client/documents${emailParam}`}
               className="bg-white rounded-xl p-5 border border-gray-100 hover:border-yellow-400 hover:shadow-md transition-all flex items-center gap-4 group"
@@ -381,6 +406,19 @@ export default function ClientDashboard() {
               <div>
                 <div className="font-semibold text-gray-900">Paiements</div>
                 <div className="text-xs text-gray-500">Factures et échéances</div>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 ml-auto" />
+            </a>
+            <a
+              href={`/client/demandes${emailParam}`}
+              className="bg-white rounded-xl p-5 border border-gray-100 hover:border-blue-300 hover:shadow-md transition-all flex items-center gap-4 group"
+            >
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-blue-200 transition-colors">
+                <ClipboardList size={22} className="text-blue-600" />
+              </div>
+              <div>
+                <div className="font-semibold text-gray-900">Demandes</div>
+                <div className="text-xs text-gray-500">Avenants, parc, renouvellement</div>
               </div>
               <ChevronRight size={16} className="text-gray-400 ml-auto" />
             </a>

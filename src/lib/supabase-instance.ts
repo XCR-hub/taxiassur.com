@@ -1,19 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Module isolé pour éviter circular deps
+type RuntimeEnv = Record<string, string | undefined>;
+
+// Module isole pour eviter circular deps
 // Ce module NE DOIT importer AUCUN autre module du projet
 
-// Récupérer les variables d'environnement directement
+// Recuperer les variables d'environnement directement
 function getEnvVar(key: string): string {
-  if (typeof window !== 'undefined' && (window as any).ENV_CONFIG) {
-    return (window as any).ENV_CONFIG[key];
+  if (typeof window !== 'undefined') {
+    const runtimeWindow = window as Window & { ENV_CONFIG?: RuntimeEnv };
+    return runtimeWindow.ENV_CONFIG?.[key] || '';
   }
+
   return import.meta.env[key] || '';
 }
-
-// Fallback values (URL Supabase correcte)
-const FALLBACK_URL = 'https://drohhxrkoequjphvabvq.supabase.co';
-const FALLBACK_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg';
 
 // Global singleton - survives HMR
 declare global {
@@ -45,10 +45,14 @@ function getSupabaseInstance() {
   // Create new instance
   _isCreating = true;
   try {
-    console.log('🆕 Creating Supabase instance (lazy)');
+    console.log('Creating Supabase instance (lazy)');
 
-    const url = getEnvVar('VITE_SUPABASE_URL') || FALLBACK_URL;
-    const key = getEnvVar('VITE_SUPABASE_ANON_KEY') || FALLBACK_KEY;
+    const url = getEnvVar('VITE_SUPABASE_URL');
+    const key = getEnvVar('VITE_SUPABASE_ANON_KEY');
+
+    if (!url || !key) {
+      throw new Error('Configuration Supabase manquante: VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY doivent etre definies explicitement.');
+    }
 
     const instance = createClient(url, key, {
       auth: {
@@ -71,9 +75,9 @@ function getSupabaseInstance() {
         try {
           const { data: { session } } = await instance.auth.getSession();
           if (session) {
-            // Rafraîchir automatiquement
+            // Rafraichir automatiquement
             await instance.auth.refreshSession();
-            console.log('🔄 Session auto-refreshed');
+            console.log('Session auto-refreshed');
           }
         } catch (error) {
           console.error('Failed to auto-refresh session:', error);

@@ -1,4 +1,5 @@
 import { supabaseInstance } from './supabase-instance';
+import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
 
 // Re-export the singleton instance
 export const supabase = supabaseInstance;
@@ -6,9 +7,9 @@ export const supabase = supabaseInstance;
 
 // Helper to check if Supabase is properly configured
 export const isSupabaseConfigured = () => {
-  return import.meta.env.VITE_SUPABASE_URL &&
-         import.meta.env.VITE_SUPABASE_ANON_KEY &&
-         !import.meta.env.VITE_SUPABASE_URL.includes('placeholder');
+  const url = getSupabaseUrl();
+  const key = getSupabaseAnonKey();
+  return Boolean(url && key && !url.includes('placeholder'));
 };
 
 // Types

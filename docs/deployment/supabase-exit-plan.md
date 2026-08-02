@@ -4,6 +4,14 @@
 
 Reduire progressivement la dependance a Supabase tout en gardant le site, les leads, les emails, les workflows et le contenu SEO operationnels.
 
+## Etat verifie le 2026-08-02
+
+- Non, la plateforme n'est pas encore totalement independante de `supabase.co` et Cloudflare.
+- Les fallbacks Supabase historiques codes en dur ont ete retires du parcours client/prospect (`src/lib/supabase-instance.ts`, `src/lib/supabase-rest.ts`, `src/lib/leads.ts`, `src/pages/EspaceProspect.tsx`, `src/pages/ProspectDocuments.tsx`).
+- La configuration Supabase du front doit maintenant etre fournie explicitement par `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` ou par `window.ENV_CONFIG`.
+- Le serveur `192.168.1.70` reste un miroir et une base de lecture/preparation, pas encore la base primaire de production pour CRM, Auth, documents, paiements, emails et crons.
+- Tant que les Edge Functions, Auth, Storage, Realtime, crons et webhooks paiement/email n'ont pas ete reportes ou self-hostes, Supabase reste une dependance operationnelle.
+- Cloudflare reste utilise pour Pages/D1/Tunnel/Turnstile si active. Une suppression complete impose un reverse proxy, DNS, anti-bot, TLS et jobs de deploiement alternatifs.
 ## Etat verifie le 2026-08-01
 
 - Le site public `taxiassur.com` est servi par Cloudflare Pages.

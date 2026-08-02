@@ -24,6 +24,7 @@ const supabaseFunctions = [
   "send-lead-notification",
   "process-lead-queue",
   "send-client-access",
+  "process-client-access-outbox",
   "send-document-notification",
   "send-email-universal",
   "send-payment-link-email",

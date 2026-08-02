@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { supabase } from './supabase';
 import { logger } from '@/lib/logger';
+import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
 
 export const LeadStatusSchema = z.enum(['nouveau', 'contacté', 'devis envoyé', 'client', 'perdu']);
 
@@ -426,9 +427,16 @@ export async function createLead(input: CreateLeadInput, forceNew: boolean = fal
     const lastName = nameParts.slice(1).join(' ') || '';
     const vehicleType = normalizedInput.status === 'vtc' ? 'VTC' : normalizedInput.status === 'autre' ? 'Autre' : 'Taxi';
 
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://drohhxrkoequjphvabvq.supabase.co';
-    const runtimeWindow = window as Window & { ENV_CONFIG?: { VITE_SUPABASE_ANON_KEY?: string } };
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || runtimeWindow.ENV_CONFIG?.VITE_SUPABASE_ANON_KEY || '';
+    const supabaseUrl = getSupabaseUrl();
+    const supabaseKey = getSupabaseAnonKey();
+
+    if (!supabaseUrl || !supabaseKey) {
+      logger.error('Configuration Supabase publique manquante pour la creation de lead');
+      return {
+        success: false,
+        error: 'Configuration du service indisponible. Merci de contacter TaxiAssur.'
+      };
+    }
 
     console.log('🔧 [FORM] Supabase URL:', supabaseUrl);
     console.log('🔧 [FORM] Supabase Key présente:', supabaseKey ? 'OUI' : 'NON');

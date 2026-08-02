@@ -27,6 +27,49 @@ const requiredChecks = [
     patterns: ["path: '/client/confidentialite'", 'ClientConfidentialite'],
   },
   {
+    label: 'client request route is registered',
+    file: 'src/router.tsx',
+    patterns: ["path: '/client/demandes'", 'ClientDemandes'],
+  },
+  {
+    label: 'client layout links to request center',
+    file: 'src/components/client/ClientLayout.tsx',
+    patterns: ['ClipboardList', "path: '/client/demandes'", "label: 'Demandes'"],
+  },
+  {
+    label: 'client request helper records consent snapshot',
+    file: 'src/lib/client-requests.ts',
+    patterns: [
+      'buildConsentSnapshot',
+      'loadClientConsentState',
+      'create_client_portal_request',
+      'get_client_portal_requests',
+      'partner_cross_sell',
+    ],
+  },
+  {
+    label: 'client request center exposes contract operations',
+    file: 'src/pages/client/ClientDemandes.tsx',
+    patterns: [
+      "type: 'endorsement_request'",
+      "type: 'fleet_change'",
+      "type: 'renewal_request'",
+      "type: 'partner_offer_question'",
+      'createClientPortalRequest',
+      'consentements au moment de l envoi',
+    ],
+  },
+  {
+    label: 'client profile uses the unified request workflow',
+    file: 'src/pages/client/ClientProfil.tsx',
+    patterns: [
+      'createClientPortalRequest',
+      "requestType: 'address_change'",
+      "requestType: 'payment_change'",
+      "requestType: 'vehicle_change'",
+    ],
+  },
+  {
     label: 'client consent helper records and revokes consent',
     file: 'src/lib/client-consent.ts',
     patterns: [
@@ -70,6 +113,42 @@ const requiredChecks = [
       'CREATE OR REPLACE FUNCTION public.record_client_consent_event',
       'CREATE OR REPLACE FUNCTION public.revoke_client_marketing_consents',
       'not authorize covert scraping',
+    ],
+  },
+  {
+    label: 'client access outbox worker processes queued portal invites',
+    file: 'supabase/functions/process-client-access-outbox/index.ts',
+    patterns: [
+      'client_portal_access_outbox',
+      'send-client-access',
+      'status: "processing"',
+      'max_attempts',
+      'scheduled_at',
+      'dry_run',
+      'last_error',
+    ],
+  },
+  {
+    label: 'client access outbox worker is published with Supabase functions',
+    file: 'scripts/publish.js',
+    patterns: ['send-client-access', 'process-client-access-outbox'],
+  },
+  {
+    label: 'database migration creates client request center and portal access outbox',
+    file: 'supabase/migrations/20260802163000_client_portal_request_center.sql',
+    patterns: [
+      'CREATE TABLE IF NOT EXISTS public.lead_client_requests',
+      'CREATE OR REPLACE FUNCTION public.create_client_portal_request',
+      'CREATE OR REPLACE FUNCTION public.get_client_portal_requests',
+      'CREATE TABLE IF NOT EXISTS public.client_portal_access_outbox',
+      'scheduled_at timestamptz NOT NULL DEFAULT now()',
+      'max_attempts integer NOT NULL DEFAULT 3',
+      'CREATE OR REPLACE FUNCTION public.enqueue_client_app_access',
+      'trg_enqueue_client_app_access_from_contract',
+      'trg_enqueue_client_app_access_from_lead',
+      'process-client-access-outbox',
+      'cron.schedule',
+      'does not allow hidden contact import',
     ],
   },
   {
@@ -176,6 +255,26 @@ const requiredChecks = [
     ],
   },
   {
+    label: 'page tracking requires analytics consent and sanitizes URLs',
+    file: 'src/hooks/usePageTracking.ts',
+    patterns: [
+      'hasAnalyticsConsent',
+      'hasBehavioralPersonalizationConsent',
+      'sanitizeUrl',
+      'analytics_consent_no_behavioral_profile',
+    ],
+  },
+  {
+    label: 'referral click analytics has no external IP lookup',
+    file: 'src/lib/referral-system.ts',
+    patterns: [
+      'hasAnalyticsConsent',
+      'ip: null',
+      "rewardAmount: number = 25",
+      "rewardType: 'credit' | 'discount' | 'cash' | 'gift' = 'gift'",
+    ],
+  },
+  {
     label: 'public privacy banner is mounted globally',
     file: 'src/App.tsx',
     patterns: ['PrivacyConsentBanner', '<PrivacyConsentBanner />'],
@@ -201,6 +300,72 @@ const requiredChecks = [
     patterns: ['hasBehavioralPersonalizationConsent', 'navigator.geolocation.getCurrentPosition', 'resolve({})'],
   },
   {
+    label: 'client request center route is registered',
+    file: 'src/router.tsx',
+    patterns: ["path: '/client/demandes'", 'ClientDemandes'],
+  },
+  {
+    label: 'client request center menu is registered',
+    file: 'src/components/client/ClientLayout.tsx',
+    patterns: ["path: '/client/demandes'", 'Demandes', 'ClipboardList'],
+  },
+  {
+    label: 'client request center uses Turnstile and explicit consent',
+    file: 'src/pages/client/ClientDemandes.tsx',
+    patterns: [
+      'useTurnstileGuard',
+      "action: 'client_portal_request'",
+      'turnstile.verify',
+      '!turnstile.canSubmit',
+      'recordClientConsent',
+      'partner_cross_sell',
+      'behavioral_personalization',
+      'Aucun import de contacts telephone',
+    ],
+  },
+  {
+    label: 'client request database workflow stores consent snapshot and automation event',
+    file: 'supabase/migrations/20260802163000_client_portal_request_center.sql',
+    patterns: [
+      'CREATE OR REPLACE FUNCTION public.create_client_portal_request',
+      'CREATE OR REPLACE FUNCTION public.get_client_portal_requests',
+      'consent_snapshot',
+      'crm_automation_events',
+      'It does not allow hidden contact import',
+    ],
+  },
+  {
+    label: 'client profile modification requests target lead id',
+    file: 'src/pages/client/ClientProfil.tsx',
+    patterns: [
+      'const requireLeadId',
+      'createClientPortalRequest',
+      'lead_id: leadId',
+      "requestType: 'address_change'",
+      "requestType: 'payment_change'",
+      "requestType: 'vehicle_change'",
+    ],
+  },
+  {
+    label: 'client access outbox worker is exposed',
+    file: 'package.json',
+    patterns: ['server:process-client-access-outbox', 'process-client-portal-access-outbox.cjs'],
+  },
+  {
+    label: 'client access outbox worker processes queued access emails',
+    file: 'scripts/process-client-portal-access-outbox.cjs',
+    patterns: [
+      'client_portal_access_outbox',
+      'send-client-access',
+      'claimRow',
+      "status: 'processing'",
+      "status: 'sent'",
+      "exhausted ? 'failed' : 'pending'",
+      'CLIENT_ACCESS_OUTBOX_MAX_ATTEMPTS',
+      'scheduled_at',
+    ],
+  },
+  {
     label: 'document antivirus worker and installer are exposed',
     file: 'package.json',
     patterns: ['server:install-clamav-document-scan', 'server:scan-documents-clamav'],
@@ -214,6 +379,7 @@ const requiredChecks = [
       'Current infrastructure dependency',
       'Public analytics and marketing tags',
       'taxiassur_privacy_consent',
+      'Client request center',
     ],
   },
 ];
@@ -226,6 +392,7 @@ const forbiddenPatterns = [
   { pattern: /mailboxScrap|scrapeMailbox|harvestEmails/i, label: 'mailbox scraping' },
   { pattern: /(?:chrome|browser)\.history|history\.search|getVisits/i, label: 'browser history access' },
   { pattern: /navigator\.sendBeacon\s*\(/i, label: 'silent beacon tracking without consent' },
+  { pattern: /api\.ipify\.org/i, label: 'external browser IP lookup' },
   {
     pattern: /googletagmanager\.com\/(?:gtm\.js|gtag\/js|ns\.html)/i,
     label: 'direct Google tag load before consent',

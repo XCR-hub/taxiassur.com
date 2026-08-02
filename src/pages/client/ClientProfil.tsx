@@ -5,13 +5,7 @@ import SEOHead from '../../components/SEOHead';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
-
-interface ModificationRequest {
-  type: 'address' | 'rib' | 'vehicle';
-  data: Record<string, unknown>;
-  status: 'pending' | 'approved' | 'rejected';
-  created_at: string;
-}
+import { createClientPortalRequest } from '@/lib/client-requests';
 
 export default function ClientProfil() {
   const [searchParams] = useSearchParams();
@@ -58,6 +52,13 @@ export default function ClientProfil() {
     loadUserData();
   }, [email, navigate]);
 
+  const requireLeadId = () => {
+    const leadId = userData?.lead_id;
+    if (typeof leadId === 'string' && leadId.trim()) {
+      return leadId;
+    }
+    throw new Error('Dossier client introuvable');
+  };
   const loadUserData = async () => {
     setLoading(true);
     try {
@@ -90,21 +91,24 @@ export default function ClientProfil() {
     setSaving(true);
     setErrorMessage(null);
     try {
-      const { error } = await supabase
-        .from('client_modification_requests')
-        .insert({
-          client_email: email,
-          request_type: 'address_change',
+      const leadId = requireLeadId();
+      await createClientPortalRequest({
+        email,
+        requestType: 'address_change',
+        title: 'Changement adresse',
+        description: 'Demande de changement adresse depuis le profil client.',
+        priority: 'normal',
+        source: 'client_profile',
+        newData: {
+          lead_id: leadId,
           old_data: {
             street: userData?.address || '',
             postal_code: userData?.postal_code || '',
-            city: userData?.city || ''
+            city: userData?.city || '',
           },
-          new_data: addressForm,
-          status: 'pending'
-        });
-
-      if (error) throw error;
+          requested_address: addressForm,
+        },
+      });
 
       setSuccessMessage('Demande de changement d\'adresse envoyee. Notre equipe la traitera sous 48h.');
       setShowAddressModal(false);
@@ -131,23 +135,26 @@ export default function ClientProfil() {
     }
 
     try {
-      const { error } = await supabase
-        .from('client_modification_requests')
-        .insert({
-          client_email: email,
-          request_type: 'rib_change',
+      const leadId = requireLeadId();
+      await createClientPortalRequest({
+        email,
+        requestType: 'payment_change',
+        title: 'Changement RIB',
+        description: 'Demande de changement de coordonnees bancaires depuis le profil client.',
+        priority: 'high',
+        source: 'client_profile',
+        newData: {
+          lead_id: leadId,
           old_data: {
-            iban: userData?.iban ? '****' + userData.iban.slice(-4) : null,
-            bic: userData?.bic
+            iban: userData?.iban ? '****' + String(userData.iban).slice(-4) : null,
+            bic: userData?.bic || null,
           },
-          new_data: {
+          requested_bank_details: {
             ...ribForm,
-            iban: cleanIban
+            iban: cleanIban,
           },
-          status: 'pending'
-        });
-
-      if (error) throw error;
+        },
+      });
 
       setSuccessMessage('Demande de changement de RIB envoyee. Verification sous 48h.');
       setShowRibModal(false);
@@ -171,19 +178,23 @@ export default function ClientProfil() {
     }
 
     try {
-      const { error } = await supabase
-        .from('client_modification_requests')
-        .insert({
-          client_email: email,
-          request_type: 'vehicle_change',
+      const leadId = requireLeadId();
+      await createClientPortalRequest({
+        email,
+        requestType: 'vehicle_change',
+        title: 'Changement vehicule',
+        description: 'Demande de changement de vehicule depuis le profil client. Un avenant peut etre necessaire.',
+        priority: 'high',
+        source: 'client_profile',
+        newData: {
+          lead_id: leadId,
           old_data: {
-            vehicle: userData?.vehicle_info
+            vehicle: userData?.vehicle_info || null,
+            immatriculation: userData?.immatriculation || null,
           },
-          new_data: vehicleForm,
-          status: 'pending'
-        });
-
-      if (error) throw error;
+          requested_vehicle: vehicleForm,
+        },
+      });
 
       setSuccessMessage('Demande de changement de vehicule envoyee. Un avenant sera etabli sous 48h.');
       setShowVehicleModal(false);

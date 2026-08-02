@@ -93,6 +93,7 @@ const ClientDashboard = lazy(() => import('./pages/client/ClientDashboard'));
 const ClientDocuments = lazy(() => import('./pages/client/ClientDocuments'));
 const ClientNotifications = lazy(() => import('./pages/client/ClientNotifications'));
 const ClientPaiements = lazy(() => import('./pages/client/ClientPaiements'));
+const ClientDemandes = lazy(() => import('./pages/client/ClientDemandes'));
 const ClientParrainage = lazy(() => import('./pages/client/ClientParrainage'));
 const ClientConfidentialite = lazy(() => import('./pages/client/ClientConfidentialite'));
 const ClientProfil = lazy(() => import('./pages/client/ClientProfil'));
@@ -575,6 +576,10 @@ export const router = createBrowserRouter([
   {
     path: '/client/notifications',
     element: <ClientNotifications />,
+  },
+  {
+    path: '/client/demandes',
+    element: <ClientDemandes />,
   },
   {
     path: '/client/paiements',

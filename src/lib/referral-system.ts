@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { hasAnalyticsConsent, hasBehavioralPersonalizationConsent } from './privacy-consent';
 
 export interface Referral {
   id: string;
@@ -7,7 +8,7 @@ export interface Referral {
   referred_id?: string;
   status: 'pending' | 'completed' | 'cancelled';
   reward_amount: number;
-  reward_type: 'credit' | 'discount' | 'cash';
+  reward_type: 'credit' | 'discount' | 'cash' | 'gift';
   created_at: string;
   completed_at?: string;
 }
@@ -55,8 +56,8 @@ export class ReferralSystem {
   async createReferral(
     referralCode: string,
     referredEmail: string,
-    rewardAmount: number = 50,
-    rewardType: 'credit' | 'discount' | 'cash' = 'discount'
+    rewardAmount: number = 25,
+    rewardType: 'credit' | 'discount' | 'cash' | 'gift' = 'gift'
   ): Promise<Referral> {
     const { data: codeData } = await supabase
       .from('referral_codes')
@@ -174,7 +175,7 @@ export class ReferralSystem {
   private async grantReward(
     userId: string,
     amount: number,
-    type: 'credit' | 'discount' | 'cash'
+    type: 'credit' | 'discount' | 'cash' | 'gift'
   ): Promise<void> {
     const { error } = await supabase
       .from('user_rewards')
@@ -224,26 +225,20 @@ export class ReferralSystem {
   }
 
   async trackReferralClick(code: string): Promise<void> {
+    if (!hasAnalyticsConsent()) return;
+
     const { error } = await supabase
       .from('referral_clicks')
       .insert({
         code,
         clicked_at: new Date().toISOString(),
-        ip: await this.getClientIP(),
-        user_agent: navigator.userAgent,
+        ip: null,
+        user_agent: hasBehavioralPersonalizationConsent()
+          ? navigator.userAgent
+          : 'analytics_consent_no_behavioral_profile',
       });
 
     if (error) console.error('Failed to track referral click:', error);
-  }
-
-  private async getClientIP(): Promise<string> {
-    try {
-      const response = await fetch('https://api.ipify.org?format=json');
-      const data = await response.json();
-      return data.ip;
-    } catch {
-      return 'unknown';
-    }
   }
 }
 

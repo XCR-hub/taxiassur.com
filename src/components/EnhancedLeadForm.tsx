@@ -163,8 +163,8 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
     }
     
     // Rate limiting check
-    const userIP = await getUserIP();
-    if (!RateLimiter.canSubmit(userIP)) {
+    const rateLimitKey = getRateLimitKey();
+    if (!RateLimiter.canSubmit(rateLimitKey)) {
       toast.warning('Trop de tentatives. Veuillez patienter avant de soumettre à nouveau.');
       return;
     }
@@ -190,7 +190,7 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
       const result = await submitSecureLead(completeFormData);
       
       if (result.success) {
-        RateLimiter.recordSubmission(userIP);
+        RateLimiter.recordSubmission(rateLimitKey);
         ConversionTracker.track('form_complete', { service, city });
 
         localStorage.removeItem('taxiassur_form_data');
@@ -210,13 +210,16 @@ const EnhancedLeadForm: React.FC<EnhancedLeadFormProps> = ({
     }
   };
 
-  const getUserIP = async (): Promise<string> => {
+  const getRateLimitKey = (): string => {
     try {
-      const response = await fetch('https://api.ipify.org?format=json');
-      const data = await response.json();
-      return data.ip;
+      const existing = sessionStorage.getItem('taxiassur_rate_limit_key');
+      if (existing) return existing;
+
+      const nextKey = `client_session_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+      sessionStorage.setItem('taxiassur_rate_limit_key', nextKey);
+      return nextKey;
     } catch {
-      return 'unknown';
+      return formData.fingerprint || 'anonymous_session';
     }
   };
 
