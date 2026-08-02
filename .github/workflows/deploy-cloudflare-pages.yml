@@ -40,6 +40,9 @@ jobs:
       - name: Client compliance guard
         run: npm run verify:client-compliance
 
+      - name: Commercial workflow guard
+        run: npm run verify:commercial-workflow
+
       - name: Backoffice auth guard
         env:
           SKIP_LIVE_BACKOFFICE_AUTH_CHECK: '1'

@@ -451,7 +451,7 @@ function runForbiddenChecks() {
     ...walk('src'),
     ...walk('supabase/functions'),
     ...walk('scripts'),
-  ].filter((file) => file !== 'scripts/verify-client-compliance.cjs');
+  ].filter((file) => file !== 'scripts/verify-client-compliance.cjs' && file !== 'scripts/verify-commercial-workflow.cjs');
   const findings = [];
 
   for (const file of scanFiles) {

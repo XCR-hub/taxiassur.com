@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { X, Send, Loader2, Building2, Paperclip, Check, AlertCircle, Mail } from 'lucide-react';
+import { X, Send, Loader2, Paperclip, Check, AlertCircle, Mail } from 'lucide-react';
 import { toast } from '@/lib/toast';
 
 interface InsurerContact {
@@ -10,6 +10,18 @@ interface InsurerContact {
   email: string;
   position?: string;
   company_name?: string;
+}
+interface InsuranceCompanyJoin {
+  name?: string | null;
+}
+
+interface InsurerContactRow {
+  id: string;
+  company_id: string;
+  full_name: string;
+  email: string;
+  position?: string | null;
+  insurance_companies?: InsuranceCompanyJoin | InsuranceCompanyJoin[] | null;
 }
 
 interface DocumentItem {
@@ -29,13 +41,28 @@ interface SendToInsurerModalProps {
   leadPhone?: string;
 }
 
+function getDocumentContentType(fileName?: string) {
+  const lower = (fileName || '').toLowerCase();
+  if (lower.endsWith('.pdf')) return 'application/pdf';
+  if (lower.endsWith('.png')) return 'image/png';
+  if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+  if (lower.endsWith('.webp')) return 'image/webp';
+  return 'application/octet-stream';
+}
+
+function getCompanyNameFromJoin(join?: InsuranceCompanyJoin | InsuranceCompanyJoin[] | null) {
+  if (Array.isArray(join)) return join[0]?.name || '';
+  return join?.name || '';
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Erreur inconnue';
+}
 export default function SendToInsurerModal({
   isOpen,
   onClose,
   leadId,
-  leadName,
-  leadEmail,
-  leadPhone
+  leadName
 }: SendToInsurerModalProps) {
   const [contacts, setContacts] = useState<InsurerContact[]>([]);
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
@@ -67,13 +94,13 @@ export default function SendToInsurerModal({
 
       if (error) throw error;
 
-      const mapped = (data || []).map((c: any) => ({
+      const mapped = ((data || []) as InsurerContactRow[]).map((c) => ({
         id: c.id,
         company_id: c.company_id,
         full_name: c.full_name,
         email: c.email,
-        position: c.position,
-        company_name: c.insurance_companies?.name || ''
+        position: c.position || undefined,
+        company_name: getCompanyNameFromJoin(c.insurance_companies)
       }));
       setContacts(mapped);
 
@@ -152,11 +179,17 @@ export default function SendToInsurerModal({
 
   async function handleSend() {
     const contact = contacts.find(c => c.id === selectedContactId);
-    const recipientEmail = useCustom ? customEmail.trim() : contact?.email;
-    const recipientName = useCustom ? customName.trim() : contact?.full_name;
+    const recipientEmail = (useCustom ? customEmail : contact?.email || '').trim().toLowerCase();
+    const recipientName = (useCustom ? customName : contact?.full_name || '').trim();
+    const companyName = useCustom ? 'Destinataire personnalise' : contact?.company_name || 'Assureur';
 
     if (!recipientEmail) {
       toast.error('Veuillez saisir un email destinataire');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) {
+      toast.error('Veuillez saisir un email destinataire valide');
       return;
     }
 
@@ -168,95 +201,39 @@ export default function SendToInsurerModal({
     setSending(true);
     try {
       const docsToSend = documents.filter(d => selectedDocs.has(d.id));
-
-      const attachments = docsToSend.map(d => ({
-        filename: d.file_name || 'document.pdf',
-        url: d.file_url,
-        contentType: d.file_name?.endsWith('.pdf') ? 'application/pdf' : 'application/octet-stream'
+      const docsPayload = docsToSend.map(d => ({
+        id: d.id,
+        file_name: d.file_name || 'document.pdf',
+        file_url: d.file_url,
+        document_type: d.document_type || 'document',
+        source: d.source,
+        contentType: getDocumentContentType(d.file_name)
       }));
 
-      const docListHtml = docsToSend.map(d =>
-        `<li style="margin:4px 0;padding:4px 0;border-bottom:1px solid #eee;">${d.file_name} <span style="color:#666;font-size:12px;">(${d.document_type || 'document'})</span></li>`
-      ).join('');
-
-      const htmlContent = `
-        <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
-          <div style="background:#1e3a5f;padding:20px 30px;border-radius:8px 8px 0 0;">
-            <h2 style="color:#fff;margin:0;font-size:20px;">Demande de saisie devis - TaxiAssur</h2>
-          </div>
-          <div style="padding:25px 30px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
-            <p style="color:#374151;font-size:15px;">Bonjour ${recipientName || ''},</p>
-            <p style="color:#374151;font-size:15px;">Veuillez trouver ci-joint le dossier complet pour saisie de devis :</p>
-
-            <table style="width:100%;border-collapse:collapse;margin:20px 0;background:#f9fafb;border-radius:6px;overflow:hidden;">
-              <tr style="background:#e5e7eb;">
-                <td colspan="2" style="padding:10px 15px;font-weight:bold;color:#1f2937;">Informations prospect</td>
-              </tr>
-              <tr><td style="padding:8px 15px;color:#6b7280;width:140px;">Nom</td><td style="padding:8px 15px;color:#111827;font-weight:500;">${leadName || '-'}</td></tr>
-              ${leadEmail ? `<tr><td style="padding:8px 15px;color:#6b7280;">Email</td><td style="padding:8px 15px;color:#111827;">${leadEmail}</td></tr>` : ''}
-              ${leadPhone ? `<tr><td style="padding:8px 15px;color:#6b7280;">Telephone</td><td style="padding:8px 15px;color:#111827;">${leadPhone}</td></tr>` : ''}
-            </table>
-
-            ${additionalMessage ? `<div style="background:#fffbeb;border-left:4px solid #f59e0b;padding:12px 15px;margin:15px 0;border-radius:4px;"><p style="color:#92400e;margin:0;font-size:14px;"><strong>Note :</strong> ${additionalMessage}</p></div>` : ''}
-
-            <div style="margin:20px 0;">
-              <p style="color:#374151;font-weight:bold;margin-bottom:8px;">Documents joints (${docsToSend.length}) :</p>
-              <ul style="list-style:none;padding:0;margin:0;background:#f3f4f6;border-radius:6px;padding:12px 16px;">
-                ${docListHtml}
-              </ul>
-            </div>
-
-            <p style="color:#374151;font-size:15px;margin-top:20px;">
-              Merci de nous transmettre le devis une fois saisi.
-            </p>
-
-            <div style="margin-top:30px;padding-top:20px;border-top:1px solid #e5e7eb;">
-              <p style="color:#6b7280;font-size:13px;margin:0;">
-                Cordialement,<br>
-                <strong style="color:#374151;">L'equipe TaxiAssur</strong><br>
-                <span style="font-size:12px;">Courtier agree ORIAS 11 061 425</span><br>
-                <span style="font-size:12px;">Tel : 01 80 85 57 88 | team@taxiassur.com</span>
-              </p>
-            </div>
-          </div>
-        </div>
-      `;
-
-      const { error } = await supabase.functions.invoke('send-email-ionos', {
-        body: {
-          to: recipientEmail,
-          toName: recipientName || '',
-          subject: `Demande de saisie devis - ${leadName || 'Prospect'}`,
-          html: htmlContent,
-          from: 'team@taxiassur.com',
-          fromName: 'TaxiAssur',
-          attachments
-        }
+      const { data, error } = await supabase.rpc('create_insurer_dossier_send', {
+        p_lead_id: leadId,
+        p_company_id: useCustom ? null : contact?.company_id || null,
+        p_contact_id: useCustom ? null : selectedContactId || null,
+        p_recipient_email: recipientEmail,
+        p_recipient_name: recipientName || null,
+        p_company_name: companyName,
+        p_subject: `Demande de saisie devis - ${leadName || 'Prospect'}`,
+        p_message: additionalMessage.trim() || null,
+        p_documents: docsPayload
       });
 
       if (error) throw error;
 
-      await supabase.from('crm_interactions').insert({
-        lead_id: leadId,
-        type: 'email',
-        channel: 'email',
-        subject: `Dossier transmis a ${recipientName} (${contact?.company_name || 'Assureur'})`,
-        body: `Email envoye a ${recipientEmail} avec ${docsToSend.length} document(s) joint(s) pour saisie devis.`,
-        status: 'sent',
-        metadata: {
-          recipient_email: recipientEmail,
-          recipient_name: recipientName,
-          company_name: contact?.company_name || 'Custom',
-          documents_count: docsToSend.length,
-          document_names: docsToSend.map(d => d.file_name)
-        }
-      });
+      const result = data as { success?: boolean; send_id?: string; error?: string } | null;
+      if (!result?.success) {
+        throw new Error(result?.error || 'Mise en file refusee');
+      }
 
-      toast.success(`Dossier transmis a ${recipientName || recipientEmail} avec ${docsToSend.length} piece(s) jointe(s)`);
+      toast.success(`Dossier mis en file pour ${recipientName || recipientEmail} - Relances J+2/J+5 activees`);
       onClose();
-    } catch (error: any) {
-      console.error('Error sending to insurer:', error);
-      toast.error(`Erreur lors de l'envoi : ${error.message || 'Erreur inconnue'}`);
+    } catch (error: unknown) {
+      console.error('Error queueing insurer dossier:', error);
+      toast.error(`Erreur lors de la mise en file : ${getErrorMessage(error)}`);
     } finally {
       setSending(false);
     }
@@ -275,7 +252,7 @@ export default function SendToInsurerModal({
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-900">Transmettre le dossier</h2>
-              <p className="text-sm text-gray-600">Envoyer les pieces a l'assureur pour saisie devis</p>
+              <p className="text-sm text-gray-600">File auditee avec Relances J+2/J+5</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
@@ -285,6 +262,12 @@ export default function SendToInsurerModal({
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+            <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-700" />
+            <p className="text-sm text-blue-900">
+              La demande est enregistree en base puis envoyee par le worker securise. Les relances sont stoppees des qu'une reponse assureur est marquee.
+            </p>
+          </div>
           {/* Recipient */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">Destinataire</label>
@@ -421,12 +404,12 @@ export default function SendToInsurerModal({
             {sending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Envoi en cours...
+                Mise en file...
               </>
             ) : (
               <>
                 <Send className="h-4 w-4" />
-                Envoyer ({selectedDocs.size} doc{selectedDocs.size > 1 ? 's' : ''})
+                Mettre en file ({selectedDocs.size} doc{selectedDocs.size > 1 ? 's' : ''})
               </>
             )}
           </button>

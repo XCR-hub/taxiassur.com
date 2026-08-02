@@ -25,6 +25,7 @@ const supabaseFunctions = [
   "process-lead-queue",
   "send-client-access",
   "process-client-access-outbox",
+  "process-insurer-dossier-sends",
   "send-document-notification",
   "send-email-universal",
   "send-payment-link-email",
