@@ -144,6 +144,23 @@ function addTrackingPixel(html: string, trackingId: string, supabaseUrl: string)
   return html + pixel;
 }
 
+function getPayloadMetadata(body: any): Record<string, unknown> {
+  return body?.metadata && typeof body.metadata === 'object' ? body.metadata : {};
+}
+
+function hasExplicitTrackingConsent(body: any): boolean {
+  const metadata = getPayloadMetadata(body);
+  return body?.tracking_consent === true ||
+    body?.trackingConsent === true ||
+    metadata.email_tracking_consent === true ||
+    metadata.tracking_consent === true ||
+    metadata.email_tracking_allowed === true;
+}
+
+function isTrackingRequested(body: any): boolean {
+  return body?.tracking_enabled === true || body?.trackOpens === true || body?.trackClicks === true;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -160,6 +177,14 @@ Deno.serve(async (req: Request) => {
     const content = body.content || body.body;
     const lead_id = body.lead_id;
     const attachments: Attachment[] = body.attachments || [];
+    const trackingRequested = isTrackingRequested(body);
+    const trackingAllowed = trackingRequested && hasExplicitTrackingConsent(body);
+    const trackOpens = trackingAllowed && body.trackOpens !== false;
+    const trackClicks = trackingAllowed && body.trackClicks !== false;
+
+    if (trackingRequested && !trackingAllowed) {
+      console.warn('CRM email tracking requested but disabled: missing explicit tracking consent');
+    }
 
     console.log('📥 Parsed values:', {
       to_email,
@@ -403,16 +428,29 @@ Deno.serve(async (req: Request) => {
         subject: subject,
         body_html: emailBody,
         body_text: content,
-        status: 'sent'
+        status: 'sent',
+        metadata: {
+          ...getPayloadMetadata(body),
+          email_tracking_allowed: trackingAllowed,
+          tracking_requested: trackingRequested,
+          track_opens: trackOpens,
+          track_clicks: trackClicks,
+          tracking_purpose: body.tracking_purpose || body.trackingPurpose || 'crm_email',
+          tracking_disabled_reason: trackingRequested && !trackingAllowed ? 'missing_explicit_tracking_consent' : null
+        }
       })
       .select('tracking_id')
       .single();
 
-    const trackingId = emailRecord?.tracking_id;
+    const trackingId = trackingAllowed ? emailRecord?.tracking_id : undefined;
 
     if (trackingId) {
-      emailBody = addLinkTracking(emailBody, trackingId, supabaseUrl);
-      emailBody = addTrackingPixel(emailBody, trackingId, supabaseUrl);
+      if (trackClicks) {
+        emailBody = addLinkTracking(emailBody, trackingId, supabaseUrl);
+      }
+      if (trackOpens) {
+        emailBody = addTrackingPixel(emailBody, trackingId, supabaseUrl);
+      }
     }
 
     console.log("📤 Envoi email CRM avec tracking:", trackingId);
@@ -438,7 +476,9 @@ Deno.serve(async (req: Request) => {
         from_email: 'team@taxiassur.com',
         metadata: {
           attachments_count: attachments.length,
-          attachments_names: attachments.map(a => a.filename)
+          attachments_names: attachments.map(a => a.filename),
+          email_tracking_allowed: trackingAllowed,
+          tracking_requested: trackingRequested
         }
       });
     }
@@ -449,6 +489,7 @@ Deno.serve(async (req: Request) => {
         message: `Email envoyé avec succès avec ${attachments.length} pièces jointes`,
         to: to_email,
         tracking_id: trackingId,
+        tracking_enabled: trackingAllowed,
         attachments_sent: attachments.length
       }),
       {

@@ -55,7 +55,7 @@ Monitor these services every 1 to 5 minutes:
 - Disk free space.
 - Certificate expiry.
 - Mail queue.
-- Client portal access outbox (`npm run server:process-client-access-outbox`).
+- Client portal access outbox (`npm run server:process-client-access-outbox`; installer: `npm run server:install-client-access-outbox`).
 
 Suggested actions:
 
@@ -82,11 +82,11 @@ Suggested actions:
 
 ## Application controls
 
-- Enforce explicit consent before analytics, marketing tags, cross-sell profiling or referral click analytics.
+- Enforce explicit consent before analytics, marketing tags, cross-sell profiling, referral click analytics, email open/click tracking or email IP geolocation.
 - Keep unsubscribe and consent revocation self-service.
 - Do not import phone contacts, browser history or mailbox contacts from the client device.
 - Do not send insurer dossiers automatically without human review.
-- Store audit logs for dossier sends, consent changes, document downloads, document scans, payment actions and contract changes.
+- Store audit logs for dossier sends, consent changes, document downloads, document scans, payment actions, contract changes and consent-gated email tracking metadata (email_tracking_allowed).
 
 ## Human supervision gates
 

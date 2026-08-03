@@ -25,9 +25,13 @@ interface EmailRequest {
   }>;
   trackOpens?: boolean;
   trackClicks?: boolean;
+  trackingConsent?: boolean;
+  tracking_consent?: boolean;
+  trackingPurpose?: string;
+  tracking_purpose?: string;
   lead_id?: string;
   campaign_id?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 function base64Encode(str: string): string {
@@ -194,6 +198,30 @@ function addLinkTracking(html: string, trackingId: string, supabaseUrl: string):
   });
 }
 
+function metadataFlag(metadata: Record<string, unknown> | undefined, keys: string[]): boolean {
+  if (!metadata) return false;
+  return keys.some((key) => metadata[key] === true);
+}
+
+function hasExplicitTrackingConsent(emailData: EmailRequest): boolean {
+  return emailData.trackingConsent === true ||
+    emailData.tracking_consent === true ||
+    metadataFlag(emailData.metadata, ['email_tracking_consent', 'tracking_consent', 'email_tracking_allowed']);
+}
+
+function buildTrackingMetadata(emailData: EmailRequest, trackingAllowed: boolean): Record<string, unknown> {
+  const trackingRequested = emailData.trackOpens === true || emailData.trackClicks === true;
+  return {
+    ...(emailData.metadata || {}),
+    email_tracking_allowed: trackingAllowed,
+    tracking_requested: trackingRequested,
+    track_opens: trackingAllowed && emailData.trackOpens === true,
+    track_clicks: trackingAllowed && emailData.trackClicks === true,
+    tracking_purpose: emailData.trackingPurpose || emailData.tracking_purpose || null,
+    tracking_disabled_reason: trackingRequested && !trackingAllowed ? 'missing_explicit_tracking_consent' : null
+  };
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -219,10 +247,16 @@ Deno.serve(async (req: Request) => {
         let emailHtml = emailData.html;
         let trackingId: string | undefined;
 
-        // Create tracking record if tracking enabled
-        if (emailData.trackOpens || emailData.trackClicks) {
+        const trackingRequested = emailData.trackOpens === true || emailData.trackClicks === true;
+        const trackingAllowed = trackingRequested && hasExplicitTrackingConsent(emailData);
+
+        // Create tracking record only for requested tracking, and inject tracking only after explicit consent.
+        if (trackingRequested) {
+          if (!trackingAllowed) {
+            console.warn('Email tracking requested but disabled: missing explicit tracking consent');
+          }
           try {
-            const trackingData: any = {
+            const trackingData: Record<string, unknown> = {
               email_to: recipient,
               email_from: emailData.from || "team@taxiassur.com",
               subject: emailData.subject,
@@ -232,7 +266,7 @@ Deno.serve(async (req: Request) => {
 
             if (emailData.lead_id) trackingData.lead_id = emailData.lead_id;
             if (emailData.campaign_id) trackingData.campaign_id = emailData.campaign_id;
-            if (emailData.metadata) trackingData.metadata = emailData.metadata;
+            trackingData.metadata = buildTrackingMetadata(emailData, trackingAllowed);
 
             const { data: emailRecord, error: trackingError } = await supabase
               .from('email_sends')
@@ -243,13 +277,13 @@ Deno.serve(async (req: Request) => {
             if (trackingError) {
               console.warn('⚠️ Tracking insert failed (continuing without tracking):', trackingError.message);
             } else {
-              trackingId = emailRecord?.tracking_id;
+              trackingId = trackingAllowed ? emailRecord?.tracking_id : undefined;
 
               if (trackingId) {
-                if (emailData.trackClicks) {
+                if (emailData.trackClicks === true) {
                   emailHtml = addLinkTracking(emailHtml, trackingId, supabaseUrl);
                 }
-                if (emailData.trackOpens) {
+                if (emailData.trackOpens === true) {
                   emailHtml = addTrackingPixel(emailHtml, trackingId, supabaseUrl);
                 }
               }
@@ -284,7 +318,11 @@ Deno.serve(async (req: Request) => {
             content: emailData.text || 'Email sent via IONOS SMTP',
             to_email: recipient,
             from_email: emailData.from || 'team@taxiassur.com',
-            metadata: emailData.metadata
+            metadata: {
+              ...(emailData.metadata || {}),
+              email_tracking_allowed: trackingAllowed,
+              tracking_requested: trackingRequested
+            }
           });
         }
 

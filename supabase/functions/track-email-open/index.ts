@@ -10,6 +10,12 @@ const corsHeaders = {
 // Pixel transparent 1x1 en base64
 const TRACKING_PIXEL = Uint8Array.from(atob('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'), c => c.charCodeAt(0));
 
+function isEmailTrackingAllowed(metadata: unknown): boolean {
+  if (!metadata || typeof metadata !== 'object') return false;
+  const value = (metadata as Record<string, unknown>).email_tracking_allowed;
+  return value === true;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -42,7 +48,7 @@ Deno.serve(async (req: Request) => {
     // Trouver l'email correspondant
     const { data: emailSend, error: emailError } = await supabase
       .from('email_sends')
-      .select('id')
+      .select('id, metadata')
       .eq('tracking_id', trackingId)
       .maybeSingle();
 
@@ -60,6 +66,18 @@ Deno.serve(async (req: Request) => {
 
     if (!emailSend) {
       console.log('⚠️ Email non trouvé pour tracking_id:', trackingId);
+      return new Response(TRACKING_PIXEL, {
+        status: 200,
+        headers: {
+          'Content-Type': 'image/gif',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          ...corsHeaders
+        }
+      });
+    }
+
+    if (!isEmailTrackingAllowed(emailSend.metadata)) {
+      console.log('Email open tracking skipped: missing explicit tracking consent');
       return new Response(TRACKING_PIXEL, {
         status: 200,
         headers: {

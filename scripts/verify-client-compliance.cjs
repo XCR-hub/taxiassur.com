@@ -355,6 +355,11 @@ const requiredChecks = [
     patterns: ['server:process-client-access-outbox', 'process-client-portal-access-outbox.cjs'],
   },
   {
+    label: 'client access outbox scheduled task installer is exposed',
+    file: 'package.json',
+    patterns: ['server:install-client-access-outbox', 'install-server-client-access-outbox.ps1'],
+  },
+  {
     label: 'client access outbox worker processes queued access emails',
     file: 'scripts/process-client-portal-access-outbox.cjs',
     patterns: [
@@ -369,6 +374,112 @@ const requiredChecks = [
     ],
   },
   {
+    label: 'client access outbox scheduled task installer is safe',
+    file: 'scripts/install-server-client-access-outbox.ps1',
+    patterns: [
+      'TaxiAssurClientAccessOutbox',
+      'taxiassur-client-access-outbox.env',
+      'process-client-portal-access-outbox.cjs',
+      'Register-ScheduledTask',
+      'Disable-ScheduledTask',
+      'CLIENT_ACCESS_OUTBOX_LIMIT',
+      'CLIENT_ACCESS_OUTBOX_MAX_ATTEMPTS',
+      'supabase_server_key_present',
+      'run-client-access-outbox.ps1',
+    ],
+  },
+  {
+    label: 'consent-gated email tracking functions are published',
+    file: 'scripts/publish.js',
+    patterns: [
+      'send-crm-email',
+      'track-email-open',
+      'track-email-click',
+      'geolocate-email-interaction',
+    ],
+  },
+  {
+    label: 'public email tracking endpoints stay public but write-gated',
+    file: 'scripts/publish.js',
+    patterns: [
+      'publicSupabaseFunctionsNoJwt',
+      'track-email-open',
+      'track-email-click',
+      '--no-verify-jwt',
+    ],
+  },
+  {
+    label: 'generic email sender gates open/click tracking by explicit consent',
+    file: 'supabase/functions/send-email-universal/index.ts',
+    patterns: [
+      'hasExplicitTrackingConsent',
+      'trackingConsent',
+      'email_tracking_allowed',
+      'missing_explicit_tracking_consent',
+      'trackingAllowed ? emailRecord?.tracking_id : undefined',
+    ],
+  },
+  {
+    label: 'CRM email sender keeps tracking disabled by default',
+    file: 'supabase/functions/send-crm-email/index.ts',
+    patterns: [
+      'hasExplicitTrackingConsent',
+      'isTrackingRequested',
+      'email_tracking_allowed',
+      'tracking_enabled: trackingAllowed',
+      'missing_explicit_tracking_consent',
+    ],
+  },
+  {
+    label: 'newsletter sender gates open/click tracking by explicit consent',
+    file: 'supabase/functions/send-newsletter-universal/index.ts',
+    patterns: [
+      'hasNewsletterTrackingConsent',
+      'isNewsletterTrackingRequested',
+      'email_tracking_allowed',
+      'tracking_enabled: trackingAllowed',
+      'missing_explicit_tracking_consent',
+    ],
+  },
+  {
+    label: 'email tracking endpoints require consent metadata',
+    file: 'supabase/functions/track-email-open/index.ts',
+    patterns: [
+      'isEmailTrackingAllowed',
+      'email_tracking_allowed',
+      ".select('id, metadata')",
+      'Email open tracking skipped: missing explicit tracking consent',
+    ],
+  },
+  {
+    label: 'email click endpoint requires consent metadata',
+    file: 'supabase/functions/track-email-click/index.ts',
+    patterns: [
+      'isEmailTrackingAllowed',
+      'email_tracking_allowed',
+      ".select('id, metadata')",
+      'emailSend && isEmailTrackingAllowed(emailSend.metadata)',
+    ],
+  },
+  {
+    label: 'CRM channel engine does not request email tracking by default',
+    file: 'src/lib/crm-channel-engine.ts',
+    patterns: [
+      'tracking_enabled: message.tracking_enabled === true',
+      'tracking_consent: message.tracking_consent === true',
+      "tracking_purpose: message.tracking_purpose || 'crm_channel_message'",
+    ],
+  },
+  {
+    label: 'email IP geolocation is service-role and policy gated',
+    file: 'supabase/functions/geolocate-email-interaction/index.ts',
+    patterns: [
+      'isAuthorizedServiceRequest',
+      'ENABLE_EMAIL_GEOLOCATION',
+      'email_geolocation_allowed',
+      'Missing explicit email geolocation consent',
+    ],
+  },  {
     label: 'document antivirus worker and installer are exposed',
     file: 'package.json',
     patterns: ['server:install-clamav-document-scan', 'server:scan-documents-clamav'],

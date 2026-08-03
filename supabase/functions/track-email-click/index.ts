@@ -7,6 +7,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
+function isEmailTrackingAllowed(metadata: unknown): boolean {
+  if (!metadata || typeof metadata !== 'object') return false;
+  const value = (metadata as Record<string, unknown>).email_tracking_allowed;
+  return value === true;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -33,13 +39,13 @@ Deno.serve(async (req: Request) => {
     // Trouver l'email correspondant
     const { data: emailSend, error: emailError } = await supabase
       .from('email_sends')
-      .select('id')
+      .select('id, metadata')
       .eq('tracking_id', trackingId)
       .maybeSingle();
 
     if (emailError) {
       console.error('❌ Erreur recherche email:', emailError);
-    } else if (emailSend) {
+    } else if (emailSend && isEmailTrackingAllowed(emailSend.metadata)) {
       // Enregistrer le clic
       const { error: insertError } = await supabase
         .from('email_clicks')
@@ -57,6 +63,8 @@ Deno.serve(async (req: Request) => {
       } else {
         console.log('✅ Clic tracké pour:', trackingId, 'URL:', targetUrl);
       }
+    } else if (emailSend) {
+      console.log('Email click tracking skipped: missing explicit tracking consent');
     }
 
     // Rediriger vers l'URL cible

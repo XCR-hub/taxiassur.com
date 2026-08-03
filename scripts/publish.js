@@ -28,9 +28,13 @@ const supabaseFunctions = [
   "process-insurer-dossier-sends",
   "send-document-notification",
   "send-email-universal",
+  "send-crm-email",
   "send-payment-link-email",
   "send-quote-email",
   "send-newsletter-universal",
+  "track-email-open",
+  "track-email-click",
+  "geolocate-email-interaction",
   "fetch-email-replies",
   "sync-ionos-imap",
   "sync-ionos-imap-v2",
@@ -38,6 +42,10 @@ const supabaseFunctions = [
   "notify-claim",
 ];
 
+const publicSupabaseFunctionsNoJwt = new Set([
+  "track-email-open",
+  "track-email-click",
+]);
 const args = process.argv.slice(2);
 const flags = new Set(args.filter((arg) => arg.startsWith("--")));
 const commitMessage = args.find((arg) => !arg.startsWith("--")) || process.env.PUBLISH_COMMIT_MESSAGE || "";
@@ -210,7 +218,7 @@ function publishSupabase() {
     }
 
     for (const fn of supabaseFunctions) {
-      run(npmCmd(), [
+      const deployArgs = [
         "exec",
         "supabase",
         "--",
@@ -219,7 +227,13 @@ function publishSupabase() {
         fn,
         "--project-ref",
         projectRef,
-      ]);
+      ];
+
+      if (publicSupabaseFunctionsNoJwt.has(fn)) {
+        deployArgs.push("--no-verify-jwt");
+      }
+
+      run(npmCmd(), deployArgs);
     }
   } finally {
     if (envFile && existsSync(envFile)) {

@@ -4,7 +4,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
 interface GeoData {
@@ -16,6 +16,22 @@ interface GeoData {
   timezone?: string;
 }
 
+function extractBearerToken(req: Request): string {
+  const authHeader = req.headers.get('Authorization') || '';
+  const match = authHeader.match(/^Bearer\s+(.+)$/i);
+  return match?.[1]?.trim() || '';
+}
+
+function isAuthorizedServiceRequest(req: Request, serviceRoleKey: string): boolean {
+  const bearerToken = extractBearerToken(req);
+  const apiKey = req.headers.get('apikey') || req.headers.get('Apikey') || '';
+  return Boolean(serviceRoleKey) && (bearerToken === serviceRoleKey || apiKey === serviceRoleKey);
+}
+
+function isEmailGeolocationAllowed(metadata: unknown): boolean {
+  if (!metadata || typeof metadata !== 'object') return false;
+  return (metadata as Record<string, unknown>).email_geolocation_allowed === true;
+}
 async function geolocateIP(ip: string): Promise<GeoData> {
   try {
     // Utiliser API gratuite ip-api.com
@@ -64,7 +80,37 @@ Deno.serve(async (req: Request) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+    if (!isAuthorizedServiceRequest(req, supabaseKey)) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (Deno.env.get('ENABLE_EMAIL_GEOLOCATION') !== 'true') {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Email geolocation disabled by policy' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { data: emailSend, error: emailError } = await supabase
+      .from('email_sends')
+      .select('id, metadata')
+      .eq('id', email_send_id)
+      .maybeSingle();
+
+    if (emailError) throw emailError;
+
+    if (!emailSend || !isEmailGeolocationAllowed(emailSend.metadata)) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Missing explicit email geolocation consent' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Géolocaliser l'IP
     const geoData = await geolocateIP(ip_address);

@@ -106,6 +106,20 @@ async function sendEmailSMTP(
   }
 }
 
+function hasNewsletterTrackingConsent(payload: any, campaign: any): boolean {
+  return payload?.tracking_consent === true ||
+    payload?.trackingConsent === true ||
+    campaign?.tracking_consent === true ||
+    campaign?.email_tracking_consent === true;
+}
+
+function isNewsletterTrackingRequested(campaign: any): boolean {
+  return campaign?.tracking_enabled === true ||
+    campaign?.email_tracking_enabled === true ||
+    campaign?.track_opens === true ||
+    campaign?.track_clicks === true;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -116,7 +130,8 @@ Deno.serve(async (req: Request) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { campaign_id, test_mode = false, test_email } = await req.json();
+    const payload = await req.json();
+    const { campaign_id, test_mode = false, test_email } = payload;
 
     if (!campaign_id) {
       return new Response(
@@ -140,6 +155,13 @@ Deno.serve(async (req: Request) => {
     }
 
     // Récupérer les abonnés
+    const trackingRequested = isNewsletterTrackingRequested(campaign);
+    const trackingAllowed = trackingRequested && hasNewsletterTrackingConsent(payload, campaign);
+
+    if (trackingRequested && !trackingAllowed) {
+      console.warn('Newsletter tracking requested but disabled: missing explicit tracking consent');
+    }
+
     let recipients = [];
     if (test_mode && test_email) {
       recipients = [{ email: test_email, name: 'Test' }];
@@ -171,7 +193,7 @@ Deno.serve(async (req: Request) => {
     let sentCount = 0;
     let errorCount = 0;
 
-    // Envoyer les emails avec tracking
+    // Envoyer les emails; open/click tracking stays disabled unless explicit consent is present
     for (const recipient of recipients) {
       try {
         let emailBody = campaign.content;
@@ -184,14 +206,23 @@ Deno.serve(async (req: Request) => {
             email_from: 'contact@taxiassur.com',
             subject: campaign.subject,
             body_html: emailBody,
-            status: 'sent'
+            status: 'sent',
+            metadata: {
+              campaign_id,
+              email_tracking_allowed: trackingAllowed,
+              tracking_requested: trackingRequested,
+              track_opens: trackingAllowed,
+              track_clicks: trackingAllowed,
+              tracking_purpose: 'newsletter_campaign',
+              tracking_disabled_reason: trackingRequested && !trackingAllowed ? 'missing_explicit_tracking_consent' : null
+            }
           })
           .select('tracking_id')
           .single();
 
-        const trackingId = emailRecord?.tracking_id;
+        const trackingId = trackingAllowed ? emailRecord?.tracking_id : undefined;
 
-        // Ajouter le tracking
+        // Ajouter le tracking uniquement apres consentement explicite
         if (trackingId) {
           emailBody = addLinkTracking(emailBody, trackingId, supabaseUrl);
           emailBody = addTrackingPixel(emailBody, trackingId, supabaseUrl);
@@ -234,7 +265,8 @@ Deno.serve(async (req: Request) => {
         sent_count: sentCount,
         error_count: errorCount,
         total: recipients.length,
-        provider: 'ionos'
+          tracking_enabled: trackingAllowed,
+          provider: 'ionos'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

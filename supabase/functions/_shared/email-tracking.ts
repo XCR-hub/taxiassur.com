@@ -1,6 +1,6 @@
 /**
- * Bibliothèque partagée pour le tracking d'emails
- * Utilisable par toutes les edge functions
+ * Shared email send ledger and optional tracking helpers.
+ * Open/click tracking is opt-in only.
  */
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -12,48 +12,58 @@ export interface EmailTrackingOptions {
   subject: string;
   bodyHtml?: string;
   bodyText?: string;
+  trackOpens?: boolean;
+  trackClicks?: boolean;
+  trackingConsent?: boolean;
+  trackingPurpose?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface EmailTrackingResult {
   trackingId: string;
   emailSendId: string;
   trackedHtml: string;
+  trackingAllowed: boolean;
 }
 
 /**
- * Ajoute le tracking des clics aux liens dans un email HTML
+ * Returns true only when open/click tracking is explicitly allowed.
  */
+function isTrackingAllowed(options: EmailTrackingOptions): boolean {
+  return options.trackingConsent === true && (options.trackOpens === true || options.trackClicks === true);
+}
+
 export function addLinkTracking(html: string, trackingId: string, supabaseUrl: string): string {
   const urlRegex = /href="([^"]+)"/gi;
   return html.replace(urlRegex, (match, url) => {
-    // Ne pas tracker les liens mailto:, tel: et ancres
+    // Do not track mailto, tel or anchor links.
     if (url.startsWith('mailto:') || url.startsWith('tel:') || url.startsWith('#')) {
       return match;
     }
-    // Créer l'URL de tracking
+    // Build the tracking redirect URL.
     const trackedUrl = `${supabaseUrl}/functions/v1/track-email-click?id=${trackingId}&url=${encodeURIComponent(url)}`;
     return `href="${trackedUrl}"`;
   });
 }
 
 /**
- * Ajoute le pixel de tracking invisible pour détecter les ouvertures
+ * Adds the open pixel after explicit opt-in.
  */
 export function addTrackingPixel(html: string, trackingId: string, supabaseUrl: string): string {
   const pixelUrl = `${supabaseUrl}/functions/v1/track-email-open?id=${trackingId}`;
   const pixel = `<img src="${pixelUrl}" width="1" height="1" style="display:none;" alt="" />`;
 
-  // Ajouter le pixel juste avant la fermeture du body
+  // Add the pixel before the closing body tag.
   if (html.includes('</body>')) {
     return html.replace('</body>', `${pixel}</body>`);
   }
 
-  // Si pas de balise body, ajouter à la fin
+  // If there is no body tag, append it at the end.
   return html + pixel;
 }
 
 /**
- * Enregistre un email et ajoute le tracking complet
+ * Records an email send and injects tracking only after explicit opt-in.
  */
 export async function trackEmail(
   options: EmailTrackingOptions,
@@ -61,8 +71,9 @@ export async function trackEmail(
   supabaseKey: string
 ): Promise<EmailTrackingResult> {
   const supabase = createClient(supabaseUrl, supabaseKey);
+  const trackingAllowed = isTrackingAllowed(options);
 
-  // Créer l'enregistrement dans email_sends
+  // Create the email_sends record.
   const { data: emailRecord, error } = await supabase
     .from('email_sends')
     .insert({
@@ -72,36 +83,50 @@ export async function trackEmail(
       subject: options.subject,
       body_html: options.bodyHtml || null,
       body_text: options.bodyText || null,
-      status: 'sent'
+      status: 'sent',
+      metadata: {
+        ...(options.metadata || {}),
+        email_tracking_allowed: trackingAllowed,
+        tracking_requested: options.trackOpens === true || options.trackClicks === true,
+        track_opens: trackingAllowed && options.trackOpens === true,
+        track_clicks: trackingAllowed && options.trackClicks === true,
+        tracking_purpose: options.trackingPurpose || null,
+        tracking_disabled_reason: trackingAllowed ? null : 'missing_explicit_tracking_consent'
+      }
     })
     .select('id, tracking_id')
     .single();
 
   if (error) {
-    console.error('Erreur création tracking email:', error);
+    console.error('Email tracking record creation failed:', error);
     throw error;
   }
 
   if (!emailRecord) {
-    throw new Error('Impossible de créer l\'enregistrement email');
+    throw new Error('Unable to create email send record');
   }
 
-  // Ajouter le tracking au HTML si fourni
+  // Add tracking to HTML only if explicitly allowed.
   let trackedHtml = options.bodyHtml || '';
-  if (trackedHtml) {
-    trackedHtml = addLinkTracking(trackedHtml, emailRecord.tracking_id, supabaseUrl);
-    trackedHtml = addTrackingPixel(trackedHtml, emailRecord.tracking_id, supabaseUrl);
+  if (trackedHtml && trackingAllowed) {
+    if (options.trackClicks === true) {
+      trackedHtml = addLinkTracking(trackedHtml, emailRecord.tracking_id, supabaseUrl);
+    }
+    if (options.trackOpens === true) {
+      trackedHtml = addTrackingPixel(trackedHtml, emailRecord.tracking_id, supabaseUrl);
+    }
   }
 
   return {
     trackingId: emailRecord.tracking_id,
     emailSendId: emailRecord.id,
-    trackedHtml
+    trackedHtml,
+    trackingAllowed
   };
 }
 
 /**
- * Met à jour le statut d'un email
+ * Updates an email status.
  */
 export async function updateEmailStatus(
   trackingId: string,
@@ -120,12 +145,12 @@ export async function updateEmailStatus(
     .eq('tracking_id', trackingId);
 
   if (error) {
-    console.error('Erreur mise à jour statut email:', error);
+    console.error('Email status update failed:', error);
   }
 }
 
 /**
- * Enregistre une interaction CRM pour un email
+ * Logs a CRM email interaction.
  */
 export async function logEmailInteraction(
   leadId: string,

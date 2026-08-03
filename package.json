@@ -57,6 +57,7 @@
     "server:deploy-postgres-sync": "powershell -ExecutionPolicy Bypass -File scripts/deploy-server-postgres-sync.ps1",
     "server:install-clamav-document-scan": "powershell -ExecutionPolicy Bypass -File scripts/install-server-clamav-document-scan.ps1",
     "server:scan-documents-clamav": "node scripts/scan-supabase-documents-clamav.cjs",
+    "server:install-client-access-outbox": "powershell -ExecutionPolicy Bypass -File scripts/install-server-client-access-outbox.ps1",
     "server:process-client-access-outbox": "node scripts/process-client-portal-access-outbox.cjs",
     "server:process-insurer-dossier-sends": "node scripts/process-insurer-dossier-sends.cjs",
     "d1:apply-schema": "npx wrangler d1 execute taxiassur-prod --remote --file cloudflare/d1/schema-public-cache.sql",

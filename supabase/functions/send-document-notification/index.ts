@@ -11,26 +11,6 @@ function base64Encode(str: string): string {
   return btoa(str);
 }
 
-function addLinkTracking(html: string, trackingId: string, supabaseUrl: string): string {
-  const urlRegex = /href="([^"]+)"/gi;
-  return html.replace(urlRegex, (match, url) => {
-    if (url.startsWith('mailto:') || url.startsWith('tel:') || url.startsWith('#')) {
-      return match;
-    }
-    const trackedUrl = `${supabaseUrl}/functions/v1/track-email-click?id=${trackingId}&url=${encodeURIComponent(url)}`;
-    return `href="${trackedUrl}"`;
-  });
-}
-
-function addTrackingPixel(html: string, trackingId: string, supabaseUrl: string): string {
-  const pixelUrl = `${supabaseUrl}/functions/v1/track-email-open?id=${trackingId}`;
-  const pixel = `<img src="${pixelUrl}" width="1" height="1" style="display:none;" alt="" />`;
-  if (html.includes('</body>')) {
-    return html.replace('</body>', `${pixel}</body>`);
-  }
-  return html + pixel;
-}
-
 async function sendEmailSMTP(
   to: string,
   toName: string,

@@ -16,7 +16,7 @@ export interface CommunicationMessage {
   opened_at?: string;
   clicked_at?: string;
   replied_at?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   created_at: string;
 }
 
@@ -51,6 +51,16 @@ export interface InboxMessage {
   received_at: string;
 }
 
+type InboxSentiment = NonNullable<InboxMessage['sentiment']>;
+
+function normalizeSentiment(sentiment?: string): InboxSentiment | undefined {
+  if (sentiment === 'positive' || sentiment === 'neutral' || sentiment === 'negative') {
+    return sentiment;
+  }
+
+  return undefined;
+}
+
 export const channelEngineService = {
   async sendMessage(message: {
     lead_id: string;
@@ -60,6 +70,8 @@ export const channelEngineService = {
     template_id?: string;
     scheduled_for?: string;
     tracking_enabled?: boolean;
+    tracking_consent?: boolean;
+    tracking_purpose?: string;
   }) {
     const functionMap = {
       email: 'send-crm-email',
@@ -79,7 +91,9 @@ export const channelEngineService = {
         content: message.body,
         template_id: message.template_id,
         scheduled_for: message.scheduled_for,
-        tracking_enabled: message.tracking_enabled !== false
+        tracking_enabled: message.tracking_enabled === true,
+        tracking_consent: message.tracking_consent === true,
+        tracking_purpose: message.tracking_purpose || 'crm_channel_message'
       }
     });
 
@@ -147,7 +161,7 @@ export const channelEngineService = {
       direction: 'inbound' as const,
       snippet: inbox.body?.substring(0, 200) || inbox.subject || '',
       status: inbox.processed ? 'read' : 'unread',
-      sentiment: inbox.sentiment as any,
+      sentiment: normalizeSentiment(inbox.sentiment),
       requires_action: !inbox.processed,
       ai_summary: inbox.ai_summary,
       ai_suggested_response: inbox.ai_response,
@@ -163,7 +177,7 @@ export const channelEngineService = {
       direction: 'outbound' as const,
       snippet: (send.body_text || send.body_html)?.substring(0, 200) || send.subject || '',
       status: 'read',
-      sentiment: 'neutral' as any,
+      sentiment: 'neutral',
       requires_action: false,
       ai_summary: `Email envoyé le ${new Date(send.sent_at).toLocaleDateString('fr-FR')}`,
       ai_suggested_response: null,
@@ -296,22 +310,6 @@ export const channelEngineService = {
     }
 
     return data;
-  },
-
-  async trackEmailOpen(trackingId: string) {
-    const { error } = await supabase.functions.invoke('track-email-open', {
-      body: { tracking_id: trackingId }
-    });
-
-    if (error) throw error;
-  },
-
-  async trackEmailClick(trackingId: string, url: string) {
-    const { error } = await supabase.functions.invoke('track-email-click', {
-      body: { tracking_id: trackingId, url }
-    });
-
-    if (error) throw error;
   },
 
   async getUnreadCount() {

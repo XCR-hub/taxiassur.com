@@ -7,7 +7,7 @@ When a lead is activated as a client, the CRM calls:
 - `ensure_client_app_access(p_lead_id)` to create or update `client_portal_users`.
 - `send-client-access` to email the dedicated client portal link.
 
-The database also has `enqueue_client_app_access(p_lead_id)` and trigger coverage on signed/active contracts and client-stage leads. This creates the portal access and queues `client_portal_access_outbox` so the access email can be sent without relying on a front-office click. The `process-client-access-outbox` Edge Function and the server script `server:process-client-access-outbox` claim pending rows, invoke `send-client-access`, retry failed sends with `scheduled_at`/`max_attempts`, and mark each row as `sent`, `pending` retry or `failed` with `last_error`.
+The database also has `enqueue_client_app_access(p_lead_id)` and trigger coverage on signed/active contracts and client-stage leads. This creates the portal access and queues `client_portal_access_outbox` so the access email can be sent without relying on a front-office click. The `process-client-access-outbox` Edge Function and the server script `server:process-client-access-outbox` claim pending rows, invoke `send-client-access`, retry failed sends with `scheduled_at`/`max_attempts`, and mark each row as `sent`, `pending` retry or `failed` with `last_error`. On the owned Windows server, `server:install-client-access-outbox` installs the `TaxiAssurClientAccessOutbox` scheduled task, stores secrets in `F:\TaxiAssur\Secrets\taxiassur-client-access-outbox.env`, writes logs under `F:\TaxiAssur\Logs`, and disables the task when Node.js or required Supabase server credentials are missing.
 
 The client portal exposes the operational app after contract signature:
 
@@ -54,6 +54,16 @@ Allowed public choices are separate:
 
 Visitors can reopen choices from `/policy?privacy=1` or the policy page button. Refusal removes local analytics and behavioral storage keys. Public lead forms must not request browser geolocation automatically; geolocation prefill is allowed only after behavioral personalization consent. Page tracking stores sanitized URLs without query strings and starts only after analytics consent.
 
+## Email tracking
+
+Transactional email sends may be logged in `email_sends` for operational traceability. Open pixels, click redirects and email IP geolocation are disabled by default and must not be used for sales profiling unless explicit tracking consent is recorded.
+
+The active safeguards are:
+
+- `send-email-universal`, `send-crm-email` and `send-newsletter-universal` only inject tracking links/pixels when tracking is requested and consent metadata is present.
+- `track-email-open` and `track-email-click` refuse to write open/click events unless the related `email_sends.metadata.email_tracking_allowed` is `true`.
+- `geolocate-email-interaction` requires a service-role request, `ENABLE_EMAIL_GEOLOCATION=true`, and `email_sends.metadata.email_geolocation_allowed=true`.
+- `src/lib/crm-channel-engine.ts` does not request tracking by default.
 ## Referral program
 
 `/client/parrainage` lets a client sponsor a filleul only after confirming that the filleul allowed TaxiAssur to receive the contact details. The default reward is deliberately capped (`reward_amount: 25`, `reward_type: 'gift'`) so the program remains attractive without creating an excessive acquisition cost.
@@ -125,7 +135,7 @@ Run this static check before deployments that touch the client app, consent, ref
 npm run verify:client-compliance
 ```
 
-The check verifies the expected post-contract client access wiring, client access outbox worker, separate opt-ins, revocation, capped referral reward, Turnstile verification, request center consent snapshots and document antivirus scan hooks. It also fails if browser contact import, mailbox/contact harvesting or browser-history access patterns are introduced.
+The check verifies the expected post-contract client access wiring, client access outbox worker, separate opt-ins, revocation, capped referral reward, consent-gated email tracking, Turnstile verification, request center consent snapshots and document antivirus scan hooks. It also fails if browser contact import, mailbox/contact harvesting or browser-history access patterns are introduced.
 
 ## Current infrastructure dependency
 

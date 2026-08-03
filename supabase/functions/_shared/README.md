@@ -1,31 +1,20 @@
-# 📚 Shared Functions Library
+# Shared Functions Library
 
-This directory contains **shared utility functions** that can be imported by multiple Edge Functions.
+This directory contains shared utility functions imported by Edge Functions.
 
-⚠️ **IMPORTANT**: Files in this directory are **NOT** Edge Functions themselves. They are libraries/utilities that are imported by actual Edge Functions.
+Important: files in this directory are not Edge Functions and must not be deployed as standalone functions.
 
-## ❌ Do NOT Deploy These Files
-
-These files should **NEVER** be deployed as standalone Edge Functions:
-- `email-tracking.ts` - Email tracking utilities
-
-## ✅ How to Use
-
-Import these utilities in your Edge Functions like this:
+## Usage
 
 ```typescript
 import { trackEmail, addLinkTracking } from '../_shared/email-tracking.ts';
 ```
 
-## 📝 .funcignore
+## email-tracking.ts
 
-The `.funcignore` file at the root of `/supabase` ensures these files are not treated as Edge Functions during deployment.
+- `trackEmail()` records an email send and injects open/click tracking only when `trackingConsent: true` is provided.
+- `addLinkTracking()` and `addTrackingPixel()` are low-level helpers and must only be called after explicit consent has been checked.
+- `updateEmailStatus()` updates email status in the database.
+- `logEmailInteraction()` logs CRM interactions.
 
-## 🔧 Available Utilities
-
-### email-tracking.ts
-- `trackEmail()` - Track email sends with click/open tracking
-- `addLinkTracking()` - Add click tracking to HTML links
-- `addTrackingPixel()` - Add invisible open tracking pixel
-- `updateEmailStatus()` - Update email status in database
-- `logEmailInteraction()` - Log CRM interactions
+Open/click tracking metadata must set `email_tracking_allowed: true`; otherwise the public tracking endpoints refuse to write events.
