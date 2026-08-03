@@ -56,6 +56,7 @@ Monitor these services every 1 to 5 minutes:
 - Certificate expiry.
 - Mail queue.
 - Client portal access outbox (`npm run server:process-client-access-outbox`; installer: `npm run server:install-client-access-outbox`).
+- Insurer dossier sends (`npm run server:process-insurer-dossier-sends`; installer: `npm run server:install-insurer-dossier-sends`).
 
 Suggested actions:
 

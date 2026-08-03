@@ -8,7 +8,7 @@ The backoffice can queue a complete insurer dossier after the prospect's file is
 
 1. `SendToInsurerModal` calls `create_insurer_dossier_send`.
 2. The database stores the request in `insurer_dossier_sends` with recipient, selected documents, operator, timestamps and metadata.
-3. `process-insurer-dossier-sends` is called by pg_cron or by the self-hosted script `scripts/process-insurer-dossier-sends.cjs`.
+3. `process-insurer-dossier-sends` is called by pg_cron or by the self-hosted script `scripts/process-insurer-dossier-sends.cjs`. On the owned Windows server, `server:install-insurer-dossier-sends` installs the `TaxiAssurInsurerDossierSends` scheduled task, stores secrets in `F:\TaxiAssur\Secrets\taxiassur-insurer-dossier-sends.env`, writes logs under `F:\TaxiAssur\Logs`, and disables the task when Node.js or required Supabase server credentials are missing.
 4. The worker sends the initial email with the selected documents.
 5. If no human marks a response with `mark_insurer_dossier_responded`, the worker sends two follow-ups: J+2 then J+5.
 6. Every send, failure and manual response stop is logged into `crm_interactions`.

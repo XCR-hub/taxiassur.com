@@ -479,7 +479,40 @@ const requiredChecks = [
       'email_geolocation_allowed',
       'Missing explicit email geolocation consent',
     ],
-  },  {
+  },
+  {
+    label: 'insurer dossier worker and installer are exposed',
+    file: 'package.json',
+    patterns: ['server:install-insurer-dossier-sends', 'server:process-insurer-dossier-sends'],
+  },
+  {
+    label: 'insurer dossier worker uses server credentials and dry-run controls',
+    file: 'scripts/process-insurer-dossier-sends.cjs',
+    patterns: [
+      'dotenv.config()',
+      'SUPABASE_SECRET_KEY',
+      'INSURER_DOSSIER_DRY_RUN',
+      '"apikey": serviceRoleKey',
+      'process-insurer-dossier-sends',
+    ],
+  },
+  {
+    label: 'insurer dossier scheduled task installer keeps human validation boundary',
+    file: 'scripts/install-server-insurer-dossier-sends.ps1',
+    patterns: [
+      'TaxiAssurInsurerDossierSends',
+      'taxiassur-insurer-dossier-sends.env',
+      'process-insurer-dossier-sends.cjs',
+      'Register-ScheduledTask',
+      'Disable-ScheduledTask',
+      'INSURER_DOSSIER_SEND_LIMIT',
+      'INSURER_DOSSIER_DRY_RUN',
+      'SUPABASE_SECRET_KEY',
+      'human_validation_required',
+      'traite uniquement les demandes creees par validation backoffice',
+    ],
+  },
+  {
     label: 'document antivirus worker and installer are exposed',
     file: 'package.json',
     patterns: ['server:install-clamav-document-scan', 'server:scan-documents-clamav'],
