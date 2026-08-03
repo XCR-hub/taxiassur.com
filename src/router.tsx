@@ -139,6 +139,7 @@ const CRMProductionManager = lazy(() => import('./backoffice/CRMProductionManage
 const WebImportManager = lazy(() => import('./backoffice/WebImportManager'));
 const InsuranceCompaniesManager = lazy(() => import('./backoffice/InsuranceCompaniesManager'));
 const InsuranceCompaniesStats = lazy(() => import('./backoffice/InsuranceCompaniesStats'));
+const InsurerDossierDashboard = lazy(() => import('./backoffice/InsurerDossierDashboard'));
 const QuotesManager = lazy(() => import('./backoffice/QuotesManager'));
 const PendingDocumentsManager = lazy(() => import('./backoffice/PendingDocumentsManager'));
 const AllDocumentsViewer = lazy(() => import('./backoffice/AllDocumentsViewer'));
@@ -662,6 +663,7 @@ export const router = createBrowserRouter([
       /* ── Insurance & Production ── */
       { path: 'insurance-companies', element: <InsuranceCompaniesManager /> },
       { path: 'insurance-companies-stats', element: <InsuranceCompaniesStats /> },
+      { path: 'insurer-dossiers', element: <InsurerDossierDashboard /> },
       { path: 'production', element: <CRMProductionManager /> },
       { path: 'web-import', element: <WebImportManager /> },
 

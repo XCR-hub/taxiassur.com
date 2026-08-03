@@ -45,6 +45,42 @@ const requiredChecks = [
     ],
   },
   {
+    label: "backoffice command center monitors insurer dossier queue",
+    file: "src/backoffice/InsurerDossierCommandCenter.tsx",
+    patterns: [
+      "insurer_dossier_sends",
+      "mark_insurer_dossier_responded",
+      "retryDossier",
+      "cancelDossier",
+      "next_followup_at",
+      "/backoffice/crm/lead/",
+    ],
+  },
+  {
+    label: "backoffice route exposes insurer dossier dashboard",
+    file: "src/router.tsx",
+    patterns: [
+      "InsurerDossierDashboard",
+      "path: 'insurer-dossiers'",
+    ],
+  },
+  {
+    label: "insurer dossier dashboard uses command center implementation",
+    file: "src/backoffice/InsurerDossierDashboard.tsx",
+    patterns: [
+      "InsurerDossierCommandCenter",
+    ],
+  },
+  {
+    label: "navigation menu exposes insurer dossier command center",
+    file: "src/backoffice/NavigationMenu.tsx",
+    patterns: [
+      "/backoffice/insurer-dossiers",
+      "Dossiers Assureurs",
+      "icon: Send",
+    ],
+  },
+  {
     label: "insurer dossier worker is exposed for self-hosted processing",
     file: "package.json",
     patterns: [

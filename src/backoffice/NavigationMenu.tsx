@@ -5,7 +5,7 @@ import {
   Inbox, Clock, Megaphone, Shield, Globe, Settings, QrCode,
   MessageSquare, Brain, MapPin, UserCog, Sparkles, Receipt,
   ClipboardList, Target, Activity, Bell, CreditCard, ChevronDown,
-  Package,
+  Package, Send,
 } from 'lucide-react';
 import { useAdminAuth } from '../hooks/useAdminAuth';
 import { usePendingDocumentsCount } from '../hooks/usePendingDocumentsCount';
@@ -255,17 +255,33 @@ function SectionGroup({
   );
 }
 
-function useUserPermissions(userId: string | undefined, isMaster: boolean) {
-  const [permissions, setPermissions] = useState<any[]>(() => {
-    try {
-      const cached = localStorage.getItem('taxiassur_permissions');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {}
+interface UserPermission {
+  permission_type: string;
+  can_view?: boolean;
+}
+
+function isUserPermission(value: unknown): value is UserPermission {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as UserPermission).permission_type === 'string'
+  );
+}
+
+function readCachedPermissions(): UserPermission[] {
+  try {
+    const cached = localStorage.getItem('taxiassur_permissions');
+    if (!cached) return [];
+    const parsed: unknown = JSON.parse(cached);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isUserPermission);
+  } catch {
     return [];
-  });
+  }
+}
+
+function useUserPermissions(userId: string | undefined, isMaster: boolean) {
+  const [permissions, setPermissions] = useState<UserPermission[]>(readCachedPermissions);
 
   useEffect(() => {
     if (!userId || isMaster) return;
@@ -279,23 +295,23 @@ function useUserPermissions(userId: string | undefined, isMaster: boolean) {
       headers: { 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}` }
     })
       .then(r => r.json())
-      .then(data => {
+      .then((data: unknown) => {
         if (Array.isArray(data) && data.length > 0) {
-          setPermissions(data);
-          localStorage.setItem('taxiassur_permissions', JSON.stringify(data));
+          const nextPermissions = data.filter(isUserPermission);
+          setPermissions(nextPermissions);
+          localStorage.setItem('taxiassur_permissions', JSON.stringify(nextPermissions));
         }
       })
-      .catch(() => {});
+      .catch(() => undefined);
   }, [userId, isMaster, permissions.length]);
 
   const check = useCallback((permType: string) => {
     if (isMaster) return true;
-    return permissions.some((p: any) => p.permission_type === permType && p.can_view);
+    return permissions.some((permission) => permission.permission_type === permType && permission.can_view === true);
   }, [isMaster, permissions]);
 
   return check;
 }
-
 export default function NavigationMenu({ excludeSections = [] }: NavigationMenuProps) {
   const { user: currentUser } = useAdminAuth();
   const isMaster = currentUser?.role === 'master';
@@ -314,8 +330,6 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
   const canViewBacklinks     = isMaster || checkPerm('backlinks');
   const canViewAnalytics     = isMaster || checkPerm('analytics');
   const canViewSocial        = isMaster || checkPerm('social_media');
-  const canViewSettings      = isMaster || checkPerm('settings');
-
   const sections: SectionDef[] = [
     {
       title: 'CRM & Clients',
@@ -352,6 +366,7 @@ export default function NavigationMenu({ excludeSections = [] }: NavigationMenuP
       links: [
         { to: '/backoffice/insurance-companies',       icon: Building2,     label: 'Compagnies' },
         { to: '/backoffice/insurance-companies-stats', icon: BarChart3,     label: 'Stats Compagnies' },
+        { to: '/backoffice/insurer-dossiers',          icon: Send,          label: 'Dossiers Assureurs', featured: true },
         { to: '/backoffice/production',                icon: ClipboardList, label: 'Production' },
         { to: '/backoffice/quotes',                    icon: Receipt,       label: 'Gestion Devis' },
         { to: '/backoffice/pending-documents',         icon: FileCheck,     label: 'Docs a Valider', badge: pendingDocsCount || undefined },

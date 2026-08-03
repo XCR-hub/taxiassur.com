@@ -24,6 +24,8 @@ The backoffice can queue a complete insurer dossier after the prospect's file is
 
 ## Human Supervision
 
+The `/backoffice/insurer-dossiers` cockpit lists queued sends, due follow-ups, failures and insurer responses. Backoffice users can open the lead, copy the selected insurer email, retry a failed queued send, cancel a queued send, and mark an insurer response as received.
+
 When the insurer replies, the backoffice must mark the dossier as responded using `mark_insurer_dossier_responded`. This stops the automatic follow-up chain and keeps the audit trail readable.
 
 ## Security
