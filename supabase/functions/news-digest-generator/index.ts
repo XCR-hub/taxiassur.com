@@ -23,7 +23,7 @@ Deno.serve(async (req: Request) => {
 
     const now = new Date();
     let periodStart: Date;
-    let periodEnd: Date = now;
+    const periodEnd: Date = now;
 
     if (type === 'daily') {
       periodStart = new Date(now);

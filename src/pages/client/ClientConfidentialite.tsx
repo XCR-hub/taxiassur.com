@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
+import { getClientAccessToken } from '@/lib/client-access';
 import {
   ClientConsentKey,
   ClientConsentState,
@@ -64,7 +65,7 @@ const CONSENT_OPTIONS: Array<{
 export default function ClientConfidentialite() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const email = searchParams.get('email') || sessionStorage.getItem('client_email') || '';
+  const accessToken = getClientAccessToken(searchParams.get('token'));
 
   const [consents, setConsents] = useState<ClientConsentState>(DEFAULT_CLIENT_CONSENTS);
   const [loading, setLoading] = useState(true);
@@ -73,21 +74,20 @@ export default function ClientConfidentialite() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!email) {
+    if (!accessToken) {
       navigate('/espace-client');
       return;
     }
 
-    sessionStorage.setItem('client_email', email);
     loadConsents();
-  }, [email, navigate]);
+  }, [accessToken, navigate]);
 
   const loadConsents = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const state = await loadClientConsentState(email);
+      const state = await loadClientConsentState(accessToken);
       setConsents(state);
     } catch {
       setError('Impossible de charger vos preferences pour le moment.');
@@ -106,7 +106,7 @@ export default function ClientConfidentialite() {
     setMessage(null);
 
     try {
-      await saveClientConsentState(email, consents);
+      await saveClientConsentState(accessToken, consents);
       setMessage('Preferences enregistrees. Votre choix est journalise et peut etre modifie a tout moment.');
     } catch {
       setError('Erreur pendant l enregistrement des preferences.');
@@ -121,7 +121,7 @@ export default function ClientConfidentialite() {
     setMessage(null);
 
     try {
-      await revokeAllClientMarketingConsents(email);
+      await revokeAllClientMarketingConsents(accessToken);
       setConsents({ ...DEFAULT_CLIENT_CONSENTS });
       setMessage('Toutes les prospections et personnalisations non essentielles ont ete revoquees.');
     } catch {
@@ -133,7 +133,7 @@ export default function ClientConfidentialite() {
 
   if (loading) {
     return (
-      <ClientLayout email={email}>
+      <ClientLayout email=''>
         <SEOHead title="Confidentialite - Espace Client TaxiAssur" noIndex={true} />
         <div className="flex h-64 items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-yellow-600" />
@@ -143,7 +143,7 @@ export default function ClientConfidentialite() {
   }
 
   return (
-    <ClientLayout email={email}>
+    <ClientLayout email=''>
       <SEOHead title="Confidentialite - Espace Client TaxiAssur" noIndex={true} />
 
       <div className="space-y-6">

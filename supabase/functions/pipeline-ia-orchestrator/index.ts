@@ -30,6 +30,15 @@ interface Lead {
   last_name: string;
   phone: string;
   current_stage_key: string;
+  access_token?: string | null;
+}
+
+function securePortalUrl(lead: Lead, portal: "espace-prospect" | "espace-client"): string | null {
+  const token = String(lead.access_token || "").trim();
+  if (!/^[0-9a-f]{64}$/i.test(token)) return null;
+  return portal === "espace-client"
+    ? `https://taxiassur.com/espace-client/${encodeURIComponent(token)}`
+    : `https://taxiassur.com/espace-prospect?token=${encodeURIComponent(token)}`;
 }
 
 async function sendEmail(to: string, subject: string, htmlContent: string, firstName: string) {
@@ -89,6 +98,8 @@ async function executeAction(task: Task, lead: Lead): Promise<{ success: boolean
   
   switch (task_action) {
     case "send_welcome_email": {
+      const prospectLink = securePortalUrl(lead, "espace-prospect");
+      if (!prospectLink) return { success: false, result: "Jeton prospect indisponible" };
       const content = `
         <h2>Bienvenue ${first_name} !</h2>
         <p>Merci de votre interet pour TaxiAssur.</p>
@@ -100,7 +111,7 @@ async function executeAction(task: Task, lead: Lead): Promise<{ success: boolean
           <li>Carte professionnelle taxi</li>
           <li>Releve d'information assurance</li>
         </ul>
-        <p><a href="https://taxiassur.com/espace-prospect?token=${lead.access_token || lead.id}">Deposer mes documents</a></p>
+        <p><a href="https://taxiassur.com/espace-prospect?token=${prospectLink}">Deposer mes documents</a></p>
       `;
       return await sendEmail(email, "Bienvenue chez TaxiAssur - Votre devis en cours", content, first_name);
     }
@@ -132,6 +143,8 @@ async function executeAction(task: Task, lead: Lead): Promise<{ success: boolean
     }
     
     case "send_document_request": {
+      const prospectLink = securePortalUrl(lead, "espace-prospect");
+      if (!prospectLink) return { success: false, result: "Jeton prospect indisponible" };
       const content = `
         <h2>Documents necessaires pour votre devis</h2>
         <p>Bonjour ${first_name},</p>
@@ -143,7 +156,7 @@ async function executeAction(task: Task, lead: Lead): Promise<{ success: boolean
           <li><strong>Releve d'information</strong> de votre ancien assureur</li>
           <li><strong>KBIS</strong> (si entreprise)</li>
         </ul>
-        <p><a href="https://taxiassur.com/espace-prospect?token=${lead.access_token || lead.id}" style="background:#2563eb;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;margin:20px 0;">DEPOSER MES DOCUMENTS</a></p>
+        <p><a href="https://taxiassur.com/espace-prospect?token=${prospectLink}" style="background:#2563eb;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block;margin:20px 0;">DEPOSER MES DOCUMENTS</a></p>
         <p>Des que nous aurons tous vos documents, nous vous enverrons votre devis personnalise sous 24h.</p>
       `;
       
@@ -160,6 +173,8 @@ async function executeAction(task: Task, lead: Lead): Promise<{ success: boolean
     case "send_reminder_24h":
     case "send_reminder_48h":
     case "send_urgent_reminder": {
+      const prospectLink = securePortalUrl(lead, "espace-prospect");
+      if (!prospectLink) return { success: false, result: "Jeton prospect indisponible" };
       const { data: docStatus } = await supabase
         .from("document_collection_status")
         .select("missing_documents, reminder_count")
@@ -176,7 +191,7 @@ async function executeAction(task: Task, lead: Lead): Promise<{ success: boolean
         <p>Bonjour ${first_name},</p>
         <p>Il nous manque encore quelques documents pour finaliser votre devis :</p>
         <ul>${(docStatus.missing_documents || []).map((d: string) => `<li>${d.replace(/_/g, " ")}</li>`).join("")}</ul>
-        <p><a href="https://taxiassur.com/espace-prospect?token=${lead.access_token || lead.id}">Deposer mes documents maintenant</a></p>
+        <p><a href="https://taxiassur.com/espace-prospect?token=${prospectLink}">Deposer mes documents maintenant</a></p>
       `;
       
       await supabase.from("document_collection_status").update({
@@ -262,34 +277,21 @@ async function executeAction(task: Task, lead: Lead): Promise<{ success: boolean
     }
     
     case "send_contract_for_signature": {
-      const content = `
-        <h2>Votre contrat est pret a signer !</h2>
-        <p>Bonjour ${first_name},</p>
-        <p>Votre contrat d'assurance taxi est pret. Signez-le electroniquement en quelques clics.</p>
-        <p><a href="https://taxiassur.com/signature?lead=${lead.id}" style="background:#16a34a;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;">SIGNER MON CONTRAT</a></p>
-      `;
-      
-      await supabase.from("crm_leads").update({ contract_sent_at: new Date().toISOString() }).eq("id", lead.id);
-      return await sendEmail(email, "Signez votre contrat d'assurance taxi - TaxiAssur", content, first_name);
+      return { success: false, result: "Signature sécurisée non créée : action manuelle requise" };
     }
-    
+
     case "send_payment_link": {
-      const content = `
-        <h2>Finalisez votre souscription</h2>
-        <p>Bonjour ${first_name},</p>
-        <p>Votre contrat est signe ! Il ne reste plus qu'a proceder au paiement pour activer votre couverture.</p>
-        <p><a href="https://taxiassur.com/paiement?lead=${lead.id}">PAYER MAINTENANT</a></p>
-      `;
-      return await sendEmail(email, "Activez votre assurance taxi - Paiement", content, first_name);
-    }
-    
+      return { success: false, result: "Lien de paiement sécurisé non créé : action manuelle requise" };
+    }    
     case "send_welcome_pack": {
+      const clientLink = securePortalUrl(lead, "espace-client");
+      if (!clientLink) return { success: false, result: "Jeton client indisponible" };
       const content = `
         <h2>Bienvenue chez TaxiAssur ! 🎉</h2>
         <p>Felicitations ${first_name} !</p>
         <p>Votre assurance taxi est maintenant active. Vous recevrez votre attestation par email separement.</p>
         <p>Votre espace client est disponible pour gerer votre contrat :</p>
-        <p><a href="https://taxiassur.com/espace-client">ACCEDER A MON ESPACE CLIENT</a></p>
+        <p><a href="${clientLink}">ACCEDER A MON ESPACE CLIENT</a></p>
       `;
       return await sendEmail(email, "Bienvenue ! Votre assurance taxi est active", content, first_name);
     }

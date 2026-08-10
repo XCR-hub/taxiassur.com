@@ -79,7 +79,7 @@ urlServeur: 'https://p.monetico-services.com/test/paiement.cgi'
 // Identifiants
 TPE      : 7374133
 Société  : taxiassur
-Clé MAC  : 106FA85BF342FD4EE95C883D82865B5CC1F63890
+Clé MAC  : [REDACTED_MONETICO_MAC_KEY]
 ```
 
 ---
@@ -170,7 +170,7 @@ Si vous voulez configurer des identifiants TEST différents :
 MONETICO_MODE=test
 MONETICO_TEST_TPE=7374133
 MONETICO_TEST_SOCIETE=taxiassur
-MONETICO_TEST_MAC_KEY=106FA85BF342FD4EE95C883D82865B5CC1F63890
+MONETICO_TEST_MAC_KEY=[REDACTED_MONETICO_MAC_KEY]
 ```
 
 Mais la configuration actuelle fonctionne déjà !

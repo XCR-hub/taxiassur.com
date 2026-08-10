@@ -1,10 +1,12 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { isInternalRequest } from "../_shared/internal-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
 interface PinterestBoard {
@@ -12,7 +14,9 @@ interface PinterestBoard {
   name: string;
 }
 
-async function getPinterestBoards(accessToken: string): Promise<PinterestBoard[]> {
+async function getPinterestBoards(
+  accessToken: string,
+): Promise<PinterestBoard[]> {
   const response = await fetch("https://api.pinterest.com/v5/boards", {
     headers: {
       "Authorization": `Bearer ${accessToken}`,
@@ -31,7 +35,7 @@ async function getPinterestBoards(accessToken: string): Promise<PinterestBoard[]
 async function publishToPinterest(
   content: string,
   accessToken: string,
-  boardId?: string
+  boardId?: string,
 ): Promise<any> {
   // Si pas de board ID spécifié, prendre le premier board
   let targetBoardId = boardId;
@@ -45,7 +49,8 @@ async function publishToPinterest(
 
   // Générer une image par défaut ou utiliser une image stock
   // Pour l'instant, on utilise une image placeholder
-  const imageUrl = "https://images.pexels.com/photos/733745/pexels-photo-733745.jpeg?auto=compress&cs=tinysrgb&w=800";
+  const imageUrl =
+    "https://images.pexels.com/photos/733745/pexels-photo-733745.jpeg?auto=compress&cs=tinysrgb&w=800";
 
   // Extraire le titre (première ligne du contenu)
   const lines = content.split("\n");
@@ -89,6 +94,13 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  if (!(await isInternalRequest(req))) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -129,7 +141,7 @@ Deno.serve(async (req: Request) => {
     const pinterestResponse = await publishToPinterest(
       content,
       network.access_token,
-      defaultBoardId
+      defaultBoardId,
     );
 
     console.log("Pinterest publish response:", pinterestResponse);
@@ -152,7 +164,7 @@ Deno.serve(async (req: Request) => {
     // Incrémenter le compteur de posts
     const { error: incrementError } = await supabase.rpc(
       "increment_social_network_posts",
-      { network_id_param: network_id }
+      { network_id_param: network_id },
     ).catch(() => {
       // Si la fonction n'existe pas, faire un update manuel
       return supabase
@@ -173,7 +185,7 @@ Deno.serve(async (req: Request) => {
       automation_name: "pinterest_publisher",
       status: "success",
       message: `Successfully published post ${post_id} to Pinterest`,
-      metadata: { post_id, pinterest_response: pinterestResponse }
+      metadata: { post_id, pinterest_response: pinterestResponse },
     });
 
     return new Response(
@@ -189,7 +201,7 @@ Deno.serve(async (req: Request) => {
           ...corsHeaders,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
   } catch (error) {
     console.error("Error in pinterest-publisher:", error);
@@ -199,12 +211,12 @@ Deno.serve(async (req: Request) => {
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
       const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       const supabase = createClient(supabaseUrl, supabaseKey);
-      
+
       await supabase.from("automation_logs").insert({
         automation_name: "pinterest_publisher_error",
         status: "error",
         message: error.message,
-        metadata: { error: error.toString() }
+        metadata: { error: error.toString() },
       });
     } catch (logError) {
       console.error("Failed to log error:", logError);
@@ -218,7 +230,7 @@ Deno.serve(async (req: Request) => {
           ...corsHeaders,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
   }
 });

@@ -6,102 +6,77 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
+const internalDomains = new Set(["taxiassur.com", "taxiassur.fr", "xcr.fr"]);
+
+async function isAuthorized(req: Request, supabaseUrl: string, serviceKey: string): Promise<boolean> {
+  const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+  if (!token) return false;
+  if (token === serviceKey) return true;
+  const admin = createClient(supabaseUrl, serviceKey);
+  const { data, error } = await admin.auth.getUser(token);
+  if (error) return false;
+  const domain = (data.user?.email || "").toLowerCase().split("@")[1];
+  return internalDomains.has(domain);
+}
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 200, headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ success: false, error: "Method not allowed" }), {
+      status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
-    const payload = await req.json();
-    const to = payload.to;
-    const content = payload.body || payload.message || payload.content;
-    const lead_id = payload.lead_id || payload.leadId;
-
-    if (!to || !content) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Missing required fields: to and body/message/content" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    if (!supabaseUrl || !serviceKey) {
+      return new Response(JSON.stringify({ success: false, error: "Service indisponible" }), {
+        status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
-
-    const brevoApiKey = Deno.env.get("BREVO_API_KEY");
-    if (!brevoApiKey) {
-      return new Response(
-        JSON.stringify({ success: false, error: "SMS service not configured (BREVO_API_KEY missing)" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    let phoneNumber = to.replace(/[\s\-\.]/g, "");
-    if (phoneNumber.startsWith("0")) {
-      phoneNumber = "33" + phoneNumber.substring(1);
-    }
-    if (!phoneNumber.startsWith("+")) {
-      phoneNumber = "+" + phoneNumber;
-    }
-
-    const brevoResponse = await fetch("https://api.brevo.com/v3/transactionalSMS/sms", {
-      method: "POST",
-      headers: {
-        "api-key": brevoApiKey,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        type: "transactional",
-        unicodeEnabled: true,
-        sender: "TaxiAssur",
-        recipient: phoneNumber,
-        content: content,
-        tag: payload.tag || "crm-sms",
-      }),
-    });
-
-    const brevoData = await brevoResponse.json();
-
-    if (!brevoResponse.ok) {
-      console.error("Brevo SMS error:", brevoData);
-      return new Response(
-        JSON.stringify({ success: false, error: "Failed to send SMS", details: brevoData }),
-        { status: brevoResponse.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (lead_id) {
-      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const supabase = createClient(supabaseUrl, supabaseKey);
-
-      await supabase.from("crm_interactions").insert({
-        lead_id,
-        type: "sms",
-        direction: "outbound",
-        subject: `SMS envoye au ${to}`,
-        content: content,
-        metadata: {
-          message_id: brevoData.messageId,
-          reference: brevoData.reference,
-          phone: phoneNumber,
-          provider: "brevo",
-        },
+    if (!await isAuthorized(req, supabaseUrl, serviceKey)) {
+      return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        messageId: brevoData.messageId,
-        reference: brevoData.reference,
-        smsCount: brevoData.smsCount || 1,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  } catch (error) {
-    console.error("Send SMS error:", error);
-    return new Response(
-      JSON.stringify({ success: false, error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    let payload: Record<string, unknown>;
+    try { payload = await req.json(); } catch {
+      return new Response(JSON.stringify({ success: false, error: "Corps JSON invalide" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const to = typeof payload.to === "string" ? payload.to.trim() : "";
+    const rawContent = payload.body ?? payload.message ?? payload.content;
+    const content = typeof rawContent === "string" ? rawContent.trim() : "";
+    const leadIdValue = payload.lead_id ?? payload.leadId;
+    const lead_id = typeof leadIdValue === "string" ? leadIdValue.trim() : undefined;
+    const tag = typeof payload.tag === "string" ? payload.tag.trim().slice(0, 64) : "crm-sms";
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-sms-brevo`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({ to, content, lead_id, tag }),
+    });
+    const responseText = await response.text();
+    let result: Record<string, unknown> = {};
+    try { result = JSON.parse(responseText); } catch { /* provider response is redacted below */ }
+    if (!response.ok) {
+      return new Response(JSON.stringify({ success: false, error: "Echec envoi SMS" }), {
+        status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    return new Response(JSON.stringify(result), {
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error: unknown) {
+    console.error("Legacy SMS adapter failed", error instanceof Error ? error.name : "unknown");
+    return new Response(JSON.stringify({ success: false, error: "Erreur serveur" }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });

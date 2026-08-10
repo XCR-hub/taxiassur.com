@@ -36,7 +36,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const emailData = await req.json();
@@ -190,7 +190,7 @@ Deno.serve(async (req: Request) => {
   } catch (error) {
     console.error('[Team Email] Error:', error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: 'Team email processing failed' }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
@@ -301,19 +301,30 @@ async function generateResponse(supabase: any, lead: any, docsStatus: any, infoS
   return { subject, body, smsContent, whatsappContent };
 }
 
+async function requireRelaySuccess(response: Response, channel: string): Promise<void> {
+  let payload: { success?: boolean } | null = null;
+  try {
+    payload = await response.json();
+  } catch {
+    // Invalid JSON is not a valid provider acknowledgement.
+  }
+  if (!response.ok || payload?.success !== true) throw new Error(`${channel}DeliveryError`);
+}
 async function sendEmail(supabase: any, to: string, subject: string, body: string) {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${supabaseKey}`
       },
-      body: JSON.stringify({ to, subject, body, from: 'team@taxiassur.com' })
+      body: JSON.stringify({ to, subject, text: body }),
+      signal: AbortSignal.timeout(30_000)
     });
+    await requireRelaySuccess(response, 'Email');
   } catch (error) {
     console.error('[Team Email] Failed to send email:', error);
   }
@@ -324,18 +335,20 @@ async function sendSMS(supabase: any, lead: any, content: string) {
   
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    await fetch(`${supabaseUrl}/functions/v1/send-sms`, {
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-sms`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${supabaseKey}`
       },
-      body: JSON.stringify({ to: lead.phone, message: content })
+      body: JSON.stringify({ to: lead.phone, message: content }),
+      signal: AbortSignal.timeout(30_000)
     });
+    await requireRelaySuccess(response, 'SMS');
 
-    await supabase.from('lead_communications').insert({
+    const { error: communicationError } = await supabase.from('lead_communications').insert({
       lead_id: lead.id,
       communication_type: 'notification',
       direction: 'outbound',
@@ -345,8 +358,9 @@ async function sendSMS(supabase: any, lead: any, content: string) {
       status: 'sent',
       sent_at: new Date().toISOString()
     });
+    if (communicationError) throw communicationError;
   } catch (error) {
-    console.error('[Team Email] Failed to send SMS:', error);
+    console.error('[Team Email] Failed to send SMS', error instanceof Error ? error.name : 'unknown');
   }
 }
 
@@ -355,18 +369,20 @@ async function sendWhatsApp(supabase: any, lead: any, content: string) {
   
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${supabaseKey}`
       },
-      body: JSON.stringify({ to: lead.phone, message: content })
+      body: JSON.stringify({ to: lead.phone, message: content }),
+      signal: AbortSignal.timeout(30_000)
     });
+    await requireRelaySuccess(response, 'WhatsApp');
 
-    await supabase.from('lead_communications').insert({
+    const { error: communicationError } = await supabase.from('lead_communications').insert({
       lead_id: lead.id,
       communication_type: 'notification',
       direction: 'outbound',
@@ -376,8 +392,9 @@ async function sendWhatsApp(supabase: any, lead: any, content: string) {
       status: 'sent',
       sent_at: new Date().toISOString()
     });
+    if (communicationError) throw communicationError;
   } catch (error) {
-    console.error('[Team Email] Failed to send WhatsApp:', error);
+    console.error('[Team Email] Failed to send WhatsApp', error instanceof Error ? error.name : 'unknown');
   }
 }
 

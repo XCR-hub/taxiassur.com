@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 import { toast } from '@/lib/toast';
 import {
   Mail,
@@ -365,7 +366,7 @@ export default function InboxIntelligent() {
     if (!email) return;
 
     try {
-      const { error } = await supabase.functions.invoke('send-crm-email', {
+      const { data: sendResult, error } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
         body: {
           to: email.from_email,
           subject: `Re: ${email.subject}`,
@@ -374,7 +375,7 @@ export default function InboxIntelligent() {
         }
       });
 
-      if (error) throw error;
+      if (error || !sendResult?.success) throw error || new Error("Envoi refusé");
 
       // Enregistrer l'action
       await supabase

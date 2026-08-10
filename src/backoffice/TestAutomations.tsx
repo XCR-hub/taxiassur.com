@@ -1,7 +1,7 @@
 import { useState } from 'react';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { Play, CheckCircle, XCircle, Loader, RefreshCw, Zap, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
 
 interface TestResult {
   function: string;
@@ -115,14 +115,11 @@ export default function TestAutomations() {
     }));
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
-
       const response = await fetch(`${SUPABASE_URL}/functions/v1/${functionId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': (await internalFunctionHeaders()).Authorization
         },
         body: JSON.stringify(payload)
       });

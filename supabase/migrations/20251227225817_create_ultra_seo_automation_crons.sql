@@ -39,7 +39,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/auto-seo-notifier',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := jsonb_build_object(
@@ -58,7 +58,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/generate-seo-content',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := jsonb_build_object('action', 'sitemap')
@@ -91,7 +91,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/generate-seo-content',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := jsonb_build_object(
@@ -126,7 +126,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/generate-seo-content',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := jsonb_build_object(
@@ -152,7 +152,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/social-media-publisher',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := jsonb_build_object(
@@ -171,7 +171,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/social-media-publisher',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := jsonb_build_object(
@@ -190,7 +190,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/social-media-publisher',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := jsonb_build_object('platform', 'pinterest')
@@ -205,7 +205,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/social-media-publisher',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := jsonb_build_object('platform', 'pinterest')
@@ -220,7 +220,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/social-media-publisher',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := jsonb_build_object('platform', 'pinterest')
@@ -240,7 +240,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/auto-followup',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := jsonb_build_object('max_followups', 20)
@@ -256,7 +256,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/auto-followup',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := jsonb_build_object('max_followups', 20)
@@ -272,7 +272,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/auto-followup',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := jsonb_build_object('max_followups', 20)
@@ -288,7 +288,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/ai-email-responder',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := jsonb_build_object('check_unread', true)
@@ -308,7 +308,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/automation-dashboard-api',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := jsonb_build_object(
@@ -327,7 +327,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/ai-auto-improver',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := jsonb_build_object(

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   Brain, Bot, Sparkles, TrendingUp, CheckCircle, XCircle,
   Clock, Activity, Target, Mail, Briefcase, Search as SearchIcon,
-  AlertTriangle, Gift, Smile, MessageSquare, ChevronRight,
+  AlertTriangle, Gift, Smile, MessageSquare,
   Play, RefreshCw, Filter, Zap, Shield, BarChart2, Users,
   CheckSquare, X, Wand2, Timer, Cpu
 } from 'lucide-react';
@@ -126,13 +126,6 @@ const CRMAIGovernance: React.FC = () => {
   } | null>(null);
 
   useEffect(() => {
-    loadAllDecisions();
-    loadAutoStatus();
-    const interval = setInterval(loadAutoStatus, 60_000);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
     if (activeTab === 'council') loadRecentLeads();
   }, [activeTab]);
 
@@ -156,6 +149,13 @@ const CRMAIGovernance: React.FC = () => {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    loadAllDecisions();
+    loadAutoStatus();
+    const interval = setInterval(loadAutoStatus, 60_000);
+    return () => clearInterval(interval);
+  }, [loadAllDecisions, loadAutoStatus]);
 
   const loadRecentLeads = async () => {
     const { data } = await supabase
@@ -231,7 +231,7 @@ const CRMAIGovernance: React.FC = () => {
     setCouncilRunning(true);
     setCouncilResult(null);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-ai-decisions', {
+      const { error } = await supabase.functions.invoke('generate-ai-decisions', {
         body: { limit: 1, agents: ['lead_scorer', 'risk_analyzer', 'negotiation_assistant', 'email_composer', 'churn_predictor', 'cross_sell_recommender', 'sentiment_analyzer', 'response_generator'] },
       });
       if (error) throw error;
@@ -676,7 +676,11 @@ const CRMAIGovernance: React.FC = () => {
                         <button
                           onClick={() => setSelectedDecisions(prev => {
                             const n = new Set(prev);
-                            n.has(decision.id) ? n.delete(decision.id) : n.add(decision.id);
+                            if (n.has(decision.id)) {
+                              n.delete(decision.id);
+                            } else {
+                              n.add(decision.id);
+                            }
                             return n;
                           })}
                           className={`absolute -left-7 top-5 w-5 h-5 rounded border flex items-center justify-center transition-all ${

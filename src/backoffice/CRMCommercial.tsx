@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
-import { Phone, Mail, MessageSquare, Calendar, FileText, CheckCircle, XCircle, Clock, TrendingUp, Users, Send, Sparkles, Upload, AlertCircle, ChevronRight, Filter, Search, Plus, CreditCard as Edit, Trash2, Download, Target, BarChart3, Activity, DollarSign, Zap, Eye, ArrowRight, Star, Tag, ExternalLink, RefreshCw, TrendingDown } from 'lucide-react';
+import { Phone, Mail, MessageSquare, Calendar, FileText, CheckCircle, TrendingUp, Users, Send, Sparkles, AlertCircle, Search, Download, Target, BarChart3, Activity, DollarSign, Zap, Star, RefreshCw } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 import DocumentsViewer from './DocumentsViewer';
 import EmailTrendline from './EmailTrendline';
 
@@ -54,6 +56,8 @@ interface AISuggestion {
   suggested_content: Record<string, unknown>;
 }
 
+type ActiveTab = 'overview' | 'interactions' | 'documents' | 'ai' | 'analytics';
+
 interface Stats {
   total_leads: number;
   hot_leads: number;
@@ -71,7 +75,7 @@ const CRMCommercial: React.FC = () => {
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [aiSuggestions, setAISuggestions] = useState<AISuggestion[]>([]);
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<unknown[]>([]);
   const [stats, setStats] = useState<Stats>({
     total_leads: 0,
     hot_leads: 0,
@@ -81,7 +85,7 @@ const CRMCommercial: React.FC = () => {
     this_month_conversions: 0
   });
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'interactions' | 'documents' | 'ai' | 'analytics'>('overview');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
@@ -92,7 +96,6 @@ const CRMCommercial: React.FC = () => {
   const [callNote, setCallNote] = useState('');
   const [quickNote, setQuickNote] = useState('');
   const [isImproving, setIsImproving] = useState(false);
-  const [showQuickActions, setShowQuickActions] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   const stages = ['Nouveau Lead', 'Premier Contact', 'Qualifié', 'Devis Envoyé', 'Négociation', 'Accord Verbal', 'Contrat Signé', 'Perdu'];
@@ -347,8 +350,7 @@ const CRMCommercial: React.FC = () => {
   };
 
   const handleNewNotification = (payload: { new: { message?: string; [key: string]: unknown } }) => {
-  const navigate = useNavigate();
-setNotifications(prev => [payload.new, ...prev]);
+    setNotifications(prev => [payload.new, ...prev]);
 
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification('TaxiAssur CRM', {
@@ -400,7 +402,7 @@ setNotifications(prev => [payload.new, ...prev]);
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Authorization': (await internalFunctionHeaders()).Authorization,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
@@ -435,62 +437,17 @@ setNotifications(prev => [payload.new, ...prev]);
     setIsSendingEmail(true);
 
     try {
-      logger.log('📧 Envoi email à:', selectedLead.email);
 
-      // Créer un timeout de 30 secondes
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-crm-email`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            to_email: selectedLead.email,
-            to_name: `${selectedLead.first_name || ''} ${selectedLead.last_name || ''}`.trim() || selectedLead.email,
-            subject: emailForm.subject,
-            content: emailForm.content,
-            lead_id: selectedLead.id
-          }),
-          signal: controller.signal
+      const { data: result, error: sendError } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
+        body: {
+          to_email: selectedLead.email,
+          to_name: [selectedLead.first_name, selectedLead.last_name].filter(Boolean).join(' ') || selectedLead.email,
+          subject: emailForm.subject,
+          content: emailForm.content,
+          lead_id: selectedLead.id
         }
-      );
-
-      clearTimeout(timeoutId);
-
-      logger.log('📬 Réponse serveur:', response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error('❌ Erreur HTTP:', errorText);
-        throw new Error(`Erreur ${response.status}: ${errorText}`);
-      }
-
-      const result = await response.json();
-      logger.log('✅ Résultat:', result);
-
-      if (!result.success) {
-        throw new Error(result.error || 'Erreur inconnue lors de l\'envoi');
-      }
-
-      // Enregistrer l'interaction dans la base avec le tracking_id IONOS
-      const { error: dbError } = await supabase.from('crm_interactions').insert({
-        lead_id: selectedLead.id,
-        type: 'email',
-        direction: 'outbound',
-        subject: emailForm.subject,
-        content: emailForm.content,
-        to_email: selectedLead.email,
-        metadata: { tracking_id: result.tracking_id || result.messageId || null }
       });
-
-      if (dbError) {
-        logger.error('⚠️ Erreur BDD (interaction):', dbError);
-      }
+      if (sendError || !result?.success) throw new Error('Envoi e-mail refusé');
 
       // Succès !
       toast.success('✅ Email envoyé avec succès à ' + selectedLead.email + ' !\n\nUn email de confirmation sera visible dans l\'onglet Interactions.');
@@ -576,37 +533,6 @@ setNotifications(prev => [payload.new, ...prev]);
     a.href = url;
     a.download = `leads-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
-  };
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!selectedLead || !event.target.files || event.target.files.length === 0) return;
-
-    const file = event.target.files[0];
-    const safeName = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.\-]+/g, '_').replace(/_+/g, '_');
-    const filePath = `leads/${selectedLead.id}/${Date.now()}_${safeName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('crm-documents')
-      .upload(filePath, file);
-
-    if (uploadError) {
-      toast.error('Erreur upload : ' + uploadError.message);
-      return;
-    }
-
-    const { error: dbError } = await supabase.from('crm_documents').insert({
-      lead_id: selectedLead.id,
-      file_name: file.name,
-      file_type: file.type,
-      file_size_bytes: file.size,
-      storage_path: filePath,
-      document_type: 'other'
-    });
-
-    if (!dbError) {
-      toast.info('Document uploadé !');
-      loadLeadDetails(selectedLead.id);
-    }
   };
 
   const acceptSuggestion = async (suggestionId: string) => {
@@ -793,7 +719,7 @@ setNotifications(prev => [payload.new, ...prev]);
               <select
                 value={sortBy}
                 onChange={(e) => {
-                  setSortBy(e.target.value as any);
+                  setSortBy(e.target.value as 'score' | 'date' | 'value');
                   loadMyLeads();
                 }}
                 className="px-4 py-2 bg-gray-100 text-gray-900 rounded-lg font-medium border-2 border-gray-200 focus:border-blue-500 outline-none"
@@ -1011,7 +937,7 @@ setNotifications(prev => [payload.new, ...prev]);
                         ].map(tab => (
                           <button
                             key={tab.key}
-                            onClick={() => setActiveTab(tab.key as any)}
+                            onClick={() => setActiveTab(tab.key as ActiveTab)}
                             className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold transition-all ${
                               activeTab === tab.key
                                 ? 'bg-blue-600 text-white shadow-lg'

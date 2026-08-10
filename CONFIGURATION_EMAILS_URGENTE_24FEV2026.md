@@ -117,7 +117,7 @@ LIMIT 10;
 3. **Tester l'envoi direct :**
    ```bash
    curl -X POST 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/send-email-ionos' \
-     -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik" \
+     -H "Authorization: Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT" \
      -H "Content-Type: application/json" \
      -d '{
        "to": "team@taxiassur.com",

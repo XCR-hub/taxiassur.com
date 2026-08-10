@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { useNavigate } from 'react-router-dom';
 import { Send, Loader2, CheckCircle, AlertCircle, Mail, TrendingUp, Rocket, Home } from 'lucide-react';
 import { getSupabaseUrl } from '../lib/env';
@@ -18,18 +19,11 @@ const [isGenerating, setIsGenerating] = useState(false);
 
     try {
       const supabaseUrl = getSupabaseUrl();
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      if (!supabaseAnonKey) {
-        throw new Error('Configuration Supabase manquante');
-      }
-
       const response = await fetch(`${supabaseUrl}/functions/v1/partner-scraper-outreach`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Authorization': (await internalFunctionHeaders()).Authorization,
           'Content-Type': 'application/json',
-          'apikey': supabaseAnonKey,
         },
         body: JSON.stringify({
           action: 'batch_outreach'
@@ -66,6 +60,7 @@ const [isGenerating, setIsGenerating] = useState(false);
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': (await internalFunctionHeaders()).Authorization,
         },
         body: JSON.stringify({
           action: 'send_batch',

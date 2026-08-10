@@ -15,6 +15,7 @@ import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
 import { supabase } from '@/lib/supabase';
 import { normalizeEmail } from '@/lib/client-consent';
+import { getClientAccessToken } from '@/lib/client-access';
 import { referralSystem } from '@/lib/referral-system';
 
 interface ReferralRow {
@@ -30,7 +31,7 @@ interface ReferralRow {
 export default function ClientParrainage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const email = searchParams.get('email') || sessionStorage.getItem('client_email') || '';
+  const accessToken = getClientAccessToken(searchParams.get('token'));
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -38,7 +39,6 @@ export default function ClientParrainage() {
   const [error, setError] = useState<string | null>(null);
   const [referralCode, setReferralCode] = useState<string>('');
   const [referrals, setReferrals] = useState<ReferralRow[]>([]);
-  const [referrerId, setReferrerId] = useState<string>('');
   const [referredEmail, setReferredEmail] = useState('');
   const [hasPermission, setHasPermission] = useState(false);
 
@@ -48,35 +48,25 @@ export default function ClientParrainage() {
   }, [referralCode]);
 
   useEffect(() => {
-    if (!email) {
+    if (!accessToken) {
       navigate('/espace-client');
       return;
     }
 
-    sessionStorage.setItem('client_email', email);
     loadReferralData();
-  }, [email, navigate]);
+  }, [accessToken, navigate]);
 
   const loadReferralData = async () => {
     setLoading(true);
     setError(null);
-
     try {
-      const normalizedEmail = normalizeEmail(email);
-      const { data: portal } = await supabase
-        .from('client_portal_users')
-        .select('id, lead_id, email')
-        .eq('email', normalizedEmail)
-        .maybeSingle();
-
-      const userId = String(portal?.lead_id || portal?.id || normalizedEmail);
-      setReferrerId(userId);
-
-      const code = await referralSystem.getReferralCode(userId);
-      setReferralCode(code || '');
-
-      const rows = await referralSystem.getReferrals(userId);
-      setReferrals(rows as ReferralRow[]);
+      const { data, error: loadError } = await supabase.rpc('get_client_referrals_by_token', {
+        p_token: accessToken,
+      });
+      if (loadError) throw loadError;
+      if (!data?.success) throw new Error('Accès client invalide');
+      setReferralCode(String(data.referral_code || ''));
+      setReferrals((data.referrals || []) as ReferralRow[]);
     } catch {
       setError('Impossible de charger votre parrainage pour le moment.');
     } finally {
@@ -98,11 +88,6 @@ export default function ClientParrainage() {
       return;
     }
 
-    if (normalizedReferredEmail === normalizeEmail(email)) {
-      setError('Vous ne pouvez pas vous parrainer vous-meme.');
-      return;
-    }
-
     if (!hasPermission) {
       setError('Vous devez confirmer que le filleul accepte de recevoir cette invitation.');
       return;
@@ -113,41 +98,13 @@ export default function ClientParrainage() {
     setMessage(null);
 
     try {
-      const { error: insertError } = await supabase
-        .from('referrals')
-        .insert({
-          referrer_id: referrerId,
-          referred_email: normalizedReferredEmail,
-          status: 'pending',
-          reward_amount: 25,
-          reward_type: 'gift',
-          consent_proof: {
-            confirmed_by_referrer: true,
-            source: 'client_portal_referral',
-            wording_version: 'referral_2026_07',
-            created_at: new Date().toISOString(),
-          },
-        });
-
+      const { data, error: insertError } = await supabase.rpc('create_client_referral_by_token', {
+        p_token: accessToken,
+        p_referred_email: normalizedReferredEmail,
+        p_permission_confirmed: hasPermission,
+      });
       if (insertError) throw insertError;
-
-      try {
-        await supabase.functions.invoke('send-crm-email', {
-          body: {
-            to: normalizedReferredEmail,
-            subject: 'Invitation TaxiAssur par un client',
-            content: `
-              <p>Bonjour,</p>
-              <p>Un client TaxiAssur vous recommande notre service d assurance taxi.</p>
-              <p>Vous pouvez demander votre devis ici : <a href="${referralLink}">${referralLink}</a></p>
-              <p>Si vous ne souhaitez pas etre contacte, ignorez simplement ce message.</p>
-              <p>L equipe TaxiAssur</p>
-            `,
-          },
-        });
-      } catch {
-        // The referral is still recorded; the CRM can relaunch the invitation.
-      }
+      if (!data?.success) throw new Error(data?.error || 'Parrainage refusé');
 
       setMessage('Parrainage enregistre. Le filleul sera traite uniquement dans ce cadre.');
       setReferredEmail('');
@@ -162,7 +119,7 @@ export default function ClientParrainage() {
 
   if (loading) {
     return (
-      <ClientLayout email={email}>
+      <ClientLayout email=''>
         <SEOHead title="Parrainage - Espace Client TaxiAssur" noIndex={true} />
         <div className="flex h-64 items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-yellow-600" />
@@ -172,7 +129,7 @@ export default function ClientParrainage() {
   }
 
   return (
-    <ClientLayout email={email}>
+    <ClientLayout email=''>
       <SEOHead title="Parrainage - Espace Client TaxiAssur" noIndex={true} />
 
       <div className="space-y-6">

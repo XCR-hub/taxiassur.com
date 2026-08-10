@@ -18,7 +18,7 @@ export function parseArticleContent(content: string): FormattedSection[] {
   const sections: FormattedSection[] = [];
 
   // Nettoyer le contenu
-  let cleanContent = content
+  const cleanContent = content
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
     .trim();

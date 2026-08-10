@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -50,7 +51,7 @@ async function sendEmailSMTP(
     throw new Error("IONOS_EMAIL_PASSWORD not configured");
   }
 
-  let conn: any = SMTP_SECURITY === "ssl"
+  let conn: Deno.TcpConn | Deno.TlsConn = SMTP_SECURITY === "ssl"
     ? await Deno.connectTls({ hostname: SMTP_HOST, port: SMTP_PORT })
     : await Deno.connect({ hostname: SMTP_HOST, port: SMTP_PORT });
 
@@ -69,26 +70,28 @@ async function sendEmailSMTP(
     return await readResponse();
   }
 
+  const expect = (response: string, codes: string[]) => {
+    if (!codes.some((code) => response.startsWith(code))) throw new Error("EmailTransportError");
+  };
   try {
-    await readResponse();
-    await sendCommand(`EHLO taxiassur.com`);
+    expect(await readResponse(), ["220"]);
+    expect(await sendCommand(`EHLO taxiassur.com`), ["250"]);
     if (SMTP_SECURITY === "starttls" || SMTP_SECURITY === "tls") {
-      const startTlsResponse = await sendCommand("STARTTLS");
-      if (!startTlsResponse.startsWith("220")) throw new Error("SMTP STARTTLS failed");
-      conn = await Deno.startTls(conn, { hostname: SMTP_HOST });
-      await sendCommand(`EHLO taxiassur.com`);
+      expect(await sendCommand("STARTTLS"), ["220"]);
+      conn = await Deno.startTls(conn as Deno.TcpConn, { hostname: SMTP_HOST });
+      expect(await sendCommand(`EHLO taxiassur.com`), ["250"]);
     }
     const authB64 = btoa(`\0${SMTP_USER}\0${SMTP_PASS}`);
-    await sendCommand(`AUTH PLAIN ${authB64}`);
-    await sendCommand(`MAIL FROM:<${SMTP_USER}>`);
-    await sendCommand(`RCPT TO:<${to}>`);
-    await sendCommand("DATA");
+    expect(await sendCommand(`AUTH PLAIN ${authB64}`), ["235"]);
+    expect(await sendCommand(`MAIL FROM:<${SMTP_USER}>`), ["250"]);
+    expect(await sendCommand(`RCPT TO:<${to}>`), ["250", "251"]);
+    expect(await sendCommand("DATA"), ["354"]);
 
     const boundary = `boundary_${Date.now()}`;
     const message = [
       `From: TaxiAssur <${SMTP_USER}>`,
-      `To: ${toName} <${to}>`,
-      `Subject: ${subject}`,
+      `To: ${toName.replace(/[\r\n"]/g, "")} <${to}>`,
+      `Subject: ${subject.replace(/[\r\n]/g, "")}`,
       `MIME-Version: 1.0`,
       `Content-Type: multipart/alternative; boundary="${boundary}"`,
       ``,
@@ -103,8 +106,8 @@ async function sendEmailSMTP(
     ].join("\r\n");
 
     await conn.write(encoder.encode(message + "\r\n"));
-    await readResponse();
-    await sendCommand("QUIT");
+    expect(await readResponse(), ["250"]);
+    expect(await sendCommand("QUIT"), ["221"]);
   } finally {
     conn.close();
   }
@@ -262,80 +265,105 @@ function buildStatusUpdateClientEmail(data: ClaimNotificationRequest): string {
 </html>`;
 }
 
+function escapeHtml(value: unknown): string {
+  const entities: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  return String(value ?? "").replace(/[&<>"']/g, (character) => entities[character]);
+}
+const json = (status: number, body: Record<string, unknown>) => new Response(JSON.stringify(body), {
+  status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+});
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+async function sha256(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 200, headers: corsHeaders });
-  }
-
+  if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
+  if (req.method !== "POST") return json(405, { success: false, error: "Method not allowed" });
+  let eventId: string | null = null;
+  let teamSent = false;
+  let clientSent = false;
   try {
-    const data: ClaimNotificationRequest = await req.json();
-
-    if (!data.type || !data.client_email || !data.client_name) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Missing required fields: type, client_email, client_name" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    if (!supabaseUrl || !serviceKey) return json(503, { success: false, error: "Service indisponible" });
+    const input = await req.json();
+    if (!uuidPattern.test(input.claim_id || "") || !["new_claim", "status_update"].includes(input.type)) {
+      return json(400, { success: false, error: "Notification invalide" });
     }
-
-    const results: { to: string; success: boolean; error?: string }[] = [];
-
+    const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+    const { data: claim, error: claimError } = await supabase.from("crm_claims").select("*").eq("id", input.claim_id).maybeSingle();
+    if (claimError || !claim?.lead_id) return json(404, { success: false, error: "Sinistre introuvable" });
+    const { data: lead, error: leadError } = await supabase.from("crm_leads").select("email, first_name, last_name, immatriculation").eq("id", claim.lead_id).maybeSingle();
+    if (leadError || !lead?.email) return json(404, { success: false, error: "Prospect introuvable" });
+    const rawStatus = String(claim.claim_status || claim.status || "DECLARED");
+    const rawVisibleStatus = String(claim.client_visible_status || "");
+    const rawVisibleNotes = String(claim.client_visible_notes || "");
+    const eventKey = await sha256([input.type, claim.id, rawStatus, rawVisibleStatus, rawVisibleNotes].join("|"));
+    const { data: event, error: eventError } = await supabase.from("claim_notification_events").insert({
+      claim_id: claim.id, notification_type: input.type, event_key: eventKey, status: "processing",
+    }).select("id, team_sent_at, client_sent_at").single();
+    if (eventError) {
+      if (eventError.code !== "23505") throw new Error("NotificationAuditError");
+      const { data: existing } = await supabase.from("claim_notification_events").select("id, status, team_sent_at, client_sent_at").eq("event_key", eventKey).maybeSingle();
+      if (!existing || existing.status !== "failed") return json(200, { success: true, duplicate: true });
+      const { data: retry, error: retryError } = await supabase.from("claim_notification_events")
+        .update({ status: "processing", failed_at: null }).eq("id", existing.id).eq("status", "failed").select("id").maybeSingle();
+      if (retryError || !retry) return json(200, { success: true, duplicate: true });
+      eventId = retry.id;
+      teamSent = Boolean(existing.team_sent_at);
+      clientSent = Boolean(existing.client_sent_at);
+    } else {
+      eventId = event.id;
+      teamSent = Boolean(event.team_sent_at);
+      clientSent = Boolean(event.client_sent_at);
+    }
+    const recipient = String(lead.email).trim().toLowerCase();
+    const rawName = `${lead.first_name || ""} ${lead.last_name || ""}`.trim() || "Client";
+    const data: ClaimNotificationRequest = {
+      type: input.type,
+      claim_id: claim.id,
+      claim_reference: escapeHtml(claim.reference_number || claim.reference || ""),
+      client_name: escapeHtml(rawName), client_email: escapeHtml(recipient),
+      claim_type: escapeHtml(claim.claim_type || claim.incident_type || "Sinistre"),
+      claim_date: claim.claim_date || claim.incident_date || claim.created_at,
+      description: escapeHtml(claim.description || claim.incident_description || ""),
+      status: escapeHtml(rawStatus), client_visible_status: escapeHtml(rawVisibleStatus),
+      client_visible_notes: escapeHtml(rawVisibleNotes), immatriculation: escapeHtml(lead.immatriculation || ""),
+      vehicle: escapeHtml(claim.vehicle_info || ""),
+    };
+    let delivered = 0;
     if (data.type === "new_claim") {
       const teamEmail = Deno.env.get("TEAM_NOTIFICATION_EMAIL") || "team@taxiassur.com";
-      const subject = `Nouveau sinistre déclaré — ${data.client_name}${data.claim_reference ? ` (${data.claim_reference})` : ""}`;
-
-      try {
-        await sendEmailSMTP(teamEmail, "Equipe TaxiAssur", subject, buildNewClaimTeamEmail(data));
-        results.push({ to: teamEmail, success: true });
-      } catch (err) {
-        console.error("Failed to send team email:", err);
-        results.push({ to: teamEmail, success: false, error: String(err) });
+      if (!teamSent) {
+        await sendEmailSMTP(teamEmail, "Equipe TaxiAssur", `Nouveau sinistre declare${data.claim_reference ? ` (${data.claim_reference})` : ""}`, buildNewClaimTeamEmail(data));
+        teamSent = true; delivered += 1;
+        await supabase.from("claim_notification_events").update({ team_sent_at: new Date().toISOString() }).eq("id", eventId);
       }
-
-      try {
-        await sendEmailSMTP(
-          data.client_email,
-          data.client_name,
-          "TaxiAssur — Votre sinistre a bien été enregistré",
-          buildNewClaimClientEmail(data)
-        );
-        results.push({ to: data.client_email, success: true });
-      } catch (err) {
-        console.error("Failed to send client confirmation email:", err);
-        results.push({ to: data.client_email, success: false, error: String(err) });
+      if (!clientSent) {
+        await sendEmailSMTP(recipient, rawName, "TaxiAssur - Votre sinistre a bien ete enregistre", buildNewClaimClientEmail(data));
+        clientSent = true; delivered += 1;
+        await supabase.from("claim_notification_events").update({ client_sent_at: new Date().toISOString() }).eq("id", eventId);
       }
-    } else if (data.type === "status_update") {
-      const statusLabel = STATUS_LABELS[data.status || ""] || data.status || "Mise à jour";
-
-      try {
-        await sendEmailSMTP(
-          data.client_email,
-          data.client_name,
-          `TaxiAssur — Votre sinistre : ${statusLabel}`,
-          buildStatusUpdateClientEmail(data)
-        );
-        results.push({ to: data.client_email, success: true });
-      } catch (err) {
-        console.error("Failed to send status update email:", err);
-        results.push({ to: data.client_email, success: false, error: String(err) });
-      }
-    } else {
-      return new Response(
-        JSON.stringify({ success: false, error: `Unknown type: ${data.type}` }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    } else if (!clientSent) {
+      const statusLabel = STATUS_LABELS[rawStatus] || rawStatus || "Mise a jour";
+      await sendEmailSMTP(recipient, rawName, `TaxiAssur - Votre sinistre : ${statusLabel}`, buildStatusUpdateClientEmail(data));
+      clientSent = true; delivered += 1;
+      await supabase.from("claim_notification_events").update({ client_sent_at: new Date().toISOString() }).eq("id", eventId);
     }
-
-    const allOk = results.every((r) => r.success);
-
-    return new Response(
-      JSON.stringify({ success: allOk, results }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  } catch (err) {
-    console.error("notify-claim error:", err);
-    return new Response(
-      JSON.stringify({ success: false, error: String(err) }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    const totalDelivered = data.type === "new_claim" ? Number(teamSent) + Number(clientSent) : Number(clientSent);
+    await supabase.from("claim_notification_events").update({ status: "sent", delivered_count: totalDelivered, sent_at: new Date().toISOString() }).eq("id", eventId);
+    console.log("Claim notification sent", input.type, delivered);
+    return json(200, { success: true, delivered });
+  } catch (error) {
+    console.error("Claim notification failed", error instanceof Error ? error.name : "UnknownError");
+    if (eventId) {
+      try {
+        const url = Deno.env.get("SUPABASE_URL") || ""; const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+        if (url && key) await createClient(url, key).from("claim_notification_events").update({ status: "failed", failed_at: new Date().toISOString() }).eq("id", eventId);
+      } catch { /* audit failure must not expose details */ }
+    }
+    return json(502, { success: false, error: "Notification impossible" });
   }
 });

@@ -9,7 +9,7 @@ Système complet de paiement comptant via Monetico CIC intégré à l'étape 6 d
 ### Identifiants
 - **TPE**: 7374133
 - **Société**: taxiassur
-- **Clé MAC**: 106FA85BF342FD4EE95C883D82865B5CC1F63890
+- **Clé MAC**: [REDACTED_MONETICO_MAC_KEY]
 - **Version**: 3.0
 - **Langue**: FR
 - **Mode**: Paiement immédiat

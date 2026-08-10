@@ -1,14 +1,17 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  Mail, RefreshCw, Star, User, Paperclip, Tag, Search,
+  Mail, RefreshCw, Star, User, Paperclip, Search,
   ExternalLink, CheckCircle, Send, Archive, AlertCircle,
   Settings, UserPlus, Clock, Link as LinkIcon, X, Trash2,
-  Folder, Inbox, MailOpen, Users, Download, FileDown, Zap,
-  ChevronDown, ArrowLeft, ArrowUp, ArrowDown, Reply,
-  MoreHorizontal, Filter, CheckSquare, Square, AtSign,
-  Phone, MapPin, Loader2, Eye, EyeOff
+  Folder, Inbox, MailOpen, Users, Zap,
+  ArrowLeft, Reply,
+  CheckSquare, Square, AtSign,
+  Phone, MapPin, Loader2, EyeOff
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
+import { SecureDocumentLink } from '@/components/crm/SecureDocumentLink';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 
 interface EmailMessage {
   id: string;
@@ -238,7 +241,7 @@ const CRMInboxMulticanal: React.FC = () => {
     try {
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-all-emails-complete`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+        headers: { ...(await internalFunctionHeaders()), 'Content-Type': 'application/json' },
       });
       const result = await res.json();
       if (result.success) {
@@ -254,7 +257,7 @@ const CRMInboxMulticanal: React.FC = () => {
     try {
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-create-leads-from-emails`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+        headers: { ...(await internalFunctionHeaders()), 'Content-Type': 'application/json' },
       });
       const result = await res.json();
       if (result.success) {
@@ -372,13 +375,14 @@ const CRMInboxMulticanal: React.FC = () => {
     if (!selectedMessage || !replyContent.trim()) { showToast('Veuillez saisir un message', 'error'); return; }
     setReplySending(true);
     try {
-      await supabase.functions.invoke('send-crm-email', {
+      const { data: sendResult, error: sendError } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
         body: {
           to: selectedMessage.from_email,
           subject: `Re: ${selectedMessage.subject}`,
           content: `<p>${replyContent.replace(/\n/g, '<br>')}</p><hr><blockquote>${selectedMessage.body_html || selectedMessage.body_text}</blockquote>`,
         },
       });
+      if (sendError || !sendResult?.success) throw sendError || new Error("Envoi refusé");
       await loadMessages();
       setShowReplyModal(false); setReplyContent('');
       showToast('Réponse envoyée !', 'success');
@@ -396,7 +400,11 @@ const CRMInboxMulticanal: React.FC = () => {
   const toggleSelectEmail = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       return next;
     });
   };
@@ -1040,16 +1048,7 @@ const CRMInboxMulticanal: React.FC = () => {
                             </div>
                           </div>
                           {(att.storage_path || att.url) && (
-                            <a
-                              href={att.storage_path ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/email-attachments/${att.storage_path}` : att.url}
-                              download
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white rounded-lg text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-700"
-                            >
-                              <Download size={13} />
-                              Télécharger
-                            </a>
+                            <SecureDocumentLink                               filePath={att.storage_path!}                               source="email_attachments"                               bucket="email-attachments"                               fileName={att.filename}                               mode="download"                               showText                               customText="Télécharger"                               iconSize={13}                               className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white rounded-lg text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-700"                             />
                           )}
                         </div>
                       ))}

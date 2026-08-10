@@ -9,6 +9,7 @@ import {
   ChevronLeft,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { getSecureDocumentUrl } from '@/lib/secure-document-url';
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface PendingDocument {
@@ -92,13 +93,10 @@ function formatSize(bytes: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
 }
 
-function getPublicUrl(doc: PendingDocument): string {
-  if (doc.metadata?.download_url) return doc.metadata.download_url;
-  const bucket = doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/')
+function getDocumentBucket(doc: PendingDocument): 'email-attachments' | 'prospect-documents' {
+  return doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/')
     ? 'email-attachments'
     : 'prospect-documents';
-  const { data } = supabase.storage.from(bucket).getPublicUrl(doc.file_path);
-  return data.publicUrl;
 }
 
 function timeAgo(dateStr: string): string {
@@ -119,10 +117,18 @@ function isUrgentDoc(doc: PendingDocument): boolean {
 
 function PreviewThumb({ doc }: { doc: PendingDocument }) {
   const [err, setErr] = useState(false);
+  const [url, setUrl] = useState('');
   const mime = doc.mime_type || '';
-  const url = getPublicUrl(doc);
+  useEffect(() => {
+    let active = true;
+    if (!mime.startsWith('image/')) return;
+    void getSecureDocumentUrl({ bucket: getDocumentBucket(doc), path: doc.file_path })
+      .then((signedUrl) => { if (active) setUrl(signedUrl); })
+      .catch(() => { if (active) setErr(true); });
+    return () => { active = false; };
+  }, [doc.file_path, mime]);
 
-  if (mime.startsWith('image/') && !err) {
+  if (mime.startsWith('image/') && !err && url) {
     return (
       <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-700 flex-shrink-0 border border-slate-600/60">
         <img
@@ -145,6 +151,19 @@ function PreviewThumb({ doc }: { doc: PendingDocument }) {
   );
 }
 
+
+function SecureDocumentActions({ doc }: { doc: PendingDocument }) {
+  const open = async (download: boolean) => {
+    try {
+      const url = await getSecureDocumentUrl({ bucket: getDocumentBucket(doc), path: doc.file_path, download, fileName: doc.file_name });
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (error) { console.error('Document unavailable', error); }
+  };
+  return <>
+    <button type="button" onClick={() => void open(false)} title="Aperçu" className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"><Eye className="w-4 h-4" /></button>
+    <button type="button" onClick={() => void open(true)} title="Télécharger" className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"><Download className="w-4 h-4" /></button>
+  </>;
+}
 function RejectModal({ state, onClose, onConfirm, batchCount = 0 }: {
   state: RejectModalState;
   onClose: () => void;
@@ -479,13 +498,13 @@ Acceder a mon espace
   };
 
   const toggleLeadExpand = (leadId: string) =>
-    setExpandedLeads(prev => { const s = new Set(prev); s.has(leadId) ? s.delete(leadId) : s.add(leadId); return s; });
+    setExpandedLeads(prev => { const s = new Set(prev); if (s.has(leadId)) s.delete(leadId); else s.add(leadId); return s; });
 
   const toggleSelect = (id: string) =>
-    setSelectedIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+    setSelectedIds(prev => { const s = new Set(prev); if (s.has(id)) s.delete(id); else s.add(id); return s; });
 
   const toggleTypeFilter = (type: string) =>
-    setFilterTypes(prev => { const s = new Set(prev); s.has(type) ? s.delete(type) : s.add(type); return s; });
+    setFilterTypes(prev => { const s = new Set(prev); if (s.has(type)) s.delete(type); else s.add(type); return s; });
 
   const clearFilters = () => {
     setFilterLeadId(null);
@@ -830,7 +849,6 @@ Acceder a mon espace
                           const isSelected = selectedIds.has(doc.id);
                           const isProc = processing.has(doc.id);
                           const isSuspect = isSuspectDocument(doc);
-                          const url = getPublicUrl(doc);
                           const urgent = isUrgentDoc(doc);
 
                           return (
@@ -880,14 +898,7 @@ Acceder a mon espace
 
                               {/* Actions */}
                               <div className="flex items-center gap-1.5 flex-shrink-0">
-                                <a href={url} target="_blank" rel="noopener noreferrer" title="Aperçu"
-                                  className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors">
-                                  <Eye className="w-4 h-4" />
-                                </a>
-                                <a href={url} download={doc.file_name} title="Télécharger"
-                                  className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors">
-                                  <Download className="w-4 h-4" />
-                                </a>
+                                <SecureDocumentActions doc={doc} />
                                 <button
                                   onClick={() => handleValidate(doc.id)}
                                   disabled={isProc}

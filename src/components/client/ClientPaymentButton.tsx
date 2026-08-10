@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { CreditCard, CheckCircle, Loader2, AlertCircle, ExternalLink, Euro, Lock } from 'lucide-react';
+import { CreditCard, CheckCircle, Loader2, AlertCircle, ExternalLink, Lock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface Props {
-  leadId: string;
+  token?: string;
 }
 
-export default function ClientPaymentButton({ leadId }: Props) {
+export default function ClientPaymentButton({ token }: Props) {
   const [loading, setLoading] = useState(true);
   const [paymentInfo, setPaymentInfo] = useState<{
     required: boolean;
@@ -18,28 +18,28 @@ export default function ClientPaymentButton({ leadId }: Props) {
 
   useEffect(() => {
     loadPaymentInfo();
-  }, [leadId]);
+  }, [token]);
 
   const loadPaymentInfo = async () => {
     try {
       setLoading(true);
 
-      const { data: contract } = await supabase
-        .from('lead_contracts')
-        .select('down_payment_required, down_payment_amount, down_payment_status, down_payment_link, down_payment_paid_at')
-        .eq('lead_id', leadId)
-        .maybeSingle();
-
-      if (contract) {
-        setPaymentInfo({
-          required: contract.down_payment_required || false,
-          amount: contract.down_payment_amount,
-          status: contract.down_payment_status,
-          payment_link: contract.down_payment_link,
-          paid_at: contract.down_payment_paid_at
-        });
+      if (!token) {
+        setPaymentInfo(null);
+        return;
       }
-    } catch (error) {
+      const { data, error } = await supabase.rpc('get_client_down_payment_by_token', {
+        p_token: token,
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error('Accès prospect invalide');
+      setPaymentInfo({
+        required: Boolean(data.required),
+        amount: data.amount == null ? null : Number(data.amount),
+        status: data.status || null,
+        payment_link: data.payment_link || null,
+        paid_at: data.paid_at || null,
+      });    } catch (error) {
       console.error('Erreur chargement paiement:', error);
     } finally {
       setLoading(false);

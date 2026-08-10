@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
-  Bell, FileText, CreditCard, CheckCircle, Clock, AlertCircle,
+  Bell, FileText, CreditCard, CheckCircle, Clock,
   RefreshCw, Package, Shield, MessageSquare, Info, type LucideIcon
 } from 'lucide-react';
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { getClientAccessToken } from '@/lib/client-access';
 
 interface Notification {
   id: string;
@@ -49,57 +50,32 @@ function formatRelativeDate(iso: string): string {
 export default function ClientNotifications() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const email = searchParams.get('email') || sessionStorage.getItem('client_email') || '';
+  const accessToken = getClientAccessToken(searchParams.get('token'));
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
 
   useEffect(() => {
-    if (!email) {
+    if (!accessToken) {
       navigate('/espace-client');
       return;
     }
-    sessionStorage.setItem('client_email', email);
     loadNotifications();
-  }, [email, navigate]);
+  }, [accessToken, navigate]);
 
   const loadNotifications = async () => {
     setLoading(true);
     try {
-      const { data: portal } = await supabase
-        .from('client_portal_users')
-        .select('lead_id')
-        .eq('email', email.toLowerCase().trim())
-        .maybeSingle();
-
-      let leadId = portal?.lead_id;
-
-      if (!leadId) {
-        const { data: lead } = await supabase
-          .from('crm_leads')
-          .select('id')
-          .eq('email', email.toLowerCase().trim())
-          .maybeSingle();
-        leadId = lead?.id;
-      }
-
-      if (!leadId) {
-        setNotifications([]);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('crm_event_notifications')
-        .select('id, title, message, type, created_at, dismissed, read_at')
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
+      const { data, error } = await supabase.rpc('get_client_notifications_by_token', {
+        p_token: accessToken,
+      });
       if (error) throw error;
-      setNotifications((data || []) as Notification[]);
+      if (!data?.success) throw new Error('Accès client invalide');
+      setNotifications((data.notifications || []) as Notification[]);
     } catch (err) {
       logger.error('Error loading notifications:', err);
+      setNotifications([]);
     } finally {
       setLoading(false);
     }
@@ -111,10 +87,8 @@ export default function ClientNotifications() {
       const unread = notifications.filter(n => !n.read_at).map(n => n.id);
       if (unread.length === 0) return;
 
-      await supabase
-        .from('crm_event_notifications')
-        .update({ read_at: new Date().toISOString(), is_read: true })
-        .in('id', unread);
+      const { data, error } = await supabase.rpc('mark_client_notifications_read_by_token', { p_token: accessToken });
+      if (error || !data?.success) throw error || new Error('Accès client invalide');
 
       setNotifications(prev => prev.map(n => ({
         ...n,
@@ -129,10 +103,11 @@ export default function ClientNotifications() {
 
   const markRead = async (id: string) => {
     try {
-      await supabase
-        .from('crm_event_notifications')
-        .update({ read_at: new Date().toISOString(), is_read: true })
-        .eq('id', id);
+      const { data, error } = await supabase.rpc('mark_client_notification_read_by_token', {
+        p_token: accessToken,
+        p_notification_id: id,
+      });
+      if (error || !data?.success) throw error || new Error('Notification inaccessible');
 
       setNotifications(prev => prev.map(n =>
         n.id === id ? { ...n, read_at: new Date().toISOString() } : n
@@ -152,7 +127,7 @@ export default function ClientNotifications() {
         noIndex={true}
       />
 
-      <ClientLayout email={email}>
+      <ClientLayout email=''>
         <div className="space-y-6">
 
           <div className="flex items-start justify-between gap-4">

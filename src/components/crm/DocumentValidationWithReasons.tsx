@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import { FileText, CheckCircle, XCircle, Eye, Download, Printer, AlertCircle, Mail, CreditCard as Edit3, X, Check } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 import { logger } from '@/lib/logger';
 
 interface Document {
@@ -24,6 +25,9 @@ interface DocumentValidationWithReasonsProps {
   leadEmail?: string;
   onValidationComplete?: () => void;
 }
+
+const escapeHtml = (value: unknown) => String(value ?? "")
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 const DOCUMENT_LABELS: Record<string, string> = {
   licence_taxi: 'Licence de taxi',
@@ -224,29 +228,14 @@ export function DocumentValidationWithReasons({
       if (rejectionForm.sendEmail && leadEmail) {
         const reasonLabel = REJECTION_REASONS.find(r => r.value === rejectionForm.reason)?.label || rejectionForm.reason;
 
-        await supabase.functions.invoke('send-crm-email', {
+        const { data: sendResult, error: sendError } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
           body: {
-            to: leadEmail,
-            template: 'document_rejected',
-            data: {
-              leadId: leadId,
-              documentType: DOCUMENT_LABELS[doc.document_type] || doc.document_type,
-              fileName: doc.file_name,
-              reason: reasonLabel,
-              details: rejectionForm.details
-            }
+            to: leadEmail, lead_id: leadId,
+            subject: "Document à renouveler - " + (DOCUMENT_LABELS[doc.document_type] || doc.document_type),
+            content: "<p>Bonjour,</p><p>Le document <strong>" + escapeHtml(doc.file_name) + "</strong> doit être renouvelé.</p><p><strong>Motif :</strong> " + escapeHtml(reasonLabel) + "</p>" + (rejectionForm.details ? "<p>" + escapeHtml(rejectionForm.details) + "</p>" : "") + "<p>Merci de déposer une nouvelle version dans votre espace sécurisé.</p><p>L équipe TaxiAssur</p>"
           }
         });
-
-        // Add email to timeline
-        await supabase.from('crm_interactions').insert({
-          lead_id: leadId,
-          type: 'email',
-          direction: 'outbound',
-          subject: `Document rejeté: ${DOCUMENT_LABELS[doc.document_type] || doc.document_type}`,
-          content: `Email automatique envoyé au prospect pour le document rejeté: ${reasonLabel}`,
-          created_by: user?.id
-        });
+        if (sendError || !sendResult?.success) throw sendError || new Error("E-mail de refus non envoyé");
       }
 
       // Add to timeline

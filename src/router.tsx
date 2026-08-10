@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { lazy } from 'react';
 import RouteErrorFallback from './components/RouteErrorFallback';
 import NotFound from './pages/NotFound';
@@ -98,7 +98,6 @@ const ClientParrainage = lazy(() => import('./pages/client/ClientParrainage'));
 const ClientConfidentialite = lazy(() => import('./pages/client/ClientConfidentialite'));
 const ClientProfil = lazy(() => import('./pages/client/ClientProfil'));
 const ClientSinistres = lazy(() => import('./pages/client/ClientSinistres'));
-const ClientInsuranceSpace = lazy(() => import('./pages/client/ClientInsuranceSpace'));
 
 const CRMLayout = lazy(() => import('./backoffice/CRMLayout'));
 const CRMKillerDashboard = lazy(() => import('./backoffice/CRMKillerDashboard'));
@@ -205,7 +204,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/espace-client/assurances',
-    element: <ClientInsuranceSpace />,
+    element: <Navigate to="/client/dashboard" replace />,
   },
   {
     path: '/espace-prospect',

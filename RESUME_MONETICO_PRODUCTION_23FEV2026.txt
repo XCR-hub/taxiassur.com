@@ -29,7 +29,7 @@
    → Section : Clé de sécurité / Clé MAC
    → Format : 40 caractères hexadécimaux
 
-   Exemple : 106FA85BF342FD4EE95C883D82865B5CC1F63890
+   Exemple : [REDACTED_MONETICO_MAC_KEY]
 
 
 2️⃣  CONFIGURER LES SECRETS SUPABASE

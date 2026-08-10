@@ -2,14 +2,17 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   FileText, Download, Eye, Upload, CheckCircle, Clock, XCircle,
-  AlertCircle, RefreshCw, Loader, FolderOpen, Layers, Shield, User,
+  AlertCircle, RefreshCw, Loader, FolderOpen,
   FileImage, FileArchive, File, UploadCloud, Filter, Receipt,
-  ScrollText, ChevronRight, Plus, type LucideIcon
+  ScrollText, Plus, type LucideIcon
 } from 'lucide-react';
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
 import { supabase } from '@/lib/supabase';
+import { getSecureDocumentUrl } from '@/lib/secure-document-url';
 import { logger } from '@/lib/logger';
+import { getClientAccessToken } from '@/lib/client-access';
+import { withTimeout } from '@/lib/promise-timeout';
 
 interface Document {
   id: string;
@@ -109,10 +112,9 @@ const TAB_META: Record<Tab, { label: string; icon: LucideIcon; color: string; em
 export default function ClientDocuments() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const email = searchParams.get('email') || sessionStorage.getItem('client_email') || '';
+  const accessToken = getClientAccessToken(searchParams.get('token'));
 
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [leadId, setLeadId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -124,20 +126,18 @@ export default function ClientDocuments() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!email) { navigate('/espace-client'); return; }
-    sessionStorage.setItem('client_email', email);
+    if (!accessToken) { navigate('/espace-client'); return; }
     loadDocuments();
-  }, [email, navigate]);
+  }, [accessToken, navigate]);
 
   const loadDocuments = async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .rpc('get_client_documents_by_email', { p_email: email.toLowerCase().trim() });
+        .rpc('get_client_documents_by_token', { p_token: accessToken });
       if (error) throw error;
       if (data?.success) {
         setDocuments(data.documents || []);
-        setLeadId(data.lead_id || null);
       }
     } catch (err) {
       logger.error('Error loading documents:', err);
@@ -146,67 +146,85 @@ export default function ClientDocuments() {
     }
   };
 
-  const handleView = (doc: Document) => {
-    if (doc.file_url) window.open(doc.file_url, '_blank', 'noopener,noreferrer');
+  const handleView = async (doc: Document) => {
+    if (!doc.file_url || !accessToken) return;
+    try {
+      const bucket = documentBucket(doc);
+      if (!bucket) return void window.open(doc.file_url, '_blank', 'noopener,noreferrer');
+      const signedUrl = await getSecureDocumentUrl({ path: doc.file_url, bucket, accessToken });
+      window.open(signedUrl, '_blank', 'noopener,noreferrer');
+    } catch (error: unknown) {
+      setUploadError(error instanceof Error ? error.message : "Impossible d'ouvrir le document");
+    }
   };
 
   const handleDownload = async (doc: Document) => {
-    if (!doc.file_url) return;
+    if (!doc.file_url || !accessToken) return;
     try {
-      const response = await fetch(doc.file_url);
+      const bucket = documentBucket(doc);
+      const signedUrl = bucket
+        ? await getSecureDocumentUrl({ path: doc.file_url, bucket, accessToken, download: true, fileName: doc.name })
+        : doc.file_url;
+      const response = await fetch(signedUrl);
+      if (!response.ok) throw new Error(`Téléchargement impossible (HTTP ${response.status})`);
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = doc.name || 'document';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = doc.name || 'document';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
       URL.revokeObjectURL(url);
-    } catch {
-      window.open(doc.file_url, '_blank', 'noopener,noreferrer');
+    } catch (error: unknown) {
+      setUploadError(error instanceof Error ? error.message : 'Téléchargement impossible');
     }
   };
 
   const processFile = async (file: File) => {
-    if (!leadId) return;
+    if (!accessToken) return;
     if (file.size > MAX_FILE_SIZE) {
       setUploadError(`Fichier trop volumineux (${formatBytes(file.size)}). La limite est de 10 MB.`);
+      return;
+    }
+    if (!['application/pdf', 'image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setUploadError('Type de fichier refusé. Formats autorisés : PDF, JPG, PNG ou WEBP.');
       return;
     }
     setUploading(true);
     setUploadError(null);
     setUploadSuccess(false);
     setUploadProgress(10);
+    let preparedPath = '';
     try {
-      const filePath = `${leadId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-      setUploadProgress(30);
-      const { error: uploadErr } = await supabase.storage
+      const request = { accessToken, fileName: file.name, fileSize: file.size, mimeType: file.type };
+      const { data: prepared, error: prepareError } = await withTimeout(supabase.functions.invoke('upload-client-document', {
+        body: { action: 'prepare', ...request },
+      }), 20_000);
+      if (prepareError || !prepared?.success || !prepared.path || !prepared.uploadToken) {
+        throw prepareError || new Error('Préparation du dépôt impossible');
+      }
+      preparedPath = String(prepared.path);
+      setUploadProgress(35);
+      const { error: uploadError } = await withTimeout(supabase.storage
         .from('prospect-documents')
-        .upload(filePath, file, { upsert: false });
-      if (uploadErr) throw uploadErr;
-      setUploadProgress(70);
-      const { data: urlData } = supabase.storage
-        .from('prospect-documents')
-        .getPublicUrl(filePath);
-      await supabase.from('prospect_documents').insert({
-        lead_id: leadId,
-        file_name: file.name,
-        file_path: filePath,
-        file_url: urlData.publicUrl,
-        file_size: file.size,
-        mime_type: file.type,
-        document_type: 'other',
-        status: 'pending',
-        uploaded_by: 'prospect',
-      });
+        .uploadToSignedUrl(preparedPath, String(prepared.uploadToken), file, { contentType: file.type }), 60_000);
+      if (uploadError) throw uploadError;
+      setUploadProgress(75);
+      const { data: finalized, error: finalizeError } = await withTimeout(supabase.functions.invoke('upload-client-document', {
+        body: { action: 'finalize', path: preparedPath, ...request },
+      }), 20_000);
+      if (finalizeError || !finalized?.success) {
+        throw finalizeError || new Error('Finalisation du dépôt impossible');
+      }
       setUploadProgress(100);
       setUploadSuccess(true);
       setActiveTab('mine');
       setTimeout(() => { setUploadSuccess(false); setUploadProgress(0); setShowUpload(false); }, 3000);
       await loadDocuments();
     } catch (err) {
-      setUploadError(err.message || "Erreur lors de l'envoi du fichier");
+      logger.error('Secure client document upload failed', { pathCreated: Boolean(preparedPath) });
+      setUploadError(err instanceof Error ? err.message : "Erreur lors de l'envoi du fichier");
       setUploadProgress(0);
     } finally {
       setUploading(false);
@@ -224,7 +242,7 @@ export default function ClientDocuments() {
     setDragOver(false);
     const file = e.dataTransfer.files?.[0];
     if (file) processFile(file);
-  }, [leadId]);
+  }, [accessToken]);
 
   const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setDragOver(true); };
   const handleDragLeave = () => setDragOver(false);
@@ -255,7 +273,7 @@ export default function ClientDocuments() {
         noIndex={true}
       />
 
-      <ClientLayout email={email}>
+      <ClientLayout email={userData?.email || ''}>
         <div className="space-y-5">
 
           {/* Header */}
@@ -277,7 +295,7 @@ export default function ClientDocuments() {
               </button>
               <button
                 onClick={() => { setShowUpload(v => !v); setUploadError(null); }}
-                disabled={!leadId}
+                disabled={!accessToken}
                 className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 disabled:from-gray-200 disabled:to-gray-200 disabled:text-gray-400 text-black rounded-lg font-semibold text-sm transition-all shadow-sm"
               >
                 <Plus size={14} />
@@ -354,12 +372,12 @@ export default function ClientDocuments() {
                     className="hidden"
                     accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx"
                     onChange={handleUpload}
-                    disabled={uploading || !leadId}
+                    disabled={uploading || !accessToken}
                   />
                   <label
                     htmlFor="doc-upload"
                     className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm cursor-pointer transition-all ${
-                      uploading || !leadId
+                      uploading || !accessToken
                         ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                         : 'bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black shadow-sm hover:shadow-md'
                     }`}
@@ -523,4 +541,10 @@ export default function ClientDocuments() {
       </ClientLayout>
     </>
   );
+}
+
+function documentBucket(doc: Document): 'prospect-documents' | 'crm-documents' | null {
+  if (doc.category === 'company_document') return null;
+  if (doc.file_url.includes('/crm-documents/')) return 'crm-documents';
+  return 'prospect-documents';
 }

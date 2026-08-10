@@ -14,9 +14,40 @@ const ROLE_LABELS: Record<string, string> = {
   support: 'Support client',
 };
 
+function escapeHtml(value: unknown): string {
+  const entities: Record<string, string> = {
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  };
+  return String(value ?? '').replace(/[&<>"']/g, (character) => entities[character]);
+}
+
+interface AdminActor {
+  userId: string | null;
+  role: 'service_role' | 'master' | 'admin';
+}
+
+async function getAdminActor(
+  req: Request,
+  supabaseUrl: string,
+  serviceKey: string,
+): Promise<AdminActor | null> {
+  const token = (req.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
+  if (!token) return null;
+  if (token === serviceKey) return { userId: null, role: 'service_role' };
+  const admin = createClient(supabaseUrl, serviceKey);
+  const { data: authData, error: authError } = await admin.auth.getUser(token);
+  if (authError || !authData.user) return null;
+  const { data: actor, error: actorError } = await admin
+    .from('admin_users')
+    .select('role, is_active')
+    .eq('id', authData.user.id)
+    .maybeSingle();
+  if (actorError || actor?.is_active !== true || !['master', 'admin'].includes(actor.role)) return null;
+  return { userId: authData.user.id, role: actor.role as 'master' | 'admin' };
+}
 function buildInvitationEmail(fullName: string, invitationLink: string, role: string): string {
-  const firstName = fullName.split(' ')[0];
-  const roleLabel = ROLE_LABELS[role] || 'Collaborateur';
+  const firstName = escapeHtml(fullName.split(' ')[0]);
+  const roleLabel = escapeHtml(ROLE_LABELS[role] || 'Collaborateur');
 
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -313,27 +344,65 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ success: false, error: 'Method not allowed' }), {
+      status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return new Response(JSON.stringify({ success: false, error: 'Service indisponible' }), {
+        status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const actor = await getAdminActor(req, supabaseUrl, supabaseServiceKey);
+    if (!actor) {
+      return new Response(JSON.stringify({ success: false, error: 'Forbidden' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const body = await req.json();
-    const { action, user_id, email, full_name, role, permissions, force_resend } = body;
+    let body: Record<string, unknown>;
+    try { body = await req.json(); } catch {
+      return new Response(JSON.stringify({ success: false, error: 'Corps JSON invalide' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const action = typeof body.action === 'string' ? body.action.trim() : 'invite';
+    const user_id = typeof body.user_id === 'string' ? body.user_id.trim() : '';
+    const email = typeof body.email === 'string' ? body.email.trim().toLowerCase().slice(0, 254) : '';
+    const full_name = typeof body.full_name === 'string' ? body.full_name.trim().replace(/[\r\n]/g, ' ').slice(0, 150) : '';
+    const role = typeof body.role === 'string' ? body.role.trim() : 'collaborator';
+    const permissions = Array.isArray(body.permissions) ? body.permissions as Array<Record<string, unknown>> : [];
+    const force_resend = body.force_resend === true;
 
     // --- DELETE ACTION ---
     if (action === 'delete') {
-      if (!user_id) {
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(user_id)) {
         return new Response(
           JSON.stringify({ success: false, error: 'user_id requis pour la suppression' }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      await supabaseAdmin.from('user_permissions').delete().eq('user_id', user_id);
+      if (actor.userId === user_id) {
+        return new Response(JSON.stringify({ success: false, error: 'Auto-suppression interdite' }), {
+          status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const { data: target } = await supabaseAdmin
+        .from('admin_users').select('role').eq('id', user_id).maybeSingle();
+      if (target?.role === 'master' && actor.role !== 'master' && actor.role !== 'service_role') {
+        return new Response(JSON.stringify({ success: false, error: 'Droits insuffisants' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }      await supabaseAdmin.from('user_permissions').delete().eq('user_id', user_id);
       await supabaseAdmin.from('admin_users').delete().eq('id', user_id);
       await supabaseAdmin.auth.admin.deleteUser(user_id);
       return new Response(
@@ -359,6 +428,11 @@ Deno.serve(async (req: Request) => {
 
     const validRoles = ['master', 'admin', 'collaborator', 'commercial', 'support'];
     const userRole = role || 'collaborator';
+    if (userRole === 'master' && actor.role !== 'master' && actor.role !== 'service_role') {
+      return new Response(JSON.stringify({ success: false, error: 'Droits insuffisants' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     if (!validRoles.includes(userRole)) {
       return new Response(
         JSON.stringify({ success: false, error: `Role invalide. Roles valides: ${validRoles.join(', ')}` }),
@@ -366,7 +440,9 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const redirectUrl = `${req.headers.get('origin') || 'https://taxiassur.com'}/auth/set-password`;
+    const requestOrigin = req.headers.get('origin') || 'https://taxiassur.com';
+    const allowedOrigins = new Set(['https://taxiassur.com', 'https://www.taxiassur.com']);
+    const redirectUrl = `${allowedOrigins.has(requestOrigin) ? requestOrigin : 'https://taxiassur.com'}/auth/set-password`;
 
     // Check if user already exists in admin_users
     const { data: existingUser } = await supabaseAdmin
@@ -424,8 +500,8 @@ Deno.serve(async (req: Request) => {
         try {
           await sendInvitationEmail(email, existingUser.full_name || full_name, actionLink, existingUser.role || userRole);
           emailSent = true;
-        } catch (mailErr: any) {
-          emailError = mailErr?.message || 'Erreur SMTP inconnue';
+        } catch (mailErr: unknown) {
+          emailError = mailErr instanceof Error ? mailErr.message : 'Erreur SMTP inconnue';
           console.error('Email send error (force_resend):', mailErr);
         }
 
@@ -467,7 +543,7 @@ Deno.serve(async (req: Request) => {
       // Fallback: if user already exists in auth, look them up
       if (linkError.message?.includes('already') || linkError.message?.includes('registered')) {
         const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
-        const existingAuthUser = usersData?.users?.find((u: any) => u.email === email);
+        const existingAuthUser = usersData?.users?.find((u) => u.email === email);
 
         if (existingAuthUser) {
           const userId = existingAuthUser.id;

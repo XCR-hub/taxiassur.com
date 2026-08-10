@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from '@/lib/toast';
 import {
-  FileText, CheckCircle, XCircle, Clock, AlertTriangle, Upload,
-  Eye, Download, RefreshCw, Send, RotateCcw, ExternalLink, GripVertical
+  FileText, CheckCircle, XCircle, Clock, AlertTriangle,
+  RefreshCw, Send, RotateCcw, GripVertical
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { getDocumentUrl } from '@/lib/document-utils';
+import { SecureDocumentLink } from './SecureDocumentLink';
 
 interface DocumentStatus {
   status: 'missing' | 'uploaded' | 'validated' | 'rejected';
@@ -58,12 +58,16 @@ const DOCUMENT_TYPES = [
   { id: 'kbis', label: 'KBIS / SIRENE', required: true, icon: '🏢' }
 ];
 
+function UnifiedDocumentLink({ doc, size = 16 }: { doc: UnifiedDocument; size?: number }) {
+  if (doc.file_path) {
+    const explicit = typeof doc.metadata?.storage_bucket === 'string' ? doc.metadata.storage_bucket : undefined;
+    const isEmail = explicit === 'email-attachments' || doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/');
+    return <SecureDocumentLink filePath={doc.file_path} source={isEmail ? 'email_attachments' : 'prospect_documents'} bucket={explicit || (isEmail ? 'email-attachments' : 'prospect-documents')} fileName={doc.file_name} className="p-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors" iconSize={size} />;
+  }
+  return null;
+}
 export function DocumentUnifiedManager({
   leadId,
-  leadEmail,
-  leadFirstName,
-  accessToken,
-  onDocumentsComplete,
   onRequestDocuments
 }: DocumentUnifiedManagerProps) {
   const [checklist, setChecklist] = useState<DocumentChecklist>({});
@@ -123,11 +127,7 @@ export function DocumentUnifiedManager({
             status: doc.status,
             notes: doc.notes,
             source: 'prospect_upload',
-            download_url: doc.metadata?.download_url || (
-              doc.file_path?.startsWith('00000000-0000-0000-0000-000000000001/')
-                ? supabase.storage.from('email-attachments').getPublicUrl(doc.file_path).data.publicUrl
-                : supabase.storage.from('prospect-documents').getPublicUrl(doc.file_path).data.publicUrl
-            ),
+            download_url: typeof doc.metadata?.download_url === 'string' ? doc.metadata.download_url : undefined,
             metadata: doc.metadata
           });
         });
@@ -146,8 +146,7 @@ export function DocumentUnifiedManager({
             status: doc.status,
             notes: doc.notes,
             source: 'manual_upload',
-            download_url: getDocumentUrl(doc.file_path, doc.bucket),
-            metadata: doc.metadata
+            metadata: { ...doc.metadata, storage_bucket: doc.bucket }
           });
         });
       }
@@ -550,15 +549,7 @@ export function DocumentUnifiedManager({
                           )}
                         </div>
                       </div>
-                      <a
-                        href={doc.download_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Eye size={16} />
-                      </a>
+                      <UnifiedDocumentLink doc={doc} />
                     </div>
                   </div>
                 ))}
@@ -671,15 +662,7 @@ export function DocumentUnifiedManager({
                             {(doc.file_size / 1024).toFixed(1)} KB
                           </p>
                         </div>
-                        <a
-                          href={doc.download_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded transition-colors"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Eye size={14} />
-                        </a>
+                        <UnifiedDocumentLink doc={doc} />
                       </div>
                     </div>
                   ))}

@@ -1,4 +1,5 @@
 import { logger } from '@/lib/logger';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 
 /**
  * Système de ping universel pour tous les moteurs de recherche
@@ -54,10 +55,8 @@ export async function pingAllSearchEngines(urls: string[]): Promise<{
   try {
     // Use Supabase Edge Function to bypass CORS
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      logger.error('Supabase credentials missing');
+    if (!supabaseUrl) {
+      logger.error('Supabase URL missing');
       return { success: false, results: [] };
     }
 
@@ -65,7 +64,7 @@ export async function pingAllSearchEngines(urls: string[]): Promise<{
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseKey}`
+        'Authorization': (await internalFunctionHeaders()).Authorization
       },
       body: JSON.stringify({ urls })
     });
@@ -90,7 +89,7 @@ export async function pingAllSearchEngines(urls: string[]): Promise<{
         {
           engine: 'IndexNow',
           status: 'error',
-          note: 'Erreur: Edge Function indexnow-ping non déployée. Déployez-la depuis Supabase Dashboard.'
+          note: 'La soumission IndexNow a échoué. Reconnectez-vous puis réessayez.'
         },
         {
           engine: 'Google',

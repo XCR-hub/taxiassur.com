@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 export default function AuthCallbackTwitter() {
@@ -18,10 +18,20 @@ export default function AuthCallbackTwitter() {
     try {
       const code = searchParams.get('code');
       const error = searchParams.get('error');
+      const returnedState = searchParams.get('state');
+      const expectedState = sessionStorage.getItem('oauth_state_twitter');
+      const codeVerifier = sessionStorage.getItem('oauth_pkce_twitter');
 
       if (error) {
         throw new Error(`Twitter authorization error: ${error}`);
       }
+
+      if (!returnedState || !expectedState || returnedState !== expectedState || !codeVerifier) {
+        throw new Error('Validation OAuth Twitter échouée');
+      }
+
+      sessionStorage.removeItem('oauth_state_twitter');
+      sessionStorage.removeItem('oauth_pkce_twitter');
 
       if (!code) {
         throw new Error('No authorization code received');
@@ -30,16 +40,13 @@ export default function AuthCallbackTwitter() {
       setMessage('Échange du code d\'autorisation...');
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
       const response = await fetch(`${supabaseUrl}/functions/v1/twitter-oauth-exchange`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-          'apikey': supabaseAnonKey
+          'Authorization': (await internalFunctionHeaders()).Authorization
         },
-        body: JSON.stringify({ code })
+        body: JSON.stringify({ code, code_verifier: codeVerifier })
       });
 
       if (!response.ok) {
@@ -49,28 +56,7 @@ export default function AuthCallbackTwitter() {
 
       const data = await response.json();
 
-      setMessage('Sauvegarde des credentials...');
-
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 90);
-
-      const { error: dbError } = await supabase
-        .from('social_networks')
-        .upsert({
-          platform: 'twitter',
-          account_name: data.username || 'Twitter Account',
-          account_id: data.user_id,
-          access_token: data.access_token,
-          refresh_token: data.refresh_token,
-          token_expires_at: expiresAt.toISOString(),
-          is_connected: true,
-          is_active: true,
-          auto_publish: false
-        }, {
-          onConflict: 'platform'
-        });
-
-      if (dbError) throw dbError;
+      if (!data.success) throw new Error(data.error || 'Connexion Twitter impossible');
 
       setStatus('success');
       setMessage('Twitter connecté avec succès !');

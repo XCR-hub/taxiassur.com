@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { MapPin, Plus, Loader, CheckCircle, XCircle, AlertCircle, Image, FileText, Newspaper, HelpCircle, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
@@ -69,7 +70,7 @@ const CityPageGenerator: React.FC = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Authorization': (await internalFunctionHeaders()).Authorization,
           },
           body: JSON.stringify({
             city_name: cityName,
@@ -93,6 +94,7 @@ const CityPageGenerator: React.FC = () => {
           city_id: data.city_id,
           slug: data.slug,
           url: data.url,
+          generated: data.generated,
         });
 
         setCityName('');

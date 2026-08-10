@@ -80,7 +80,7 @@ L'API Monético est **MAINTENANT COMPLÈTEMENT INTÉGRÉE ET OPÉRATIONNELLE**. 
 const MONETICO_CONFIG = {
   tpe: '7374133',                                      // ✅ Configuré
   societe: 'taxiassur',                                // ✅ Configuré
-  macKey: '106FA85BF342FD4EE95C883D82865B5CC1F63890', // ✅ Configuré (Clé de sécurité)
+  macKey: '[REDACTED_MONETICO_MAC_KEY]', // ✅ Configuré (Clé de sécurité)
   version: '3.0',                                      // ✅ Version protocole
   langue: 'FR',                                        // ✅ Langue
   urlServeur: 'https://p.monetico-services.com/paiement.cgi', // ✅ URL Production

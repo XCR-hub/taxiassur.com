@@ -17,6 +17,7 @@ import {
   Clock3
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 
 export interface DocumentStatus {
   label: string;
@@ -136,12 +137,11 @@ export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
       // Envoyer via l'edge function appropriée
       let sendResult;
       if (channel === 'email' && leadEmail) {
-        const { data, error } = await supabase.functions.invoke('send-crm-email', {
-          body: {
+        const { data, error } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
             to: leadEmail,
             subject: `Documents manquants - ${leadName}`,
             content: message.replace(/\n/g, '<br>')
-          }
+
         });
         if (error || !data?.success) {
           const errorMsg = error?.message || data?.error || 'Erreur inconnue';
@@ -149,13 +149,12 @@ export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
         }
         sendResult = data;
       } else if (channel === 'sms' && leadPhone) {
-        const { data, error } = await supabase.functions.invoke('send-sms-brevo', {
-          body: {
+        const { data, error } = await invokeIdempotentDelivery(supabase, 'sms', 'send-sms-brevo', {
             to: leadPhone,
             content: message,
             lead_id: leadId,
             tag: 'document-reminder'
-          }
+
         });
         if (error || !data?.success) {
           const errorMsg = error?.message || data?.error || 'Erreur inconnue';
@@ -163,11 +162,10 @@ export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
         }
         sendResult = data;
       } else if (channel === 'whatsapp' && leadPhone) {
-        const { data, error } = await supabase.functions.invoke('send-whatsapp', {
-          body: {
+        const { data, error } = await invokeIdempotentDelivery(supabase, 'whatsapp', 'send-whatsapp', {
             to: leadPhone,
             message: message
-          }
+
         });
         if (error || !data?.success) {
           const errorMsg = error?.message || data?.error || 'Erreur inconnue';

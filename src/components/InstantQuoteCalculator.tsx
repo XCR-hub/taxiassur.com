@@ -39,7 +39,7 @@ const InstantQuoteCalculator: React.FC = () => {
   ];
 
   const calculateQuote = () => {
-    let basePrice = 1430; // Prix de base
+    const basePrice = 1430; // Prix de base
 
     // Ajustement par type véhicule
     const vehicleMultipliers: Record<string, number> = {

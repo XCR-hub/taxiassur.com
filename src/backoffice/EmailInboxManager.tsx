@@ -219,7 +219,7 @@ const EmailInboxManager: React.FC = () => {
 
     leads.forEach(lead => {
       let matchScore = 0;
-      let matchReasons: string[] = [];
+      const matchReasons: string[] = [];
 
       if (lead.email.toLowerCase() === email.from_email.toLowerCase()) {
         matchScore += 100;

@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from '@/lib/toast';
 import {
-  FileText, CheckCircle, XCircle, Clock, AlertTriangle, Upload,
-  Eye, Download, RefreshCw, Send, RotateCcw, ExternalLink
+  FileText, CheckCircle, XCircle, Clock, AlertTriangle,
+  RefreshCw, Send, RotateCcw, ExternalLink
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { SecureDocumentLink } from './SecureDocumentLink';
 import { getRequiredDocuments } from '@/lib/document-requirements';
 
 interface DocumentStatus {
@@ -66,11 +67,8 @@ interface DocumentChecklistPanelV2Props {
 
 export function DocumentChecklistPanelV2({
   leadId,
-  leadEmail,
-  leadFirstName,
   vehicleType,
   accessToken,
-  onDocumentsComplete,
   onRequestDocuments
 }: DocumentChecklistPanelV2Props) {
   const DOCUMENT_TYPES = getRequiredDocuments(vehicleType).map(d => ({
@@ -555,24 +553,18 @@ export function DocumentChecklistPanelV2({
                     </button>
                   )}
 
-                  {(doc || emailAttachments.find(a => a.auto_detected_type === docType.id && a.classification_status === 'classified')) && (
-                    <a
-                      href={
-                        doc
-                          ? (doc.metadata?.download_url ||
-                            (doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/')
-                              ? supabase.storage.from('email-attachments').getPublicUrl(doc.file_path).data.publicUrl
-                              : supabase.storage.from('prospect-documents').getPublicUrl(doc.file_path).data.publicUrl))
-                          : emailAttachments.find(a => a.auto_detected_type === docType.id && a.classification_status === 'classified')?.download_url || '#'
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
+                  {doc ? (
+                    <SecureDocumentLink
+                      filePath={doc.file_path}
+                      source={doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/') ? 'email_attachments' : 'prospect_documents'}
+                      bucket={doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/') ? 'email-attachments' : 'prospect-documents'}
+                      fileName={doc.file_name}
                       className="p-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors"
-                      title="Voir le document"
-                    >
-                      <Eye size={16} />
-                    </a>
-                  )}
+                      iconSize={16}
+                    />
+                  ) : emailAttachments.find(a => a.auto_detected_type === docType.id && a.classification_status === 'classified')?.download_url ? (
+                    <SecureDocumentLink filePath={emailAttachments.find(a => a.auto_detected_type === docType.id && a.classification_status === 'classified')!.storage_path} source="email_attachments" bucket="email-attachments" fileName={emailAttachments.find(a => a.auto_detected_type === docType.id && a.classification_status === 'classified')!.file_name} className="p-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors" iconSize={16} />
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -637,23 +629,8 @@ export function DocumentChecklistPanelV2({
                             </div>
                           </div>
                           <div className="flex items-center gap-2 ml-2">
-                            <a
-                              href={attachment.download_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors"
-                              title="Voir le document"
-                            >
-                              <Eye size={16} />
-                            </a>
-                            <a
-                              href={attachment.download_url}
-                              download={attachment.file_name}
-                              className="p-1.5 bg-gray-600/50 hover:bg-gray-600 text-gray-400 rounded-lg transition-colors"
-                              title="Télécharger"
-                            >
-                              <Download size={16} />
-                            </a>
+                            <SecureDocumentLink filePath={attachment.storage_path} source="email_attachments" bucket="email-attachments" fileName={attachment.file_name} mode="view" className="p-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors" iconSize={16} />
+                            <SecureDocumentLink filePath={attachment.storage_path} source="email_attachments" bucket="email-attachments" fileName={attachment.file_name} mode="download" className="p-1.5 bg-gray-600/50 hover:bg-gray-600 text-gray-400 rounded-lg transition-colors" iconSize={16} />
                           </div>
                         </div>
                       </div>

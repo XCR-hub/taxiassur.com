@@ -7,6 +7,7 @@ const path = require('node:path');
 const root = process.cwd();
 const MAX_TEXT_FILE_BYTES = 2 * 1024 * 1024;
 const placeholder = /REDACTED|YOUR_|PLACEHOLDER|EXEMPLE|EXAMPLE|\$|\.replace|match\(|includes\(/i;
+const jwtPattern = /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g;
 
 const secretPatterns = [
   { name: 'OpenAI API key', regex: /\bsk-proj-[A-Za-z0-9_-]{20,}\b/g },
@@ -32,6 +33,9 @@ const secretPatterns = [
   { name: 'Sensitive Supabase piped secret command', regex: /^\s*echo\s+["'](?!REDACTED|YOUR_|PLACEHOLDER|\$)[^"']{8,}["']\s*\|\s*supabase\s+secrets\s+set\s+[A-Z0-9_]*(?:PASSWORD|TOKEN|SECRET|API_KEY|KEY)\b/gm },
 ];
 
+const forbiddenTrackedPathPatterns = [
+  { name: 'Payment-provider private key file', regex: /^supabase\/functions\/[^/]+\/config\/[^/]+\.key$/i },
+];
 const ignoredExtensions = new Set([
   '.avif', '.bmp', '.doc', '.docx', '.eot', '.gif', '.gz', '.ico', '.jpeg',
   '.jpg', '.mp3', '.mp4', '.otf', '.pdf', '.png', '.tar', '.tgz', '.ttf',
@@ -55,17 +59,41 @@ function isSkipped(file) {
   return ignoredExtensions.has(path.extname(normalized).toLowerCase());
 }
 
+function countSupabaseServiceRoleJwts(content) {
+  let count = 0;
+
+  for (const match of content.matchAll(jwtPattern)) {
+    try {
+      const payload = JSON.parse(Buffer.from(match[0].split('.')[1], 'base64url').toString('utf8'));
+      if (payload?.role === 'service_role') count += 1;
+    } catch {
+      // Ignore malformed JWT-like strings; explicit secret patterns still apply.
+    }
+  }
+
+  return count;
+}
+
 function scanFile(file) {
   if (isSkipped(file)) return [];
 
   const absolutePath = path.join(root, file);
   if (!existsSync(absolutePath)) return [];
 
+  const normalized = file.replace(/\\/g, '/');
+  const forbiddenPath = forbiddenTrackedPathPatterns.find(({ regex }) => regex.test(normalized));
+  if (forbiddenPath) return [{ name: forbiddenPath.name, count: 1 }];
+
   const size = statSync(absolutePath).size;
   if (size > MAX_TEXT_FILE_BYTES) return [];
 
   const content = readFileSync(absolutePath, 'utf8');
   const findings = [];
+  const serviceRoleJwtCount = countSupabaseServiceRoleJwts(content);
+
+  if (serviceRoleJwtCount) {
+    findings.push({ name: 'Supabase service_role JWT', count: serviceRoleJwtCount });
+  }
 
   for (const { name, regex, ignore } of secretPatterns) {
     regex.lastIndex = 0;

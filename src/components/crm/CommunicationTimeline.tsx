@@ -4,27 +4,25 @@ import {
   Phone,
   MessageSquare,
   Send,
-  Download,
   ArrowDownLeft,
   ArrowUpRight,
   Paperclip,
   ChevronDown,
   ChevronUp,
   Clock,
-  User,
-  ExternalLink,
   FileText,
   Image as ImageIcon,
   File
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { SecureDocumentLink } from './SecureDocumentLink';
 
 interface Attachment {
   id: string;
   file_name: string;
   file_type: string;
   file_size: number;
-  download_url: string;
+  storage_path?: string;
   auto_detected_type?: string;
 }
 
@@ -143,12 +141,12 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
             .replace(/䰀/g, 'é');
 
           // Mapper les attachments depuis le champ JSONB email_messages.attachments
-          const mappedAttachments = ((email.attachments as Array<{ filename?: string; name?: string; contentType?: string; content_type?: string; size?: number; file_size?: number; url?: string; proposed_doc_type?: string }>) || []).map((att, idx: number) => ({
+          const mappedAttachments = ((email.attachments as Array<{ filename?: string; name?: string; contentType?: string; content_type?: string; size?: number; file_size?: number; storage_path?: string; path?: string; proposed_doc_type?: string }>) || []).map((att, idx: number) => ({
             id: `${email.id}-att-${idx}`,
             file_name: att.filename || att.name || 'Pièce jointe',
             file_type: att.contentType || att.content_type || 'application/octet-stream',
             file_size: att.size || att.file_size || 0,
-            download_url: att.url || '',
+            storage_path: att.storage_path || att.path,
             auto_detected_type: att.proposed_doc_type
           }));
 
@@ -375,7 +373,7 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {events.map((event, index) => {
+            {events.map((event) => {
               const isExpanded = expandedId === event.id;
               const colorClasses = getColor(event.type, event.direction);
 
@@ -491,15 +489,7 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
                                         )}
                                       </div>
                                     </div>
-                                    <a
-                                      href={attachment.download_url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="flex-shrink-0 p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                                      title="Télécharger"
-                                    >
-                                      <Download className="w-4 h-4" />
-                                    </a>
+                                    {attachment.storage_path && <SecureDocumentLink filePath={attachment.storage_path} source="email_attachments" bucket="email-attachments" fileName={attachment.file_name} mode="download" className="flex-shrink-0 p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors" iconSize={16} />}
                                   </div>
                                 ))}
                               </div>

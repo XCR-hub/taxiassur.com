@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { useNavigate } from 'react-router-dom';
 import { Search, Globe, RefreshCw, TrendingUp, ExternalLink, CheckCircle, AlertCircle, Home, Settings, Clock } from 'lucide-react';
 import { pingSearchEngines } from '../lib/ping';
@@ -143,7 +144,7 @@ const SeoTools: React.FC = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+            'Authorization': (await internalFunctionHeaders()).Authorization
           },
           body: JSON.stringify({
             siteUrl: siteUrl,

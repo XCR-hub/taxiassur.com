@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import {
@@ -142,7 +143,7 @@ const LLMDashboard: React.FC = () => {
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/llm-brain`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': (await internalFunctionHeaders()).Authorization,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -171,7 +172,7 @@ const LLMDashboard: React.FC = () => {
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/llm-autonomous-orchestrator`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': (await internalFunctionHeaders()).Authorization,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

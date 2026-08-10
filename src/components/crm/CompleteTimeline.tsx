@@ -8,7 +8,7 @@ import {
   PhoneIncoming, PhoneOutgoing, Inbox
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { getDocumentPublicUrl } from '@/lib/utils';
+import { getSecureDocumentUrl } from '@/lib/secure-document-url';
 import { DocumentViewer } from './index';
 
 interface Attachment {
@@ -247,7 +247,7 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({ leadId, lead
             id: doc.id, file_name: doc.file_name,
             file_type: doc.mime_type || 'application/octet-stream',
             file_size: doc.file_size || 0,
-            download_url: getDocumentPublicUrl(doc.file_path, 'crm_lead_documents', supabase),
+            download_url: '',
             storage_path: doc.file_path,
           }],
           metadata: { statut: doc.status, validé_par: doc.validated_by },
@@ -557,6 +557,19 @@ const EventCard: React.FC<{
   const cfg = getEventConfig(event);
   const plainContent = event.type === 'email' ? event.content : event.content;
   const previewText = plainContent ? plainContent.substring(0, 180) : '';
+  const openAttachment = async (att: Attachment, download: boolean) => {
+    try {
+      let url = att.download_url;
+      if (att.storage_path) {
+        const bucket = att.storage_path.startsWith('email-attachments/') || att.storage_path.startsWith('00000000-0000-0000-0000-000000000001/')
+          ? 'email-attachments' : att.storage_path.startsWith('crm-documents/') ? 'crm-documents' : 'prospect-documents';
+        url = await getSecureDocumentUrl({ path: att.storage_path, bucket, download, fileName: att.file_name });
+      }
+      if (!url) throw new Error('Document indisponible');
+      if (download) window.open(url, '_blank', 'noopener,noreferrer');
+      else onViewDoc(url, att.file_name, att.file_type);
+    } catch (error) { console.error('Attachment unavailable', error); }
+  };
   const hasMore = plainContent.length > 180;
   const hasAttachments = event.attachments && event.attachments.length > 0;
   const time = new Date(event.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
@@ -678,22 +691,14 @@ const EventCard: React.FC<{
                         <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                           {(isPDF || isImage) && (
                             <button
-                              onClick={e => { e.stopPropagation(); let url = att.download_url; if (att.storage_path && !url) url = getDocumentPublicUrl(att.storage_path, 'crm_lead_documents', supabase); onViewDoc(url, att.file_name, att.file_type); }}
+                              onClick={e => { e.stopPropagation(); void openAttachment(att, false); }}
                               className="p-1.5 text-sky-600 hover:bg-sky-100 rounded-lg transition-colors"
                               title="Voir"
                             >
                               <Eye className="w-4 h-4" />
                             </button>
                           )}
-                          <a
-                            href={att.download_url || '#'}
-                            download={att.file_name}
-                            onClick={e => e.stopPropagation()}
-                            className="p-1.5 text-gray-500 hover:bg-gray-200 rounded-lg transition-colors"
-                            title="Télécharger"
-                          >
-                            <Download className="w-4 h-4" />
-                          </a>
+                          <button type="button" onClick={e => { e.stopPropagation(); void openAttachment(att, true); }} className="p-1.5 text-gray-500 hover:bg-gray-200 rounded-lg transition-colors" title="Télécharger"><Download className="w-4 h-4" /></button>
                         </div>
                       </div>
                     );

@@ -80,7 +80,7 @@ const CRMUniversal: React.FC = () => {
     setLoading(true);
     try {
       // Charger d'abord les leads de la table principale
-      let leadsQuery = supabase
+      const leadsQuery = supabase
         .from('crm_leads')
         .select('*')
         .order('created_at', { ascending: false })

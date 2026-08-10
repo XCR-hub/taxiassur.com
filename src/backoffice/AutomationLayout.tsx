@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
+import { withTimeout } from '@/lib/promise-timeout';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   Zap,
@@ -190,18 +192,21 @@ const AutomationLayout: React.FC = () => {
         {!collapsed && (
           <div className="px-2 pb-2">
             <button
-              onClick={() => {
-                fetch(
-                  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crm-automation-engine`,
-                  {
-                    method: 'POST',
-                    headers: {
-                      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-                      'Content-Type': 'application/json',
+              onClick={async () => {
+                try {
+                  const headers = await internalFunctionHeaders();
+                  const response = await withTimeout(fetch(
+                    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crm-automation-engine`,
+                    {
+                      method: 'POST',
+                      headers: { Authorization: headers.Authorization, 'Content-Type': 'application/json' },
+                      body: JSON.stringify({}),
                     },
-                    body: JSON.stringify({}),
-                  }
-                );
+                  ), 30_000);
+                  if (!response.ok) throw new Error(`Automation HTTP ${response.status}`);
+                } catch (error) {
+                  console.error('CRM automation execution failed', error);
+                }
               }}
               className="w-full flex items-center gap-2 px-2 py-2 rounded-lg transition-all text-xs font-medium"
               style={{ background: 'rgba(234,179,8,0.1)', color: '#eab308', border: '1px solid rgba(234,179,8,0.2)' }}

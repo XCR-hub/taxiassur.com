@@ -16,6 +16,8 @@ import {
   Trash2
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { withTimeout } from '@/lib/promise-timeout';
+import { clearDeliveryRequestId, getDeliveryRequestId } from '@/lib/delivery-idempotency';
 import { LegalDocumentsSelector } from './LegalDocumentsSelector';
 import { LeadDocumentsSelector } from './LeadDocumentsSelector';
 
@@ -335,7 +337,7 @@ interface CustomAttachment {
   size: number;
   uploading: boolean;
   uploaded: boolean;
-  url?: string;
+  path?: string;
   error?: string;
 }
 
@@ -355,7 +357,7 @@ export function EmailComposerModal({
   const [showLegalDocs, setShowLegalDocs] = useState(false);
   const [selectedLegalDocs, setSelectedLegalDocs] = useState<LegalDocument[]>([]);
   const [showLeadDocs, setShowLeadDocs] = useState(false);
-  const [selectedLeadDocs, setSelectedLeadDocs] = useState<any[]>([]);
+  const [selectedLeadDocs, setSelectedLeadDocs] = useState<Array<{ id: string; name: string; file_url?: string; file_path?: string; bucket?: 'prospect-documents' | 'crm-documents'; category: string }>>([]);
   const [customAttachments, setCustomAttachments] = useState<CustomAttachment[]>([]);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
@@ -458,16 +460,12 @@ export function EmailComposerModal({
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('email-attachments')
-        .getPublicUrl(fileName);
-
       // Mettre à jour l'état uploaded
       setCustomAttachments(prev =>
-        prev.map(a => a.id === attachment.id ? { ...a, uploading: false, uploaded: true, url: publicUrl } : a)
+        prev.map(a => a.id === attachment.id ? { ...a, uploading: false, uploaded: true, path: data.path } : a)
       );
 
-      return publicUrl;
+      return data.path;
     } catch (err) {
       console.error('Upload error:', err);
       setCustomAttachments(prev =>
@@ -498,70 +496,56 @@ export function EmailComposerModal({
 
     try {
       // 1. Upload custom attachments first
-      const uploadPromises = customAttachments
-        .filter(a => !a.uploaded)
-        .map(a => uploadFile(a));
-
-      await Promise.all(uploadPromises);
+      const customPaths = await Promise.all(customAttachments.map((attachment) =>
+        attachment.uploaded && attachment.path ? Promise.resolve(attachment.path) : uploadFile(attachment)
+      ));
+      if (customPaths.some((path) => !path)) throw new Error("Une pièce jointe n''a pas pu être chargée");
 
       // 2. Prepare all attachments
       const legalAttachments = selectedLegalDocs.map(doc => ({
         filename: doc.name,
+        reference_id: doc.id,
         path: doc.file_path,
         type: 'legal'
       }));
 
       const leadAttachments = selectedLeadDocs.map(doc => ({
         filename: doc.name,
+        reference_id: doc.id,
+        path: doc.file_path,
         url: doc.file_url,
+        bucket: doc.bucket,
         type: 'lead_document'
       }));
 
-      const customAttachmentsData = customAttachments
-        .filter(a => a.uploaded && a.url)
-        .map(a => ({
-          filename: a.name,
-          url: a.url,
-          type: 'custom'
-        }));
+      const customAttachmentsData = customAttachments.map((attachment, index) => ({
+        filename: attachment.name,
+        path: customPaths[index] as string,
+        bucket: 'email-attachments' as const,
+        type: 'custom' as const
+      }));
 
       const allAttachments = [...legalAttachments, ...leadAttachments, ...customAttachmentsData];
 
+      const deliverySignature = JSON.stringify({ leadId: lead.id, to: lead.email.trim().toLowerCase(), subject: subject.trim(), body, attachments: allAttachments.map(({ filename, path, type }) => ({ filename, path, type })) });
+      const requestId = getDeliveryRequestId('email', deliverySignature);
+
       // 3. Send email
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-crm-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({
+      const { data: sendResult, error: sendError } = await withTimeout(supabase.functions.invoke('send-crm-email', {
+        body: {
           to: lead.email,
           subject,
           body,
           lead_id: lead.id,
-          attachments: allAttachments.length > 0 ? allAttachments : undefined
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Erreur lors de l\'envoi');
-      }
-
-      // 4. Save interaction
-      await supabase.from('crm_interactions').insert({
-        lead_id: lead.id,
-        type: 'email',
-        direction: 'outbound',
-        subject,
-        content: body.substring(0, 500),
-        status: 'sent',
-        metadata: {
-          legal_attachments: selectedLegalDocs.map(d => d.name),
-          lead_attachments: selectedLeadDocs.map(d => d.name),
-          custom_attachments: customAttachments.map(a => a.name)
+          attachments: allAttachments.length > 0 ? allAttachments : undefined,
+          requestId,
         }
-      });
+      }), 45_000);
+      if (sendError || !sendResult?.success) throw new Error("Erreur lors de l'envoi");
 
+
+
+      clearDeliveryRequestId('email', deliverySignature);
       setSuccess(true);
       setTimeout(() => {
         if (onEmailSent) onEmailSent();

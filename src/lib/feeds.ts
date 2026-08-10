@@ -1,13 +1,12 @@
-import { getEnv, getSupabaseUrl, getSupabaseAnonKey } from './env';
+import { getSupabaseUrl } from './env';
 import { logger } from '@/lib/logger';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 
 // Fonction pour déclencher la régénération des feeds via edge function
 export async function regenerateFeeds(): Promise<boolean> {
   try {
     const supabaseUrl = getSupabaseUrl();
-    const supabaseKey = getSupabaseAnonKey();
-
-    if (!supabaseUrl || !supabaseKey) {
+    if (!supabaseUrl) {
       logger.error('Supabase configuration missing');
       return false;
     }
@@ -19,7 +18,7 @@ export async function regenerateFeeds(): Promise<boolean> {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseKey}`
+        'Authorization': (await internalFunctionHeaders()).Authorization
       }
     });
 

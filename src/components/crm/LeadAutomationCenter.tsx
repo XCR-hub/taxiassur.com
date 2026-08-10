@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Bot, Mail, MessageSquare, Phone, Clock, CheckCircle, XCircle, RefreshCw, Send, Sparkles, Calendar, AlertCircle, Zap, ExternalLink, Copy, ThumbsUp, ThumbsDown, CreditCard as Edit3, Play, Pause, Settings, TrendingUp, Target, UserPlus, Loader2, RotateCcw, Activity, List } from 'lucide-react';
+import { Bot, Mail, MessageSquare, Phone, Clock, CheckCircle, XCircle, RefreshCw, Send, Sparkles, Calendar, Zap, ExternalLink, Copy, ThumbsUp, ThumbsDown, CreditCard as Edit3, Play, Pause, TrendingUp, Target, UserPlus, Loader2, RotateCcw, Activity, List } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { pipelineService, PendingAutomation, AutomationStats } from '@/lib/crm-pipeline';
 
@@ -23,6 +23,15 @@ interface ScheduledFollowUp {
   trigger_reason: string;
 }
 
+interface AutomationHistoryEntry {
+  id: string;
+  status: string;
+  action_type?: string;
+  executed_at?: string;
+  created_at?: string;
+  execution_time_ms?: number;
+  action_id?: string;
+}
 interface LeadAutomationCenterProps {
   leadId: string;
   leadStatus: string;
@@ -56,7 +65,7 @@ export const LeadAutomationCenter: React.FC<LeadAutomationCenterProps> = ({
   const [copiedUrl, setCopiedUrl] = useState(false);
 
   const [pendingActions, setPendingActions] = useState<PendingAutomation[]>([]);
-  const [automationHistory, setAutomationHistory] = useState<any[]>([]);
+  const [automationHistory, setAutomationHistory] = useState<AutomationHistoryEntry[]>([]);
   const [automationStats, setAutomationStats] = useState<AutomationStats[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [retryingAction, setRetryingAction] = useState<string | null>(null);
@@ -343,23 +352,18 @@ L'equipe TaxiAssur`,
         };
       }
 
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify(payload)
+      const { data: sendResult, error: sendError } = await supabase.functions.invoke(endpoint, {
+        body: payload
       });
-
-      if (response.ok) {
-        setAiSuggestions(prev =>
-          prev.map(s => s.id === suggestion.id ? { ...s, status: 'sent' as const } : s)
-        );
-        setEditingSuggestion(null);
-        onActionTaken?.();
+      if (sendError || sendResult?.success !== true) {
+        throw sendError || new Error(`${suggestion.type} non envoyé`);
       }
-    } catch (error) {
+
+      setAiSuggestions(prev =>
+        prev.map(s => s.id === suggestion.id ? { ...s, status: 'sent' as const } : s)
+      );
+      setEditingSuggestion(null);
+      onActionTaken?.();    } catch (error) {
       console.error('Error sending message:', error);
     } finally {
       setSendingId(null);
@@ -646,7 +650,7 @@ L'equipe TaxiAssur`,
           <div className="border-t border-gray-200 bg-gray-50 p-4">
             <h4 className="text-sm font-medium text-gray-700 mb-3">Historique des actions recentes</h4>
             <div className="space-y-2 max-h-64 overflow-y-auto">
-              {(automationHistory as Array<{ id: string; status: string; action_type?: string; executed_at?: string; created_at?: string; execution_time_ms?: number; action_id?: string }>).map((log) => (
+              {automationHistory.map((log) => (
                 <div
                   key={log.id}
                   className={`flex items-center justify-between p-3 rounded-lg border ${

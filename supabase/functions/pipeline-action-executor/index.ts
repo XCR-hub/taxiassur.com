@@ -1,10 +1,12 @@
+import { isInternalRequest } from "../_shared/internal-auth.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
 interface PendingAction {
@@ -37,6 +39,12 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
+  if (!(await isInternalRequest(req))) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   const startTime = Date.now();
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -46,7 +54,9 @@ Deno.serve(async (req: Request) => {
     const action = body.action || "process_queue";
     const limit = body.limit || 20;
 
-    console.log(`Pipeline Action Executor - Action: ${action}, Limit: ${limit}`);
+    console.log(
+      `Pipeline Action Executor - Action: ${action}, Limit: ${limit}`,
+    );
 
     if (action === "process_queue") {
       const results = await processActionQueue(supabase, limit);
@@ -60,7 +70,7 @@ Deno.serve(async (req: Request) => {
           duration_ms: Date.now() - startTime,
           details: results.details,
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -73,7 +83,7 @@ Deno.serve(async (req: Request) => {
           result,
           duration_ms: Date.now() - startTime,
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -82,13 +92,16 @@ Deno.serve(async (req: Request) => {
 
       return new Response(
         JSON.stringify({ success: true, stats }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     return new Response(
       JSON.stringify({ error: "Invalid action" }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   } catch (error) {
     console.error("Pipeline Action Executor Error:", error);
@@ -99,18 +112,31 @@ Deno.serve(async (req: Request) => {
         message: error instanceof Error ? error.message : "Unknown error",
         duration_ms: Date.now() - startTime,
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });
 
 async function processActionQueue(
   supabase: ReturnType<typeof createClient>,
-  limit: number
-): Promise<{ processed: number; succeeded: number; failed: number; details: ActionResult[] }> {
-  const { data: pendingActions, error } = await supabase.rpc("get_pending_pipeline_actions", {
-    p_limit: limit,
-  });
+  limit: number,
+): Promise<
+  {
+    processed: number;
+    succeeded: number;
+    failed: number;
+    details: ActionResult[];
+  }
+> {
+  const { data: pendingActions, error } = await supabase.rpc(
+    "get_pending_pipeline_actions",
+    {
+      p_limit: limit,
+    },
+  );
 
   if (error || !pendingActions || pendingActions.length === 0) {
     console.log("No pending actions to process");
@@ -139,17 +165,22 @@ async function processActionQueue(
 
       if (result.success) {
         succeeded++;
-        console.log(`Action ${action.action_type} for lead ${action.lead_id}: Success`);
+        console.log(
+          `Action ${action.action_type} for lead ${action.lead_id}: Success`,
+        );
       } else {
         failed++;
-        console.log(`Action ${action.action_type} for lead ${action.lead_id}: Failed - ${result.message}`);
+        console.log(
+          `Action ${action.action_type} for lead ${action.lead_id}: Failed - ${result.message}`,
+        );
       }
 
       await supabase
         .from("crm_leads")
         .update({
           last_automation_at: new Date().toISOString(),
-          automation_count: (await getLeadAutomationCount(supabase, action.lead_id)) + 1,
+          automation_count:
+            (await getLeadAutomationCount(supabase, action.lead_id)) + 1,
           last_automation_result: result.success ? "success" : "failed",
         })
         .eq("id", action.lead_id);
@@ -169,12 +200,17 @@ async function processActionQueue(
     }
   }
 
-  return { processed: pendingActions.length, succeeded, failed, details: results };
+  return {
+    processed: pendingActions.length,
+    succeeded,
+    failed,
+    details: results,
+  };
 }
 
 async function getLeadAutomationCount(
   supabase: ReturnType<typeof createClient>,
-  leadId: string
+  leadId: string,
 ): Promise<number> {
   const { data } = await supabase
     .from("crm_leads")
@@ -187,7 +223,7 @@ async function getLeadAutomationCount(
 
 async function executeSingleAction(
   supabase: ReturnType<typeof createClient>,
-  actionId: string
+  actionId: string,
 ): Promise<ActionResult> {
   const { data: action } = await supabase
     .from("pipeline_action_queue")
@@ -217,7 +253,9 @@ async function executeSingleAction(
     lead_first_name: action.crm_leads?.first_name || "",
     lead_last_name: action.crm_leads?.last_name || "",
     lead_full_name:
-      `${action.crm_leads?.first_name || ""} ${action.crm_leads?.last_name || ""}`.trim() ||
+      `${action.crm_leads?.first_name || ""} ${
+        action.crm_leads?.last_name || ""
+      }`.trim() ||
       action.crm_leads?.email ||
       "",
   };
@@ -227,18 +265,22 @@ async function executeSingleAction(
 
 async function executeAction(
   supabase: ReturnType<typeof createClient>,
-  action: PendingAction
+  action: PendingAction,
 ): Promise<ActionResult> {
   const actionType = action.action_type;
   const params = action.action_params || {};
 
-  console.log(`Executing: ${actionType} for ${action.lead_full_name} (${action.lead_email})`);
+  console.log(
+    `Executing: ${actionType} for ${action.lead_full_name} (${action.lead_email})`,
+  );
 
   switch (actionType) {
     case "send_welcome_email":
       return await sendEmail(supabase, action, {
         template: "welcome_new_lead",
-        subject: `Bienvenue ${action.lead_first_name || ""} ! Votre demande de devis taxi`,
+        subject: `Bienvenue ${
+          action.lead_first_name || ""
+        } ! Votre demande de devis taxi`,
         ...params,
       });
 
@@ -311,25 +353,28 @@ async function executeAction(
 async function sendEmail(
   supabase: ReturnType<typeof createClient>,
   action: PendingAction,
-  params: Record<string, unknown>
+  params: Record<string, unknown>,
 ): Promise<ActionResult> {
   if (!BREVO_API_KEY) {
-    const { data, error } = await supabase.functions.invoke("send-email-ionos", {
-      body: {
-        to: action.lead_email,
-        subject: params.subject as string,
-        template: params.template as string,
-        lead_id: action.lead_id,
-        lead_name: action.lead_full_name,
-        lead_first_name: action.lead_first_name,
-        variables: {
-          first_name: action.lead_first_name || "Cher client",
-          full_name: action.lead_full_name,
-          from_status: action.from_status,
-          to_status: action.to_status,
+    const { data, error } = await supabase.functions.invoke(
+      "send-email-ionos",
+      {
+        body: {
+          to: action.lead_email,
+          subject: params.subject as string,
+          template: params.template as string,
+          lead_id: action.lead_id,
+          lead_name: action.lead_full_name,
+          lead_first_name: action.lead_first_name,
+          variables: {
+            first_name: action.lead_first_name || "Cher client",
+            full_name: action.lead_full_name,
+            from_status: action.from_status,
+            to_status: action.to_status,
+          },
         },
       },
-    });
+    );
 
     if (error) {
       return { success: false, message: error.message };
@@ -374,7 +419,10 @@ async function sendEmail(
       status: "sent",
       provider: "brevo",
       message_id: result.messageId,
-      metadata: { template: params.template, pipeline_action: action.action_type },
+      metadata: {
+        template: params.template,
+        pipeline_action: action.action_type,
+      },
     });
 
     return {
@@ -390,7 +438,10 @@ async function sendEmail(
   }
 }
 
-function generateEmailContent(action: PendingAction, params: Record<string, unknown>): string {
+function generateEmailContent(
+  action: PendingAction,
+  params: Record<string, unknown>,
+): string {
   const template = params.template as string;
   const firstName = action.lead_first_name || "Cher client";
 
@@ -467,7 +518,7 @@ function generateEmailContent(action: PendingAction, params: Record<string, unkn
 async function sendSignatureRequest(
   supabase: ReturnType<typeof createClient>,
   action: PendingAction,
-  params: Record<string, unknown>
+  params: Record<string, unknown>,
 ): Promise<ActionResult> {
   const accessToken = generateAccessToken();
 
@@ -476,7 +527,8 @@ async function sendSignatureRequest(
     .update({ access_token: accessToken })
     .eq("id", action.lead_id);
 
-  const signatureUrl = `https://taxiassur.fr/espace-prospect?token=${accessToken}&action=sign`;
+  const signatureUrl =
+    `https://taxiassur.fr/espace-prospect?token=${accessToken}&action=sign`;
 
   await sendEmail(supabase, action, {
     template: "signature_request",
@@ -495,7 +547,7 @@ async function sendSignatureRequest(
 async function sendContractConfirmation(
   supabase: ReturnType<typeof createClient>,
   action: PendingAction,
-  params: Record<string, unknown>
+  params: Record<string, unknown>,
 ): Promise<ActionResult> {
   await supabase
     .from("crm_leads")
@@ -519,34 +571,20 @@ async function sendContractConfirmation(
 }
 
 async function createPaymentLink(
-  supabase: ReturnType<typeof createClient>,
-  action: PendingAction,
-  params: Record<string, unknown>
+  _supabase: ReturnType<typeof createClient>,
+  _action: PendingAction,
+  _params: Record<string, unknown>,
 ): Promise<ActionResult> {
-  const { data, error } = await supabase.functions.invoke("create-cic-payment-link", {
-    body: {
-      lead_id: action.lead_id,
-      type: params.type || "down_payment",
-      email: action.lead_email,
-      name: action.lead_full_name,
-    },
-  });
-
-  if (error) {
-    return { success: false, message: error.message };
-  }
-
   return {
-    success: true,
-    message: "Payment link created",
-    details: { paymentUrl: data?.payment_url },
+    success: false,
+    message: "Secure payment creation requires an explicit contract and amount",
   };
 }
 
 async function notifyCommercial(
   supabase: ReturnType<typeof createClient>,
   action: PendingAction,
-  params: Record<string, unknown>
+  params: Record<string, unknown>,
 ): Promise<ActionResult> {
   const { data: lead } = await supabase
     .from("crm_leads")
@@ -575,7 +613,7 @@ async function notifyCommercial(
 
 async function updateLastContact(
   supabase: ReturnType<typeof createClient>,
-  action: PendingAction
+  action: PendingAction,
 ): Promise<ActionResult> {
   await supabase
     .from("crm_leads")
@@ -588,7 +626,7 @@ async function updateLastContact(
 async function scheduleFollowup(
   supabase: ReturnType<typeof createClient>,
   action: PendingAction,
-  params: Record<string, unknown>
+  params: Record<string, unknown>,
 ): Promise<ActionResult> {
   const delayHours = (params.delay_hours as number) || 48;
   const followupDate = new Date(Date.now() + delayHours * 60 * 60 * 1000);
@@ -618,7 +656,7 @@ async function scheduleFollowup(
 
 async function notifySignatureReceived(
   supabase: ReturnType<typeof createClient>,
-  action: PendingAction
+  action: PendingAction,
 ): Promise<ActionResult> {
   const { data: lead } = await supabase
     .from("crm_leads")
@@ -644,7 +682,7 @@ async function notifySignatureReceived(
 async function createSinisterFile(
   supabase: ReturnType<typeof createClient>,
   action: PendingAction,
-  params: Record<string, unknown>
+  params: Record<string, unknown>,
 ): Promise<ActionResult> {
   const { data: claim, error } = await supabase
     .from("crm_claims")
@@ -680,7 +718,8 @@ async function createSinisterFile(
 }
 
 function generateAccessToken(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let token = "";
   for (let i = 0; i < 32; i++) {
     token += chars.charAt(Math.floor(Math.random() * chars.length));

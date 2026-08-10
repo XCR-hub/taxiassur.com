@@ -23,93 +23,20 @@ const DOWNLOADS: Record<GuideType, string> = {
   'checklist-documents': '/guides/checklist-documents-taxi.html',
 };
 
-const GUIDE_LABELS: Record<GuideType, { title: string; emoji: string }> = {
-  'guide-complet': { title: 'Guide Complet Assurance Taxi 2026', emoji: '' },
-  'checklist-documents': { title: 'Checklist Documents Obligatoires', emoji: '' },
-};
 
-async function sendConfirmationEmail(
-  to: string,
-  firstName: string,
-  guideType: GuideType,
-): Promise<void> {
-  const firstName_ = firstName || 'Chauffeur';
-  const guide = GUIDE_LABELS[guideType];
-  const downloadUrl = `${window.location.origin}${DOWNLOADS[guideType]}`;
-  const devisUrl = `${window.location.origin}/#devis`;
-
-  const html = `
-<!DOCTYPE html>
-<html lang="fr">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f4f6fa;font-family:Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fa;padding:32px 16px;">
-  <tr><td align="center">
-    <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);max-width:100%;">
-      <!-- Header -->
-      <tr>
-        <td style="background:linear-gradient(135deg,#1a1a2e 0%,#0f3460 100%);padding:40px 40px 32px;text-align:center;">
-          <div style="font-size:28px;font-weight:900;color:#f5b400;letter-spacing:-0.5px;margin-bottom:8px;">TaxiAssur</div>
-          <div style="color:rgba(255,255,255,0.6);font-size:14px;">Votre guide gratuit est pret</div>
-        </td>
-      </tr>
-      <!-- Body -->
-      <tr>
-        <td style="padding:40px;">
-          <p style="font-size:22px;font-weight:700;color:#1a1a2e;margin:0 0 16px;">Bonjour ${firstName_},</p>
-          <p style="color:#555;font-size:16px;line-height:1.7;margin:0 0 24px;">Merci pour votre interet ! Votre ressource gratuite est disponible immediatement :</p>
-
-          <div style="background:linear-gradient(135deg,#fff8e1,#fffde7);border:2px solid #f5b400;border-radius:12px;padding:24px;margin:0 0 32px;text-align:center;">
-            <div style="font-size:15px;font-weight:700;color:#0f3460;margin-bottom:16px;">${guide.title}</div>
-            <a href="${downloadUrl}" style="display:inline-block;background:#f5b400;color:#1a1a2e;font-weight:700;font-size:16px;padding:14px 32px;border-radius:8px;text-decoration:none;">
-              Telecharger maintenant
-            </a>
-          </div>
-
-          <p style="color:#555;font-size:15px;line-height:1.7;margin:0 0 16px;">Ce guide a ete redige par nos courtiers experts qui ont accompagne plus de 1 200 chauffeurs de taxi dans leur recherche d'assurance.</p>
-
-          <div style="background:#f8f9fa;border-radius:12px;padding:24px;margin:0 0 32px;">
-            <p style="font-size:14px;font-weight:700;color:#1a1a2e;margin:0 0 12px;">Prochaine etape recommandee :</p>
-            <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 16px;">Obtenez votre devis personnalise en 2 minutes. Nos courtiers comparent 15+ assureurs pour vous trouver la meilleure offre.</p>
-            <a href="${devisUrl}" style="display:inline-block;background:#0f3460;color:#fff;font-weight:700;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none;">
-              Obtenir mon devis gratuit
-            </a>
-          </div>
-
-          <p style="color:#888;font-size:13px;line-height:1.6;margin:0;">Des questions ? Repondez directement a cet email ou appelez-nous. Notre equipe est disponible du lundi au vendredi de 9h a 18h.</p>
-        </td>
-      </tr>
-      <!-- Footer -->
-      <tr>
-        <td style="background:#f8f9fa;padding:24px 40px;border-top:1px solid #e8e8e8;">
-          <p style="color:#aaa;font-size:12px;margin:0;text-align:center;">TaxiAssur · Courtier d'assurance ORIAS · taxiassur.com<br>Pour vous desinscrire, <a href="#" style="color:#aaa;">cliquez ici</a>.</p>
-        </td>
-      </tr>
-    </table>
-  </td></tr>
-</table>
-</body>
-</html>`;
-
-  try {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    await fetch(`${supabaseUrl}/functions/v1/send-email-ionos`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseKey}`,
-        'Apikey': supabaseKey,
-      },
-      body: JSON.stringify({
-        to,
-        toName: firstName_,
-        subject: `Votre ${guide.title} est pret — TaxiAssur`,
-        html,
-      }),
-    });
-  } catch {
-  }
+async function sendConfirmationEmail(to: string, firstName: string, guideType: GuideType): Promise<void> {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const response = await fetch(`${supabaseUrl}/functions/v1/send-lead-magnet-confirmation`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${supabaseKey}`,
+      Apikey: supabaseKey,
+    },
+    body: JSON.stringify({ email: to, first_name: firstName, guide_type: guideType }),
+  });
+  if (!response.ok) throw new Error(`GuideEmailError:${response.status}`);
 }
 
 interface MagnetCardProps {
@@ -162,7 +89,7 @@ const MagnetCard: React.FC<MagnetCardProps> = ({
 
       if (error) throw error;
 
-      sendConfirmationEmail(email, form.firstName.trim(), guideType);
+      await sendConfirmationEmail(email, form.firstName.trim(), guideType);
 
       setForm(prev => ({ ...prev, status: 'success' }));
       onSuccess?.();

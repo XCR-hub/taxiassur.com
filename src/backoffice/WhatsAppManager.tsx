@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import { withTimeout } from '@/lib/promise-timeout';
+import { clearDeliveryRequestId, getDeliveryRequestId } from '@/lib/delivery-idempotency';
 import {
   MessageSquare,
   Send,
@@ -187,15 +189,20 @@ export default function WhatsAppManager() {
     if (!selectedConversation || !messageText.trim()) return;
     setLoading(true);
     try {
-      await supabase.functions.invoke('send-whatsapp', {
-        body: { conversationId: selectedConversation.id, body: messageText },
-      });
+      const deliverySignature = JSON.stringify({ conversationId: selectedConversation.id, body: messageText.trim() });
+      const requestId = getDeliveryRequestId('whatsapp', deliverySignature);
+      const { data: sendResult, error: sendError } = await withTimeout(supabase.functions.invoke('send-whatsapp', {
+        body: { conversationId: selectedConversation.id, body: messageText, requestId },
+      }), 45_000);
+      if (sendError || sendResult?.success !== true) throw sendError || new Error('WhatsApp non envoyé');
+      clearDeliveryRequestId('whatsapp', deliverySignature);
       setMessageText('');
       if (textareaRef.current) textareaRef.current.style.height = 'auto';
       await loadMessages(selectedConversation.id);
       await loadConversations();
     } catch (error) {
       logger.error('Error sending WhatsApp:', error);
+      window.alert("Le message WhatsApp n'a pas pu être envoyé. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
@@ -205,13 +212,18 @@ export default function WhatsAppManager() {
     if (!selectedConversation || !selectedTemplate) return;
     setLoading(true);
     try {
-      await supabase.functions.invoke('send-whatsapp', {
+      const deliverySignature = JSON.stringify({ conversationId: selectedConversation.id, templateName: selectedTemplate.name, templateVariables: templateVars });
+      const requestId = getDeliveryRequestId('whatsapp', deliverySignature);
+      const { data: sendResult, error: sendError } = await withTimeout(supabase.functions.invoke('send-whatsapp', {
         body: {
           conversationId: selectedConversation.id,
           templateName: selectedTemplate.name,
           templateVariables: templateVars,
+          requestId,
         },
-      });
+      }), 45_000);
+      if (sendError || sendResult?.success !== true) throw sendError || new Error('WhatsApp non envoyé');
+      clearDeliveryRequestId('whatsapp', deliverySignature);
       setShowTemplates(false);
       setSelectedTemplate(null);
       setTemplateVars({});
@@ -219,6 +231,7 @@ export default function WhatsAppManager() {
       await loadConversations();
     } catch (error) {
       logger.error('Error sending template:', error);
+      window.alert("Le modèle WhatsApp n'a pas pu être envoyé. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }

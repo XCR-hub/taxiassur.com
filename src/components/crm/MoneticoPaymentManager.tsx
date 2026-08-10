@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { CreditCard, CheckCircle, XCircle, Loader, Euro, AlertCircle, ExternalLink, Mail, Send, type LucideIcon } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { CreditCard, CheckCircle, XCircle, Loader, Euro, AlertCircle, Mail, Send, type LucideIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { clearPaymentRequestId, getPaymentRequestId } from '@/lib/payment-idempotency';
 import { toast } from '@/lib/toast';
 
 interface MoneticoPaymentManagerProps {
@@ -29,6 +30,29 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const loadPayments = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('monetico_payments')
+        .select('*')
+        .eq('lead_id', leadId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setPayments(data || []);
+
+      const hasSuccessfulPayment = data?.some(p => p.status === 'success');
+      if (hasSuccessfulPayment && onPaymentSuccess) {
+        onPaymentSuccess();
+      }
+    } catch (err) {
+      console.error('Erreur chargement paiements:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [leadId, onPaymentSuccess]);
+
   useEffect(() => {
     loadPayments();
 
@@ -51,30 +75,7 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [leadId]);
-
-  const loadPayments = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('monetico_payments')
-        .select('*')
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      setPayments(data || []);
-
-      const hasSuccessfulPayment = data?.some(p => p.status === 'success');
-      if (hasSuccessfulPayment && onPaymentSuccess) {
-        onPaymentSuccess();
-      }
-    } catch (err) {
-      console.error('Erreur chargement paiements:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [leadId, loadPayments]);
 
   const createPayment = async () => {
     if (!amount || parseFloat(amount) <= 0) {
@@ -86,45 +87,59 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
     setError(null);
 
     try {
-      console.log('🚀 Création paiement pour lead:', leadId);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Session administrateur expirée. Reconnectez-vous.');
+
+      const paymentSignature = JSON.stringify({ leadId, amount: Number.parseFloat(amount).toFixed(2), description: (description || 'Paiement comptant assurance taxi').trim() });
+
+      const paymentRequestId = getPaymentRequestId(paymentSignature);
 
       const response = await fetch(
+
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-monetico-payment`,
         {
           method: 'POST',
+          signal: AbortSignal.timeout(45_000),
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
             leadId,
             amount: parseFloat(amount),
             description: description || `Paiement comptant assurance taxi`,
+            requestId: paymentRequestId,
           }),
         }
       );
 
       const result = await response.json();
-      console.log('📦 Réponse serveur:', result);
 
-      if (!response.ok) {
-        const errorMsg = result.details
-          ? `${result.error}: ${result.details}`
-          : result.error || 'Erreur lors de la création du paiement';
-        throw new Error(errorMsg);
+      if (!response.ok || result?.success !== true) {
+        throw new Error('Erreur lors de la création du paiement');
       }
 
-      if (result.success && result.htmlForm) {
-        const blob = new Blob([result.htmlForm], { type: 'text/html; charset=utf-8' });
-        const blobUrl = URL.createObjectURL(blob);
-        const newWindow = window.open(blobUrl, '_blank');
-        if (newWindow) {
-          newWindow.addEventListener('load', () => {
-            URL.revokeObjectURL(blobUrl);
-          });
-        } else {
-          URL.revokeObjectURL(blobUrl);
+      if (result.success && result.actionUrl && result.formData) {
+        const action = new URL(result.actionUrl);
+        if (action.protocol !== 'https:' || action.hostname !== 'p.monetico-services.com') {
+          throw new Error('Adresse de paiement invalide');
         }
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = action.toString();
+        form.target = '_blank';
+        Object.entries(result.formData as Record<string, string>).forEach(([name, value]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = name;
+          input.value = String(value);
+          form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
+        form.remove();
+        clearPaymentRequestId(paymentSignature);
 
         setAmount('');
         setDescription('');
@@ -133,9 +148,8 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
         throw new Error(result.error);
       }
     } catch (err) {
-      console.error('❌ Erreur détaillée:', err);
-      setError(err.message || 'Erreur inconnue lors de la création du paiement');
-    } finally {
+      console.error('Payment creation failed', err instanceof Error ? err.name : 'UnknownError');
+      setError(err instanceof Error ? err.message : 'Erreur inconnue lors de la création du paiement');    } finally {
       setCreating(false);
     }
   };
@@ -146,13 +160,17 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
     setSuccessMessage(null);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Session administrateur expirée. Reconnectez-vous.');
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-payment-link-monetico`,
         {
           method: 'POST',
+          signal: AbortSignal.timeout(45_000),
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({ paymentId }),
         }
@@ -160,18 +178,16 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
 
       const result = await response.json();
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Erreur lors de l\'envoi de l\'email');
+      if (!response.ok || result?.success !== true) {
+        throw new Error('Erreur lors de l’envoi de l’email');
       }
-
-      setSuccessMessage(`Email envoyé avec succès à ${result.email}`);
+      setSuccessMessage('Email de paiement envoyé avec succès.');
 
       // Effacer le message après 5 secondes
       setTimeout(() => setSuccessMessage(null), 5000);
     } catch (err) {
-      console.error('Erreur envoi email:', err);
-      setError(err.message || 'Erreur lors de l\'envoi de l\'email');
-    } finally {
+      console.error('Payment email failed', err instanceof Error ? err.name : 'UnknownError');
+      setError(err instanceof Error ? err.message : 'Erreur lors de l’envoi de l’email');    } finally {
       setSendingEmail(null);
     }
   };
@@ -328,31 +344,42 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
                   setError(null);
 
                   try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (!session?.access_token) throw new Error('Session administrateur expirée. Reconnectez-vous.');
+
+                    const paymentSignature = JSON.stringify({ leadId, amount: Number.parseFloat(amount).toFixed(2), description: (description || 'Paiement comptant assurance taxi').trim() });
+
+                    const paymentRequestId = getPaymentRequestId(paymentSignature);
+
                     const response = await fetch(
+
                       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-monetico-payment`,
                       {
                         method: 'POST',
+          signal: AbortSignal.timeout(45_000),
                         headers: {
                           'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+                          'Authorization': `Bearer ${session.access_token}`,
                         },
                         body: JSON.stringify({
                           leadId,
                           amount: parseFloat(amount),
                           description: description || `Paiement comptant assurance taxi`,
+            requestId: paymentRequestId,
                         }),
                       }
                     );
 
                     const result = await response.json();
 
-                    if (!response.ok) {
+                    if (!response.ok || result?.success !== true) {
                       throw new Error(result.error || 'Erreur lors de la création du paiement');
                     }
 
                     // Envoyer l'email directement
                     if (result.paymentId) {
                       await sendPaymentEmail(result.paymentId);
+                      clearPaymentRequestId(paymentSignature);
                       setAmount('');
                       setDescription('');
                       await loadPayments();

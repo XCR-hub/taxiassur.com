@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 import type { CommunicationChannel } from './crm-channel-engine';
 
 export interface SmartTemplate {
@@ -273,7 +274,7 @@ export const templatesService = {
       }
     }
 
-    const { data, error } = await supabase.functions.invoke('send-crm-email', {
+    const { data, error } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
       body: {
         lead_id: composer.lead_id,
         to: composer.to,
@@ -285,7 +286,9 @@ export const templatesService = {
       }
     });
 
-    if (error) throw error;
+    if (error || !data?.success) {
+      throw error || new Error("L'e-mail CRM n'a pas été envoyé");
+    }
 
     if (composer.template_id) {
       await this.incrementTemplateUsage(composer.template_id);

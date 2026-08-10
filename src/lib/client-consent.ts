@@ -38,41 +38,33 @@ export function setLocalBehavioralPersonalizationConsent(allowed: boolean): void
   setBehavioralPersonalizationConsent(allowed);
 }
 
-export async function loadClientConsentState(email: string): Promise<ClientConsentState> {
-  const normalizedEmail = normalizeEmail(email);
-
-  const { data, error } = await supabase
-    .from('client_portal_users')
-    .select(
-      'marketing_consent_email, marketing_consent_sms, marketing_consent_phone, partner_cross_sell_consent, behavioral_personalization_consent'
-    )
-    .eq('email', normalizedEmail)
-    .maybeSingle();
+export async function loadClientConsentState(accessToken: string): Promise<ClientConsentState> {
+  const { data, error } = await supabase.rpc('get_client_consents_by_token', {
+    p_token: accessToken,
+  });
 
   if (error || !data) {
     return { ...DEFAULT_CLIENT_CONSENTS };
   }
 
   return {
-    marketing_email: Boolean(data.marketing_consent_email),
-    marketing_sms: Boolean(data.marketing_consent_sms),
-    marketing_phone: Boolean(data.marketing_consent_phone),
-    partner_cross_sell: Boolean(data.partner_cross_sell_consent),
-    behavioral_personalization: Boolean(data.behavioral_personalization_consent),
+    marketing_email: Boolean(data.marketing_email),
+    marketing_sms: Boolean(data.marketing_sms),
+    marketing_phone: Boolean(data.marketing_phone),
+    partner_cross_sell: Boolean(data.partner_cross_sell),
+    behavioral_personalization: Boolean(data.behavioral_personalization),
   };
 }
 
 export async function recordClientConsent(
-  email: string,
+  accessToken: string,
   key: ClientConsentKey,
   value: boolean,
   source = 'client_portal_preferences',
   proof: Record<string, unknown> = {}
 ): Promise<void> {
-  const normalizedEmail = normalizeEmail(email);
-
-  const { error } = await supabase.rpc('record_client_consent_event', {
-    p_email: normalizedEmail,
+  const { error } = await supabase.rpc('record_client_consent_by_token', {
+    p_token: accessToken,
     p_consent_key: key,
     p_consent_value: value,
     p_source: source,
@@ -92,14 +84,14 @@ export async function recordClientConsent(
 }
 
 export async function saveClientConsentState(
-  email: string,
+  accessToken: string,
   consents: ClientConsentState,
   source = 'client_portal_preferences'
 ): Promise<void> {
   const entries = Object.entries(consents) as Array<[ClientConsentKey, boolean]>;
 
   for (const [key, value] of entries) {
-    await recordClientConsent(email, key, value, source, {
+    await recordClientConsent(accessToken, key, value, source, {
       wording_version: 'client_app_2026_07',
       explicit_action: 'checkbox_save',
     });
@@ -107,11 +99,11 @@ export async function saveClientConsentState(
 }
 
 export async function revokeAllClientMarketingConsents(
-  email: string,
+  accessToken: string,
   reason = 'client_request'
 ): Promise<void> {
-  const { error } = await supabase.rpc('revoke_client_marketing_consents', {
-    p_email: normalizeEmail(email),
+  const { error } = await supabase.rpc('revoke_client_consents_by_token', {
+    p_token: accessToken,
     p_source: 'client_portal_revocation',
     p_reason: reason,
   });

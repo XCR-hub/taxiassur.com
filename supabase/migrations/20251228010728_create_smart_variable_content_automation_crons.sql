@@ -32,7 +32,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/auto-generate-blog-post',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := '{}'::jsonb
@@ -48,7 +48,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/auto-generate-blog-post',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := '{}'::jsonb
@@ -64,7 +64,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/auto-generate-blog-post',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := '{}'::jsonb
@@ -80,7 +80,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/auto-generate-blog-post',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := '{}'::jsonb
@@ -96,7 +96,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/auto-generate-blog-post',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := '{}'::jsonb
@@ -112,7 +112,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/auto-generate-blog-post',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := '{}'::jsonb
@@ -132,7 +132,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/auto-generate-city-page',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := '{}'::jsonb
@@ -148,7 +148,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/auto-generate-city-page',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := '{}'::jsonb
@@ -164,7 +164,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/auto-generate-city-page',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := '{}'::jsonb
@@ -180,7 +180,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/auto-generate-city-page',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := '{}'::jsonb
@@ -200,7 +200,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/auto-generate-faq',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := '{}'::jsonb
@@ -216,7 +216,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/auto-generate-faq',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := '{}'::jsonb
@@ -236,7 +236,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/seo-booster',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := '{}'::jsonb
@@ -252,7 +252,7 @@ SELECT cron.schedule(
   SELECT net.http_post(
     url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/seo-booster',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik',
+      'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT',
       'Content-Type', 'application/json'
     ),
     body := '{}'::jsonb

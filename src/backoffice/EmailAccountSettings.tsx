@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Mail, Save, RefreshCw, CheckCircle, AlertCircle, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 
 interface EmailAccount {
   id: string;
@@ -120,7 +121,7 @@ export default function EmailAccountSettings() {
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            ...(await internalFunctionHeaders()),
             'Content-Type': 'application/json'
           }
         }

@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   CreditCard, CheckCircle, Clock, XCircle, AlertCircle,
-  Euro, ExternalLink, RefreshCw, TrendingUp, Receipt,
-  ArrowUpRight, Loader, Mail, Send, ShieldCheck, type LucideIcon
+  ExternalLink, RefreshCw, TrendingUp, Receipt,
+  Loader, Mail, ShieldCheck, type LucideIcon
 } from 'lucide-react';
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
 import { supabase } from '@/lib/supabase';
+import { getClientAccessToken } from '@/lib/client-access';
 
 interface Payment {
   id: string;
@@ -65,7 +66,7 @@ function formatDateTime(iso: string) {
 export default function ClientPaiements() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const email = searchParams.get('email') || sessionStorage.getItem('client_email') || '';
+  const accessToken = getClientAccessToken(searchParams.get('token'));
 
   const [leadData, setLeadData] = useState<LeadData | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -76,68 +77,34 @@ export default function ClientPaiements() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!email) {
+    if (!accessToken) {
       navigate('/espace-client');
       return;
     }
-    sessionStorage.setItem('client_email', email);
     loadData();
-  }, [email]);
+  }, [accessToken, navigate]);
 
   const loadData = async () => {
     try {
-      const { data: portal } = await supabase
-        .from('client_portal_users')
-        .select('lead_id, email')
-        .eq('email', email.toLowerCase().trim())
-        .maybeSingle();
-
-      if (!portal?.lead_id) {
-        const { data: lead } = await supabase
-          .from('crm_leads')
-          .select('id, email, first_name, last_name')
-          .eq('email', email.toLowerCase().trim())
-          .maybeSingle();
-
-        if (lead) {
-          setLeadData(lead);
-          await loadPayments(lead.id);
-        }
-      } else {
-        const { data: lead } = await supabase
-          .from('crm_leads')
-          .select('id, email, first_name, last_name')
-          .eq('id', portal.lead_id)
-          .maybeSingle();
-
-        if (lead) {
-          setLeadData(lead);
-          await loadPayments(lead.id);
-        }
-      }
+      const { data, error: loadError } = await supabase.rpc('get_client_payments_by_token', {
+        p_token: accessToken,
+      });
+      if (loadError) throw loadError;
+      if (!data?.success) throw new Error('Accès client invalide');
+      setLeadData(data.lead as LeadData);
+      setPayments((data.payments || []) as Payment[]);
     } catch (err) {
       console.error('Erreur chargement données client:', err);
+      setLeadData(null);
+      setPayments([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadPayments = async (leadId: string) => {
-    const { data, error } = await supabase
-      .from('monetico_payments')
-      .select('id, reference, amount, status, payment_date, card_type, card_last4, description, payment_url, created_at')
-      .eq('lead_id', leadId)
-      .order('created_at', { ascending: false });
-
-    if (!error && data) {
-      setPayments(data as Payment[]);
-    }
-  };
-
   const handleRefresh = async () => {
-    if (!leadData) return;
     setRefreshing(true);
-    await loadPayments(leadData.id);
+    await loadData();
     setRefreshing(false);
   };
 
@@ -160,7 +127,7 @@ export default function ClientPaiements() {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
-          body: JSON.stringify({ paymentId }),
+          body: JSON.stringify({ paymentId, accessToken }),
         }
       );
       const result = await response.json();
@@ -198,7 +165,7 @@ export default function ClientPaiements() {
         noIndex={true}
       />
 
-      <ClientLayout email={email}>
+      <ClientLayout email={leadData?.email || ''}>
         <div className="space-y-6 max-w-3xl">
 
           <div className="flex items-center justify-between">
@@ -331,7 +298,7 @@ export default function ClientPaiements() {
               </h2>
 
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
-                {paidPayments.map((payment, idx) => (
+                {paidPayments.map((payment) => (
                   <div key={payment.id} className="p-5 hover:bg-gray-50/50 transition-colors">
                     <div className="flex items-center gap-4">
                       <div className="w-9 h-9 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">

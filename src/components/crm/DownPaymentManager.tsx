@@ -51,13 +51,16 @@ export const DownPaymentManager: React.FC<DownPaymentManagerProps> = ({
     setError(null);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Session administrateur expirée. Reconnectez-vous.');
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-monetico-payment`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+            'Authorization': `Bearer ${session.access_token}`
           },
           body: JSON.stringify({
             leadId: leadId,
@@ -74,52 +77,66 @@ export const DownPaymentManager: React.FC<DownPaymentManagerProps> = ({
 
       const data = await response.json();
 
-      if (data.success && data.htmlForm) {
-        const newWindow = window.open('', '_blank', 'width=800,height=600');
-        if (newWindow) {
-          newWindow.document.write(data.htmlForm);
-          newWindow.document.close();
+      if (data.success && data.actionUrl && data.formData) {
+        const action = new URL(data.actionUrl);
+        if (action.protocol !== 'https:' || action.hostname !== 'p.monetico-services.com') {
+          throw new Error('Adresse de paiement invalide');
         }
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = action.toString();
+        form.target = '_blank';
+        Object.entries(data.formData as Record<string, string>).forEach(([name, value]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = name;
+          input.value = String(value);
+          form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
+        form.remove();
 
         setIsEditMode(false);
 
         // Construire l'URL complète du paiement
-        const paymentUrl = `${window.location.origin}/paiement/${data.reference}`;
+        if (!/^[0-9a-f]{64}$/i.test(data.paymentAccessToken || '')) {           throw new Error('Jeton de paiement manquant');         }         const paymentPath = `${encodeURIComponent(data.reference)}?token=${encodeURIComponent(data.paymentAccessToken)}`;         const paymentUrl = `${window.location.origin}/paiement/${paymentPath}`;
 
-        await supabase
+        const { error: contractUpdateError } = await supabase
           .from('lead_contracts')
           .update({
             down_payment_required: true,
             down_payment_amount: parseFloat(amount),
             down_payment_status: 'pending',
-            down_payment_link: data.reference
+            down_payment_link: paymentPath
           })
           .eq('id', contractId);
+        if (contractUpdateError) throw contractUpdateError;
 
         // Récupérer les données du lead pour l'email
-        const { data: lead } = await supabase
+        const { data: lead, error: leadError } = await supabase
           .from('crm_leads')
           .select('email, first_name, last_name')
           .eq('id', leadId)
           .single();
+        if (leadError) throw leadError;
 
         // Envoyer l'email de paiement automatiquement
         if (lead && lead.email) {
           try {
-            await supabase.functions.invoke('send-payment-link-email', {
+            const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-payment-link-email', {
               body: {
                 lead_id: leadId,
                 payment_url: paymentUrl,
-                amount: parseFloat(amount),
-                email: lead.email,
-                first_name: lead.first_name,
-                last_name: lead.last_name
+                amount: parseFloat(amount)
               }
             });
-            console.log('✅ Email de paiement envoyé automatiquement');
+            if (emailError || emailResult?.success !== true) {
+              throw emailError || new Error('E-mail de paiement non envoyé');
+            }
           } catch (emailError) {
-            console.error('⚠️ Erreur envoi email:', emailError);
-            // Ne pas bloquer le processus si l'email échoue
+            console.error('Payment email delivery failed', emailError instanceof Error ? emailError.name : 'UnknownError');
+            setError('Lien créé, mais l’e-mail de paiement n’a pas été envoyé. Copiez le lien manuellement.');
           }
         }
 
@@ -128,8 +145,8 @@ export const DownPaymentManager: React.FC<DownPaymentManagerProps> = ({
         throw new Error(data.error || 'Échec de la création du paiement');
       }
     } catch (err) {
-      console.error('Error creating Monético payment:', err);
-      setError(err.message);
+      console.error('Payment creation failed', err instanceof Error ? err.name : 'UnknownError');
+      setError(err instanceof Error ? err.message : 'Erreur lors de la création du paiement');
     } finally {
       setGenerating(false);
     }

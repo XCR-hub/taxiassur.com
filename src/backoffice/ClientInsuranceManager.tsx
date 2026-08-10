@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, User, FileText, AlertCircle, DollarSign, CheckSquare, Clock, Phone, Mail, MapPin, CreditCard as Edit, Save, X, Plus, Trash2, Eye, Activity, Bell, AlertTriangle, CheckCircle2, Loader2, RefreshCw, FolderOpen, Link, Copy, Check, MessageSquare, Send, Calendar } from 'lucide-react';
+import { ArrowLeft, User, FileText, AlertCircle, DollarSign, CheckSquare, Clock, Phone, Mail, MapPin, CreditCard as Edit, Save, X, Plus, Trash2, Eye, Activity, Bell, AlertTriangle, Loader2, RefreshCw, FolderOpen, Copy, Check, MessageSquare, Calendar } from 'lucide-react';
 import DocumentsViewer from './DocumentsViewer';
 import { toast } from '@/lib/toast';
 
@@ -57,6 +57,10 @@ interface Claim {
   insurer_claim_number?: string;
   estimated_amount?: number;
   circumstances: string;
+  location?: string;
+  vehicle_plate?: string;
+  internal_notes?: string;
+  contract_id?: string;
   created_at: string;
 }
 
@@ -225,6 +229,8 @@ export default function ClientInsuranceManager() {
     if (leadId) {
       loadAllData();
     }
+  // Reload only when the selected lead changes; loaders are intentionally local.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leadId]);
 
   async function loadAllData() {
@@ -419,7 +425,8 @@ export default function ClientInsuranceManager() {
   }
 
   function copyPortalLink() {
-    const token = client?.access_token || client?.id;
+    const token = client?.access_token;
+    if (!token) return;
     const url = `${window.location.origin}/espace-client/${token}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopiedLink(true);
@@ -559,13 +566,13 @@ export default function ClientInsuranceManager() {
       claim_type: claim.claim_type,
       claim_date: claim.claim_date ? claim.claim_date.split('T')[0] : '',
       circumstances: claim.circumstances || '',
-      location: (claim as any).location || '',
-      vehicle_plate: (claim as any).vehicle_plate || '',
+      location: claim.location || '',
+      vehicle_plate: claim.vehicle_plate || '',
       insurer_claim_number: claim.insurer_claim_number || '',
       estimated_amount: claim.estimated_amount?.toString() || '',
       status: claim.status,
-      internal_notes: (claim as any).internal_notes || '',
-      contract_id: (claim as any).contract_id || ''
+      internal_notes: claim.internal_notes || '',
+      contract_id: claim.contract_id || ''
     });
     setEditingClaimId(claim.id);
     setClaimError(null);
@@ -768,6 +775,7 @@ export default function ClientInsuranceManager() {
               </a>
               <button
                 onClick={copyPortalLink}
+                disabled={!client.access_token}
                 className={`flex items-center gap-2 px-3 py-2 border rounded-lg transition-colors font-medium text-sm ${copiedLink ? 'bg-green-50 border-green-300 text-green-700' : 'bg-white border-gray-200 hover:bg-gray-50 text-gray-700'}`}
                 title="Copier le lien espace client"
               >
@@ -775,8 +783,9 @@ export default function ClientInsuranceManager() {
                 {copiedLink ? 'Copié !' : 'Lien client'}
               </button>
               <button
-                onClick={() => window.open(`/espace-client/${client.access_token || client.id}`, '_blank')}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors font-semibold"
+                onClick={() => client.access_token && window.open(`/espace-client/${client.access_token}`, '_blank', 'noopener,noreferrer')}
+                disabled={!client.access_token}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors font-semibold disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Eye size={18} />
                 Voir comme client
@@ -872,7 +881,7 @@ export default function ClientInsuranceManager() {
               {!editingProfile ? (
                 <button
                   onClick={() => setEditingProfile(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors font-semibold"
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors font-semibold disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Edit size={18} />
                   Modifier
@@ -1049,7 +1058,7 @@ export default function ClientInsuranceManager() {
               <h2 className="text-xl font-bold text-gray-900">Contrats d'assurance</h2>
               <button
                 onClick={openNewContractForm}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors font-semibold"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors font-semibold disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Plus size={18} />
                 Nouveau contrat
@@ -1382,7 +1391,7 @@ export default function ClientInsuranceManager() {
               <h2 className="text-xl font-bold text-gray-900">Sinistres</h2>
               <button
                 onClick={openNewClaimForm}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors font-semibold"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors font-semibold disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Plus size={18} />
                 Déclarer un sinistre
@@ -1611,8 +1620,8 @@ export default function ClientInsuranceManager() {
                           <p className="text-xs text-gray-500">
                             {new Date(claim.claim_date).toLocaleDateString('fr-FR')}
                             {claim.insurer_claim_number && ` • N° ${claim.insurer_claim_number}`}
-                            {(claim as any).contract_id && (() => {
-                              const c = contracts.find(ct => ct.id === (claim as any).contract_id);
+                            {claim.contract_id && (() => {
+                              const c = contracts.find(ct => ct.id === claim.contract_id);
                               return c ? <span className="ml-1 inline-flex items-center gap-1 text-yellow-600 font-medium"><FileText size={10} />{c.insurer_name}{c.contract_number ? ' N° ' + c.contract_number : ''}</span> : null;
                             })()}
                           </p>
@@ -1753,7 +1762,7 @@ export default function ClientInsuranceManager() {
               <h2 className="text-xl font-bold text-gray-900">Tâches à faire</h2>
               <button
                 onClick={() => setShowTaskForm(v => !v)}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors font-semibold"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black rounded-lg transition-colors font-semibold disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Plus size={18} />
                 Nouvelle tâche

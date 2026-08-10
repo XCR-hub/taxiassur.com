@@ -64,7 +64,7 @@ const SecurityDashboard: React.FC = () => {
   const getTimeRangeQuery = () => {
   const navigate = useNavigate();
 const now = new Date();
-    let timeAgo = new Date();
+    const timeAgo = new Date();
 
     switch (timeRange) {
       case '1h':

@@ -4,6 +4,8 @@ import {
   Sparkles, RefreshCw, Phone, ChevronDown, Zap, AlertCircle
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { withTimeout } from '@/lib/promise-timeout';
+import { clearDeliveryRequestId, getDeliveryRequestId } from '@/lib/delivery-idempotency';
 
 interface SMSMessage {
   id: string;
@@ -102,14 +104,17 @@ const SMSConversationPanel: React.FC<Props> = ({ leadId, leadPhone, leadFirstNam
     setSending(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('send-sms-brevo', {
+      const deliverySignature = JSON.stringify({ leadId, to: leadPhone, content: newMessage.trim(), tag: 'crm-manual' });
+      const requestId = getDeliveryRequestId('sms', deliverySignature);
+      const { data, error } = await withTimeout(supabase.functions.invoke('send-sms-brevo', {
         body: {
           to: leadPhone,
           content: newMessage.trim(),
           lead_id: leadId,
           tag: 'crm-manual',
+          requestId,
         },
-      });
+      }), 45_000);
 
       if (error || !data?.success) {
         throw new Error(error?.message || data?.error || 'Echec envoi');
@@ -140,6 +145,7 @@ const SMSConversationPanel: React.FC<Props> = ({ leadId, leadPhone, leadFirstNam
         });
       }
 
+      clearDeliveryRequestId('sms', deliverySignature);
       setNewMessage('');
       await loadConversation();
     } catch (err: any) {

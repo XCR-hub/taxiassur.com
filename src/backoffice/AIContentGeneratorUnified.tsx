@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Sparkles, Loader2, Copy, Check, Download, Home, Save, FileText, MapPin, HelpCircle, Image as ImageIcon, Tag, Clock } from 'lucide-react';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
+import { Sparkles, Loader2, Copy, Check, Home, Save, FileText, MapPin, HelpCircle, Image as ImageIcon, Tag, Clock } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
@@ -106,13 +107,11 @@ export default function AIContentGeneratorUnified() {
     try {
       // Utiliser Edge Function Supabase au lieu de PHP
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
       const response = await fetch(`${supabaseUrl}/functions/v1/generate-seo-content`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Authorization': (await internalFunctionHeaders()).Authorization,
         },
         body: JSON.stringify({
           keyword: keyword.trim(),

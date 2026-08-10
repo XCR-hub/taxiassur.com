@@ -1,3 +1,7 @@
+## Sécurité du webhook
+
+Configurez KEYYO_WEBHOOK_SECRET avec au moins 24 caractères. Transmettez-le de préférence dans l’en-tête X-Keyyo-Secret; si Keyyo ne permet pas les en-têtes personnalisés, ajoutez webhook_secret=VOTRE_SECRET_LONG à l’URL configurée.
+
 # Guide Complet d'Intégration Keyyo - API CTI v1.6
 
 ## Vue d'ensemble
@@ -59,7 +63,7 @@ Pour chaque ligne Keyyo que vous souhaitez utiliser :
 2. Notez l'**URL de notification** actuelle (si existante)
 3. Préparez l'URL du webhook :
    ```
-   https://VOTRE_PROJET.supabase.co/functions/v1/keyyo-webhook?account=_ACCOUNT_&caller=_CALLER_&callee=_CALLEE_&type=_N_TYPE_&callref=_CALLREF_&dref=_DREF_&drefreplace=_DREF_REPLACE_&_TSMS_=_TSMS_
+   https://VOTRE_PROJET.supabase.co/functions/v1/keyyo-webhook?account=_ACCOUNT_&caller=_CALLER_&callee=_CALLEE_&type=_N_TYPE_&callref=_CALLREF_&dref=_DREF_&drefreplace=_DREF_REPLACE_&_TSMS_=_TSMS_&webhook_secret=VOTRE_SECRET_LONG
    ```
 
 ### C. Configuration de l'IP source (optionnel)
@@ -159,7 +163,7 @@ ORDER BY email;
    - Allez dans **Paramètres** → **CTI/API**
    - **URL de notification** : Collez l'URL complète avec les paramètres :
      ```
-     https://VOTRE_PROJET.supabase.co/functions/v1/keyyo-webhook?account=_ACCOUNT_&caller=_CALLER_&callee=_CALLEE_&type=_N_TYPE_&callref=_CALLREF_&dref=_DREF_&drefreplace=_DREF_REPLACE_&_SESSION_ID_=_SESSION_ID_&_IS_ACD_=_IS_ACD_&_REDIRECTING_NUMBER_=_REDIRECTING_NUMBER_&_TSMS_=_TSMS_
+     https://VOTRE_PROJET.supabase.co/functions/v1/keyyo-webhook?account=_ACCOUNT_&caller=_CALLER_&callee=_CALLEE_&type=_N_TYPE_&callref=_CALLREF_&dref=_DREF_&drefreplace=_DREF_REPLACE_&_SESSION_ID_=_SESSION_ID_&_IS_ACD_=_IS_ACD_&_REDIRECTING_NUMBER_=_REDIRECTING_NUMBER_&_TSMS_=_TSMS_&webhook_secret=VOTRE_SECRET_LONG
      ```
 
 3. Cliquez sur **Enregistrer**

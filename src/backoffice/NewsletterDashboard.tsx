@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { supabase } from '../lib/supabase';
 import { Send, Users, Mail, Eye, MousePointer, Download, BarChart3, CheckCircle, Clock, Plus, Search, RefreshCw, TrendingUp, Filter, ChevronRight, X, AlertTriangle, FileText, Zap, ArrowUp, Inbox, Sparkles, CreditCard as Edit3, Radio } from 'lucide-react';
 
@@ -274,7 +275,7 @@ export default function NewsletterDashboard() {
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-newsletter-campaign`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
+          headers: { 'Content-Type': 'application/json', Authorization: (await internalFunctionHeaders()).Authorization },
           body: JSON.stringify({ campaign_id: campaignId }),
         }
       );

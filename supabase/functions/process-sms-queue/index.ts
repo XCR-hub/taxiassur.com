@@ -71,6 +71,7 @@ async function sendSMSViaBrevo(phone: string, content: string, tag?: string): Pr
       content,
       tag: tag || "workflow-sms",
     }),
+    signal: AbortSignal.timeout(30_000),
   });
 
   const data = await response.json();
@@ -86,10 +87,51 @@ Deno.serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    if (req.headers.get("Authorization") !== `Bearer ${supabaseKey}`) {
+      return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     let totalSent = 0;
     let totalFailed = 0;
+
+    const staleBefore = new Date(Date.now() - 10 * 60_000).toISOString();
+    const { error: recoverMessagesError } = await supabase
+      .from("sms_messages")
+      .update({ status: "pending" })
+      .eq("status", "processing")
+      .eq("direction", "outbound")
+      .lt("updated_at", staleBefore);
+    if (recoverMessagesError) throw recoverMessagesError;
+
+    const { data: staleQueue, error: staleQueueError } = await supabase
+      .from("sms_queue")
+      .select("id,attempts,updated_at")
+      .eq("status", "processing")
+      .lt("updated_at", staleBefore)
+      .limit(100);
+    if (staleQueueError) throw staleQueueError;
+
+    for (const stale of staleQueue || []) {
+      const attempts = (stale.attempts || 0) + 1;
+      const exhausted = attempts >= 3;
+      const { error: recoveryError } = await supabase
+        .from("sms_queue")
+        .update({
+          status: exhausted ? "failed" : "pending",
+          attempts,
+          scheduled_for: exhausted ? undefined : new Date(Date.now() + 60_000).toISOString(),
+          error_message: exhausted ? "Delivery attempts exhausted" : "Recovered after interrupted processing",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", stale.id)
+        .eq("status", "processing")
+        .eq("updated_at", stale.updated_at);
+      if (recoveryError) throw recoveryError;
+    }
 
     // 1. Process sms_messages with pending status (new conversation system)
     const { data: pendingMessages } = await supabase
@@ -101,6 +143,15 @@ Deno.serve(async (req: Request) => {
       .limit(20);
 
     for (const msg of pendingMessages || []) {
+      const { data: claimedMessage, error: claimMessageError } = await supabase
+        .from("sms_messages")
+        .update({ status: "processing", updated_at: new Date().toISOString() })
+        .eq("id", msg.id)
+        .eq("status", "pending")
+        .select("id")
+        .maybeSingle();
+      if (claimMessageError) throw claimMessageError;
+      if (!claimedMessage) continue;
       try {
         const recipient = cleanText(msg.to_number);
         if (!recipient) {
@@ -117,7 +168,7 @@ Deno.serve(async (req: Request) => {
         await supabase.from("sms_messages").update({
           status: "sent",
           provider_message_id: result.messageId,
-          delivered_at: new Date().toISOString(),
+          sent_at: new Date().toISOString(),
         }).eq("id", msg.id);
 
         if (msg.conversation_id) {
@@ -165,7 +216,15 @@ Deno.serve(async (req: Request) => {
 
     for (const sms of pending || []) {
       try {
-        await supabase.from("sms_queue").update({ status: "processing" }).eq("id", sms.id);
+        const { data: claimed, error: claimError } = await supabase
+          .from("sms_queue")
+          .update({ status: "processing", updated_at: new Date().toISOString() })
+          .eq("id", sms.id)
+          .eq("status", "pending")
+          .select("id")
+          .maybeSingle();
+        if (claimError) throw claimError;
+        if (!claimed) continue;
 
         const recipient = cleanText(sms.recipient);
         if (!recipient) {
@@ -191,6 +250,7 @@ Deno.serve(async (req: Request) => {
           sent_at: new Date().toISOString(),
           attempts: (sms.attempts || 0) + 1,
           metadata: { ...(sms.metadata || {}), message_id: result.messageId },
+          updated_at: new Date().toISOString(),
         }).eq("id", sms.id);
 
         // Also insert into sms_messages for conversation tracking
@@ -211,7 +271,7 @@ Deno.serve(async (req: Request) => {
             provider_message_id: result.messageId,
             is_automated: true,
             workflow_trigger: sms.template_key,
-            delivered_at: new Date().toISOString(),
+            sent_at: new Date().toISOString(),
           });
 
           await supabase.from("crm_interactions").insert({

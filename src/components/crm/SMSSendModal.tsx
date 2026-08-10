@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { X, Send, MessageCircle, User, Phone, Clock, CheckCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { withTimeout } from '@/lib/promise-timeout';
+import { clearDeliveryRequestId, getDeliveryRequestId } from '@/lib/delivery-idempotency';
 import { toast } from '@/lib/toast';
 
 interface SMSSendModalProps {
@@ -87,14 +89,17 @@ const SMSSendModal: React.FC<SMSSendModalProps> = ({
 
     setSending(true);
     try {
-      const { data, error } = await supabase.functions.invoke('send-sms-brevo', {
+      const deliverySignature = JSON.stringify({ leadId, to: leadPhone, content: message.trim(), tag: 'crm-manual' });
+      const requestId = getDeliveryRequestId('sms', deliverySignature);
+      const { data, error } = await withTimeout(supabase.functions.invoke('send-sms-brevo', {
         body: {
           to: leadPhone,
           content: message.trim(),
           lead_id: leadId,
           tag: 'crm-manual',
+          requestId,
         },
-      });
+      }), 45_000);
 
       if (error) {
         throw new Error(error.message || 'Erreur Edge Function');
@@ -104,6 +109,7 @@ const SMSSendModal: React.FC<SMSSendModalProps> = ({
         throw new Error(data.error || 'Echec envoi SMS');
       }
 
+      clearDeliveryRequestId('sms', deliverySignature);
       setSent(true);
       onSent?.();
       setTimeout(() => {

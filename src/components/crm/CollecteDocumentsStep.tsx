@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 import { Mail, MessageSquare, Phone, Send, CheckCircle2, AlertCircle, Loader2, FileText, Download, Plus, X, CreditCard as Edit3 } from 'lucide-react';
 import DocumentValidationComplete from './DocumentValidationComplete';
 import { toast } from '@/lib/toast';
@@ -325,15 +326,14 @@ export default function CollecteDocumentsStep({
       if (template.channel === 'email') {
         const htmlContent = messageContent.replace(/\n/g, '<br>');
 
-        const { data: emailResult, error } = await supabase.functions.invoke('send-crm-email', {
-          body: {
+        const { data: emailResult, error } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
             to: leadEmail,
             to_email: leadEmail,
             subject: subject || 'Documents necessaires - TaxiAssur',
             content: htmlContent,
             body: htmlContent,
             lead_id: leadId
-          }
+
         });
 
         // Vérifier l'erreur ET le résultat
@@ -356,13 +356,12 @@ export default function CollecteDocumentsStep({
           });
 
       } else if (template.channel === 'sms') {
-        const { data: smsResult, error } = await supabase.functions.invoke('send-sms-brevo', {
-          body: {
+        const { data: smsResult, error } = await invokeIdempotentDelivery(supabase, 'sms', 'send-sms-brevo', {
             to: leadPhone,
             content: messageContent,
             lead_id: leadId,
             tag: 'documents-request'
-          }
+
         });
 
         if (error || !smsResult?.success) {
@@ -372,12 +371,11 @@ export default function CollecteDocumentsStep({
 
       } else if (template.channel === 'whatsapp') {
         // Send WhatsApp
-        const { data: waResult, error } = await supabase.functions.invoke('send-whatsapp', {
-          body: {
+        const { data: waResult, error } = await invokeIdempotentDelivery(supabase, 'whatsapp', 'send-whatsapp', {
             to: leadPhone,
             message: messageContent,
             leadId: leadId
-          }
+
         });
 
         // Vérifier l'erreur ET le résultat

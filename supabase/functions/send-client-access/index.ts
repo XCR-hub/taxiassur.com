@@ -7,155 +7,89 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-function base64Encode(str: string): string {
-  return btoa(str);
+const internalDomains = new Set(['taxiassur.com', 'taxiassur.fr', 'xcr.fr']);
+
+async function isAuthorized(req: Request, supabaseUrl: string, serviceKey: string): Promise<boolean> {
+  const token = (req.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
+  if (!token) return false;
+  if (token === serviceKey) return true;
+  const admin = createClient(supabaseUrl, serviceKey);
+  const { data, error } = await admin.auth.getUser(token);
+  if (error) return false;
+  const domain = (data.user?.email || '').toLowerCase().split('@')[1];
+  return internalDomains.has(domain);
 }
 
-async function sendEmailSMTP(
-  to: string,
-  toName: string,
-  subject: string,
-  htmlBody: string,
-  fromEmail: string = "team@taxiassur.com",
-  fromName: string = "TaxiAssur"
-): Promise<void> {
-  const SMTP_HOST = Deno.env.get("SMTP_HOST") || Deno.env.get("HMAIL_SMTP_HOST") || Deno.env.get("IONOS_SMTP_HOST") || "mail.xcr.fr";
-  const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") || Deno.env.get("HMAIL_SMTP_PORT") || Deno.env.get("IONOS_SMTP_PORT") || "587");
-  const SMTP_USER = Deno.env.get("SMTP_USER") || Deno.env.get("HMAIL_SMTP_USER") || Deno.env.get("IONOS_EMAIL_USER") || "tcerda@xcr.fr";
-  const SMTP_PASS = Deno.env.get("SMTP_PASS") || Deno.env.get("HMAIL_SMTP_PASS") || Deno.env.get("IONOS_EMAIL_PASSWORD") || Deno.env.get("IONOS_SMTP_PASSWORD");
-  const SMTP_SECURITY = (Deno.env.get("SMTP_SECURITY") || Deno.env.get("HMAIL_SMTP_SECURITY") || Deno.env.get("IONOS_SMTP_SECURITY") || (SMTP_PORT === 465 ? "ssl" : "starttls")).toLowerCase();
-
-  console.log("🔧 Configuration SMTP:", {
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    user: SMTP_USER,
-    hasPassword: !!SMTP_PASS
-  });
-
-  if (!SMTP_PASS) {
-    throw new Error("IONOS_EMAIL_PASSWORD ou IONOS_SMTP_PASSWORD non configuré dans les secrets Supabase");
-  }
-
-  // Port 465 = SSL direct, Port 587 = STARTTLS
-  const useSSL = SMTP_SECURITY === "ssl";
-
-  let conn;
-
-  if (useSSL) {
-    // Connexion SSL directe
-    conn = await Deno.connectTls({
-      hostname: SMTP_HOST,
-      port: SMTP_PORT,
-    });
-  } else {
-    // Connexion non sécurisée puis STARTTLS
-    conn = await Deno.connect({
-      hostname: SMTP_HOST,
-      port: SMTP_PORT,
-    });
-  }
-
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-
-  async function readResponse(): Promise<string> {
-    const buffer = new Uint8Array(4096);
-    const n = await conn.read(buffer);
-    if (n === null) return "";
-    const response = decoder.decode(buffer.subarray(0, n));
-    console.log("← SMTP:", response.trim());
-    return response;
-  }
-
-  async function sendCommand(cmd: string): Promise<string> {
-    console.log("→ SMTP:", cmd.replace(SMTP_PASS || "", "***"));
-    await conn.write(encoder.encode(cmd + "\r\n"));
-    return await readResponse();
-  }
-
-  try {
-    // Lecture du banner initial
-    await readResponse();
-
-    // EHLO
-    await sendCommand(`EHLO ${SMTP_HOST}`);
-    if (SMTP_SECURITY === "starttls" || SMTP_SECURITY === "tls") {
-      const startTlsResponse = await sendCommand("STARTTLS");
-      if (!startTlsResponse.startsWith("220")) throw new Error("SMTP STARTTLS failed");
-      conn = await Deno.startTls(conn, { hostname: SMTP_HOST });
-      await sendCommand(`EHLO ${SMTP_HOST}`);
-    }
-
-    // AUTH LOGIN
-    await sendCommand(`AUTH LOGIN`);
-    await sendCommand(base64Encode(SMTP_USER));
-    await sendCommand(base64Encode(SMTP_PASS));
-
-    // Enveloppe email
-    await sendCommand(`MAIL FROM:<${fromEmail}>`);
-    await sendCommand(`RCPT TO:<${to}>`);
-    await sendCommand("DATA");
-
-    const emailContent = [
-      `From: "${fromName}" <${fromEmail}>`,
-      `To: "${toName}" <${to}>`,
-      `Subject: ${subject}`,
-      "MIME-Version: 1.0",
-      "Content-Type: text/html; charset=UTF-8",
-      "",
-      htmlBody,
-      ".",
-    ].join("\r\n");
-
-    await conn.write(encoder.encode(emailContent + "\r\n"));
-    await readResponse();
-    await sendCommand("QUIT");
-
-    console.log("✅ Email envoyé avec succès via SMTP");
-  } catch (error) {
-    console.error("❌ Erreur SMTP:", error);
-    throw error;
-  } finally {
-    try {
-      conn.close();
-    } catch (e) {
-      console.log("Connexion déjà fermée");
-    }
-  }
+function escapeHtml(value: unknown): string {
+  const entities: Record<string, string> = {
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  };
+  return String(value ?? '').replace(/[&<>"']/g, (character) => entities[character]);
 }
-
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ success: false, error: "Method not allowed" }), {
+      status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   try {
-    const { lead_id, email, first_name, last_name } = await req.json();
-
-    if (!lead_id) {
-      throw new Error("lead_id est requis");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    if (!supabaseUrl || !supabaseKey) {
+      return new Response(JSON.stringify({ success: false, error: "Service indisponible" }), {
+        status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    if (!await isAuthorized(req, supabaseUrl, supabaseKey)) {
+      return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    let body: Record<string, unknown>;
+    try { body = await req.json(); } catch {
+      return new Response(JSON.stringify({ success: false, error: "Corps JSON invalide" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const requestId = typeof body.requestId === "string" ? body.requestId.trim() : "";
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestId)) {
+      return new Response(JSON.stringify({ success: false, error: "requestId invalide" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const lead_id = typeof body.lead_id === "string" ? body.lead_id.trim() : "";
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(lead_id)) {
+      return new Response(JSON.stringify({ success: false, error: "lead_id invalide" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { data: lead, error: leadError } = await supabase
       .from("crm_leads")
-      .select("id, first_name, last_name, email, phone")
+      .select("id, first_name, last_name, email, phone, access_token")
       .eq("id", lead_id)
       .maybeSingle();
 
     if (leadError || !lead) {
-      throw new Error(`Lead introuvable: ${leadError?.message || "Aucune donnée"}`);
+      throw new Error("Lead introuvable");
     }
 
-    if (!lead.email) {
+    if (!lead.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lead.email) || lead.email.length > 254) {
       throw new Error("Le lead n'a pas d'email");
     }
 
-    // Lien d'accès direct à l'espace client (pas de mot de passe requis)
-    const clientSpaceLink = `https://taxiassur.com/espace-client/${lead.id}`;
+    if (!lead.access_token || !/^[0-9A-Fa-f]{64}$/.test(lead.access_token)) {
+      return new Response(JSON.stringify({ success: false, error: "Jeton client indisponible" }), {
+        status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const clientSpaceLink = `https://taxiassur.com/espace-client/${lead.access_token}`;
+    const safeFirstName = escapeHtml(lead.first_name);
 
     const emailHtml = `
 <!DOCTYPE html>
@@ -189,7 +123,7 @@ Deno.serve(async (req: Request) => {
     </div>
     <div class="content">
       <div class="welcome-box">
-        <strong style="font-size: 18px;">Félicitations ${lead.first_name || ""} !</strong><br><br>
+        <strong style="font-size: 18px;">Félicitations ${safeFirstName} !</strong><br><br>
         Votre assurance taxi est maintenant active. Nous sommes ravis de vous compter parmi nos clients.
       </div>
 
@@ -265,17 +199,6 @@ Deno.serve(async (req: Request) => {
 </body>
 </html>`;
 
-    console.log(`📧 Envoi email d'accès à ${lead.email}...`);
-
-    await sendEmailSMTP(
-      lead.email,
-      `${lead.first_name || ""} ${lead.last_name || ""}`.trim() || "Client",
-      "🎉 Bienvenue ! Accédez à votre espace client TaxiAssur",
-      emailHtml,
-      "team@taxiassur.com",
-      "TaxiAssur"
-    );
-
     // Créer ou mettre à jour le portail client
     const { error: portalError } = await supabase
       .from('client_portal_users')
@@ -294,36 +217,46 @@ Deno.serve(async (req: Request) => {
         onConflict: 'email'
       });
 
-    if (portalError) {
-      console.error('Erreur création portail:', portalError);
+    if (portalError) throw new Error("ClientPortalPersistenceFailed");
+
+    const relayResponse = await fetch(`${supabaseUrl}/functions/v1/send-crm-email`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${supabaseKey}`,
+        apikey: supabaseKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        to: lead.email,
+        to_name: `${lead.first_name || ""} ${lead.last_name || ""}`.trim() || "Client",
+        subject: "Bienvenue ! Accédez à votre espace client TaxiAssur",
+        content: emailHtml,
+        lead_id: lead.id,
+        requestId,
+      }),
+      signal: AbortSignal.timeout(45_000),
+    });
+    const relayResult = await relayResponse.json().catch(() => null);
+    if (!relayResponse.ok || relayResult?.success !== true) {
+      throw new Error("ClientAccessDeliveryFailed");
     }
 
-    await supabase.from("crm_interactions").insert({
-      lead_id: lead.id,
-      type: "email",
-      direction: "outbound",
-      subject: "Envoi des accès espace client",
-      content: `Email d'accès espace client envoyé avec lien sécurisé : ${clientSpaceLink}`,
-      to_email: lead.email,
-      from_email: "team@taxiassur.com",
-    });
 
-    console.log(`✅ Email d'accès client envoyé à ${lead.email}`);
 
     return new Response(
       JSON.stringify({
         success: true,
         message: "Email d'accès envoyé avec succès",
-        client_space_link: clientSpaceLink,
+        lead_id: lead.id,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("❌ Erreur lors de l'envoi des accès client:", error);
+    console.error("Client access email failed", error instanceof Error ? error.name : "unknown");
     return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : "Erreur inconnue",
+        error: "Erreur serveur",
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

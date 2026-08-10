@@ -1,26 +1,12 @@
 import { supabase } from './supabase';
 import { toast } from './toast';
+import { getSecureDocumentUrl } from './secure-document-url';
 
-export function getDocumentUrl(filePath: string, bucketParam?: string): string {
-  if (!filePath) return '';
-
-  let bucket = bucketParam || 'crm-documents';
-  let path = filePath;
-
-  if (!bucketParam) {
-    if (path.startsWith('prospect-documents/')) {
-      bucket = 'prospect-documents';
-      path = path.replace('prospect-documents/', '');
-    } else if (path.startsWith('crm-documents/')) {
-      bucket = 'crm-documents';
-      path = path.replace('crm-documents/', '');
-    } else if (path.startsWith('email-attachments/')) {
-      bucket = 'email-attachments';
-      path = path.replace('email-attachments/', '');
-    }
-  }
-
-  return `${supabase.supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
+function resolveBucket(filePath: string, bucket?: string): string {
+  if (bucket) return bucket;
+  if (filePath.startsWith('prospect-documents/')) return 'prospect-documents';
+  if (filePath.startsWith('email-attachments/')) return 'email-attachments';
+  return 'crm-documents';
 }
 
 export function isOrphanEmailRef(filePath?: string | null): boolean {
@@ -40,40 +26,49 @@ async function resolveOrphanPath(filePath: string): Promise<{ path: string; buck
     .not('storage_path', 'is', null)
     .maybeSingle();
 
-  if (data?.storage_path) {
-    return { path: data.storage_path, bucket: 'email-attachments' };
+  return data?.storage_path
+    ? { path: data.storage_path, bucket: 'email-attachments' }
+    : null;
+}
+
+async function resolveStoredDocument(
+  filePath: string,
+  bucket?: string,
+): Promise<{ path: string; bucket: string } | null> {
+  if (!isOrphanEmailRef(filePath)) {
+    return { path: filePath, bucket: resolveBucket(filePath, bucket) };
   }
-  return null;
+  const resolved = await resolveOrphanPath(filePath);
+  if (!resolved) {
+    toast.error("Ce fichier n'est plus disponible en stockage. Demandez au prospect de le renvoyer.");
+  }
+  return resolved;
 }
 
 export async function openDocument(filePath: string, bucket?: string) {
-  if (isOrphanEmailRef(filePath)) {
-    const resolved = await resolveOrphanPath(filePath);
-    if (!resolved) {
-      toast.error("Ce fichier n'est plus disponible en stockage. Demandez au prospect de le renvoyer.");
-      return;
-    }
-    window.open(getDocumentUrl(resolved.path, resolved.bucket), '_blank');
-    return;
+  const resolved = await resolveStoredDocument(filePath, bucket);
+  if (!resolved) return;
+  try {
+    const signedUrl = await getSecureDocumentUrl(resolved);
+    window.open(signedUrl, '_blank', 'noopener,noreferrer');
+  } catch (error: unknown) {
+    console.error('Document open failure', error instanceof Error ? error.name : 'unknown');
+    toast.error("Impossible d'ouvrir ce document.");
   }
-  window.open(getDocumentUrl(filePath, bucket), '_blank');
 }
 
 export async function downloadDocument(filePath: string, fileName: string, bucket?: string) {
-  let url = getDocumentUrl(filePath, bucket);
-
-  if (isOrphanEmailRef(filePath)) {
-    const resolved = await resolveOrphanPath(filePath);
-    if (!resolved) {
-      toast.error("Ce fichier n'est plus disponible en stockage. Demandez au prospect de le renvoyer.");
-      throw new Error('Orphan email attachment');
-    }
-    url = getDocumentUrl(resolved.path, resolved.bucket);
-  }
+  const resolved = await resolveStoredDocument(filePath, bucket);
+  if (!resolved) throw new Error('Orphan email attachment');
 
   try {
+    const url = await getSecureDocumentUrl({
+      ...resolved,
+      download: true,
+      fileName,
+    });
     const response = await fetch(url);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    if (!response.ok) throw new Error('Download failed');
     const blob = await response.blob();
     const downloadUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -81,10 +76,10 @@ export async function downloadDocument(filePath: string, fileName: string, bucke
     link.download = fileName;
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    link.remove();
     window.URL.revokeObjectURL(downloadUrl);
-  } catch (error) {
-    console.error('Error downloading document:', error);
+  } catch (error: unknown) {
+    console.error('Document download failure', error instanceof Error ? error.name : 'unknown');
     throw error;
   }
 }

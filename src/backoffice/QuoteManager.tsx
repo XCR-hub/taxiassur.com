@@ -224,7 +224,7 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
       const fileName = `${lead.id}-devis-${Date.now()}.${file.name.split('.').pop()}`;
       const filePath = `quotes/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('crm-documents')
         .upload(filePath, file);
 
@@ -243,7 +243,10 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
           uploaded_by: 'admin'
         });
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        await supabase.storage.from('crm-documents').remove([uploadData?.path || filePath]);
+        throw dbError;
+      }
 
       toast.success('✅ Devis uploadé avec succès !');
       setFile(null);
@@ -285,23 +288,17 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
     try {
       const recipient = selectedChannel === 'email' ? lead.email : lead.phone;
 
-      const { error: historyError } = await supabase
-        .from('crm_quote_history')
-        .insert({
-          lead_id: lead.id,
-          document_id: uploadedQuote.id,
-          template_id: selectedTemplate?.id,
-          insurance_company_id: selectedCompany.id,
-          sent_via: selectedChannel,
-          sent_to: recipient,
-          subject: selectedChannel === 'email' ? customSubject : null,
-          body: customBody,
-          lead_status_at_send: lead.status,
-          status: 'sent'
-        });
-
-      if (historyError) throw historyError;
-
+      const historyRecord = {
+        lead_id: lead.id,
+        document_id: uploadedQuote.id,
+        template_id: selectedTemplate?.id,
+        insurance_company_id: selectedCompany.id,
+        sent_via: selectedChannel,
+        sent_to: recipient,
+        subject: selectedChannel === 'email' ? customSubject : null,
+        body: customBody,
+        lead_status_at_send: lead.status,
+      };
       const functionName = {
         email: 'send-crm-email',
         sms: 'send-sms-brevo',
@@ -315,20 +312,37 @@ const QuoteManager: React.FC<QuoteManagerProps> = ({ lead, onQuoteSent, onStatus
 
       if (selectedChannel === 'email') {
         payload.subject = customSubject;
-        payload.body = customBody;
-        payload.attachment_url = uploadedQuote.file_path;
-      } else {
         payload.content = customBody;
+        payload.attachments = [{
+          filename: uploadedQuote.file_name,
+          path: uploadedQuote.file_path,
+          bucket: 'crm-documents',
+          type: 'lead_document'
+        }];
+      } else if (selectedChannel === 'sms') {
+        payload.content = customBody;
+      } else {
+        payload.message = customBody;
       }
-
-      const { error: sendError } = await supabase.functions.invoke(functionName, {
+      const { data: sendResult, error: sendError } = await supabase.functions.invoke(functionName, {
         body: payload
       });
 
-      if (sendError) {
-        console.error('Send error:', sendError);
+      if (sendError || sendResult?.success !== true) {
+        const { error: failedHistoryError } = await supabase.from('crm_quote_history').insert({
+          ...historyRecord,
+          status: 'failed',
+          error_message: 'Delivery rejected'
+        });
+        if (failedHistoryError) console.error('Quote failure audit persistence failed');
+        throw sendError || new Error(`${selectedChannel} non envoyé`);
       }
 
+      const { error: historyError } = await supabase.from('crm_quote_history').insert({
+        ...historyRecord,
+        status: 'sent'
+      });
+      if (historyError) console.error('Quote sent audit persistence failed');
       if (lead.status !== 'QUOTE_SENT' && lead.status !== 'SIGNATURE_PENDING' && lead.status !== 'SIGNED' && lead.status !== 'ACTIVE_CLIENT') {
         const { error: statusError } = await supabase
           .from('crm_leads')

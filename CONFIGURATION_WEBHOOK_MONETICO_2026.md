@@ -61,7 +61,7 @@ application/x-www-form-urlencoded
 
 Dans votre code actuel, la clé MAC est:
 ```
-106FA85BF342FD4EE95C883D82865B5CC1F63890
+[REDACTED_MONETICO_MAC_KEY]
 ```
 
 **À Vérifier dans Monético Manager**:

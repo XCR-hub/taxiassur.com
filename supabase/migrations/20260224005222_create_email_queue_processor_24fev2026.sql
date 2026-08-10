@@ -48,7 +48,7 @@ BEGIN
         url := 'https://drohhxrkoequjphvabvq.supabase.co/functions/v1/send-email-ionos',
         headers := jsonb_build_object(
           'Content-Type', 'application/json',
-          'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik'
+          'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_JWT'
         ),
         body := jsonb_build_object(
           'to', email_rec.to_email,

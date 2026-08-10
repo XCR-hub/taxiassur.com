@@ -5,6 +5,7 @@ import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { getClientAccessToken } from '@/lib/client-access';
 
 interface UserData {
   success: boolean;
@@ -48,37 +49,36 @@ const PIPELINE_LABELS: Record<string, { label: string; color: string; progress: 
 export default function ClientDashboard() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const email = searchParams.get('email') || sessionStorage.getItem('client_email') || '';
+  const accessToken = getClientAccessToken(searchParams.get('token'));
 
   const [userData, setUserData] = useState<UserData | null>(null);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [sinistresCount, setSinistresCount] = useState(0);
   const [openRequestsCount, setOpenRequestsCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const emailParam = email ? `?email=${encodeURIComponent(email)}` : '';
+  const emailParam = '';
 
   useEffect(() => {
-    if (!email) {
+    if (!accessToken) {
       navigate('/espace-client');
       return;
     }
-    sessionStorage.setItem('client_email', email);
     loadUserData();
-  }, [email, navigate]);
+  }, [accessToken, navigate]);
 
   const loadUserData = async () => {
     try {
       const { data, error } = await supabase
-        .rpc('get_client_portal_data_by_email', { p_email: email.toLowerCase().trim() });
+        .rpc('get_client_portal_data_by_token', { p_token: accessToken });
 
       if (error) throw error;
 
       if (data?.success) {
         setUserData(data as UserData);
         if (data.lead_id) {
-          loadRecentActivity(data.lead_id);
+          loadRecentActivity();
           loadSinistresCount();
-          loadOpenRequestsCount(data.lead_id);
+          loadOpenRequestsCount();
         }
       }
     } catch (error) {
@@ -91,7 +91,7 @@ export default function ClientDashboard() {
   const loadSinistresCount = async () => {
     try {
       const { data } = await supabase
-        .rpc('get_client_claims_by_email', { p_email: email.toLowerCase().trim() });
+        .rpc('get_client_claims_by_token', { p_token: accessToken });
       if (data?.success) {
         const active = (data.claims || []).filter((c: { claim_status?: string }) => c.claim_status !== 'closed' && c.claim_status !== 'rejected');
         setSinistresCount(active.length);
@@ -101,47 +101,32 @@ export default function ClientDashboard() {
     }
   };
 
-  const loadOpenRequestsCount = async (leadId: string) => {
+  const loadOpenRequestsCount = async () => {
     try {
-      const { count } = await supabase
-        .from('lead_client_requests')
-        .select('id', { count: 'exact', head: true })
-        .eq('lead_id', leadId)
-        .in('status', ['pending', 'in_progress']);
-
-      setOpenRequestsCount(count || 0);
+      const { data, error } = await supabase.rpc('get_client_portal_requests_by_token', {
+        p_token: accessToken,
+      });
+      if (error || !data?.success) throw error || new Error('Accès client invalide');
+      const open = (data.requests || []).filter((request: { status?: string }) =>
+        request.status === 'pending' || request.status === 'in_progress'
+      );
+      setOpenRequestsCount(open.length);
     } catch {
       setOpenRequestsCount(0);
     }
   };
 
-  const loadRecentActivity = async (leadId: string) => {
+  const loadRecentActivity = async () => {
     try {
       const [docsRes, quotesRes, notifsRes] = await Promise.all([
-        supabase
-          .from('prospect_documents')
-          .select('id, file_name, uploaded_at, status')
-          .eq('lead_id', leadId)
-          .order('uploaded_at', { ascending: false })
-          .limit(3),
-        supabase
-          .from('lead_company_quotes')
-          .select('id, created_at, status')
-          .eq('lead_id', leadId)
-          .not('quote_file_url', 'is', null)
-          .order('created_at', { ascending: false })
-          .limit(2),
-        supabase
-          .from('crm_event_notifications')
-          .select('id, title, created_at')
-          .eq('lead_id', leadId)
-          .order('created_at', { ascending: false })
-          .limit(2),
+        supabase.rpc('get_client_documents_by_token', { p_token: accessToken }),
+        supabase.rpc('get_client_quotes_by_token', { p_token: accessToken }),
+        supabase.rpc('get_client_notifications_by_token', { p_token: accessToken }),
       ]);
 
       const activities: RecentActivity[] = [];
 
-      (docsRes.data as Array<{ id: string; status?: string; file_name?: string; uploaded_at?: string }> || []).forEach((doc) => {
+      ((docsRes.data?.documents || []) as Array<{ id: string; status?: string; file_name?: string; uploaded_at?: string }>).forEach((doc) => {
         activities.push({
           id: doc.id,
           label: doc.status === 'verified'
@@ -152,7 +137,7 @@ export default function ClientDashboard() {
         });
       });
 
-      (quotesRes.data as Array<{ id: string; status?: string; created_at?: string }> || []).forEach((q) => {
+      ((quotesRes.data?.quotes || []) as Array<{ id: string; status?: string; created_at?: string }>).forEach((q) => {
         activities.push({
           id: q.id,
           label: q.status === 'validated' ? 'Devis validé' : 'Nouveau devis disponible',
@@ -161,7 +146,7 @@ export default function ClientDashboard() {
         });
       });
 
-      (notifsRes.data as Array<{ id: string; title?: string; created_at?: string }> || []).forEach((n) => {
+      ((notifsRes.data?.notifications || []) as Array<{ id: string; title?: string; created_at?: string }>).forEach((n) => {
         activities.push({
           id: n.id,
           label: n.title || 'Nouvelle notification',
@@ -269,7 +254,7 @@ export default function ClientDashboard() {
         noIndex={true}
       />
 
-      <ClientLayout email={email}>
+      <ClientLayout email={userData?.email || ''}>
         <div className="space-y-6">
 
           {/* Header */}

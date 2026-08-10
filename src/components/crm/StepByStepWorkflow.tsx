@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { toast } from '@/lib/toast';
-import { Mail, Phone, Check, ChevronRight, Clock, FileText, AlertCircle, Send, X, Calendar, MessageSquare, CheckCircle2, XCircle, CreditCard as Edit3 } from 'lucide-react';
+import { Mail, Phone, Check, ChevronRight, Clock, AlertCircle, Send, X, MessageSquare, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 import { logger } from '@/lib/logger';
 import { DocumentValidationWithReasons } from './DocumentValidationWithReasons';
 
@@ -30,12 +31,12 @@ interface StepByStepWorkflowProps {
   onStepCompleted?: () => void;
 }
 
-export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepCompleted }: StepByStepWorkflowProps) {
+export function StepByStepWorkflow({ leadId, leadEmail, onStepCompleted }: StepByStepWorkflowProps) {
   const [steps, setSteps] = useState<WorkflowStep[]>([]);
   const [currentStep, setCurrentStep] = useState<WorkflowStep | null>(null);
   const [loading, setLoading] = useState(true);
   const [showCallModal, setShowCallModal] = useState(false);
-  const [showDocumentsModal, setShowDocumentsModal] = useState(false);
+  const [, setShowDocumentsModal] = useState(false);
   const [callHistory, setCallHistory] = useState<CallLog[]>([]);
   const [showCallHistory, setShowCallHistory] = useState(false);
 
@@ -167,6 +168,11 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
+      // Send email via edge function
+      const { data: sendResult, error: sendError } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
+        body: { to: leadEmail, subject: 'Étude de votre dossier TaxiAssur', content: '<p>Bonjour,</p><p>Votre demande est en cours de qualification par notre équipe. Nous revenons rapidement vers vous avec les prochaines étapes.</p><p>L équipe TaxiAssur</p>', lead_id: leadId }
+      });
+      if (sendError || !sendResult?.success) throw sendError || new Error("Envoi refusé");
       // Mark step as completed
       await supabase.from('crm_workflow_step_actions').insert({
         lead_id: leadId,
@@ -176,24 +182,7 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
         completed_by: user?.id
       });
 
-      // Send email via edge function
-      await supabase.functions.invoke('send-crm-email', {
-        body: {
-          to: leadEmail,
-          template: 'qualification',
-          leadId: leadId
-        }
-      });
 
-      // Add to timeline
-      await supabase.from('crm_interactions').insert({
-        lead_id: leadId,
-        type: 'email',
-        direction: 'outbound',
-        subject: 'Email de qualification envoyé',
-        content: `Email de qualification envoyé à ${leadEmail}`,
-        created_by: user?.id
-      });
 
       await loadWorkflowSteps();
       onStepCompleted?.();
@@ -606,6 +595,10 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
                   try {
                     const { data: { user } } = await supabase.auth.getUser();
 
+                    const { data: sendResult, error: sendError } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
+                      body: { to: leadEmail, subject: 'Réponses à vos questions - TaxiAssur', content: '<p>Bonjour,</p><p>Notre équipe reste disponible pour répondre à vos questions concernant votre proposition. Vous pouvez répondre directement à cet e-mail ou nous appeler.</p><p>L équipe TaxiAssur</p>', lead_id: leadId }
+                    });
+                    if (sendError || !sendResult?.success) throw sendError || new Error("Envoi refusé");
                     await supabase.from('crm_workflow_step_actions').insert({
                       lead_id: leadId,
                       step_key: currentStep?.step_key,
@@ -614,22 +607,7 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
                       completed_by: user?.id
                     });
 
-                    await supabase.functions.invoke('send-crm-email', {
-                      body: {
-                        to: leadEmail,
-                        template: 'objections_response',
-                        leadId: leadId
-                      }
-                    });
 
-                    await supabase.from('crm_interactions').insert({
-                      lead_id: leadId,
-                      type: 'email',
-                      direction: 'outbound',
-                      subject: 'Réponse aux objections',
-                      content: `Email de réponse aux objections envoyé à ${leadEmail}`,
-                      created_by: user?.id
-                    });
 
                     await loadWorkflowSteps();
                     onStepCompleted?.();
@@ -709,8 +687,6 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
               <button
                 onClick={async () => {
                   try {
-                    const { data: { user } } = await supabase.auth.getUser();
-
                     // Create contract
                     const { data: contract } = await supabase
                       .from('crm_contracts')
@@ -723,25 +699,12 @@ export function StepByStepWorkflow({ leadId, leadEmail, leadPhone, onStepComplet
                       .single();
 
                     // Send signature request
-                    await supabase.functions.invoke('send-crm-email', {
-                      body: {
-                        to: leadEmail,
-                        template: 'signature_request',
-                        data: {
-                          leadId: leadId,
-                          contractId: contract?.id
-                        }
-                      }
+                    const { data: sendResult, error: sendError } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
+                      body: { to: leadEmail, subject: 'Votre contrat TaxiAssur est prêt à signer', content: '<p>Bonjour,</p><p>Votre contrat est prêt. Connectez-vous à votre espace client sécurisé pour le consulter et poursuivre la signature.</p><p>Si vous avez besoin d aide, répondez à cet e-mail.</p><p>L équipe TaxiAssur</p>', lead_id: leadId, metadata: { contract_id: contract?.id } }
                     });
+                    if (sendError || !sendResult?.success) throw sendError || new Error("Envoi refusé");
 
-                    await supabase.from('crm_interactions').insert({
-                      lead_id: leadId,
-                      type: 'email',
-                      direction: 'outbound',
-                      subject: 'Demande de signature envoyée',
-                      content: `Email avec lien de signature envoyé à ${leadEmail}`,
-                      created_by: user?.id
-                    });
+
 
                     toast.success('Demande de signature envoyée avec succès !');
                   } catch (err) {

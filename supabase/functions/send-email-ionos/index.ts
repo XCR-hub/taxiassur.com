@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,38 +20,69 @@ interface AttachmentResolved {
   contentType: string;
 }
 
-async function fetchAttachment(att: AttachmentInput): Promise<AttachmentResolved | null> {
-  try {
-    const filename = att.filename || "attachment";
-    const contentType = att.contentType || "application/octet-stream";
-
-    if (att.content) {
-      return { filename, base64: att.content, contentType };
-    }
-
-    if (!att.url) return null;
-
-    const resp = await fetch(att.url);
-    if (!resp.ok) {
-      console.warn(`[ATTACH] Fetch failed (${resp.status}) for ${att.url}`);
-      return null;
-    }
-    const buf = new Uint8Array(await resp.arrayBuffer());
-    let binary = "";
-    for (let i = 0; i < buf.length; i++) binary += String.fromCharCode(buf[i]);
-    const base64 = btoa(binary);
-    const detectedType = resp.headers.get("content-type") || contentType;
-    return { filename, base64, contentType: detectedType };
-  } catch (err) {
-    console.warn(`[ATTACH] Error resolving ${att.filename}:`, err);
-    return null;
-  }
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+const MAX_TOTAL_ATTACHMENT_BYTES = 20 * 1024 * 1024;
+const allowedAttachmentTypes = new Set([
+  "application/pdf", "image/jpeg", "image/png", "image/webp", "text/plain",
+  "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+]);
+function safeAttachmentName(value: unknown): string {
+  return String(value || "document").replace(/[\r\n"\\/]/g, "_").replace(/[^\p{L}\p{N}._ -]/gu, "_").slice(0, 120) || "document";
 }
-
+function normalizeAttachmentType(value: unknown): string | null {
+  const type = String(value || "").split(";")[0].trim().toLowerCase();
+  return allowedAttachmentTypes.has(type) ? type : null;
+}
+async function fetchAttachment(att: AttachmentInput, allowedHosts: Set<string>): Promise<AttachmentResolved> {
+  const filename = safeAttachmentName(att.filename);
+  const declaredType = normalizeAttachmentType(att.contentType);
+  if (att.content) {
+    const compact = att.content.replace(/\s/g, "");
+    if (!declaredType || !/^[A-Za-z0-9+/]*={0,2}$/.test(compact) || Math.ceil(compact.length * 3 / 4) > MAX_ATTACHMENT_BYTES) {
+      throw new Error("InvalidAttachmentContent");
+    }
+    return { filename, base64: compact, contentType: declaredType };
+  }
+  if (!att.url) throw new Error("MissingAttachmentSource");
+  let url: URL;
+  try { url = new URL(att.url); } catch { throw new Error("InvalidAttachmentUrl"); }
+  if (url.protocol !== "https:" || !allowedHosts.has(url.hostname.toLowerCase()) || url.username || url.password) {
+    throw new Error("UntrustedAttachmentUrl");
+  }
+  const response = await fetch(url, { redirect: "error", signal: AbortSignal.timeout(15000) });
+  if (!response.ok || !response.body) throw new Error("AttachmentFetchError");
+  const contentLength = Number(response.headers.get("content-length") || "0");
+  if (contentLength > MAX_ATTACHMENT_BYTES) throw new Error("AttachmentTooLarge");
+  const contentType = normalizeAttachmentType(response.headers.get("content-type") || declaredType);
+  if (!contentType) throw new Error("InvalidAttachmentType");
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > MAX_ATTACHMENT_BYTES) { await reader.cancel(); throw new Error("AttachmentTooLarge"); }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+  let binary = "";
+  for (let index = 0; index < bytes.length; index += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(index, Math.min(index + 0x8000, bytes.length)));
+  }
+  return { filename, base64: btoa(binary), contentType };
+}
 function chunkBase64(b64: string, size = 76): string {
   const lines: string[] = [];
   for (let i = 0; i < b64.length; i += size) lines.push(b64.substring(i, i + size));
   return lines.join("\r\n");
+}
+
+function safeHeader(value: unknown, fallback = ""): string {
+  return String(value || fallback).replace(/[\r\n"]/g, " ").trim().slice(0, 150);
 }
 
 function buildMimeMessage(
@@ -62,6 +94,8 @@ function buildMimeMessage(
   htmlBody: string,
   attachments: AttachmentResolved[]
 ): string {
+  fromName = safeHeader(fromName, "TaxiAssur");
+  toName = safeHeader(toName, to);
   const encodedSubject = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
 
   if (attachments.length === 0) {
@@ -112,7 +146,6 @@ async function sendEmailSMTP(
   toName: string,
   subject: string,
   htmlBody: string,
-  fromEmail = "team@taxiassur.com",
   fromName = "TaxiAssur",
   attachments: AttachmentResolved[] = []
 ): Promise<void> {
@@ -123,11 +156,11 @@ async function sendEmailSMTP(
   const SMTP_SECURITY = (Deno.env.get("SMTP_SECURITY") || Deno.env.get("HMAIL_SMTP_SECURITY") || Deno.env.get("IONOS_SMTP_SECURITY") || (SMTP_PORT === 465 ? "ssl" : "starttls")).toLowerCase();
   const SENDER_EMAIL = Deno.env.get("FROM_EMAIL") || Deno.env.get("HMAIL_FROM_EMAIL") || SMTP_USER;
 
-  console.log(`[hMail] SMTP ${SMTP_HOST}:${SMTP_PORT} security=${SMTP_SECURITY} user=${SMTP_USER} attachments=${attachments.length}`);
+  console.log(`[hMail] SMTP ${SMTP_HOST}:${SMTP_PORT} security=${SMTP_SECURITY} attachments=${attachments.length}`);
 
   if (!SMTP_PASS) throw new Error("SMTP_PASS not configured");
 
-  let conn: any = SMTP_SECURITY === "ssl"
+  let conn: Deno.TcpConn | Deno.TlsConn = SMTP_SECURITY === "ssl"
     ? await Deno.connectTls({ hostname: SMTP_HOST, port: SMTP_PORT })
     : await Deno.connect({ hostname: SMTP_HOST, port: SMTP_PORT });
   const encoder = new TextEncoder();
@@ -148,34 +181,37 @@ async function sendEmailSMTP(
     return await readResponse();
   }
 
+  function expect(response: string, codes: string[], step: string): void {
+    if (!codes.some((code) => response.startsWith(code))) throw new Error(`SMTP_${step}`);
+  }
+
   try {
-    await readResponse();
-    await sendCommand(`EHLO taxiassur.com`);
+    expect(await readResponse(), ["220"], "GREETING");
+    expect(await sendCommand(`EHLO taxiassur.com`), ["250"], "EHLO");
     if (SMTP_SECURITY === "starttls" || SMTP_SECURITY === "tls") {
       const startTlsResponse = await sendCommand("STARTTLS");
       if (!startTlsResponse.startsWith("220")) throw new Error("SMTP STARTTLS failed");
-      conn = await Deno.startTls(conn, { hostname: SMTP_HOST });
-      await sendCommand(`EHLO taxiassur.com`);
+      conn = await Deno.startTls(conn as Deno.TcpConn, { hostname: SMTP_HOST });
+      expect(await sendCommand(`EHLO taxiassur.com`), ["250"], "EHLO_TLS");
     }
-    await sendCommand("AUTH LOGIN");
-    await sendCommand(btoa(SMTP_USER), false);
-    const authResponse = await sendCommand(btoa(SMTP_PASS), false);
-    if (authResponse.includes("535")) throw new Error("SMTP auth failed");
+    expect(await sendCommand("AUTH LOGIN"), ["334"], "AUTH");
+    expect(await sendCommand(btoa(SMTP_USER), false), ["334"], "AUTH_USER");
+    expect(await sendCommand(btoa(SMTP_PASS), false), ["235"], "AUTH_PASSWORD");
 
-    await sendCommand(`MAIL FROM:<${SENDER_EMAIL}>`);
-    await sendCommand(`RCPT TO:<${to}>`);
-    await sendCommand("DATA");
+    expect(await sendCommand(`MAIL FROM:<${SENDER_EMAIL}>`), ["250"], "MAIL_FROM");
+    expect(await sendCommand(`RCPT TO:<${to}>`), ["250", "251"], "RCPT_TO");
+    expect(await sendCommand("DATA"), ["354"], "DATA");
 
     const mime = buildMimeMessage(fromName, SENDER_EMAIL, toName, to, subject, htmlBody, attachments);
     // Dot-stuffing: any line starting with "." must be escaped
     const safe = mime.replace(/\r\n\./g, "\r\n..");
-    await sendCommand(safe + "\r\n.", false);
-    await sendCommand("QUIT");
-    console.log(`[SMTP] Sent to ${to}`);
+    expect(await sendCommand(safe + "\r\n.", false), ["250"], "MESSAGE");
+    expect(await sendCommand("QUIT"), ["221"], "QUIT");
+    console.log(`[SMTP] Message accepted by relay`);
     conn.close();
   } catch (error) {
     console.error(`[SMTP] Error:`, error);
-    try { conn.close(); } catch (_) { /* noop */ }
+    try { conn.close(); } catch { /* noop */ }
     throw error;
   }
 }
@@ -185,51 +221,68 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
+  if (req.method !== "POST") return new Response(JSON.stringify({ success: false, error: "Method not allowed" }), { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
   try {
-    const payload: any = await req.json();
-    console.log(`[HANDLER] payload keys=${Object.keys(payload).join(",")}`);
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const authorization = req.headers.get("Authorization") || "";
+    const token = authorization.replace(/^Bearer\s+/i, "");
+    let authorized = Boolean(serviceKey && token === serviceKey);
+    if (!authorized && token && supabaseUrl && serviceKey) {
+      const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+      const { data } = await admin.auth.getUser(token);
+      const domain = data.user?.email?.toLowerCase().split("@")[1] || "";
+      authorized = ["taxiassur.com", "taxiassur.fr", "xcr.fr"].includes(domain);
+    }
+    if (!authorized) return new Response(JSON.stringify({ success: false, error: "Authentification requise" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    const to = payload.to;
-    const subject = payload.subject;
-    const html = payload.html || payload.htmlBody;
+    const payload: Record<string, unknown> = await req.json();
+    const to = typeof payload.to === "string" ? payload.to.trim().toLowerCase() : "";
+    const subject = typeof payload.subject === "string" ? payload.subject.trim() : "";
+    const html = typeof payload.html === "string" ? payload.html : typeof payload.htmlBody === "string" ? payload.htmlBody : "";
 
-    if (!to || !subject || !html) {
-      throw new Error("Missing required fields: to, subject, html");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to) || !subject || !html || subject.length > 200 || html.length > 2_000_000) {
+      return new Response(JSON.stringify({ success: false, error: "Requête invalide" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const rawAttachments: AttachmentInput[] = Array.isArray(payload.attachments) ? payload.attachments : [];
+    const attachmentInputs = Array.isArray(payload.attachments) ? payload.attachments : [];
+    if (attachmentInputs.length > 10) return new Response(JSON.stringify({ success: false, error: "Trop de pièces jointes" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const rawAttachments = attachmentInputs.filter((item): item is AttachmentInput => Boolean(item && typeof item === "object"));
+    const configuredHost = new URL(supabaseUrl).hostname.toLowerCase();
+    const extraHosts = (Deno.env.get("ATTACHMENT_ALLOWED_HOSTS") || "").split(",").map((host) => host.trim().toLowerCase()).filter(Boolean);
+    const allowedHosts = new Set([configuredHost, "taxiassur.com", "www.taxiassur.com", "taxiassur.fr", "www.taxiassur.fr", ...extraHosts]);
     const resolvedAttachments: AttachmentResolved[] = [];
+    let totalAttachmentBytes = 0;
     for (const att of rawAttachments) {
-      const r = await fetchAttachment(att);
-      if (r) resolvedAttachments.push(r);
+      const resolved = await fetchAttachment(att, allowedHosts);
+      totalAttachmentBytes += Math.ceil(resolved.base64.length * 3 / 4);
+      if (totalAttachmentBytes > MAX_TOTAL_ATTACHMENT_BYTES) throw new Error("AttachmentsTooLarge");
+      resolvedAttachments.push(resolved);
     }
 
     await sendEmailSMTP(
       to,
-      payload.toName || to,
+      typeof payload.toName === "string" ? payload.toName.slice(0, 150) : to,
       subject,
       html,
-      payload.from || payload.fromEmail || "team@taxiassur.com",
-      payload.fromName || "TaxiAssur",
+      typeof payload.fromName === "string" ? payload.fromName.slice(0, 150) : "TaxiAssur",
       resolvedAttachments
     );
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Email sent via hMail SMTP",
-        recipient: to,
         attachments: resolvedAttachments.length,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("[HANDLER] Error:", error);
+    console.error("[HANDLER] Error:", error instanceof Error ? error.name : "UnknownError");
     return new Response(
       JSON.stringify({
         success: false,
-        error: (error as Error).message,
-        details: String(error),
+        error: "Envoi impossible",
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

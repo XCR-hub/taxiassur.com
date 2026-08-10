@@ -1,10 +1,12 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { isInternalRequest } from "../_shared/internal-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
 const TOPICS = [
@@ -12,62 +14,62 @@ const TOPICS = [
     title: "Nouvelle reglementation des taxis en France 2026",
     category: "reglementation",
     tags: ["reglementation", "taxi", "loi", "france"],
-    keywords: "taxi regulation france city"
+    keywords: "taxi regulation france city",
   },
   {
     title: "Assurance taxi : les tarifs en baisse pour 2026",
     category: "economie",
     tags: ["assurance", "tarifs", "economie", "taxi"],
-    keywords: "taxi insurance affordable"
+    keywords: "taxi insurance affordable",
   },
   {
     title: "Vehicules electriques : l'avenir du taxi professionnel",
     category: "innovation",
     tags: ["electrique", "innovation", "ecologie", "taxi"],
-    keywords: "electric taxi green vehicle"
+    keywords: "electric taxi green vehicle",
   },
   {
     title: "Comment optimiser sa couverture d'assurance taxi",
     category: "conseil",
     tags: ["assurance", "conseil", "optimisation", "taxi"],
-    keywords: "taxi insurance coverage professional"
+    keywords: "taxi insurance coverage professional",
   },
   {
     title: "Les nouvelles aides pour les chauffeurs de taxi",
     category: "economie",
     tags: ["aides", "subventions", "chauffeurs", "taxi"],
-    keywords: "taxi driver support help"
+    keywords: "taxi driver support help",
   },
   {
     title: "Securite routiere : nouvelles obligations pour les taxis",
     category: "securite",
     tags: ["securite", "reglementation", "taxi"],
-    keywords: "taxi safety road regulations"
+    keywords: "taxi safety road regulations",
   },
   {
     title: "Taxis et VTC : le marche se restructure en 2026",
     category: "economie",
     tags: ["taxi", "VTC", "marche", "concurrence"],
-    keywords: "taxi VTC market competition"
+    keywords: "taxi VTC market competition",
   },
   {
     title: "Sinistres taxi : les chiffres cles et les tendances",
     category: "sinistres",
     tags: ["sinistre", "statistiques", "assurance", "taxi"],
-    keywords: "taxi accident claims statistics"
+    keywords: "taxi accident claims statistics",
   },
   {
     title: "Franchise assurance taxi : ce qui change cette annee",
     category: "assurance",
     tags: ["franchise", "assurance", "taxi", "reforme"],
-    keywords: "taxi insurance deductible reform"
+    keywords: "taxi insurance deductible reform",
   },
   {
     title: "Mobilite urbaine : quel role pour le taxi demain ?",
     category: "innovation",
     tags: ["mobilite", "urbain", "avenir", "taxi"],
-    keywords: "urban mobility taxi future city"
-  }
+    keywords: "urban mobility taxi future city",
+  },
 ];
 
 function buildNewsSystemPrompt(masterPrompt: string): string {
@@ -99,33 +101,40 @@ STRUCTURE : Paragraphes TRES inegaux. Certains de 1-2 lignes, d'autres de 5-6.`;
 function slugify(value: string): string {
   return value
     .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
     .slice(0, 90);
 }
 
 function formatFrenchDate(date: Date): string {
-  return new Intl.DateTimeFormat('fr-FR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'Europe/Paris',
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    timeZone: "Europe/Paris",
   }).format(date);
 }
 
-async function buildUniqueSlug(supabase: any, baseSlug: string, publishedAt: Date): Promise<string> {
-  const stamp = publishedAt.toISOString().slice(0, 10).replace(/-/g, '');
-  const base = `${baseSlug}-${stamp}`.replace(/-+/g, '-').replace(/^-+|-+$/g, '').slice(0, 110);
+async function buildUniqueSlug(
+  supabase: any,
+  baseSlug: string,
+  publishedAt: Date,
+): Promise<string> {
+  const stamp = publishedAt.toISOString().slice(0, 10).replace(/-/g, "");
+  const base = `${baseSlug}-${stamp}`.replace(/-+/g, "-").replace(
+    /^-+|-+$/g,
+    "",
+  ).slice(0, 110);
 
   for (let attempt = 0; attempt < 10; attempt += 1) {
-    const suffix = attempt === 0 ? '' : `-${attempt + 1}`;
+    const suffix = attempt === 0 ? "" : `-${attempt + 1}`;
     const candidate = `${base}${suffix}`;
     const { data, error } = await supabase
-      .from('news_articles')
-      .select('id')
-      .eq('slug', candidate)
+      .from("news_articles")
+      .select("id")
+      .eq("slug", candidate)
       .maybeSingle();
 
     if (error) throw new Error(`Erreur verification slug: ${error.message}`);
@@ -134,7 +143,10 @@ async function buildUniqueSlug(supabase: any, baseSlug: string, publishedAt: Dat
 
   return `${base}-${crypto.randomUUID().slice(0, 8)}`;
 }
-function buildNewsUserPrompt(topic: typeof TOPICS[0], forbiddenPatterns: string[]): string {
+function buildNewsUserPrompt(
+  topic: typeof TOPICS[0],
+  forbiddenPatterns: string[],
+): string {
   return `Ecris un article d'actualite complet (800-1200 mots) sur : "${topic.title}"
 
 CONTRAINTES ANTI-DETECTION IA :
@@ -147,7 +159,7 @@ CONTRAINTES ANTI-DETECTION IA :
 - Ton journalistique engageant mais factuel
 
 PHRASES STRICTEMENT INTERDITES :
-${forbiddenPatterns.map(p => `- "${p}"`).join('\n')}
+${forbiddenPatterns.map((p) => `- "${p}"`).join("\n")}
 - "Dans cet article"
 - "Il est important de noter"
 - "En conclusion"
@@ -163,28 +175,37 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
+  if (!(await isInternalRequest(req))) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const openaiKey = Deno.env.get('OPENAI_API_KEY');
-    const pexelsKey = Deno.env.get('PEXELS_API_KEY');
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const openaiKey = Deno.env.get("OPENAI_API_KEY");
+    const pexelsKey = Deno.env.get("PEXELS_API_KEY");
 
     const supabase = createClient(supabaseUrl, supabaseKey);
     const requestBody = await req.json().catch(() => ({}));
-    const force = requestBody.force === true || new URL(req.url).searchParams.get('force') === 'true';
-    const minIntervalHours = Number.isFinite(Number(requestBody.min_interval_hours))
-      ? Math.max(1, Math.min(168, Number(requestBody.min_interval_hours)))
-      : 24;
+    const force = requestBody.force === true ||
+      new URL(req.url).searchParams.get("force") === "true";
+    const minIntervalHours =
+      Number.isFinite(Number(requestBody.min_interval_hours))
+        ? Math.max(1, Math.min(168, Number(requestBody.min_interval_hours)))
+        : 24;
 
     const oneDayAgo = new Date(Date.now() - minIntervalHours * 60 * 60 * 1000);
 
     const { data: recentArticles, error: checkError } = await supabase
-      .from('news_articles')
-      .select('id, published_at')
-      .eq('status', 'published')
-      .not('published_at', 'is', null)
-      .gte('published_at', oneDayAgo.toISOString())
-      .order('published_at', { ascending: false })
+      .from("news_articles")
+      .select("id, published_at")
+      .eq("status", "published")
+      .not("published_at", "is", null)
+      .gte("published_at", oneDayAgo.toISOString())
+      .order("published_at", { ascending: false })
       .limit(1);
 
     if (checkError) {
@@ -196,46 +217,52 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({
           success: true,
           skipped: true,
-          message: `Article deja publie dans les dernieres ${minIntervalHours}h`,
-          lastPublished: recentArticles[0].published_at
+          message:
+            `Article deja publie dans les dernieres ${minIntervalHours}h`,
+          lastPublished: recentArticles[0].published_at,
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    let masterPrompt = '';
+    let masterPrompt = "";
     let forbiddenPatterns: string[] = [];
     let configTemperature = 0.82;
 
     try {
       const { data: configData } = await supabase
-        .from('system_settings')
-        .select('value')
-        .eq('key', 'anti_ai_detection_master_prompt')
+        .from("system_settings")
+        .select("value")
+        .eq("key", "anti_ai_detection_master_prompt")
         .maybeSingle();
 
       if (configData?.value) {
-        const config = typeof configData.value === 'string' ? JSON.parse(configData.value) : configData.value;
-        masterPrompt = config.system_prompt || '';
+        const config = typeof configData.value === "string"
+          ? JSON.parse(configData.value)
+          : configData.value;
+        masterPrompt = config.system_prompt || "";
       }
 
       const { data: genConfig } = await supabase
-        .from('system_settings')
-        .select('value')
-        .eq('key', 'content_generation_config')
+        .from("system_settings")
+        .select("value")
+        .eq("key", "content_generation_config")
         .maybeSingle();
 
       if (genConfig?.value) {
-        const gc = typeof genConfig.value === 'string' ? JSON.parse(genConfig.value) : genConfig.value;
+        const gc = typeof genConfig.value === "string"
+          ? JSON.parse(genConfig.value)
+          : genConfig.value;
         forbiddenPatterns = gc.blog?.forbidden_patterns || [];
         configTemperature = gc.news?.temperature || 0.82;
       }
     } catch (configError) {
-      console.error('Config load error:', configError);
+      console.error("Config load error:", configError);
     }
 
     if (!masterPrompt) {
-      masterPrompt = `Tu es un VRAI journaliste humain francais specialise transport et assurance.
+      masterPrompt =
+        `Tu es un VRAI journaliste humain francais specialise transport et assurance.
 Ecris EXACTEMENT comme un journaliste du Figaro ou des Echos.
 Varie enormement la longueur des phrases. Donne des opinions editoriales.
 Cite des sources. Utilise des chiffres precis. Contextualise historiquement.`;
@@ -243,17 +270,17 @@ Cite des sources. Utilise des chiffres precis. Contextualise historiquement.`;
 
     const selectedTopic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
 
-    let imageUrl = '/logo-600x300.png';
+    let imageUrl = "/logo-600x300.png";
 
     if (pexelsKey) {
       try {
         const { data: usedImages } = await supabase
-          .from('news_articles')
-          .select('image_url')
-          .not('image_url', 'is', null)
+          .from("news_articles")
+          .select("image_url")
+          .not("image_url", "is", null)
           .limit(200);
 
-        const usedPhotoIds = (usedImages || []).map(img => {
+        const usedPhotoIds = (usedImages || []).map((img) => {
           const match = img.image_url?.match(/photos\/(\d+)\//);
           return match ? match[1] : null;
         }).filter(Boolean);
@@ -266,12 +293,15 @@ Cite des sources. Utilise des chiffres precis. Contextualise historiquement.`;
           selectedTopic.keywords,
         ];
 
-        const randomSearch = searchVariations[Math.floor(Math.random() * searchVariations.length)];
+        const randomSearch =
+          searchVariations[Math.floor(Math.random() * searchVariations.length)];
         const randomPage = Math.floor(Math.random() * 30) + 1;
 
         const pexelsResponse = await fetch(
-          `https://api.pexels.com/v1/search?query=${encodeURIComponent(randomSearch)}&per_page=20&page=${randomPage}&orientation=landscape`,
-          { headers: { 'Authorization': pexelsKey } }
+          `https://api.pexels.com/v1/search?query=${
+            encodeURIComponent(randomSearch)
+          }&per_page=20&page=${randomPage}&orientation=landscape`,
+          { headers: { "Authorization": pexelsKey } },
         );
 
         if (pexelsResponse.ok) {
@@ -287,65 +317,80 @@ Cite des sources. Utilise des chiffres precis. Contextualise historiquement.`;
           }
         }
       } catch (imageError) {
-        console.error('Erreur Pexels:', imageError);
+        console.error("Erreur Pexels:", imageError);
       }
     }
 
-    let content = '';
-    let excerpt = '';
+    let content = "";
+    let excerpt = "";
 
     if (openaiKey) {
       try {
         const systemPrompt = buildNewsSystemPrompt(masterPrompt);
-        const userPrompt = buildNewsUserPrompt(selectedTopic, forbiddenPatterns);
+        const userPrompt = buildNewsUserPrompt(
+          selectedTopic,
+          forbiddenPatterns,
+        );
         const temperature = configTemperature + (Math.random() * 0.08 - 0.04);
 
-        const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${openaiKey}`,
-            'Content-Type': 'application/json',
+        const openaiResponse = await fetch(
+          "https://api.openai.com/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${openaiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "gpt-4o-mini",
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userPrompt },
+              ],
+              temperature,
+              max_tokens: 2500,
+            }),
           },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userPrompt }
-            ],
-            temperature,
-            max_tokens: 2500
-          })
-        });
+        );
 
         if (openaiResponse.ok) {
           const openaiData = await openaiResponse.json();
           content = openaiData.choices[0].message.content;
 
-          const plainText = content.replace(/<[^>]+>/g, '');
-          const firstSentences = plainText.split(/[.!?]/).slice(0, 2).join('. ').trim();
-          excerpt = firstSentences.substring(0, 200) + '...';
+          const plainText = content.replace(/<[^>]+>/g, "");
+          const firstSentences = plainText.split(/[.!?]/).slice(0, 2).join(". ")
+            .trim();
+          excerpt = firstSentences.substring(0, 200) + "...";
         } else {
-          throw new Error('Erreur OpenAI API');
+          throw new Error("Erreur OpenAI API");
         }
       } catch (aiError) {
-        console.error('Erreur generation contenu:', aiError);
+        console.error("Erreur generation contenu:", aiError);
         content = generateFallbackContent(selectedTopic);
-        excerpt = `Decouvrez notre analyse sur ${selectedTopic.title.toLowerCase()}. Conseils et informations pour les professionnels du taxi.`;
+        excerpt =
+          `Decouvrez notre analyse sur ${selectedTopic.title.toLowerCase()}. Conseils et informations pour les professionnels du taxi.`;
       }
     } else {
       content = generateFallbackContent(selectedTopic);
-      excerpt = `Decouvrez notre analyse sur ${selectedTopic.title.toLowerCase()}. Conseils et informations pour les professionnels du taxi.`;
+      excerpt =
+        `Decouvrez notre analyse sur ${selectedTopic.title.toLowerCase()}. Conseils et informations pour les professionnels du taxi.`;
     }
 
     const publishedAt = new Date();
-    const articleTitle = `${selectedTopic.title} : point du ${formatFrenchDate(publishedAt)}`;
-    const slug = await buildUniqueSlug(supabase, slugify(articleTitle), publishedAt);
+    const articleTitle = `${selectedTopic.title} : point du ${
+      formatFrenchDate(publishedAt)
+    }`;
+    const slug = await buildUniqueSlug(
+      supabase,
+      slugify(articleTitle),
+      publishedAt,
+    );
 
     const wordCount = content.split(/\s+/).length;
     const readingTime = Math.ceil(wordCount / 200);
 
     const { data: insertedArticle, error: insertError } = await supabase
-      .from('news_articles')
+      .from("news_articles")
       .insert({
         title: articleTitle,
         content,
@@ -354,11 +399,11 @@ Cite des sources. Utilise des chiffres precis. Contextualise historiquement.`;
         tags: selectedTopic.tags,
         image_url: imageUrl,
         slug,
-        status: 'published',
-        source: 'TaxiAssur Redaction',
+        status: "published",
+        source: "TaxiAssur Redaction",
         source_url: `https://taxiassur.com/actualites/${slug}`,
         score: Math.floor(Math.random() * 15) + 85,
-        published_at: publishedAt.toISOString()
+        published_at: publishedAt.toISOString(),
       })
       .select()
       .single();
@@ -370,25 +415,30 @@ Cite des sources. Utilise des chiffres precis. Contextualise historiquement.`;
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Article publie avec succes',
+        message: "Article publie avec succes",
         article: {
           id: insertedArticle.id,
           title: insertedArticle.title,
           slug: insertedArticle.slug,
           image_url: insertedArticle.image_url,
           published_at: insertedArticle.published_at,
-          anti_ai_version: '2.0',
-          force
-        }
+          anti_ai_version: "2.0",
+          force,
+        },
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-
   } catch (error: any) {
-    console.error('Erreur:', error);
+    console.error("Erreur:", error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message || 'Erreur inconnue' }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({
+        success: false,
+        error: error.message || "Erreur inconnue",
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });

@@ -6,6 +6,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
+const internalDomains = new Set(['taxiassur.com', 'taxiassur.fr', 'xcr.fr']);
+
+async function isAuthorized(req: Request, supabaseUrl: string, serviceKey: string): Promise<boolean> {
+  const token = (req.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
+  if (!token) return false;
+  if (token === serviceKey) return true;
+  const admin = createClient(supabaseUrl, serviceKey);
+  const { data, error } = await admin.auth.getUser(token);
+  if (error) return false;
+  const domain = (data.user?.email || '').toLowerCase().split('@')[1];
+  return internalDomains.has(domain);
+}
 /**
  * Edge Function : Envoi du lien de paiement Monetico par email
  *
@@ -16,25 +28,60 @@ const corsHeaders = {
  * 4. Crée une notification pour le commercial
  */
 
+function escapeHtml(value: unknown): string {
+  const entities: Record<string, string> = {
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  };
+  return String(value ?? '').replace(/[&<>"']/g, (character) => entities[character]);
+}
 interface RequestBody {
   paymentId: string;
+  accessToken?: string;
 }
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ success: false, error: 'Method not allowed' }), {
+      status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return new Response(JSON.stringify({ success: false, error: 'Service indisponible' }), {
+        status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { paymentId }: RequestBody = await req.json();
+    let body: RequestBody;
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ success: false, error: 'Corps JSON invalide' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const paymentId = typeof body.paymentId === 'string' ? body.paymentId.trim() : '';
+    const staffAuthorized = await isAuthorized(req, supabaseUrl, supabaseServiceKey);
+    const clientAccessToken = typeof body.accessToken === 'string' ? body.accessToken.trim() : '';
+    const clientTokenCandidate = /^[0-9a-f]{64}$/i.test(clientAccessToken);
 
-    if (!paymentId) {
+    if (!staffAuthorized && !clientTokenCandidate) {
+      return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(paymentId)) {
       return new Response(
-        JSON.stringify({ success: false, error: 'paymentId requis' }),
+        JSON.stringify({ success: false, error: 'paymentId invalide' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -42,18 +89,23 @@ Deno.serve(async (req: Request) => {
     // Récupérer le paiement
     const { data: payment, error: paymentError } = await supabase
       .from('monetico_payments')
-      .select('*')
+      .select('id, reference, amount, currency, status, description, lead_id')
       .eq('id', paymentId)
       .single();
 
     if (paymentError || !payment) {
-      console.error('Payment not found:', paymentError);
+      console.error('Payment lookup failed');
       return new Response(
         JSON.stringify({ success: false, error: 'Paiement introuvable' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    if (payment.status !== 'pending' || payment.currency !== 'EUR' || !Number.isFinite(Number(payment.amount)) || Number(payment.amount) <= 0 || !payment.lead_id) {
+      return new Response(JSON.stringify({ success: false, error: 'Paiement non envoyable' }), {
+        status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     // Récupérer le lead
     const { data: lead, error: leadError } = await supabase
       .from('crm_leads')
@@ -61,17 +113,34 @@ Deno.serve(async (req: Request) => {
       .eq('id', payment.lead_id)
       .single();
 
-    if (leadError || !lead || !lead.email) {
-      console.error('Lead not found:', leadError);
+    if (leadError || !lead || typeof lead.email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lead.email) || lead.email.length > 254) {
+      console.error('Payment recipient lookup failed');
       return new Response(
         JSON.stringify({ success: false, error: 'Lead ou email introuvable' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Générer le lien vers l'espace prospect
-    const espaceProspectUrl = `https://taxiassur.com/espace-prospect/${lead.access_token}?tab=paiement`;
+    if (!staffAuthorized && clientAccessToken !== lead.access_token) {
+      return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
+    if (!lead.access_token || !/^[A-Za-z0-9_-]{20,200}$/.test(lead.access_token)) {
+      return new Response(JSON.stringify({ success: false, error: 'Acces prospect indisponible' }), {
+        status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    // Générer le lien vers l'espace prospect
+    const espaceProspectUrl = `https://taxiassur.com/espace-prospect?token=${encodeURIComponent(lead.access_token)}&tab=paiement`;
+
+    const safeFirstName = escapeHtml(lead.first_name);
+    const safeLastName = escapeHtml(lead.last_name);
+    const safeAmount = escapeHtml(Number(payment.amount).toFixed(2));
+    const safeReference = escapeHtml(payment.reference);
+    const safeDescription = escapeHtml(payment.description || 'Paiement comptant assurance taxi');
+    const recipientName = `${String(lead.first_name || '').replace(/[\r\n]/g, ' ').slice(0, 100)} ${String(lead.last_name || '').replace(/[\r\n]/g, ' ').slice(0, 100)}`.trim();
     // Template email HTML professionnel
     const emailHtml = `
 <!DOCTYPE html>
@@ -103,7 +172,7 @@ Deno.serve(async (req: Request) => {
           <tr>
             <td style="padding: 40px 30px;">
               <p style="color: #111827; font-size: 18px; margin: 0 0 20px 0;">
-                Bonjour <strong>${lead.first_name} ${lead.last_name}</strong>,
+                Bonjour <strong>${safeFirstName} ${safeLastName}</strong>,
               </p>
 
               <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
@@ -118,19 +187,19 @@ Deno.serve(async (req: Request) => {
                       <tr>
                         <td style="color: #6b7280; font-size: 14px; padding: 8px 0;">Montant à payer :</td>
                         <td align="right" style="color: #111827; font-size: 20px; font-weight: bold; padding: 8px 0;">
-                          ${payment.amount} €
+                          ${safeAmount} €
                         </td>
                       </tr>
                       <tr>
                         <td style="color: #6b7280; font-size: 14px; padding: 8px 0;">Référence :</td>
                         <td align="right" style="color: #374151; font-size: 14px; font-weight: 600; font-family: monospace; padding: 8px 0;">
-                          ${payment.reference}
+                          ${safeReference}
                         </td>
                       </tr>
                       <tr>
                         <td style="color: #6b7280; font-size: 14px; padding: 8px 0;">Description :</td>
                         <td align="right" style="color: #374151; font-size: 14px; padding: 8px 0;">
-                          ${payment.description || 'Paiement comptant assurance taxi'}
+                          ${safeDescription}
                         </td>
                       </tr>
                     </table>
@@ -197,8 +266,23 @@ Deno.serve(async (req: Request) => {
 </body>
 </html>`;
 
+    const { data: claimedPayment, error: claimError } = await supabase
+      .from('monetico_payments')
+      .update({ status: 'processing', updated_at: new Date().toISOString() })
+      .eq('id', paymentId)
+      .eq('status', 'pending')
+      .select('id')
+      .maybeSingle();
+    if (claimError || !claimedPayment) {
+      return new Response(JSON.stringify({ success: false, error: 'Lien deja envoye ou en cours' }), {
+        status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Envoyer l'email via IONOS
-    const emailResponse = await fetch(
+    let emailResponse: Response;
+    try {
+      emailResponse = await fetch(
       `${supabaseUrl}/functions/v1/send-email-ionos`,
       {
         method: 'POST',
@@ -206,9 +290,10 @@ Deno.serve(async (req: Request) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${supabaseServiceKey}`,
         },
+        signal: AbortSignal.timeout(30_000),
         body: JSON.stringify({
           to: lead.email,
-          toName: `${lead.first_name} ${lead.last_name}`,
+          toName: recipientName,
           subject: `💳 Votre lien de paiement comptant - ${payment.amount}€`,
           htmlBody: emailHtml,
           fromEmail: 'contact@taxiassur.com',
@@ -216,19 +301,46 @@ Deno.serve(async (req: Request) => {
         }),
       }
     );
+    } catch {
+      await supabase.from('monetico_payments').update({ status: 'delivery_uncertain', updated_at: new Date().toISOString() }).eq('id', paymentId).eq('status', 'processing');
+      return new Response(JSON.stringify({ success: false, error: 'Statut d envoi incertain, vérification manuelle requise' }), {
+        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    if (!emailResponse.ok) {
-      const errorText = await emailResponse.text();
-      console.error('Erreur envoi email:', errorText);
-      throw new Error('Erreur lors de l\'envoi de l\'email');
+    let relayResult: { success?: boolean } | null = null;
+    try {
+      relayResult = await emailResponse.json();
+    } catch {
+      // A malformed relay response is a failed delivery acknowledgement.
+    }
+    if (!emailResponse.ok || relayResult?.success !== true) {
+      console.error('Payment email provider failed', emailResponse.status);
+      const nextStatus = emailResponse.ok ? 'delivery_uncertain' : 'pending';
+      await supabase.from('monetico_payments').update({ status: nextStatus, updated_at: new Date().toISOString() }).eq('id', paymentId).eq('status', 'processing');
+      return new Response(JSON.stringify({ success: false, error: emailResponse.ok ? 'Statut d envoi incertain, vérification manuelle requise' : 'Echec envoi e-mail' }), {
+        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { error: sentError } = await supabase
+      .from('monetico_payments')
+      .update({ status: 'sent', updated_at: new Date().toISOString() })
+      .eq('id', paymentId)
+      .eq('status', 'processing');
+    if (sentError) {
+      console.error('Payment sent-status persistence failed', sentError.code || 'unknown');
+      return new Response(JSON.stringify({ success: false, error: 'E-mail envoyé, audit non enregistré' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Créer une notification CRM
-    await supabase.from('crm_event_notifications').insert({
+    const { error: notificationError } = await supabase.from('crm_event_notifications').insert({
       lead_id: lead.id,
       event_type: 'communication_sent',
       title: '💳 Lien de paiement envoyé',
-      message: `Lien de paiement de ${payment.amount}€ envoyé à ${lead.email} (Réf: ${payment.reference})`,
+      message: `Lien de paiement de ${payment.amount}€ envoyé à ${lead.email} (Réf: ${safeReference})`,
       priority: 1,
       action_url: `/backoffice/crm-killer/${lead.id}`,
       context_data: {
@@ -239,27 +351,21 @@ Deno.serve(async (req: Request) => {
         sent_at: new Date().toISOString(),
       },
     });
-
-    console.log('✅ Email envoyé avec succès à:', lead.email);
+    if (notificationError) console.error('Payment CRM notification persistence failed');
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'Email envoyé avec succès',
-        email: lead.email,
-        amount: payment.amount,
-      }),
+      JSON.stringify({ success: true }),
       {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
-  } catch (error: any) {
-    console.error('❌ Erreur:', error);
+  } catch (error: unknown) {
+    console.error('Payment link email failed', error instanceof Error ? error.name : 'unknown');
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || 'Erreur inconnue',
+        error: 'Erreur serveur',
       }),
       {
         status: 500,

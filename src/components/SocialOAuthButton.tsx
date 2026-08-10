@@ -83,7 +83,7 @@ export function SocialOAuthButton({
     );
   }
 
-  const oauthUrl = `${authUrl}?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
+  const oauthUrl = `${authUrl}?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;    const startOAuth = async () => {     const url = new URL(authUrl);     url.searchParams.set('response_type', 'code');     url.searchParams.set('client_id', clientId);     url.searchParams.set('redirect_uri', redirectUri);     url.searchParams.set('scope', scope);     const randomValue = (length: number) => {       const bytes = crypto.getRandomValues(new Uint8Array(length));       return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');     };     const state = randomValue(24);     sessionStorage.setItem(`oauth_state_${platform}`, state);     url.searchParams.set('state', state);     if (platform === 'twitter') {       const verifier = randomValue(64);       const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));       const challenge = btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');       sessionStorage.setItem('oauth_pkce_twitter', verifier);       url.searchParams.set('code_challenge', challenge);       url.searchParams.set('code_challenge_method', 'S256');     }     window.location.assign(url.toString());   };
 
   if (loading) {
     return (
@@ -115,6 +115,7 @@ export function SocialOAuthButton({
         {isExpiringSoon && (
           <a
             href={oauthUrl}
+            onClick={(event) => { event.preventDefault(); void startOAuth(); }}
             className={`inline-flex items-center gap-2 text-xs ${color} hover:opacity-90 text-white px-3 py-1.5 rounded transition`}
           >
             <Icon className="w-3 h-3" />
@@ -146,10 +147,8 @@ export function SocialOAuthButton({
       </div>
       <a
         href={oauthUrl}
+        onClick={(event) => { event.preventDefault(); event.stopPropagation(); void startOAuth(); }}
         className={`inline-flex items-center gap-2 ${color} hover:opacity-90 text-white px-4 py-2 rounded-lg transition text-sm font-medium`}
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
       >
         <Icon className="w-4 h-4" />
         Connecter {label}

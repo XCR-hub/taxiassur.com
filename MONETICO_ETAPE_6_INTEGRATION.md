@@ -416,7 +416,7 @@ Erreur: https://taxiassur.com/espace-prospect/paiement-error
 ```
 TPE: 7374133
 Société: taxiassur
-Clé MAC: 106FA85BF342FD4EE95C883D82865B5CC1F63890
+Clé MAC: [REDACTED_MONETICO_MAC_KEY]
 ```
 
 ---

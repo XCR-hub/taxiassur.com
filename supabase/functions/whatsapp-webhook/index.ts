@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { verifyTwilioWebhook } from "../_shared/twilio-webhook.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -28,14 +29,33 @@ Deno.serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const formData = await req.formData();
-    const payload: any = {};
+    if (!(await verifyTwilioWebhook(req, formData, "TWILIO_WHATSAPP_WEBHOOK_URL"))) {
+      return new Response("Forbidden", { status: 403, headers: corsHeaders });
+    }
+    const payload: Record<string, string> = {};
     formData.forEach((value, key) => {
-      payload[key] = value;
+      payload[key] = String(value);
     });
 
-    console.log("WhatsApp webhook received:", payload);
 
-    const { MessageSid, From, To, Body, NumMedia, MediaUrl0, MediaContentType0 } = payload as TwilioWebhookPayload;
+    const { MessageSid, From, To, Body, NumMedia, MediaUrl0, MediaContentType0 } = payload as unknown as TwilioWebhookPayload;
+    const mediaCount = Number(NumMedia || 0);
+    if (!/^SM[a-f0-9]{32}$/i.test(String(MessageSid || '')) ||
+        !/^whatsapp:\+[1-9]\d{7,14}$/.test(String(From || '')) ||
+        (Body && Body.length > 4096) ||
+        !Number.isInteger(mediaCount) || mediaCount < 0 || mediaCount > 10) {
+      return new Response('Invalid WhatsApp payload', { status: 400, headers: corsHeaders });
+    }
+    if (mediaCount > 0) {
+      try {
+        const mediaUrl = new URL(String(MediaUrl0 || ''));
+        if (mediaUrl.protocol !== 'https:' || !(mediaUrl.hostname === 'api.twilio.com' || mediaUrl.hostname.endsWith('.twilio.com'))) {
+          throw new Error('Untrusted media URL');
+        }
+      } catch {
+        return new Response('Invalid WhatsApp media', { status: 400, headers: corsHeaders });
+      }
+    }
 
     const phone = From.replace("whatsapp:", "");
 
@@ -58,7 +78,7 @@ Deno.serve(async (req: Request) => {
       status: "received",
     };
 
-    if (NumMedia && parseInt(NumMedia) > 0) {
+    if (mediaCount > 0) {
       messageData.media_url = MediaUrl0;
       messageData.media_content_type = MediaContentType0;
     }
@@ -67,30 +87,27 @@ Deno.serve(async (req: Request) => {
       .from("wa_messages")
       .insert(messageData);
 
+    if (msgError?.code === "23505") {
+      return new Response("OK", { status: 200, headers: { ...corsHeaders, "Content-Type": "text/plain" } });
+    }
     if (msgError) {
-      console.error("Error inserting message:", msgError);
+      console.error("Error inserting inbound WhatsApp message");
       throw msgError;
     }
 
     await supabase.from("wa_webhooks_log").insert({
       webhook_type: "inbound_message",
       message_sid: MessageSid,
-      payload: payload,
+      payload: { has_body: Boolean(Body), num_media: Number(NumMedia || 0), media_content_type: MediaContentType0 || null },
       processed: true,
     });
 
-    if (Body?.toLowerCase().includes("stop")) {
-      await supabase
-        .from("wa_contacts")
-        .update({ opted_out: true })
-        .eq("phone_e164", phone);
-    } else if (Body?.toLowerCase().includes("start")) {
-      await supabase
-        .from("wa_contacts")
-        .update({ opted_out: false })
-        .eq("phone_e164", phone);
+    const normalizedCommand = Body?.trim().toLowerCase();
+    if (["stop", "unsubscribe", "désabonnement", "desabonnement"].includes(normalizedCommand || "")) {
+      await supabase.from("wa_contacts").update({ opted_out: true }).eq("phone_e164", phone);
+    } else if (["start", "subscribe", "réabonnement", "reabonnement"].includes(normalizedCommand || "")) {
+      await supabase.from("wa_contacts").update({ opted_out: false }).eq("phone_e164", phone);
     }
-
     return new Response("OK", {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "text/plain" },

@@ -6,300 +6,101 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
+const internalDomains = new Set(["taxiassur.com", "taxiassur.fr", "xcr.fr"]);
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const json = (status: number, body: Record<string, unknown>) => new Response(JSON.stringify(body), {
+  status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+});
 
-function base64Encode(str: string): string {
-  return btoa(str);
+function escapeHtml(value: unknown): string {
+  const entities: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  return String(value ?? "").replace(/[&<>"']/g, (character) => entities[character]);
 }
-
-async function sendEmailSMTP(
-  to: string,
-  toName: string,
-  subject: string,
-  htmlBody: string,
-  fromEmail: string = "team@taxiassur.com",
-  fromName: string = "TaxiAssur"
-): Promise<void> {
-  const SMTP_HOST = Deno.env.get("SMTP_HOST") || Deno.env.get("HMAIL_SMTP_HOST") || Deno.env.get("IONOS_SMTP_HOST") || "mail.xcr.fr";
-  const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") || Deno.env.get("HMAIL_SMTP_PORT") || Deno.env.get("IONOS_SMTP_PORT") || "587");
-  const SMTP_USER = Deno.env.get("SMTP_USER") || Deno.env.get("HMAIL_SMTP_USER") || Deno.env.get("IONOS_EMAIL_USER") || "tcerda@xcr.fr";
-  const SMTP_PASS = Deno.env.get("SMTP_PASS") || Deno.env.get("HMAIL_SMTP_PASS") || Deno.env.get("IONOS_EMAIL_PASSWORD") || Deno.env.get("IONOS_SMTP_PASSWORD");
-  const SMTP_SECURITY = (Deno.env.get("SMTP_SECURITY") || Deno.env.get("HMAIL_SMTP_SECURITY") || Deno.env.get("IONOS_SMTP_SECURITY") || (SMTP_PORT === 465 ? "ssl" : "starttls")).toLowerCase();
-
-  if (!SMTP_PASS) {
-    console.error("⚠️ IONOS_EMAIL_PASSWORD not configured in Supabase secrets");
-    throw new Error("Configuration email IONOS manquante. Veuillez contacter l'administrateur.");
-  }
-
-  console.log(`📧 Tentative envoi email SMTP vers ${to} via ${SMTP_HOST}:${SMTP_PORT}`);
-
-  let conn: any = SMTP_SECURITY === "ssl"
-    ? await Deno.connectTls({ hostname: SMTP_HOST, port: SMTP_PORT })
-    : await Deno.connect({ hostname: SMTP_HOST, port: SMTP_PORT });
-
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-
-  async function readResponse(): Promise<string> {
-    const buffer = new Uint8Array(1024);
-    const n = await conn.read(buffer);
-    if (n === null) return "";
-    return decoder.decode(buffer.subarray(0, n));
-  }
-
-  async function sendCommand(cmd: string): Promise<string> {
-    await conn.write(encoder.encode(cmd + "\r\n"));
-    return await readResponse();
-  }
-
+async function isAuthorized(req: Request, url: string, serviceKey: string): Promise<boolean> {
+  const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+  if (!token) return false;
+  if (token === serviceKey) return true;
+  const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
+  const { data, error } = await admin.auth.getUser(token);
+  if (error) return false;
+  const domain = (data.user?.email || "").toLowerCase().split("@")[1] || "";
+  return internalDomains.has(domain);
+}
+function isAllowedPaymentUrl(value: unknown): value is string {
+  if (typeof value !== "string" || value.length > 2048) return false;
   try {
-    await readResponse();
-    await sendCommand(`EHLO ${SMTP_HOST}`);
-    if (SMTP_SECURITY === "starttls" || SMTP_SECURITY === "tls") {
-      const startTlsResponse = await sendCommand("STARTTLS");
-      if (!startTlsResponse.startsWith("220")) throw new Error("SMTP STARTTLS failed");
-      conn = await Deno.startTls(conn, { hostname: SMTP_HOST });
-      await sendCommand(`EHLO ${SMTP_HOST}`);
+    const url = new URL(value);
+    let configuredHost = "";
+    try { configuredHost = new URL(Deno.env.get("SITE_URL") || "").hostname.toLowerCase(); } catch { /* optional */ }
+    const allowedHosts = new Set(["taxiassur.com", "www.taxiassur.com", "taxiassur.fr", "www.taxiassur.fr", configuredHost].filter(Boolean));
+    return url.protocol === "https:" && allowedHosts.has(url.hostname.toLowerCase()) &&
+      /^\/paiement\/[A-Za-z0-9_-]+$/.test(url.pathname) && /^[0-9a-f]{64}$/i.test(url.searchParams.get("token") || "");
+  } catch { return false; }
+}
+function encodeBase64(value: string): string { return btoa(value); }
+async function sendEmailSMTP(to: string, toName: string, subject: string, htmlBody: string): Promise<void> {
+  const host = Deno.env.get("SMTP_HOST") || Deno.env.get("HMAIL_SMTP_HOST") || Deno.env.get("IONOS_SMTP_HOST") || "mail.xcr.fr";
+  const port = Number(Deno.env.get("SMTP_PORT") || Deno.env.get("HMAIL_SMTP_PORT") || Deno.env.get("IONOS_SMTP_PORT") || "587");
+  const user = Deno.env.get("SMTP_USER") || Deno.env.get("HMAIL_SMTP_USER") || Deno.env.get("IONOS_EMAIL_USER") || "tcerda@xcr.fr";
+  const password = Deno.env.get("SMTP_PASS") || Deno.env.get("HMAIL_SMTP_PASS") || Deno.env.get("IONOS_EMAIL_PASSWORD") || Deno.env.get("IONOS_SMTP_PASSWORD");
+  const security = (Deno.env.get("SMTP_SECURITY") || Deno.env.get("HMAIL_SMTP_SECURITY") || (port === 465 ? "ssl" : "starttls")).toLowerCase();
+  if (!password || !Number.isInteger(port) || port < 1 || port > 65535) throw new Error("EmailConfigurationError");
+  let connection: Deno.TcpConn | Deno.TlsConn = security === "ssl"
+    ? await Deno.connectTls({ hostname: host, port }) : await Deno.connect({ hostname: host, port });
+  const encoder = new TextEncoder(); const decoder = new TextDecoder();
+  const read = async () => { const buffer = new Uint8Array(4096); const size = await connection.read(buffer); return size === null ? "" : decoder.decode(buffer.subarray(0, size)); };
+  const command = async (value: string) => { await connection.write(encoder.encode(value + "\r\n")); return await read(); };
+  const expect = (response: string, codes: string[]) => {
+    if (!codes.some((code) => response.startsWith(code))) throw new Error("EmailTransportError");
+  };
+  try {
+    expect(await read(), ["220"]); expect(await command(`EHLO ${host}`), ["250"]);
+    if (security === "starttls" || security === "tls") {
+      expect(await command("STARTTLS"), ["220"]);
+      connection = await Deno.startTls(connection as Deno.TcpConn, { hostname: host });
+      expect(await command(`EHLO ${host}`), ["250"]);
     }
-    await sendCommand(`AUTH LOGIN`);
-    await sendCommand(base64Encode(SMTP_USER));
-    await sendCommand(base64Encode(SMTP_PASS));
-    await sendCommand(`MAIL FROM:<${fromEmail}>`);
-    await sendCommand(`RCPT TO:<${to}>`);
-    await sendCommand("DATA");
-
-    const emailContent = [
-      `From: "${fromName}" <${fromEmail}>`,
-      `To: "${toName}" <${to}>`,
-      `Subject: ${subject}`,
-      "MIME-Version: 1.0",
-      "Content-Type: text/html; charset=UTF-8",
-      "",
-      htmlBody,
-      ".",
-    ].join("\r\n");
-
-    await conn.write(encoder.encode(emailContent + "\r\n"));
-    await readResponse();
-    await sendCommand("QUIT");
-  } finally {
-    conn.close();
-  }
+    expect(await command("AUTH LOGIN"), ["334"]);
+    expect(await command(encodeBase64(user)), ["334"]);
+    expect(await command(encodeBase64(password)), ["235"]);
+    expect(await command("MAIL FROM:<team@taxiassur.com>"), ["250"]);
+    expect(await command(`RCPT TO:<${to}>`), ["250", "251"]);
+    expect(await command("DATA"), ["354"]);
+    const message = [`From: "TaxiAssur" <team@taxiassur.com>`, `To: "${toName.replace(/[\r\n"]/g, "")}" <${to}>`, `Subject: ${subject.replace(/[\r\n]/g, "")}`, "MIME-Version: 1.0", "Content-Type: text/html; charset=UTF-8", "", htmlBody, "."].join("\r\n");
+    await connection.write(encoder.encode(message + "\r\n")); expect(await read(), ["250"]); expect(await command("QUIT"), ["221"]);
+  } finally { connection.close(); }
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 200, headers: corsHeaders });
-  }
-
+  if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
+  if (req.method !== "POST") return json(405, { success: false, error: "Method not allowed" });
   try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    if (!supabaseUrl || !serviceKey) return json(503, { success: false, error: "Service indisponible" });
+    if (!(await isAuthorized(req, supabaseUrl, serviceKey))) return json(401, { success: false, error: "Non autorise" });
     const { lead_id, payment_url, amount, email, first_name, last_name } = await req.json();
-
-    if (!payment_url || !amount) {
-      throw new Error("payment_url et amount sont requis");
-    }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Récupérer les données du lead si non fournies
-    let leadEmail = email;
-    let leadFirstName = first_name;
-    let leadLastName = last_name;
-
-    if (!leadEmail) {
-      const { data: lead, error: leadError } = await supabase
-        .from("crm_leads")
-        .select("email, first_name, last_name")
-        .eq("id", lead_id)
-        .maybeSingle();
-
-      if (leadError || !lead) {
-        throw new Error(`Lead introuvable: ${leadError?.message || "Aucune donnée"}`);
-      }
-
-      leadEmail = lead.email;
-      leadFirstName = lead.first_name;
-      leadLastName = lead.last_name;
-    }
-
-    if (!leadEmail) {
-      throw new Error("Email du lead introuvable");
-    }
-
-    const formattedAmount = new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
-
-    const emailHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: Arial, sans-serif; background: #f3f4f6; margin: 0; padding: 20px; }
-    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-    .header { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); padding: 40px 30px; text-align: center; color: white; }
-    .header h1 { margin: 0 0 10px 0; font-size: 28px; }
-    .content { padding: 40px 30px; }
-    .info-box { background: #dbeafe; border-left: 4px solid #3b82f6; padding: 20px; margin: 25px 0; border-radius: 8px; }
-    .payment-box { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 3px solid #f59e0b; padding: 30px; border-radius: 16px; margin: 30px 0; text-align: center; box-shadow: 0 4px 15px rgba(245,158,11,0.3); }
-    .amount-display { background: white; padding: 20px; border-radius: 12px; margin: 20px 0; border: 2px solid #f59e0b; }
-    .amount-value { color: #ea580c; font-weight: bold; font-size: 36px; font-family: 'Courier New', monospace; }
-    .cta-button { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 20px 45px; text-decoration: none; border-radius: 50px; display: inline-block; font-weight: bold; font-size: 18px; margin: 20px 0; box-shadow: 0 4px 15px rgba(16,185,129,0.4); transition: all 0.3s; }
-    .cta-button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,185,129,0.5); }
-    .warning-box { background: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0; border-radius: 8px; }
-    .steps-box { background: #f9fafb; padding: 25px; border-radius: 12px; margin: 25px 0; }
-    .step-item { display: flex; align-items: start; margin: 15px 0; }
-    .step-number { background: #10b981; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; flex-shrink: 0; }
-    .security-badges { display: flex; justify-content: center; gap: 20px; margin: 25px 0; flex-wrap: wrap; }
-    .security-badge { background: #f0fdf4; border: 2px solid #10b981; padding: 12px 20px; border-radius: 8px; font-size: 13px; color: #065f46; font-weight: bold; }
-    .footer { background: #1f2937; color: white; padding: 30px; text-align: center; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>💳 Paiement de votre comptant</h1>
-      <p style="margin: 0; font-size: 18px;">Dernière étape pour lancer votre contrat</p>
-    </div>
-    <div class="content">
-      <div class="info-box">
-        <strong style="font-size: 18px;">Bonjour ${leadFirstName || ""} !</strong><br><br>
-        Votre dossier est prêt ! Il ne reste plus qu'à régler le comptant pour activer immédiatement votre assurance taxi.
-      </div>
-
-      <div class="payment-box">
-        <h2 style="margin-top: 0; color: #92400e; font-size: 24px;">💰 Montant à régler</h2>
-
-        <div class="amount-display">
-          <div style="color: #6b7280; font-size: 14px; margin-bottom: 10px;">Comptant d'assurance</div>
-          <div class="amount-value">${formattedAmount}</div>
-          <div style="color: #6b7280; font-size: 12px; margin-top: 10px;">Paiement sécurisé en ligne</div>
-        </div>
-
-        <div style="margin: 30px 0;">
-          <a href="${payment_url}" class="cta-button" style="text-decoration: none;">
-            🚀 PAYER MAINTENANT
-          </a>
-        </div>
-
-        <p style="margin: 0; font-size: 14px; color: #92400e;">
-          ⚡ Activation instantanée après paiement
-        </p>
-      </div>
-
-      <div class="steps-box">
-        <h3 style="margin-top: 0; color: #1f2937;">📋 Que se passe-t-il après le paiement ?</h3>
-
-        <div class="step-item">
-          <div class="step-number">1</div>
-          <div>
-            <strong>Paiement sécurisé</strong><br>
-            <span style="color: #6b7280; font-size: 14px;">Transaction cryptée via Monetico (CIC)</span>
-          </div>
-        </div>
-
-        <div class="step-item">
-          <div class="step-number">2</div>
-          <div>
-            <strong>Activation immédiate</strong><br>
-            <span style="color: #6b7280; font-size: 14px;">Votre contrat est activé en quelques secondes</span>
-          </div>
-        </div>
-
-        <div class="step-item">
-          <div class="step-number">3</div>
-          <div>
-            <strong>Réception des documents</strong><br>
-            <span style="color: #6b7280; font-size: 14px;">Attestation et contrat envoyés par email</span>
-          </div>
-        </div>
-
-        <div class="step-item">
-          <div class="step-number">4</div>
-          <div>
-            <strong>Vous pouvez rouler !</strong><br>
-            <span style="color: #6b7280; font-size: 14px;">Couverture effective immédiatement</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="security-badges">
-        <div class="security-badge">🔒 Paiement 100% sécurisé</div>
-        <div class="security-badge">✅ Conforme PCI-DSS</div>
-        <div class="security-badge">🏦 CIC Monetico</div>
-      </div>
-
-      <div class="warning-box">
-        <strong>⚠️ Important :</strong> Ce lien de paiement est personnel et sécurisé. Il reste valide pendant 7 jours.
-      </div>
-
-      <div style="background: #dbeafe; padding: 20px; border-radius: 12px; margin: 30px 0; text-align: center;">
-        <h3 style="color: #1e40af; margin-top: 0;">💬 Besoin d'aide ?</h3>
-        <p style="margin: 10px 0; color: #1f2937;">
-          <strong>📞 01 80 85 57 86</strong><br>
-          <a href="mailto:team@taxiassur.com" style="color: #1e40af;">📧 team@taxiassur.com</a>
-        </p>
-        <p style="margin: 0; font-size: 14px; color: #6b7280;">
-          Notre équipe est disponible du lundi au vendredi, 9h-18h
-        </p>
-      </div>
-    </div>
-    <div class="footer">
-      <div style="font-size: 22px; font-weight: bold; color: #10b981; margin-bottom: 10px;">TaxiAssur</div>
-      <p style="margin: 5px 0;">Courtier spécialisé en assurance taxi et VTC</p>
-      <p style="margin-top: 15px; font-size: 12px; color: #9ca3af;">
-        ORIAS 11 061 425 - Excellence Coverage Risks<br>
-        Ce message vous est envoyé car vous avez souscrit une assurance chez TaxiAssur
-      </p>
-    </div>
-  </div>
-</body>
-</html>`;
-
-    await sendEmailSMTP(
-      leadEmail,
-      `${leadFirstName || ""} ${leadLastName || ""}`.trim() || "Client",
-      `💳 Paiement de votre comptant - ${formattedAmount}`,
-      emailHtml,
-      "team@taxiassur.com",
-      "TaxiAssur"
-    );
-
-    // Enregistrer l'interaction seulement si c'est lié à un lead
+    const numericAmount = Number(amount);
+    if (!isAllowedPaymentUrl(payment_url) || !Number.isFinite(numericAmount) || numericAmount <= 0 || numericAmount > 100000) return json(400, { success: false, error: "Donnees de paiement invalides" });
+    if (lead_id && !uuidPattern.test(lead_id)) return json(400, { success: false, error: "Lead invalide" });
+    if (email && !emailPattern.test(email)) return json(400, { success: false, error: "Email invalide" });
+    const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+    let recipient = email; let firstName = first_name; let lastName = last_name;
     if (lead_id) {
-      await supabase.from("crm_interactions").insert({
-        lead_id: lead_id,
-        type: "email",
-        direction: "outbound",
-        subject: `Envoi lien de paiement comptant ${formattedAmount}`,
-        content: `Email de paiement envoyé avec lien sécurisé Monetico pour ${formattedAmount}`,
-        to_email: leadEmail,
-        from_email: "team@taxiassur.com",
-      });
+      const { data: lead, error } = await supabase.from("crm_leads").select("email, first_name, last_name").eq("id", lead_id).maybeSingle();
+      if (error || !lead?.email) return json(404, { success: false, error: "Prospect introuvable" });
+      recipient = lead.email; firstName = lead.first_name; lastName = lead.last_name;
     }
-
-    console.log(`✅ Email de paiement envoyé à ${leadEmail} pour ${formattedAmount}${lead_id ? ` (Lead: ${lead_id})` : ' (Facturation libre)'}`);
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Email de paiement envoyé avec succès",
-        payment_url: payment_url,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    if (!recipient || !emailPattern.test(recipient)) return json(400, { success: false, error: "Email invalide" });
+    const formattedAmount = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(numericAmount);
+    const html = `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f3f4f6;padding:24px"><div style="max-width:600px;margin:auto;background:#fff;padding:32px;border-radius:16px"><h1 style="color:#ea580c">Paiement de votre assurance</h1><p>Bonjour ${escapeHtml(firstName)},</p><p>Votre dossier est prêt. Le montant à régler est de <strong>${escapeHtml(formattedAmount)}</strong>.</p><p style="margin:32px 0"><a href="${escapeHtml(payment_url)}" style="background:#059669;color:#fff;padding:16px 24px;border-radius:24px;text-decoration:none;font-weight:bold">Payer maintenant</a></p><p>Ce lien est personnel. Ne le transmettez pas.</p><hr><p style="color:#6b7280;font-size:13px">TaxiAssur — ORIAS 11 061 425 — 01 80 85 57 86</p></div></body></html>`;
+    await sendEmailSMTP(recipient, `${firstName || ""} ${lastName || ""}`.trim() || "Client", `Paiement TaxiAssur - ${formattedAmount}`, html);
+    if (lead_id) await supabase.from("crm_interactions").insert({ lead_id, type: "email", direction: "outbound", subject: `Envoi lien de paiement ${formattedAmount}`, content: `Lien de paiement sécurisé envoyé pour ${formattedAmount}`, to_email: recipient, from_email: "team@taxiassur.com" });
+    console.log("Payment email sent");
+    return json(200, { success: true, message: "Email de paiement envoye avec succes" });
   } catch (error) {
-    console.error("❌ Erreur lors de l'envoi de l'email de paiement:", error);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : "Erreur inconnue",
-      }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    console.error("Payment email delivery failed", error instanceof Error ? error.name : "UnknownError");
+    return json(502, { success: false, error: "Envoi impossible" });
   }
 });

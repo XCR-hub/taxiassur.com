@@ -155,7 +155,17 @@ IONOS_PASSWORD=REDACTED
 # WhatsApp/SMS (Twilio)
 TWILIO_ACCOUNT_SID=your-sid
 TWILIO_AUTH_TOKEN=REDACTED
+KEYYO_WEBHOOK_SECRET=generate-a-long-random-secret
+INDEXNOW_KEY=generate-a-random-indexnow-key
+TWITTER_CLIENT_ID=your-twitter-client-id
+TWITTER_CLIENT_SECRET=REDACTED
+TWITTER_REDIRECT_URI=https://taxiassur.com/auth/callback/twitter
 TWILIO_PHONE_NUMBER=+33...
+TWILIO_WEBHOOK_URL=https://<project>.supabase.co/functions/v1/twilio-webhook
+TWILIO_WHATSAPP_WEBHOOK_URL=https://<project>.supabase.co/functions/v1/whatsapp-webhook
+TWILIO_WHATSAPP_STATUS_URL=https://<project>.supabase.co/functions/v1/whatsapp-status
+BREVO_WEBHOOK_TOKEN=generate-a-long-random-secret
+BREVO_SMS_WEBHOOK_TOKEN=generate-another-long-random-secret
 
 # IA (OpenAI)
 OPENAI_API_KEY=sk-...

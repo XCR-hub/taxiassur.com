@@ -5,7 +5,6 @@ import {
   XCircle,
   Clock,
   AlertCircle,
-  Eye,
   Download,
   FileText,
   Loader2,
@@ -14,6 +13,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { SecureDocumentLink } from './SecureDocumentLink';
 
 interface Document {
   id: string;
@@ -308,20 +308,14 @@ const DocumentValidationPanel: React.FC<DocumentValidationPanelProps> = ({ leadI
 
                   {/* Actions */}
                   <div className="flex items-center gap-2">
-                    <a
-                      href={
-                        doc.metadata?.download_url ||
-                        (doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/')
-                          ? supabase.storage.from('email-attachments').getPublicUrl(doc.file_path).data.publicUrl
-                          : supabase.storage.from('prospect-documents').getPublicUrl(doc.file_path).data.publicUrl)
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <SecureDocumentLink
+                      filePath={doc.file_path}
+                      source={doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/') ? 'email_attachments' : 'prospect_documents'}
+                      bucket={doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/') ? 'email-attachments' : 'prospect-documents'}
+                      fileName={doc.file_name}
                       className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                      title="Voir le document"
-                    >
-                      <Eye className="w-5 h-5" />
-                    </a>
+                      iconSize={20}
+                    />
 
                     {doc.status === 'pending' && (
                       <>

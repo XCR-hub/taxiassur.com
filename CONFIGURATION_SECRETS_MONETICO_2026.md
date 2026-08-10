@@ -70,7 +70,7 @@ MONETICO_MODE=test
 - **Format**: Texte alphanumérique sans espaces
 
 ### **MONETICO_MAC_KEY**
-- **Valeur**: `106FA85BF342FD4EE95C883D82865B5CC1F63890` (votre clé MAC)
+- **Valeur**: `[REDACTED_MONETICO_MAC_KEY]` (votre clé MAC)
 - **Description**: Clé secrète pour calculer la signature HMAC-SHA1
 - **Format**: Chaîne hexadécimale de 40 caractères
 - **⚠️ CRITIQUE**: Ne JAMAIS partager cette clé
@@ -189,7 +189,7 @@ LIMIT 10;
 Le code utilise des valeurs par défaut si les secrets ne sont pas configurés :
 - TPE: `7374133`
 - Société: `taxiassur`
-- MAC Key: `106FA85BF342FD4EE95C883D82865B5CC1F63890`
+- MAC Key: `[REDACTED_MONETICO_MAC_KEY]`
 
 **Ces valeurs fonctionnent**, mais il est recommandé de les mettre dans les secrets pour plus de sécurité.
 

@@ -33,56 +33,48 @@ const AIAutonomousEngine: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
 
-  useEffect(() => {
-    loadStatus();
-    autoStartIfNeeded();
-  }, []);
-
-  const loadStatus = async () => {
+  const loadStatus = React.useCallback(async () => {
     try {
       const { data, error } = await supabase.rpc('get_filtered_system_status');
-
       if (error) throw error;
-
       setStatus(data);
     } catch (error) {
       console.error('Error loading status:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const autoStartIfNeeded = async () => {
-    try {
-      const { data: shouldStart } = await supabase.rpc('should_ai_auto_start');
-
-      if (shouldStart) {
-        await startAI();
-      }
-    } catch (error) {
-      console.error('Auto-start error:', error);
-    }
-  };
-
-  const startAI = async () => {
+  const startAI = React.useCallback(async () => {
     setStarting(true);
     try {
-      const { data, error } = await supabase.rpc('start_ai_engine');
-
+      const { error } = await supabase.rpc('start_ai_engine');
       if (error) throw error;
-
       await loadStatus();
     } catch (error) {
       console.error('Error starting AI:', error);
     } finally {
       setStarting(false);
     }
-  };
+  }, [loadStatus]);
 
+  const autoStartIfNeeded = React.useCallback(async () => {
+    try {
+      const { data: shouldStart } = await supabase.rpc('should_ai_auto_start');
+      if (shouldStart) await startAI();
+    } catch (error) {
+      console.error('Auto-start error:', error);
+    }
+  }, [startAI]);
+
+  useEffect(() => {
+    void loadStatus();
+    void autoStartIfNeeded();
+  }, [autoStartIfNeeded, loadStatus]);
   const stopAI = async () => {
     setStarting(true);
     try {
-      const { data, error } = await supabase.rpc('stop_ai_engine');
+      const { error } = await supabase.rpc('stop_ai_engine');
 
       if (error) throw error;
 
