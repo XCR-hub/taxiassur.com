@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import {
-  Brain, Zap, TrendingUp, Users, Activity, RefreshCw,
-  CheckCircle, AlertTriangle, Code, Rocket, BarChart3,
-  Clock, Play, ChevronRight, X, Shield,
-  Cpu, GitBranch, Database, Sparkles, Circle,
+  Brain, Zap, Users, Activity, RefreshCw,
+  CheckCircle, AlertTriangle, Code, Rocket,
+  Clock, X, Shield,
+  Cpu, GitBranch, Database, Sparkles,
   ArrowUp, ArrowDown, Minus,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -200,7 +201,7 @@ export default function AIAutonomousDashboard() {
     try {
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/autonomous-ai-engine`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: (await internalFunctionHeaders()).Authorization, 'Content-Type': 'application/json' },
         body: JSON.stringify({ context: { currentMetrics: metrics, timestamp: new Date().toISOString() }, decisionType: 'performance_optimization' }),
       });
       const data = await res.json();
@@ -225,7 +226,7 @@ export default function AIAutonomousDashboard() {
       await supabase.from('ai_code_suggestions').update({ status: 'approved' }).eq('status', 'pending').in('priority', ['high', 'medium']);
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-deploy-improvements`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: (await internalFunctionHeaders()).Authorization, 'Content-Type': 'application/json' },
       });
       const data = await res.json();
       if (data.success) {
@@ -372,7 +373,7 @@ export default function AIAutonomousDashboard() {
                 </div>
               ) : (
                 <div className="divide-y divide-gray-50">
-                  {decisions.map((d, i) => (
+                  {decisions.map(d => (
                     <div key={d.id} className="p-3.5 hover:bg-gray-50/60 transition-colors">
                       <div className="flex items-start gap-3">
                         <div className="w-7 h-7 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">

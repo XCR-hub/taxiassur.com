@@ -1,10 +1,12 @@
+import { isInternalRequest } from "../_shared/internal-auth.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
 /**
@@ -187,7 +189,7 @@ export default ${componentName};
 
 function generateOptimizedPageCode(
   currentContent: string,
-  recommendations: any
+  recommendations: any,
 ): string {
   // Pour l'instant, retourne le contenu actuel avec un commentaire
   // Dans une version complète, utiliserait l'IA pour optimiser
@@ -204,13 +206,20 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
+  if (!(await isInternalRequest(req))) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { action, data, priority = 5 }: CodeGenerationRequest = await req.json();
+    const { action, data, priority = 5 }: CodeGenerationRequest = await req
+      .json();
 
     console.log(`🤖 Génération de code IA: ${action}`);
 
@@ -225,7 +234,9 @@ Deno.serve(async (req: Request) => {
         }
 
         const slug = data.city.toLowerCase().replace(/\s+/g, "-");
-        filePath = `src/pages/AssuranceTaxi${data.city.replace(/[- ]/g, "")}.tsx`;
+        filePath = `src/pages/AssuranceTaxi${
+          data.city.replace(/[- ]/g, "")
+        }.tsx`;
         generatedCode = generateCityPageCode(data.city, data.keyword);
         commitMessage = `Création page SEO pour ${data.city} - ${data.keyword}`;
 
@@ -242,9 +253,11 @@ Deno.serve(async (req: Request) => {
         filePath = data.metadata?.file_path || "src/pages/Unknown.tsx";
         generatedCode = generateOptimizedPageCode(
           data.current_content,
-          data.seo_recommendations
+          data.seo_recommendations,
         );
-        commitMessage = `Optimisation SEO: ${data.seo_recommendations.title || "Amélioration contenu"}`;
+        commitMessage = `Optimisation SEO: ${
+          data.seo_recommendations.title || "Amélioration contenu"
+        }`;
         break;
       }
 
@@ -272,7 +285,7 @@ Deno.serve(async (req: Request) => {
           data,
           generated_at: new Date().toISOString(),
         },
-      }
+      },
     );
 
     if (queueError) {
@@ -290,7 +303,7 @@ Deno.serve(async (req: Request) => {
         preview: generatedCode.substring(0, 500) + "...",
         message: "Code généré et ajouté à la queue de publication",
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error) {
     console.error("❌ Erreur génération code:", error);
@@ -299,7 +312,10 @@ Deno.serve(async (req: Request) => {
         success: false,
         error: error instanceof Error ? error.message : "Erreur inconnue",
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });

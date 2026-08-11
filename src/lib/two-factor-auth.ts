@@ -223,22 +223,3 @@ export class TwoFactorAuth {
     return new Uint8Array(signature);
   }
 }
-
-export async function sendSMSVerificationCode(phoneNumber: string): Promise<string> {
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-
-  const response = await fetch('/api/send-sms.php', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      to: phoneNumber,
-      message: `Votre code de vérification TaxiAssur est: ${code}. Valide 10 minutes.`,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to send SMS');
-  }
-
-  return code;
-}

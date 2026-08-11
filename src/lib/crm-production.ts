@@ -1,4 +1,14 @@
 import { supabase } from './supabase';
+import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
+
+const escapeHtml = (value: unknown) => String(value ?? "")
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+function requireHttpsUrl(value: string): string {
+  const url = new URL(value);
+  if (url.protocol !== "https:" || url.username || url.password) throw new Error("Lien de signature invalide");
+  return url.toString();
+}
 
 export type DocumentType =
   | 'carte_grise'
@@ -16,7 +26,8 @@ export interface LeadDocument {
   lead_id: string;
   document_type: DocumentType;
   file_name: string;
-  file_url: string;
+  file_path: string;
+  file_url?: string | null;
   file_size: number;
   mime_type: string;
   status: 'pending_review' | 'approved' | 'rejected' | 'missing';
@@ -93,7 +104,7 @@ export const productionService = {
   },
 
   async uploadDocument(file: File, leadId: string, documentType: DocumentType) {
-    const safeName = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.\-]+/g, '_').replace(/_+/g, '_');
+    const safeName = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.-]+/g, '_').replace(/_+/g, '_');
     const fileName = `${leadId}/${documentType}/${Date.now()}_${safeName}`;
 
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -102,26 +113,29 @@ export const productionService = {
 
     if (uploadError) throw uploadError;
 
-    const { data: urlData } = supabase.storage
-      .from('crm-documents')
-      .getPublicUrl(fileName);
-
     const { data: docRecord, error: insertError } = await supabase
       .from('crm_documents')
       .insert({
         lead_id: leadId,
         document_type: documentType,
         file_name: file.name,
-        file_url: urlData.publicUrl,
+        file_type: file.type || "application/octet-stream",
+        file_size_bytes: file.size,
+        storage_path: uploadData.path,
+        file_path: uploadData.path,
+        file_url: null,
         file_size: file.size,
-        mime_type: file.type,
+        mime_type: file.type || "application/octet-stream",
         status: 'pending_review',
         uploaded_at: new Date().toISOString()
       })
       .select()
       .single();
 
-    if (insertError) throw insertError;
+    if (insertError) {
+      await supabase.storage.from('crm-documents').remove([uploadData.path]);
+      throw insertError;
+    }
 
     await supabase.functions.invoke('send-document-notification', {
       body: {
@@ -216,16 +230,10 @@ export const productionService = {
     if (error) throw error;
 
     if (payment.payment_method === 'card' && payment.payment_link) {
-      await supabase.functions.invoke('send-crm-email', {
-        body: {
-          lead_id: payment.lead_id,
-          template_type: 'payment_link',
-          data: {
-            payment_link: payment.payment_link,
-            amount: payment.amount
-          }
-        }
+      const { data: sendResult, error: sendError } = await supabase.functions.invoke('send-payment-link-email', {
+        body: { lead_id: payment.lead_id, payment_url: payment.payment_link, amount: payment.amount }
       });
+      if (sendError || !sendResult?.success) throw sendError || new Error("Envoi du lien de paiement refusé");
     }
 
     return data;
@@ -269,16 +277,16 @@ export const productionService = {
 
     if (error) throw error;
 
-    await supabase.functions.invoke('send-crm-email', {
+    const signatureUrl = requireHttpsUrl(signature.signature_url);
+    const { data: lead, error: leadError } = await supabase.from('crm_leads').select('email').eq('id', signature.lead_id).maybeSingle();
+    if (leadError || !lead?.email) throw leadError || new Error("Adresse prospect introuvable");
+    const { data: sendResult, error: sendError } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
       body: {
-        lead_id: signature.lead_id,
-        template_type: 'signature_request',
-        data: {
-          document_name: signature.document_name,
-          signature_url: signature.signature_url
-        }
+        lead_id: signature.lead_id, to: lead.email, subject: "Signature requise - " + signature.document_name,
+        content: "<p>Bonjour,</p><p>Le document <strong>" + escapeHtml(signature.document_name) + "</strong> est prêt à signer.</p><p><a href=\"" + escapeHtml(signatureUrl) + "\">Ouvrir la signature sécurisée</a></p><p>L équipe TaxiAssur</p>"
       }
     });
+    if (sendError || !sendResult?.success) throw sendError || new Error("Envoi de la demande de signature refusé");
 
     return data;
   },
@@ -305,7 +313,7 @@ export const productionService = {
       .map(d => d.document_type);
 
     const requiredTypes = Object.entries(DOCUMENT_TYPES)
-      .filter(([_, info]) => info.required)
+      .filter(([, info]) => info.required)
       .map(([type]) => type as DocumentType);
 
     return requiredTypes.filter(type => !uploadedTypes.includes(type));

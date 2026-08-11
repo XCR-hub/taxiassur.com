@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FileText, Download, Eye, Trash2, CheckCircle, XCircle, Clock, File, Image, FileCode, Archive, AlertCircle, Calendar, User, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RefreshCw, Filter, Search, Upload, Star, Tag, ExternalLink, Grid2x2 as Grid, List, type LucideIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
+import { getSecureDocumentUrl } from '@/lib/secure-document-url';
 
 interface Document {
   id: string;
@@ -161,22 +162,11 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
     }
 
     try {
-      // Utiliser l'URL depuis metadata si disponible
-      if (doc.metadata?.download_url) {
-        setPreviewUrl(doc.metadata.download_url);
-        return;
-      }
-
-      // Sinon, détecter le bucket automatiquement
       const bucket = doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/')
         ? 'email-attachments'
         : 'prospect-documents';
-
-      const { data } = await supabase.storage
-        .from(bucket)
-        .getPublicUrl(doc.file_path);
-
-      setPreviewUrl(data.publicUrl);
+      const signedUrl = await getSecureDocumentUrl({ bucket, path: doc.file_path });
+      setPreviewUrl(signedUrl);
     } catch (error) {
       console.error('Error loading preview:', error);
     }

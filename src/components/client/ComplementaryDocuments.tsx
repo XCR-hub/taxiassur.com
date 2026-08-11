@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { withTimeout } from '@/lib/promise-timeout';
 import { Upload, CheckCircle, Clock, AlertCircle, FileText, Loader2, X } from 'lucide-react';
 
 interface DocumentRequest {
@@ -18,7 +19,7 @@ interface DocumentRequest {
 }
 
 interface ComplementaryDocumentsProps {
-  leadId: string;
+  token: string;
   anonClient: SupabaseClient;
   onDocumentUploaded?: () => void;
 }
@@ -31,7 +32,7 @@ const PHASE_LABELS: Record<string, string> = {
 };
 
 export const ComplementaryDocuments: React.FC<ComplementaryDocumentsProps> = ({
-  leadId,
+  token,
   anonClient,
   onDocumentUploaded
 }) => {
@@ -42,10 +43,10 @@ export const ComplementaryDocuments: React.FC<ComplementaryDocumentsProps> = ({
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    if (leadId && anonClient) {
+    if (token && anonClient) {
       loadDocumentRequests();
     }
-  }, [leadId, anonClient]);
+  }, [token, anonClient]);
 
   const loadDocumentRequests = async () => {
     if (!anonClient) return;
@@ -53,15 +54,11 @@ export const ComplementaryDocuments: React.FC<ComplementaryDocumentsProps> = ({
     try {
       setLoading(true);
 
-      const { data, error } = await anonClient
-        .from('crm_document_requests')
-        .select('*')
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      setRequests(data || []);
+      const { data, error } = await withTimeout(anonClient.functions.invoke('upload-client-document', {
+        body: { action: 'list-requests', accessToken: token, scope: 'prospect' },
+      }), 20_000);
+      if (error || !data?.success) throw error || new Error(data?.error || 'Chargement impossible');
+      setRequests(data.requests || []);
     } catch (err) {
       console.error('Erreur chargement demandes:', err);
       setError('Erreur lors du chargement des documents');
@@ -78,36 +75,17 @@ export const ComplementaryDocuments: React.FC<ComplementaryDocumentsProps> = ({
     setSuccess(null);
 
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${leadId}/${requestId}/${Date.now()}.${fileExt}`;
-
-      const { data: uploadData, error: uploadError } = await anonClient
-        .storage
-        .from('prospect-documents')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
+      const acceptedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+      if (file.size < 1 || file.size > 10 * 1024 * 1024) throw new Error('Fichier trop volumineux (max 10 Mo)');
+      if (!acceptedTypes.includes(file.type)) throw new Error('Format accepté : PDF, JPG, PNG ou WebP');
+      const request = { accessToken: token, scope: 'prospect', documentType: 'autre', requestId, fileName: file.name, fileSize: file.size, mimeType: file.type };
+      const { data: prepared, error: prepareError } = await withTimeout(anonClient.functions.invoke('upload-client-document', { body: { action: 'prepare', ...request } }), 20_000);
+      if (prepareError || !prepared?.path || !prepared.uploadToken) throw prepareError || new Error('Préparation impossible');
+      const path = String(prepared.path);
+      const { error: uploadError } = await withTimeout(anonClient.storage.from('prospect-documents').uploadToSignedUrl(path, String(prepared.uploadToken), file, { contentType: file.type }), 60_000);
       if (uploadError) throw uploadError;
-
-      const { data: urlData } = anonClient
-        .storage
-        .from('prospect-documents')
-        .getPublicUrl(fileName);
-
-      const { error: updateError } = await anonClient
-        .from('crm_document_requests')
-        .update({
-          document_url: urlData.publicUrl,
-          document_filename: file.name,
-          document_size: file.size,
-          statut: 'recu',
-          received_at: new Date().toISOString()
-        })
-        .eq('id', requestId);
-
-      if (updateError) throw updateError;
+      const { data: finalized, error: finalizeError } = await withTimeout(anonClient.functions.invoke('upload-client-document', { body: { action: 'finalize', path, ...request } }), 20_000);
+      if (finalizeError || !finalized?.success) throw finalizeError || new Error(finalized?.error || 'Finalisation impossible');
 
       setSuccess(`Document "${file.name}" envoyé avec succès !`);
       await loadDocumentRequests();

@@ -3,6 +3,7 @@ import { useSearchParams, useParams, Link } from 'react-router-dom';
 import { Upload, CheckCircle, AlertCircle, FileText, Loader2, X } from 'lucide-react';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
+import { withTimeout } from '@/lib/promise-timeout';
 import ComplementaryDocuments from '@/components/client/ComplementaryDocuments';
 
 interface DocumentType {
@@ -151,25 +152,13 @@ const ProspectDocuments: React.FC = () => {
       return;
     }
 
-    console.log('🔍 Loading lead info for token:', token?.substring(0, 20) + '...');
-
     try {
       const { data: leadData, error: leadError } = await anonClient
-        .from('crm_leads')
-        .select('*')
-        .eq('access_token', token)
+        .rpc('get_lead_by_token', { p_token: token })
         .maybeSingle();
-
-      console.log('📊 Query result:', { leadData, leadError });
-
-      if (leadError) {
-        console.error('❌ Error loading lead:', leadError);
-        throw leadError;
-      }
-
-      if (leadData) {
-        console.log('✅ Lead found:', leadData.first_name, leadData.email);
-        setLeadInfo(leadData);
+      if (leadError) throw leadError;
+      if (leadData?.lead) {
+        setLeadInfo(leadData.lead);
       } else {
         console.log('⚠️ No lead found for this token');
         setError('Lien invalide ou expiré');
@@ -186,12 +175,7 @@ const ProspectDocuments: React.FC = () => {
     if (!leadInfo?.id || !anonClient) return;
 
     try {
-      const { data, error } = await anonClient
-        .from('prospect_documents')
-        .select('*')
-        .eq('lead_id', leadInfo.id)
-        .order('uploaded_at', { ascending: false });
-
+      const { data, error } = await anonClient.rpc('get_prospect_documents_by_token', { p_token: token });
       if (error) throw error;
       setUploadedDocuments(data || []);
     } catch (err) {
@@ -207,31 +191,17 @@ const ProspectDocuments: React.FC = () => {
     setSuccess(null);
 
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${token}/${documentType}_${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await anonClient.storage
-        .from('prospect-documents')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
+      const acceptedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+      if (file.size < 1 || file.size > 10 * 1024 * 1024) throw new Error('Fichier trop volumineux (max 10 Mo)');
+      if (!acceptedTypes.includes(file.type)) throw new Error('Format accepté : PDF, JPG, PNG ou WebP');
+      const request = { accessToken: token, scope: 'prospect', documentType, fileName: file.name, fileSize: file.size, mimeType: file.type };
+      const { data: prepared, error: prepareError } = await withTimeout(anonClient.functions.invoke('upload-client-document', { body: { action: 'prepare', ...request } }), 20_000);
+      if (prepareError || !prepared?.path || !prepared.uploadToken) throw prepareError || new Error('Préparation impossible');
+      const path = String(prepared.path);
+      const { error: uploadError } = await withTimeout(anonClient.storage.from('prospect-documents').uploadToSignedUrl(path, String(prepared.uploadToken), file, { contentType: file.type }), 60_000);
       if (uploadError) throw uploadError;
-
-      const { error: dbError } = await anonClient
-        .from('prospect_documents')
-        .insert({
-          lead_id: leadInfo.id,
-          document_type: documentType,
-          document_name: file.name,
-          file_path: fileName,
-          file_size: file.size,
-          mime_type: file.type,
-          status: 'pending'
-        });
-
-      if (dbError) throw dbError;
+      const { data: finalized, error: finalizeError } = await withTimeout(anonClient.functions.invoke('upload-client-document', { body: { action: 'finalize', path, ...request } }), 20_000);
+      if (finalizeError || !finalized?.success) throw finalizeError || new Error(finalized?.error || 'Finalisation impossible');
 
       setSuccess(`Document "${file.name}" uploadé avec succès !`);
       await loadDocuments();
@@ -407,7 +377,7 @@ const ProspectDocuments: React.FC = () => {
         {leadInfo?.id && anonClient && (
           <div className="mb-8">
             <ComplementaryDocuments
-              leadId={leadInfo.id}
+              token={token}
               anonClient={anonClient}
               onDocumentUploaded={() => {
                 setSuccess('Document complémentaire envoyé avec succès !');

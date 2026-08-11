@@ -1,8 +1,10 @@
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { isInternalRequest } from "../_shared/internal-auth.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 interface SendGridEmail {
@@ -16,19 +18,22 @@ interface SendGridEmail {
   last_event_time: string;
 }
 
-async function fetchSendGridEmails(apiKey: string, limit: number = 1000): Promise<SendGridEmail[]> {
+async function fetchSendGridEmails(
+  apiKey: string,
+  limit: number = 1000,
+): Promise<SendGridEmail[]> {
   const emails: SendGridEmail[] = [];
 
   try {
     const response = await fetch(
       `https://api.sendgrid.com/v3/messages?limit=${limit}`,
       {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -42,40 +47,46 @@ async function fetchSendGridEmails(apiKey: string, limit: number = 1000): Promis
     if (data.messages) {
       emails.push(...data.messages);
     }
-
   } catch (error) {
-    console.error('Error fetching SendGrid emails:', error);
+    console.error("Error fetching SendGrid emails:", error);
   }
 
   return emails;
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  if (!(await isInternalRequest(req))) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const sendGridApiKey = Deno.env.get('SENDGRID_API_KEY');
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const sendGridApiKey = Deno.env.get("SENDGRID_API_KEY");
 
     if (!sendGridApiKey) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'SENDGRID_API_KEY not configured in environment'
+          error: "SENDGRID_API_KEY not configured in environment",
         }),
         {
           status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('Fetching emails from SendGrid API...');
+    console.log("Fetching emails from SendGrid API...");
     const sendGridEmails = await fetchSendGridEmails(sendGridApiKey, 1000);
     console.log(`Retrieved ${sendGridEmails.length} emails from SendGrid`);
 
@@ -86,9 +97,9 @@ Deno.serve(async (req) => {
     for (const email of sendGridEmails) {
       try {
         const { data: existing } = await supabase
-          .from('email_messages')
-          .select('id')
-          .eq('message_id', email.msg_id)
+          .from("email_messages")
+          .select("id")
+          .eq("message_id", email.msg_id)
           .maybeSingle();
 
         if (existing) {
@@ -103,14 +114,14 @@ Deno.serve(async (req) => {
           from_name: email.from_email,
           to_emails: [email.to_email],
           to_names: [email.to_email],
-          subject: email.subject || '(No Subject)',
-          body_text: '',
+          subject: email.subject || "(No Subject)",
+          body_text: "",
           received_at: email.last_event_time,
           sent_at: email.last_event_time,
-          direction: 'outbound',
+          direction: "outbound",
           status: email.status,
-          channel: 'email',
-          provider: 'sendgrid',
+          channel: "email",
+          provider: "sendgrid",
           is_read: true,
           has_attachments: false,
           metadata: {
@@ -121,7 +132,7 @@ Deno.serve(async (req) => {
         };
 
         const { error: insertError } = await supabase
-          .from('email_messages')
+          .from("email_messages")
           .insert(emailData);
 
         if (insertError) {
@@ -130,7 +141,6 @@ Deno.serve(async (req) => {
         } else {
           inserted++;
         }
-
       } catch (error) {
         console.error(`Error processing email ${email.msg_id}:`, error);
         errors++;
@@ -138,18 +148,18 @@ Deno.serve(async (req) => {
     }
 
     const { error: updateError } = await supabase
-      .from('email_accounts')
+      .from("email_accounts")
       .update({ last_sync_at: new Date().toISOString() })
-      .eq('email', 'team@taxiassur.com');
+      .eq("email", "team@taxiassur.com");
 
     if (updateError) {
-      console.error('Error updating last_sync_at:', updateError);
+      console.error("Error updating last_sync_at:", updateError);
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'SendGrid emails synced successfully',
+        message: "SendGrid emails synced successfully",
         stats: {
           total_retrieved: sendGridEmails.length,
           inserted,
@@ -157,20 +167,19 @@ Deno.serve(async (req) => {
           errors,
         },
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-
   } catch (error) {
-    console.error('Error in sync-sendgrid-emails:', error);
+    console.error("Error in sync-sendgrid-emails:", error);
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message
+        error: error.message,
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });

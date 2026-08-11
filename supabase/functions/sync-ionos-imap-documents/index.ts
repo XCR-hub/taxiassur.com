@@ -1,9 +1,11 @@
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { isInternalRequest } from "../_shared/internal-auth.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
 interface EmailAttachment {
@@ -27,32 +29,70 @@ interface EmailMessage {
 
 async function connectIMAP() {
   const imapConfig = {
-    host: Deno.env.get('IMAP_HOST') || Deno.env.get('HMAIL_IMAP_HOST') || Deno.env.get('IONOS_IMAP_HOST') || 'mail.xcr.fr',
-    port: parseInt(Deno.env.get('IMAP_PORT') || Deno.env.get('HMAIL_IMAP_PORT') || Deno.env.get('IONOS_IMAP_PORT') || '993'),
+    host: Deno.env.get("IMAP_HOST") || Deno.env.get("HMAIL_IMAP_HOST") ||
+      Deno.env.get("IONOS_IMAP_HOST") || "mail.xcr.fr",
+    port: parseInt(
+      Deno.env.get("IMAP_PORT") || Deno.env.get("HMAIL_IMAP_PORT") ||
+        Deno.env.get("IONOS_IMAP_PORT") || "993",
+    ),
     secure: true,
     auth: {
-      user: Deno.env.get('IMAP_USER') || Deno.env.get('SMTP_USER') || Deno.env.get('HMAIL_IMAP_USER') || Deno.env.get('IONOS_IMAP_USER') || Deno.env.get('IONOS_EMAIL_USER') || 'tcerda@xcr.fr',
-      pass: Deno.env.get('IMAP_PASS') || Deno.env.get('SMTP_PASS') || Deno.env.get('HMAIL_IMAP_PASS') || Deno.env.get('IONOS_IMAP_PASSWORD') || Deno.env.get('IONOS_EMAIL_PASSWORD') || '',
+      user: Deno.env.get("IMAP_USER") || Deno.env.get("SMTP_USER") ||
+        Deno.env.get("HMAIL_IMAP_USER") || Deno.env.get("IONOS_IMAP_USER") ||
+        Deno.env.get("IONOS_EMAIL_USER") || "tcerda@xcr.fr",
+      pass: Deno.env.get("IMAP_PASS") || Deno.env.get("SMTP_PASS") ||
+        Deno.env.get("HMAIL_IMAP_PASS") ||
+        Deno.env.get("IONOS_IMAP_PASSWORD") ||
+        Deno.env.get("IONOS_EMAIL_PASSWORD") || "",
     },
   };
 
   return imapConfig;
 }
 
-function classifyDocument(filename: string): { type: string; confidence: number } {
-  const lower = filename.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+function classifyDocument(
+  filename: string,
+): { type: string; confidence: number } {
+  const lower = filename.toLowerCase().normalize("NFD").replace(
+    /[\u0300-\u036f]/g,
+    "",
+  );
 
   const patterns = [
-    { regex: /rib|iban|bank|compte/i, type: 'RIB', confidence: 0.9 },
-    { regex: /permis|driving|license|conduire/i, type: 'permis_conduire', confidence: 0.85 },
-    { regex: /carte.*grise|registration|immatriculation/i, type: 'carte_grise', confidence: 0.9 },
-    { regex: /releve.*info|assurance.*info/i, type: 'releve_information', confidence: 0.8 },
-    { regex: /kbis|sirene|siret|extrait/i, type: 'kbis', confidence: 0.95 },
-    { regex: /licence|carte.*pro|professional/i, type: 'carte_professionnelle', confidence: 0.9 },
-    { regex: /identite|cni|passport|passeport/i, type: 'piece_identite', confidence: 0.85 },
-    { regex: /justif.*dom|facture.*elec|facture.*eau|quittance/i, type: 'justificatif_domicile', confidence: 0.8 },
-    { regex: /attestation/i, type: 'attestation', confidence: 0.7 },
-    { regex: /contrat/i, type: 'contrat', confidence: 0.75 },
+    { regex: /rib|iban|bank|compte/i, type: "RIB", confidence: 0.9 },
+    {
+      regex: /permis|driving|license|conduire/i,
+      type: "permis_conduire",
+      confidence: 0.85,
+    },
+    {
+      regex: /carte.*grise|registration|immatriculation/i,
+      type: "carte_grise",
+      confidence: 0.9,
+    },
+    {
+      regex: /releve.*info|assurance.*info/i,
+      type: "releve_information",
+      confidence: 0.8,
+    },
+    { regex: /kbis|sirene|siret|extrait/i, type: "kbis", confidence: 0.95 },
+    {
+      regex: /licence|carte.*pro|professional/i,
+      type: "carte_professionnelle",
+      confidence: 0.9,
+    },
+    {
+      regex: /identite|cni|passport|passeport/i,
+      type: "piece_identite",
+      confidence: 0.85,
+    },
+    {
+      regex: /justif.*dom|facture.*elec|facture.*eau|quittance/i,
+      type: "justificatif_domicile",
+      confidence: 0.8,
+    },
+    { regex: /attestation/i, type: "attestation", confidence: 0.7 },
+    { regex: /contrat/i, type: "contrat", confidence: 0.75 },
   ];
 
   for (const pattern of patterns) {
@@ -61,14 +101,14 @@ function classifyDocument(filename: string): { type: string; confidence: number 
     }
   }
 
-  return { type: 'autre', confidence: 0.3 };
+  return { type: "autre", confidence: 0.3 };
 }
 
 async function fetchEmails(): Promise<EmailMessage[]> {
   // Simulation pour l'instant - à remplacer par vraie connexion IMAP
   // Utiliser npm:imap ou npm:emailjs-imap-client
 
-  console.log('IMAP connection would be established here');
+  console.log("IMAP connection would be established here");
 
   // Pour l'instant, retourner un tableau vide
   // Dans la vraie implémentation, on ferait :
@@ -83,14 +123,14 @@ async function fetchEmails(): Promise<EmailMessage[]> {
 
 async function processEmail(
   supabase: any,
-  email: EmailMessage
+  email: EmailMessage,
 ): Promise<void> {
   try {
     // Vérifier si déjà traité
     const { data: existing } = await supabase
-      .from('email_messages')
-      .select('id')
-      .eq('imap_uid', email.uid)
+      .from("email_messages")
+      .select("id")
+      .eq("imap_uid", email.uid)
       .single();
 
     if (existing) {
@@ -100,7 +140,7 @@ async function processEmail(
 
     // Insérer le message
     const { data: messageData, error: messageError } = await supabase
-      .from('email_messages')
+      .from("email_messages")
       .insert({
         imap_uid: email.uid,
         from_email: email.from,
@@ -110,7 +150,7 @@ async function processEmail(
         body_html: email.bodyHtml,
         received_at: email.receivedAt.toISOString(),
         raw_headers: email.headers,
-        status: 'pending',
+        status: "pending",
       })
       .select()
       .single();
@@ -124,7 +164,7 @@ async function processEmail(
       // Upload vers Supabase Storage
       const fileName = `${messageData.id}/${attachment.filename}`;
       const { error: uploadError } = await supabase.storage
-        .from('email-attachments')
+        .from("email-attachments")
         .upload(fileName, attachment.data, {
           contentType: attachment.contentType,
           upsert: false,
@@ -140,7 +180,7 @@ async function processEmail(
 
       // Insérer dans email_attachments
       const { error: attachmentError } = await supabase
-        .from('email_attachments')
+        .from("email_attachments")
         .insert({
           email_message_id: messageData.id,
           filename: attachment.filename,
@@ -149,66 +189,78 @@ async function processEmail(
           storage_path: fileName,
           proposed_doc_type: classification.type,
           classification_confidence: classification.confidence,
-          classification_method: 'filename',
-          status: 'unclassified',
+          classification_method: "filename",
+          status: "unclassified",
         });
 
       if (attachmentError) {
-        console.error(`Failed to insert attachment ${attachment.filename}:`, attachmentError);
+        console.error(
+          `Failed to insert attachment ${attachment.filename}:`,
+          attachmentError,
+        );
       }
 
       // Enregistrer la classification
       await supabase
-        .from('attachment_classifications')
+        .from("attachment_classifications")
         .insert({
           attachment_id: (await supabase
-            .from('email_attachments')
-            .select('id')
-            .eq('email_message_id', messageData.id)
-            .eq('filename', attachment.filename)
+            .from("email_attachments")
+            .select("id")
+            .eq("email_message_id", messageData.id)
+            .eq("filename", attachment.filename)
             .single()).data?.id,
           doc_type: classification.type,
           confidence: classification.confidence,
-          method: 'filename',
+          method: "filename",
           keywords: { filename: attachment.filename },
         });
     }
 
     // Marquer comme traité
     await supabase
-      .from('email_messages')
-      .update({ status: 'processed' })
-      .eq('id', messageData.id);
+      .from("email_messages")
+      .update({ status: "processed" })
+      .eq("id", messageData.id);
 
-    console.log(`Successfully processed email ${email.uid} with ${email.attachments.length} attachments`);
+    console.log(
+      `Successfully processed email ${email.uid} with ${email.attachments.length} attachments`,
+    );
   } catch (error) {
     console.error(`Error processing email ${email.uid}:`, error);
 
     // Marquer comme failed
     await supabase
-      .from('email_messages')
+      .from("email_messages")
       .update({
-        status: 'failed',
-        processing_error: error.message
+        status: "failed",
+        processing_error: error.message,
       })
-      .eq('imap_uid', email.uid);
+      .eq("imap_uid", email.uid);
   }
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 200,
       headers: corsHeaders,
     });
   }
 
+  if (!(await isInternalRequest(req))) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('Starting IMAP sync...');
+    console.log("Starting IMAP sync...");
 
     // Se connecter à IMAP
     await connectIMAP();
@@ -232,12 +284,12 @@ Deno.serve(async (req: Request) => {
       {
         headers: {
           ...corsHeaders,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-      }
+      },
     );
   } catch (error) {
-    console.error('IMAP sync error:', error);
+    console.error("IMAP sync error:", error);
 
     return new Response(
       JSON.stringify({
@@ -248,9 +300,9 @@ Deno.serve(async (req: Request) => {
         status: 500,
         headers: {
           ...corsHeaders,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-      }
+      },
     );
   }
 });

@@ -1,10 +1,8 @@
 import { useState } from 'react';
-import { Shield, FileCheck, Bell, Clock, CreditCard, Download, Upload, CheckCircle, Star, Zap, Lock, Smartphone, Calendar, Award, Mail, Eye, EyeOff } from 'lucide-react';
+import { Shield, FileCheck, Bell, CreditCard, Upload, CheckCircle, Star, Zap, Lock, Smartphone, Award, Mail, Eye, EyeOff } from 'lucide-react';
 import SEOHead from '../components/SEOHead';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { supabase } from '@/lib/supabase';
-import { logger } from '@/lib/logger';
 
 export default function EspaceClient() {
   const [email, setEmail] = useState('');
@@ -14,47 +12,14 @@ export default function EspaceClient() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError('');
+    setIsLoading(false);
     setSuccess('');
-
-    try {
-      const { data: portalUser, error: portalError } = await supabase
-        .from('client_portal_users')
-        .select('*')
-        .eq('email', email.toLowerCase().trim())
-        .maybeSingle();
-
-      if (portalError) throw portalError;
-
-      if (!portalUser) {
-        setError('Email non reconnu. Veuillez vérifier votre adresse email.');
-        return;
-      }
-
-      if (!portalUser.is_active) {
-        setError('Votre compte est désactivé. Contactez-nous au 01 80 85 57 86.');
-        return;
-      }
-
-      setSuccess('Connexion réussie ! Redirection...');
-
-      setTimeout(() => {
-        window.location.href = `/client/dashboard?email=${encodeURIComponent(email)}`;
-      }, 1500);
-
-    } catch (err: unknown) {
-      logger.error('Login error:', err);
-      setError('Une erreur est survenue. Réessayez dans quelques instants.');
-    } finally {
-      setIsLoading(false);
-    }
+    setError("Pour protéger vos données, utilisez uniquement le lien personnel sécurisé reçu par e-mail. Si vous ne l'avez plus, contactez-nous au 01 80 85 57 86.");
   };
 
-  return (
-    <>
+  return (    <>
       <SEOHead
         title="Espace Client TaxiAssur - Gestion 100% En Ligne"
         description="Accédez à votre espace client TaxiAssur : gestion contrat, documents, sinistres, paiements. Disponible 24/7 sur ordinateur et mobile. Service client primé."

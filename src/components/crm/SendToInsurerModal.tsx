@@ -27,7 +27,8 @@ interface InsurerContactRow {
 interface DocumentItem {
   id: string;
   file_name: string;
-  file_url: string;
+  file_path: string;
+  mime_type?: string | null;
   document_type: string;
   source: 'prospect' | 'crm';
 }
@@ -120,21 +121,21 @@ export default function SendToInsurerModal({
       const [prospectRes, crmRes] = await Promise.all([
         supabase
           .from('prospect_documents')
-          .select('id, file_name, file_url, document_type')
+          .select('id, file_name, file_path, mime_type, document_type')
           .eq('lead_id', leadId)
-          .not('file_url', 'is', null),
+          .not('file_path', 'is', null),
         supabase
           .from('crm_lead_documents')
-          .select('id, file_name, file_url, document_type')
+          .select('id, file_name, file_path, mime_type, document_type')
           .eq('lead_id', leadId)
-          .not('file_url', 'is', null)
+          .not('file_path', 'is', null)
       ]);
 
       const allDocs: DocumentItem[] = [];
 
       if (prospectRes.data) {
         for (const d of prospectRes.data) {
-          if (d.file_url) {
+          if (d.file_path) {
             allDocs.push({ ...d, source: 'prospect' });
           }
         }
@@ -142,7 +143,7 @@ export default function SendToInsurerModal({
 
       if (crmRes.data) {
         for (const d of crmRes.data) {
-          if (d.file_url) {
+          if (d.file_path) {
             allDocs.push({ ...d, source: 'crm' });
           }
         }
@@ -204,10 +205,11 @@ export default function SendToInsurerModal({
       const docsPayload = docsToSend.map(d => ({
         id: d.id,
         file_name: d.file_name || 'document.pdf',
-        file_url: d.file_url,
+        file_path: d.file_path,
+        bucket: d.source === 'prospect' ? 'prospect-documents' : 'crm-documents',
         document_type: d.document_type || 'document',
         source: d.source,
-        contentType: getDocumentContentType(d.file_name)
+        contentType: d.mime_type || getDocumentContentType(d.file_name)
       }));
 
       const { data, error } = await supabase.rpc('create_insurer_dossier_send', {

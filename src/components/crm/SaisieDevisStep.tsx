@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 import { Upload, CheckCircle2, X, FileText, Send, Loader2, Building2, AlertCircle, Plus, CheckCheck, Mail } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { generateAdviceSheetHtml } from '@/lib/advice-sheet-generator';
@@ -372,7 +373,7 @@ export default function SaisieDevisStep({
       `;
 
       // Send email via edge function
-      const { error } = await supabase.functions.invoke('send-crm-email', {
+      const { data: sendResult, error } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
         body: {
           to: leadEmail,
           subject: subject,
@@ -381,7 +382,7 @@ export default function SaisieDevisStep({
         }
       });
 
-      if (error) throw error;
+      if (error || !sendResult?.success) throw error || new Error("Envoi refusé");
 
       // Log interaction
       await supabase

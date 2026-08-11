@@ -1,7 +1,6 @@
 import { supabase } from './supabase';
 import {
   loadClientConsentState,
-  normalizeEmail,
   type ClientConsentState,
 } from './client-consent';
 
@@ -42,7 +41,7 @@ export interface ClientPortalRequest {
 }
 
 export interface CreateClientPortalRequestInput {
-  email: string;
+  accessToken: string;
   requestType: ClientPortalRequestType;
   title: string;
   description?: string;
@@ -88,9 +87,9 @@ export function buildConsentSnapshot(
   };
 }
 
-export async function loadClientPortalRequests(email: string): Promise<ClientPortalRequest[]> {
-  const { data, error } = await supabase.rpc('get_client_portal_requests', {
-    p_email: normalizeEmail(email),
+export async function loadClientPortalRequests(accessToken: string): Promise<ClientPortalRequest[]> {
+  const { data, error } = await supabase.rpc('get_client_portal_requests_by_token', {
+    p_token: accessToken,
   });
 
   if (error) throw error;
@@ -100,13 +99,12 @@ export async function loadClientPortalRequests(email: string): Promise<ClientPor
 
 export async function createClientPortalRequest(
   input: CreateClientPortalRequestInput
-): Promise<{ requestId: string; leadId: string; email: string }> {
-  const normalizedEmail = normalizeEmail(input.email);
-  const consents = await loadClientConsentState(normalizedEmail);
+): Promise<{ requestId: string; leadId: string }> {
+  const consents = await loadClientConsentState(input.accessToken);
   const consentSnapshot = buildConsentSnapshot(consents, input.source || 'client_portal');
 
-  const { data, error } = await supabase.rpc('create_client_portal_request', {
-    p_email: normalizedEmail,
+  const { data, error } = await supabase.rpc('create_client_portal_request_by_token', {
+    p_token: input.accessToken,
     p_request_type: input.requestType,
     p_title: input.title.trim(),
     p_description: input.description?.trim() || null,
@@ -123,6 +121,5 @@ export async function createClientPortalRequest(
   return {
     requestId: String(data.request_id),
     leadId: String(data.lead_id),
-    email: String(data.email),
   };
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
@@ -308,7 +309,7 @@ export default function SocialMediaManager() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Authorization': (await internalFunctionHeaders()).Authorization,
           },
           body: JSON.stringify({
             category: 'assurance',
@@ -386,13 +387,11 @@ export default function SocialMediaManager() {
   const handlePublishToPinterest = async (post: { id?: string; content: string; media_urls?: string[] }) => {
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
       const response = await fetch(`${supabaseUrl}/functions/v1/pinterest-publisher`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}`,
+          'Authorization': (await internalFunctionHeaders()).Authorization,
         },
         body: JSON.stringify({
           board_id: '945333846723355976',

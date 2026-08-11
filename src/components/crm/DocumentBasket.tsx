@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
-import { getDocumentPublicUrl } from '../../lib/utils';
+import { getSecureDocumentUrl } from '@/lib/secure-document-url';
 import { useRealtimeDocuments } from '@/hooks/useRealtimeDocuments';
 import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, Eye } from 'lucide-react';
 import DocumentViewer from './DocumentViewer';
@@ -117,7 +117,7 @@ export default function DocumentBasket({ caseId, onDocumentClassified }: Documen
 
     try {
       // Try email_attachments first
-      let { error: emailError } = await supabase
+      const { error: emailError } = await supabase
         .from('email_attachments')
         .update({ status: 'rejected' })
         .eq('id', attachmentId);
@@ -247,13 +247,10 @@ export default function DocumentBasket({ caseId, onDocumentClassified }: Documen
                     <div className="flex items-center gap-2 mt-3">
                       <button
                         onClick={() => {
-                          // Utiliser la source correcte pour détecter le bon bucket
-                          const url = getDocumentPublicUrl(attachment.storage_path, attachment.source, supabase);
-                          setViewingDoc({
-                            url,
-                            fileName: attachment.filename,
-                            mimeType: attachment.content_type
-                          });
+                          const bucket = attachment.source === 'email_attachments' ? 'email-attachments' : attachment.source === 'crm_lead_documents' ? 'crm-documents' : 'prospect-documents';
+                          void getSecureDocumentUrl({ path: attachment.storage_path, bucket })
+                            .then((url) => setViewingDoc({ url, fileName: attachment.filename, mimeType: attachment.content_type }))
+                            .catch((error) => toast.error(error instanceof Error ? error.message : 'Document indisponible'));
                         }}
                         className="flex-1 text-xs py-1.5 px-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
                       >

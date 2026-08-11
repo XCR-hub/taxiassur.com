@@ -154,7 +154,7 @@ Les identifiants production sont déjà dans le code (lignes 28-36) :
 {
   tpe: '7374133',
   societe: 'taxiassur',
-  macKey: '106FA85BF342FD4EE95C883D82865B5CC1F63890',
+  macKey: '[REDACTED_MONETICO_MAC_KEY]',
   version: '3.0',
   langue: 'FR',
   urlServeur: 'https://p.monetico-services.com/paiement.cgi',  // SANS /test/

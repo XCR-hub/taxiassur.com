@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { toast } from '@/lib/toast';
 import {
   Users,
@@ -126,7 +127,7 @@ const LLMCouncilDashboard: React.FC = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Authorization': (await internalFunctionHeaders()).Authorization,
           },
           body: JSON.stringify({
             query: query.trim(),

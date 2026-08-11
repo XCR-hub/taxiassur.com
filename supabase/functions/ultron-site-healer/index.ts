@@ -1,10 +1,12 @@
+import { isInternalRequest } from "../_shared/internal-auth.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
 const EDGE_FUNCTIONS_TO_TEST = [
@@ -32,6 +34,12 @@ const CRITICAL_TABLES = [
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
+  }
+  if (!(await isInternalRequest(req))) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
@@ -128,8 +136,8 @@ Deno.serve(async (req: Request) => {
         .order("created_at", { ascending: false });
 
       if (!leadsError && recentLeads) {
-        const withoutToken = recentLeads.filter(l => !l.access_token);
-        const withoutStage = recentLeads.filter(l => !l.pipeline_stage);
+        const withoutToken = recentLeads.filter((l) => !l.access_token);
+        const withoutStage = recentLeads.filter((l) => !l.pipeline_stage);
 
         // Auto-repair: generer tokens manquants
         if (withoutToken.length > 0) {
@@ -161,10 +169,11 @@ Deno.serve(async (req: Request) => {
 
       if (!queueError && queueData) {
         const stuck = queueData.filter(
-          e => e.status === "pending" &&
-          new Date(e.created_at) < new Date(Date.now() - 2 * 3600000)
+          (e) =>
+            e.status === "pending" &&
+            new Date(e.created_at) < new Date(Date.now() - 2 * 3600000),
         );
-        const failed = queueData.filter(e => e.status === "failed");
+        const failed = queueData.filter((e) => e.status === "failed");
 
         if (stuck.length > 0 || failed.length > 0) {
           await supabase
@@ -203,7 +212,7 @@ Deno.serve(async (req: Request) => {
               },
               body: JSON.stringify({ action: "health_check", ping: true }),
               signal: controller.signal,
-            }
+            },
           ).catch(() => null);
 
           clearTimeout(timeout);
@@ -223,7 +232,10 @@ Deno.serve(async (req: Request) => {
             efResults[fn] = { status: "unknown", http_status: res.status };
           }
         } catch (e) {
-          efResults[fn] = { status: "exception", error: String(e).slice(0, 100) };
+          efResults[fn] = {
+            status: "exception",
+            error: String(e).slice(0, 100),
+          };
         }
       }
 
@@ -238,7 +250,8 @@ Deno.serve(async (req: Request) => {
       .limit(20);
 
     if (latestHealth && latestHealth.length > 0) {
-      const avg = latestHealth.reduce((s, h) => s + (h.score || 100), 0) / latestHealth.length;
+      const avg = latestHealth.reduce((s, h) => s + (h.score || 100), 0) /
+        latestHealth.length;
       report.global_score = Math.round(avg);
     }
 
@@ -256,17 +269,24 @@ Deno.serve(async (req: Request) => {
       },
     });
 
-    console.log(`[ULTRON-HEALER] Termine - Score: ${report.global_score} - Reparations: ${report.total_repairs}`);
+    console.log(
+      `[ULTRON-HEALER] Termine - Score: ${report.global_score} - Reparations: ${report.total_repairs}`,
+    );
 
     return new Response(JSON.stringify(report), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-
   } catch (err) {
     console.error("[ULTRON-HEALER] Erreur fatale:", err);
     return new Response(
-      JSON.stringify({ error: String(err), timestamp: new Date().toISOString() }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({
+        error: String(err),
+        timestamp: new Date().toISOString(),
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });

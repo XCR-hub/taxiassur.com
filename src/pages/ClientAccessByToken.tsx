@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Shield, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { storeClientAccessToken } from '@/lib/client-access';
+import { withTimeout } from '@/lib/promise-timeout';
 
 export default function ClientAccessByToken() {
   const { token } = useParams<{ token: string }>();
@@ -20,8 +22,9 @@ export default function ClientAccessByToken() {
     try {
       setMessage('Vérification de votre identité...');
 
-      const { data, error } = await supabase
-        .rpc('get_or_create_client_portal_access', { p_token: tokenOrId });
+      const { data, error } = await withTimeout(
+        supabase.rpc('get_or_create_client_portal_access', { p_token: tokenOrId }),
+      );
 
       if (error) {
         logger.error('RPC error:', error);
@@ -34,11 +37,15 @@ export default function ClientAccessByToken() {
         return;
       }
 
+      if (!storeClientAccessToken(tokenOrId)) {
+        throw new Error('Lien d’accès invalide');
+      }
+
       setMessage('Connexion à votre espace...');
       setStatus('success');
 
       setTimeout(() => {
-        navigate(`/client/dashboard?email=${encodeURIComponent(data.email)}`);
+        navigate('/client/dashboard', { replace: true });
       }, 1500);
 
     } catch (error) {

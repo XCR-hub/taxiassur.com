@@ -3,6 +3,8 @@ import { useSearchParams, useParams, Link } from 'react-router-dom';
 import { Upload, CheckCircle, AlertCircle, FileText, Loader2, X, Download, User, Phone, Mail, MapPin, Car, Shield, CreditCard, Ligature as FileSignature, Clock, CheckCircle2, XCircle, ChevronRight, Lock, RefreshCw, Euro, FileCheck, AlertTriangle } from 'lucide-react';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
+import { getSecureDocumentUrl } from '@/lib/secure-document-url';
+import { withTimeout } from '@/lib/promise-timeout';
 import ClientQuotesViewer from '../components/client/ClientQuotesViewer';
 import ClientSubscriptionForm from '../components/client/ClientSubscriptionForm';
 import ClientPaymentButton from '../components/client/ClientPaymentButton';
@@ -225,9 +227,9 @@ const EspaceProspect: React.FC = () => {
 
     try {
       // Utiliser la fonction RPC sécurisée au lieu de la requête directe
-      const { data: leadData, error: leadError } = await anonClient
-        .rpc('get_lead_by_token', { p_token: token })
-        .maybeSingle();
+      const { data: leadData, error: leadError } = await withTimeout(
+        anonClient.rpc('get_lead_by_token', { p_token: token }).maybeSingle(),
+      );
 
       console.log('Lead query result:', { data: leadData, error: leadError });
 
@@ -245,8 +247,9 @@ const EspaceProspect: React.FC = () => {
         }
 
         // Charger tous les paiements via RPC (utilise le token du prospect)
-        const { data: payments, error: paymentsError } = await anonClient
-          .rpc('get_payments_by_token', { p_token: token });
+        const { data: payments, error: paymentsError } = await withTimeout(
+          anonClient.rpc('get_payments_by_token', { p_token: token }),
+        );
 
         if (!paymentsError && payments) {
           console.log('Tous les paiements:', payments);
@@ -367,6 +370,15 @@ const EspaceProspect: React.FC = () => {
     }
   }, [token, anonClient, leadInfo]);
 
+  const handleFinalDocument = async (doc: FinalClientDocument) => {
+    if (!token) return;
+    try {
+      const signedUrl = await getSecureDocumentUrl({ path: doc.file_url, bucket: 'crm-documents', accessToken: token, download: true, fileName: doc.file_name });
+      window.open(signedUrl, '_blank', 'noopener,noreferrer');
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'Document indisponible');
+    }
+  };
   const handleRefresh = async () => {
     setRefreshing(true);
     await loadLeadInfo();
@@ -385,51 +397,36 @@ const EspaceProspect: React.FC = () => {
     setSuccess(null);
 
     try {
-      // Validation du fichier
-      const maxSize = 10 * 1024 * 1024; // 10MB
-      if (file.size > maxSize) {
-        throw new Error(`Fichier trop volumineux. Taille max: 10MB`);
+      const maxSize = 10 * 1024 * 1024;
+      const acceptedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+      if (file.size < 1 || file.size > maxSize) throw new Error('Fichier trop volumineux. Taille max : 10 Mo');
+      if (!acceptedTypes.includes(file.type)) throw new Error('Format accepté : PDF, JPG, PNG ou WebP');
+      const request = { accessToken: token, scope: 'prospect', documentType, fileName: file.name, fileSize: file.size, mimeType: file.type };
+      const { data: prepared, error: prepareError } = await withTimeout(
+        anonClient.functions.invoke('upload-client-document', {
+          body: { action: 'prepare', ...request },
+        }),
+        20_000,
+      );
+      if (prepareError || !prepared?.success || !prepared.path || !prepared.uploadToken) {
+        throw prepareError || new Error(prepared?.error || 'Préparation du dépôt impossible');
       }
-
-      const fileExt = file.name.split('.').pop();
-      if (!fileExt) {
-        throw new Error('Extension de fichier invalide');
+      const path = String(prepared.path);
+      const { error: uploadError } = await withTimeout(
+        anonClient.storage.from('prospect-documents')
+          .uploadToSignedUrl(path, String(prepared.uploadToken), file, { contentType: file.type }),
+        60_000,
+      );
+      if (uploadError) throw uploadError;
+      const { data: finalized, error: finalizeError } = await withTimeout(
+        anonClient.functions.invoke('upload-client-document', {
+          body: { action: 'finalize', path, ...request },
+        }),
+        20_000,
+      );
+      if (finalizeError || !finalized?.success) {
+        throw finalizeError || new Error(finalized?.error || 'Finalisation du dépôt impossible');
       }
-
-      const fileName = `${token}/${documentType}_${Date.now()}.${fileExt}`;
-
-      console.log('📤 [UPLOAD] Début upload:', { documentType, fileName, size: file.size });
-
-      // Étape 1: Upload vers Storage
-      const { data: uploadData, error: uploadError } = await anonClient.storage
-        .from('prospect-documents')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) {
-        console.error('❌ [UPLOAD] Storage error:', uploadError);
-        throw new Error(`Erreur upload storage: ${uploadError.message}`);
-      }
-
-      console.log('✅ [UPLOAD] Storage OK:', uploadData);
-
-      // Étape 2: Enregistrer le document en base via RPC
-      const { data: rpcData, error: dbError } = await anonClient.rpc('upload_prospect_document_by_token', {
-        p_token: token,
-        p_document_type: documentType,
-        p_file_name: file.name,
-        p_file_path: fileName,
-        p_file_size: file.size
-      });
-
-      if (dbError) {
-        console.error('❌ [UPLOAD] DB error:', dbError);
-        throw new Error(`Erreur enregistrement: ${dbError.message}`);
-      }
-
-      console.log('✅ [UPLOAD] DB OK:', rpcData);
 
       setSuccess(`✅ Document "${file.name}" uploadé avec succès ! Vous recevrez un email de confirmation sous 60 secondes.`);
 
@@ -978,9 +975,9 @@ const EspaceProspect: React.FC = () => {
                     </div>
 
                     <ClientMoneticoPayment
-                      leadId={leadInfo.id}
                       amount={parseFloat(payment.amount)}
                       reference={payment.reference}
+                      accessToken={token}
                       description={payment.description}
                       customerEmail={leadInfo.email}
                       customerFirstName={leadInfo.first_name}
@@ -1076,7 +1073,7 @@ const EspaceProspect: React.FC = () => {
               <div className="space-y-6">
                 <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
                   <ClientSubscriptionForm
-                    leadId={leadInfo.id}
+                    token={token || ''}
                     acceptedQuoteId={leadInfo.selected_company_id || ''}
                     onSubmit={() => {
                       loadLeadInfo();
@@ -1085,7 +1082,7 @@ const EspaceProspect: React.FC = () => {
                 </div>
 
                 {/* Bouton de paiement si comptant requis */}
-                <ClientPaymentButton leadId={leadInfo.id} />
+                <ClientPaymentButton token={token} />
               </div>
             )}
           </div>
@@ -1157,15 +1154,14 @@ const EspaceProspect: React.FC = () => {
                           })}</p>
                         </div>
 
-                        <a
-                          href={doc.file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          type="button"
+                          onClick={() => void handleFinalDocument(doc)}
                           className={`w-full ${config.buttonColor} text-white font-bold py-4 px-6 rounded-xl transition-colors flex items-center justify-center gap-2`}
                         >
                           <Download size={20} />
                           Telecharger ce document
-                        </a>
+                        </button>
                       </div>
                     );
                   })

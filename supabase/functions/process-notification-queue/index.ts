@@ -36,9 +36,43 @@ Deno.serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    if (req.headers.get("Authorization") !== `Bearer ${supabaseKey}`) {
+      return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     console.log("Processing notification queue...");
+
+    const staleBefore = new Date(Date.now() - 10 * 60_000).toISOString();
+    const { data: staleNotifications, error: staleFetchError } = await supabase
+      .from("crm_notification_queue")
+      .select("id,retry_count,max_retries,updated_at")
+      .eq("status", "processing")
+      .lt("updated_at", staleBefore)
+      .limit(100);
+
+    if (staleFetchError) throw staleFetchError;
+
+    for (const stale of staleNotifications || []) {
+      const retryCount = (stale.retry_count || 0) + 1;
+      const exhausted = retryCount >= (stale.max_retries || 3);
+      const { error: recoveryError } = await supabase
+        .from("crm_notification_queue")
+        .update({
+          status: exhausted ? "failed" : "pending",
+          retry_count: retryCount,
+          scheduled_at: exhausted ? undefined : new Date(Date.now() + 60_000).toISOString(),
+          error_message: exhausted ? "Delivery attempts exhausted" : "Recovered after interrupted processing",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", stale.id)
+        .eq("status", "processing")
+        .eq("updated_at", stale.updated_at);
+      if (recoveryError) throw recoveryError;
+    }
 
     const { data: pendingNotifications, error: fetchError } = await supabase
       .from("crm_notification_queue")
@@ -75,10 +109,19 @@ Deno.serve(async (req: Request) => {
 
     for (const notification of pendingNotifications) {
       try {
-        await supabase
+        const { data: claimed, error: claimError } = await supabase
           .from("crm_notification_queue")
-          .update({ status: "processing", processed_at: new Date().toISOString() })
-          .eq("id", notification.id);
+          .update({ status: "processing", updated_at: new Date().toISOString() })
+          .eq("id", notification.id)
+          .eq("status", "pending")
+          .select("id")
+          .maybeSingle();
+
+        if (claimError) throw claimError;
+        if (!claimed) {
+          results.skipped++;
+          continue;
+        }
 
         const { data: template } = await supabase
           .from("crm_notification_templates")
@@ -189,14 +232,30 @@ function replaceVariables(template: string, variables: Record<string, string>): 
 }
 
 async function markAsFailed(supabase: any, id: string, errorMessage: string) {
-  await supabase
+  const { data: item, error: readError } = await supabase
     .from("crm_notification_queue")
-    .update({ 
-      status: "failed", 
-      error_message: errorMessage,
-      processed_at: new Date().toISOString()
+    .select("retry_count,max_retries")
+    .eq("id", id)
+    .single();
+  if (readError) throw readError;
+
+  const retryCount = (item.retry_count || 0) + 1;
+  const exhausted = retryCount >= (item.max_retries || 3);
+  const retryDelayMs = Math.min(15 * 60_000, 30_000 * 2 ** (retryCount - 1));
+  const safeError = errorMessage.replace(/Bearer\s+\S+/gi, "Bearer [redacted]").slice(0, 500);
+
+  const { error: updateError } = await supabase
+    .from("crm_notification_queue")
+    .update({
+      status: exhausted ? "failed" : "pending",
+      retry_count: retryCount,
+      scheduled_at: exhausted ? undefined : new Date(Date.now() + retryDelayMs).toISOString(),
+      error_message: safeError,
+      updated_at: new Date().toISOString(),
     })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("status", "processing");
+  if (updateError) throw updateError;
 }
 
 async function sendEmail(
@@ -221,11 +280,12 @@ async function sendEmail(
         subject: params.subject,
         text: params.content,
         html: params.html
-      })
+      }),
+      signal: AbortSignal.timeout(30_000),
     });
 
     const result = await response.json();
-    return { success: result.success || response.ok, error: result.error };
+    return { success: response.ok && result.success === true, error: result.error };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "Email send error" };
   }
@@ -255,11 +315,12 @@ async function sendSMS(
       body: JSON.stringify({
         to: formattedPhone,
         body: params.body
-      })
+      }),
+      signal: AbortSignal.timeout(30_000),
     });
 
     const result = await response.json();
-    return { success: result.success || response.ok, error: result.error };
+    return { success: response.ok && result.success === true, error: result.error };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "SMS send error" };
   }
@@ -289,11 +350,12 @@ async function sendWhatsApp(
       body: JSON.stringify({
         to: formattedPhone,
         message: params.message
-      })
+      }),
+      signal: AbortSignal.timeout(30_000),
     });
 
     const result = await response.json();
-    return { success: result.success || response.ok, error: result.error };
+    return { success: response.ok && result.success === true, error: result.error };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "WhatsApp send error" };
   }

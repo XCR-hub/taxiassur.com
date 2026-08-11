@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Beaker, Play, Pause, CheckCircle, BarChart3, TrendingUp, Plus, Trash2 } from 'lucide-react';
+import { Beaker, Play, CheckCircle, TrendingUp, Plus, Trash2 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 
 interface ABTest {
@@ -51,7 +51,7 @@ export default function ABTestingManager() {
   }, []);
 
   const loadTests = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('email_ab_tests')
       .select('*')
       .order('created_at', { ascending: false });

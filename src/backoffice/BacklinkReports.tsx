@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
 import {
@@ -232,15 +233,12 @@ const BacklinkReports: React.FC = () => {
                   if (!confirm('Envoyer 5 emails maintenant ?')) return;
                   setLoading(true);
                   try {
-                    const { data: { session } } = await supabase.auth.getSession();
-                    const token = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
-
                     const response = await fetch(
                       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/backlink-auto-outreach`,
                       {
                         method: 'POST',
                         headers: {
-                          'Authorization': `Bearer ${token}`,
+                          'Authorization': (await internalFunctionHeaders()).Authorization,
                           'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({ maxEmailsPerRun: 5 })

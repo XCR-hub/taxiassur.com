@@ -7,32 +7,27 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
-// 🔐 Configuration Monético depuis les secrets Supabase
-// Les identifiants sensibles sont stockés dans les secrets de l'Edge Function
-// Dashboard Supabase → Edge Functions → Secrets
 
-// 🧪 MODE TEST ACTIVÉ - TPE encore en test chez Ingineco
-const TEST_MODE = (Deno.env.get('MONETICO_MODE') || 'test') === 'test';
+const MONETICO_MODE = (Deno.env.get('MONETICO_MODE') || '').trim().toLowerCase();
+const TEST_MODE = MONETICO_MODE === 'test';
 
-// Récupération des identifiants depuis les secrets Supabase
-// ⚠️ IMPORTANT: Demandez vos vrais identifiants de TEST à Ingineco
-// Ces valeurs par défaut sont des exemples et ne fonctionneront pas
 const MONETICO_TPE = TEST_MODE
-  ? Deno.env.get('MONETICO_TEST_TPE') || '7374133'  // Votre TPE de test Ingineco
-  : Deno.env.get('MONETICO_TPE') || '7374133';
+  ? Deno.env.get('MONETICO_TEST_TPE') || ''  // Votre TPE de test Ingineco
+  : Deno.env.get('MONETICO_TPE') || '';
 
 const MONETICO_SOCIETE = TEST_MODE
-  ? Deno.env.get('MONETICO_TEST_SOCIETE') || 'taxiassur'  // Votre code société test
-  : Deno.env.get('MONETICO_SOCIETE') || 'taxiassur';
+  ? Deno.env.get('MONETICO_TEST_SOCIETE') || ''  // Votre code sociÃƒÂ©tÃƒÂ© test
+  : Deno.env.get('MONETICO_SOCIETE') || '';
 
 const MONETICO_MAC_KEY = TEST_MODE
-  ? Deno.env.get('MONETICO_TEST_MAC_KEY') || '106FA85BF342FD4EE95C883D82865B5CC1F63890'  // Votre clé MAC de test
-  : Deno.env.get('MONETICO_MAC_KEY') || '106FA85BF342FD4EE95C883D82865B5CC1F63890';
+  ? Deno.env.get('MONETICO_TEST_MAC_KEY') || ''  // Votre clÃƒÂ© MAC de test
+  : Deno.env.get('MONETICO_MAC_KEY') || '';
+const MONETICO_OPERATIONAL_KEY = MONETICO_MAC_KEY.length % 2 === 1 ? '0' + MONETICO_MAC_KEY : MONETICO_MAC_KEY;
 
 const MONETICO_CONFIG = {
   tpe: MONETICO_TPE,
   societe: MONETICO_SOCIETE,
-  macKey: MONETICO_MAC_KEY,
+  macKey: MONETICO_OPERATIONAL_KEY,
   version: '3.0',
   langue: 'FR',
   urlServeur: TEST_MODE
@@ -45,7 +40,7 @@ const MONETICO_CONFIG = {
 async function calculateMAC(data: string): Promise<string> {
   const encoder = new TextEncoder();
 
-  // Convertir la clé hexadécimale en bytes (CRUCIAL pour Monético!)
+  // Convertir la clÃƒÂ© hexadÃƒÂ©cimale en bytes (CRUCIAL pour MonÃƒÂ©tico!)
   const hexKey = MONETICO_CONFIG.macKey;
   const keyBytes = new Uint8Array(hexKey.length / 2);
   for (let i = 0; i < hexKey.length; i += 2) {
@@ -65,16 +60,14 @@ async function calculateMAC(data: string): Promise<string> {
   return Array.from(new Uint8Array(signature))
     .map(b => b.toString(16).padStart(2, '0'))
     .join('')
-    .toUpperCase(); // Monético utilise uppercase
+    .toUpperCase(); // MonÃƒÂ©tico utilise uppercase
 }
 
 function generateReference(): string {
-  // Monético exige MAX 12 caractères pour la référence
-  // Format: Txxxxxxxxxxxx (12 caractères)
-  const timestamp = Date.now().toString().slice(-8); // 8 derniers chiffres du timestamp
-  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0'); // 3 chiffres
-  const prefix = TEST_MODE ? 'T' : 'P'; // 1 caractère (T=test, P=prod)
-  return `${prefix}${timestamp}${random}`; // Total = 1 + 8 + 3 = 12 caractères
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = crypto.getRandomValues(new Uint8Array(11));
+  const suffix = Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join('');
+  return `${TEST_MODE ? 'T' : 'P'}${suffix}`;
 }
 
 function formatMoneticoDate(date: Date): string {
@@ -82,9 +75,28 @@ function formatMoneticoDate(date: Date): string {
   return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}:${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
+const internalDomains = new Set(["taxiassur.com", "taxiassur.fr", "xcr.fr"]);
+
+async function isAuthorized(req: Request, supabaseUrl: string, serviceKey: string): Promise<boolean> {
+  const authorization = req.headers.get("Authorization") || "";
+  const token = authorization.replace(/^Bearer\s+/i, "");
+  if (!token) return false;
+  if (token === serviceKey) return true;
+  const admin = createClient(supabaseUrl, serviceKey);
+  const { data, error } = await admin.auth.getUser(token);
+  if (error) return false;
+  const email = data.user?.email?.toLowerCase() || "";
+  return internalDomains.has(email.split("@")[1]);
+}
+
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers: corsHeaders });
+  }
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 
   try {
@@ -92,105 +104,108 @@ serve(async (req: Request) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const {
-      leadId,
-      amount,
-      description,
-      customerEmail,
-      customerFirstName,
-      customerLastName,
-      customerPhone,
-      customReference
-    } = await req.json();
-
-    console.log('📦 Données reçues:', { leadId, amount, description, customerEmail });
-
-    if (!amount) {
-      return new Response(
-        JSON.stringify({ error: 'amount est requis' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (!await isAuthorized(req, supabaseUrl, supabaseKey)) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (!['test', 'production'].includes(MONETICO_MODE) || !MONETICO_CONFIG.tpe || !MONETICO_CONFIG.societe || MONETICO_CONFIG.macKey.length < 32 || MONETICO_CONFIG.macKey.length > 256 || MONETICO_CONFIG.macKey.length % 2 !== 0 || !/^[0-9A-F]+$/i.test(MONETICO_CONFIG.macKey)) {
+      return new Response(JSON.stringify({ error: 'Paiement temporairement indisponible' }), {
+        status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // Variables pour stocker les infos client
-    let lead: any = null;
-    let email: string;
-    let firstName: string;
-    let lastName: string;
-    let phone: string | null;
+    let payload: Record<string, unknown>;
+    try {
+      payload = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: 'Corps JSON invalide' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const rawLeadId = payload.leadId ?? payload.lead_id;
+    const leadId = typeof rawLeadId === 'string' ? rawLeadId.trim() : '';
+    const amount = typeof payload.amount === 'number' ? payload.amount : Number(payload.amount);
+    const description = typeof payload.description === 'string'
+      ? payload.description.trim().slice(0, 500)
+      : 'Paiement assurance taxi';
+    const customerEmail = typeof payload.customerEmail === 'string'
+      ? payload.customerEmail.trim().toLowerCase().slice(0, 254)
+      : '';
+    const customerFirstName = typeof payload.customerFirstName === 'string'
+      ? payload.customerFirstName.trim().slice(0, 100)
+      : '';
+    const customerLastName = typeof payload.customerLastName === 'string'
+      ? payload.customerLastName.trim().slice(0, 100)
+      : '';
+    const customerPhone = typeof payload.customerPhone === 'string'
+      ? payload.customerPhone.trim().slice(0, 32)
+      : '';
+    const rawRequestId = payload.requestId ?? payload.request_id;
+    const requestId = typeof rawRequestId === 'string' ? rawRequestId.trim().toLowerCase() : '';
+    if (requestId && !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(requestId)) {
+      return new Response(JSON.stringify({ error: 'Identifiant de requete invalide' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!Number.isFinite(amount) || amount < 0.5 || amount > 999999.99) {
+      return new Response(JSON.stringify({ error: 'Montant invalide' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (leadId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(leadId)) {
+      return new Response(JSON.stringify({ error: 'Identifiant prospect invalide' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    let email = customerEmail;
+    let firstName = customerFirstName;
+    let lastName = customerLastName;
+    let phone: string | null = customerPhone || null;
 
     if (leadId) {
-      // Mode avec lead existant
-      console.log('🔍 Recherche du lead:', leadId);
-
       const { data: leadData, error: leadError } = await supabase
         .from('crm_leads')
         .select('email, first_name, last_name, phone')
         .eq('id', leadId)
         .single();
 
-      console.log('📊 Résultat:', { lead: leadData, leadError });
-
       if (leadError || !leadData) {
-        // Fallback sur les données passées en paramètre si la requête échoue
-        console.log('⚠️ Lead non trouvé en DB, utilisation du fallback');
-
-        if (!customerEmail || !customerFirstName || !customerLastName) {
-          console.error('❌ Données insuffisantes');
-          return new Response(
-            JSON.stringify({
-              error: 'Lead non trouvé et données client manquantes',
-              details: leadError?.message || 'Lead non trouvé',
-              leadId: leadId,
-              hint: 'Passez customerEmail, customerFirstName et customerLastName en paramètre'
-            }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        email = customerEmail;
-        firstName = customerFirstName;
-        lastName = customerLastName;
-        phone = customerPhone || null;
-      } else {
-        lead = leadData;
-        email = lead.email || customerEmail || 'test@taxiassur.fr';
-        firstName = lead.first_name || customerFirstName || 'Client';
-        lastName = lead.last_name || customerLastName || 'TaxiAssur';
-        phone = lead.phone || customerPhone || null;
+        return new Response(JSON.stringify({ error: 'Prospect introuvable' }), {
+          status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
-    } else {
-      // Mode facturation libre (sans lead)
-      console.log('💳 Mode facturation libre');
-
-      if (!customerEmail || !customerFirstName || !customerLastName) {
-        return new Response(
-          JSON.stringify({
-            error: 'Pour une facturation libre, email, firstName et lastName sont requis'
-          }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      email = customerEmail;
-      firstName = customerFirstName;
-      lastName = customerLastName;
-      phone = customerPhone || null;
+      email = String(leadData.email || '').trim().toLowerCase().slice(0, 254);
+      firstName = String(leadData.first_name || '').trim().slice(0, 100);
+      lastName = String(leadData.last_name || '').trim().slice(0, 100);
+      phone = String(leadData.phone || '').trim().slice(0, 32) || null;
     }
 
-    const reference = customReference
-      ? customReference.trim().replace(/[^a-zA-Z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').substring(0, 50)
-      : generateReference();
+    if (!email || !firstName || !lastName || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return new Response(JSON.stringify({ error: 'Coordonnees client incompletes ou invalides' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const fingerprintInput = JSON.stringify({
+      leadId: leadId || null, amount: amount.toFixed(2), email, firstName, lastName, phone, description,
+    });
+    const fingerprintBytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(fingerprintInput));
+    const requestFingerprint = Array.from(new Uint8Array(fingerprintBytes), (byte) => byte.toString(16).padStart(2, '0')).join('');
+
+    const reference = generateReference();
     const dateTime = formatMoneticoDate(new Date());
-    const montant = `${parseFloat(amount).toFixed(2)}EUR`;
+    const montant = `${amount.toFixed(2)}EUR`;
     const customerName = `${firstName} ${lastName}`.trim();
 
-    // Texte libre avec valeur simple (sans caractères spéciaux pour éviter les problèmes de MAC)
+    // Texte libre avec valeur simple (sans caractÃƒÂ¨res spÃƒÂ©ciaux pour ÃƒÂ©viter les problÃƒÂ¨mes de MAC)
     const texteLibreSimple = leadId
       ? `lead_${leadId}_${TEST_MODE ? 'TEST' : 'PROD'}`
       : `free_invoice_${TEST_MODE ? 'TEST' : 'PROD'}`;
 
-    // Stocker les vraies données JSON séparément pour notre DB
+    // Stocker les vraies donnÃƒÂ©es JSON sÃƒÂ©parÃƒÂ©ment pour notre DB
     const texteLibreData = {
       leadId: leadId || null,
       description: description || 'Paiement assurance taxi',
@@ -209,21 +224,58 @@ serve(async (req: Request) => {
         country: 'FR'
       }
     }));
+    const buildPaymentResponse = (payment: {
+      id: string; reference: string; payment_access_token: string; mac_sent: string;
+      monetico_data: { date?: string } | null;
+    }) => {
+      const storedDate = String(payment.monetico_data?.date || dateTime);
+      return new Response(JSON.stringify({
+        success: true, paymentId: payment.id, reference: payment.reference,
+        paymentAccessToken: payment.payment_access_token,
+        formData: {
+          version: MONETICO_CONFIG.version, TPE: MONETICO_CONFIG.tpe, date: storedDate,
+          montant, reference: payment.reference, MAC: payment.mac_sent,
+          url_retour_ok: MONETICO_CONFIG.urlOK, url_retour_err: MONETICO_CONFIG.urlKO,
+          lgue: MONETICO_CONFIG.langue, societe: MONETICO_CONFIG.societe,
+          contexte_commande: contexteCommande, 'texte-libre': texteLibreSimple, mail: email,
+        },
+        actionUrl: MONETICO_CONFIG.urlServeur,
+        mode: TEST_MODE ? 'TEST' : 'PRODUCTION',
+        idempotent: payment.reference !== reference,
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    };
 
-    // Format MAC Version 3.0 selon documentation officielle Monético p.82
-    // UNIQUEMENT les paramètres avec valeurs dans l'ordre alphabétique (pas de paramètres vides)
+    const findExistingPayment = async () => {
+      if (!requestId) return null;
+      const { data } = await supabase.from('monetico_payments')
+        .select('id, reference, payment_access_token, mac_sent, monetico_data, request_fingerprint')
+        .eq('request_id', requestId).maybeSingle();
+      if (!data) return null;
+      if (data.request_fingerprint !== requestFingerprint) return 'conflict' as const;
+      return data;
+    };
+
+    const existingPayment = await findExistingPayment();
+    if (existingPayment === 'conflict') {
+      return new Response(JSON.stringify({ error: 'Identifiant de requete deja utilise avec des donnees differentes' }), {
+        status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (existingPayment) return buildPaymentResponse(existingPayment);
+
+    // Format MAC Version 3.0 selon documentation officielle MonÃƒÂ©tico p.82
+    // UNIQUEMENT les paramÃƒÂ¨tres avec valeurs dans l'ordre alphabÃƒÂ©tique (pas de paramÃƒÂ¨tres vides)
     const macData = `TPE=${MONETICO_CONFIG.tpe}*contexte_commande=${contexteCommande}*date=${dateTime}*lgue=${MONETICO_CONFIG.langue}*mail=${email}*montant=${montant}*reference=${reference}*societe=${MONETICO_CONFIG.societe}*texte-libre=${texteLibreSimple}*url_retour_err=${MONETICO_CONFIG.urlKO}*url_retour_ok=${MONETICO_CONFIG.urlOK}*version=${MONETICO_CONFIG.version}`;
-
-    console.log('🔐 MAC Data:', macData);
     const mac = await calculateMAC(macData);
-    console.log('🔐 MAC calculé:', mac.substring(0, 10) + '...');
 
     const { data: paymentData, error: insertError } = await supabase
       .from('monetico_payments')
       .insert({
         reference,
+        request_id: requestId || null,
+        request_fingerprint: requestId ? requestFingerprint : null,
         lead_id: leadId || null,
-        amount: parseFloat(amount),
+        amount,
         currency: 'EUR',
         status: 'pending',
         customer_email: email,
@@ -234,172 +286,31 @@ serve(async (req: Request) => {
           texte_libre: texteLibreData,
           date: dateTime,
           mode: TEST_MODE ? 'TEST' : 'PRODUCTION',
-          mac: mac,
           is_free_invoice: !leadId
         },
         mac_sent: mac
       })
-      .select('id')
+      .select('id, reference, payment_access_token, mac_sent, monetico_data')
       .single();
 
-    if (insertError) {
-      console.error('Erreur insertion:', insertError);
+    if (insertError || !paymentData) {
+      if (insertError?.code === '23505' && requestId) {
+        const racedPayment = await findExistingPayment();
+        if (racedPayment && racedPayment !== 'conflict') return buildPaymentResponse(racedPayment);
+      }
+      console.error('Monetico payment insert failed', insertError?.code || 'unknown');
+      return new Response(JSON.stringify({ error: 'Impossible de preparer le paiement' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    const paymentId = paymentData?.id;
+    return buildPaymentResponse(paymentData);
 
-    const formData = {
-      version: MONETICO_CONFIG.version,
-      TPE: MONETICO_CONFIG.tpe,
-      date: dateTime,
-      montant: montant,
-      reference: reference,
-      MAC: mac,
-      url_retour_ok: MONETICO_CONFIG.urlOK,
-      url_retour_err: MONETICO_CONFIG.urlKO,
-      lgue: MONETICO_CONFIG.langue,
-      societe: MONETICO_CONFIG.societe,
-      contexte_commande: contexteCommande,
-      'texte-libre': texteLibreSimple,
-      mail: email
-    };
-
-    console.log('Mode:', TEST_MODE ? '🧪 TEST' : '🚀 PRODUCTION');
-    console.log('URL:', MONETICO_CONFIG.urlServeur);
-    console.log('TPE:', MONETICO_CONFIG.tpe);
-
-    // Générer le formulaire HTML pour Monetico
-    const htmlForm = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Paiement sécurisé - TaxiAssur</title>
-        <style>
-          body {
-            font-family: system-ui, -apple-system, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            margin: 0;
-            padding: 20px;
-          }
-          .container {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            text-align: center;
-            max-width: 500px;
-          }
-          .logo {
-            font-size: 32px;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 20px;
-          }
-          h1 {
-            color: #1a202c;
-            margin: 0 0 10px 0;
-            font-size: 24px;
-          }
-          .amount {
-            font-size: 48px;
-            font-weight: bold;
-            color: #667eea;
-            margin: 20px 0;
-          }
-          .info {
-            color: #4a5568;
-            margin: 10px 0;
-            font-size: 14px;
-          }
-          .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #f3f4f6;
-            border-top-color: #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 30px auto;
-          }
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-          .secure-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: #f0fdf4;
-            color: #166534;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            margin-top: 20px;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="logo">🚕 TaxiAssur</div>
-          <h1>Paiement sécurisé</h1>
-          <div class="amount">${parseFloat(amount).toFixed(2)} €</div>
-          <p class="info">Paiement comptant pour votre assurance taxi</p>
-          <p class="info" style="font-size: 12px; color: #718096;">Référence: ${reference}</p>
-          <div class="spinner"></div>
-          <p class="info">Redirection vers la plateforme de paiement sécurisée...</p>
-          <div class="secure-badge">
-            🔒 Paiement sécurisé par Monético
-          </div>
-          <form id="monetico-form" method="POST" action="${MONETICO_CONFIG.urlServeur}">
-            <input type="hidden" name="version" value="${formData.version}" />
-            <input type="hidden" name="TPE" value="${formData.TPE}" />
-            <input type="hidden" name="date" value="${formData.date}" />
-            <input type="hidden" name="montant" value="${formData.montant}" />
-            <input type="hidden" name="reference" value="${formData.reference}" />
-            <input type="hidden" name="MAC" value="${formData.MAC}" />
-            <input type="hidden" name="url_retour_ok" value="${formData.url_retour_ok}" />
-            <input type="hidden" name="url_retour_err" value="${formData.url_retour_err}" />
-            <input type="hidden" name="lgue" value="${formData.lgue}" />
-            <input type="hidden" name="societe" value="${formData.societe}" />
-            <input type="hidden" name="contexte_commande" value="${formData.contexte_commande}" />
-            <input type="hidden" name="texte-libre" value="${formData['texte-libre']}" />
-            <input type="hidden" name="mail" value="${formData.mail}" />
-          </form>
-          <script>
-            setTimeout(() => {
-              document.getElementById('monetico-form').submit();
-            }, 2000);
-          </script>
-        </div>
-      </body>
-      </html>
-    `;
-
+  } catch (error: unknown) {
+    console.error('Monetico payment preparation failed', error instanceof Error ? error.name : 'unknown');
     return new Response(
       JSON.stringify({
-        success: true,
-        paymentId,
-        reference,
-        htmlForm,
-        formData,
-        actionUrl: MONETICO_CONFIG.urlServeur,
-        mode: TEST_MODE ? 'TEST' : 'PRODUCTION'
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
-
-  } catch (error) {
-    console.error('Erreur:', error);
-    return new Response(
-      JSON.stringify({
-        error: error.message,
-        details: TEST_MODE ? 'Mode TEST - Vérifiez vos identifiants de test Monético' : 'Erreur serveur'
+        error: 'Erreur serveur'
       }),
       {
         status: 500,

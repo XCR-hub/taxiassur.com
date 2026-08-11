@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
-import { openDocument } from '../../lib/document-utils';
-import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, XCircle, Check, MoveHorizontal, Upload, GripVertical, Mail, ChevronDown, Eye, ArrowRightLeft, Trash2 } from 'lucide-react';
+import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
+import { downloadDocument, openDocument } from '../../lib/document-utils';
+import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, XCircle, Check, Upload, GripVertical, Mail, ChevronDown, Eye, ArrowRightLeft, Trash2 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { getRequiredDocuments } from '@/lib/document-requirements';
 
@@ -66,6 +67,14 @@ interface UnimportedAttachment {
   storage_bucket: string | null;
 }
 
+function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
 function buildDocumentCategories(vehicleType?: string | null): DocumentCategory[] {
   return getRequiredDocuments(vehicleType).map(d => ({
     id: d.type,
@@ -390,18 +399,19 @@ export default function DocumentValidationComplete({
       let emailSent = false;
       let emailErrorMsg = '';
       if (leadEmail) {
-        const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-crm-email', {
+        const documentLabel = categories.find(c => c.id === doc.document_type)?.label || doc.document_type;
+        const { data: emailResult, error: emailError } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
           body: {
             to: leadEmail,
             subject: `Document validé - ${categories.find(c => c.id === doc.document_type)?.label || doc.document_type}`,
             content: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <h2 style="color: #16a34a;">✅ Document validé</h2>
-                <p>Bonjour ${leadFirstName || ''},</p>
+                <p>Bonjour ${escapeHtml(leadFirstName)},</p>
                 <p>Nous avons validé votre document :</p>
                 <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 15px; margin: 20px 0;">
-                  <strong>${categories.find(c => c.id === doc.document_type)?.label || doc.document_type}</strong><br>
-                  <span style="color: #666; font-size: 14px;">${doc.file_name}</span>
+                  <strong>${escapeHtml(documentLabel)}</strong><br>
+                  <span style="color: #666; font-size: 14px;">${escapeHtml(doc.file_name)}</span>
                 </div>
                 <p>Votre dossier avance bien ! Nous vous tiendrons informé de la suite.</p>
                 <p style="color: #666; font-size: 14px; margin-top: 30px;">
@@ -439,16 +449,11 @@ export default function DocumentValidationComplete({
       // Si tous les documents sont validés, envoyer l'accès à l'espace client
       if (allDocsValidated && leadEmail && caseId) {
         try {
-          const { error: clientAccessError } = await supabase.functions.invoke('send-client-access', {
-            body: {
-              lead_id: caseId,
-              email: leadEmail,
-              first_name: leadFirstName || 'Client',
-              last_name: ''
-            }
+          const { data: clientAccessResult, error: clientAccessError } = await invokeIdempotentDelivery(supabase, 'email', 'send-client-access', {
+            body: { lead_id: caseId }
           });
 
-          if (!clientAccessError) {
+          if (!clientAccessError && clientAccessResult?.success) {
             toast.success('✅ Document validé avec succès !\n\n🎉 Tous les documents sont validés !\n\n📧 Un email avec l\'accès à l\'espace client a été envoyé au prospect.');
           } else {
             toast.success('✅ Document validé avec succès !\n\n🎉 Tous les documents sont validés !\n\n⚠️ L\'email d\'accès à l\'espace client n\'a pas pu être envoyé. Envoyez-le manuellement depuis le détail du lead.');
@@ -496,22 +501,23 @@ export default function DocumentValidationComplete({
 
       // Send rejection email
       if (leadEmail) {
-        const { error: emailError } = await supabase.functions.invoke('send-crm-email', {
+        const documentLabel = categories.find(c => c.id === doc.document_type)?.label || doc.document_type;
+        const { data: emailResult, error: emailError } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
           body: {
             to: leadEmail,
             subject: `Document à renouveler - ${categories.find(c => c.id === doc.document_type)?.label || doc.document_type}`,
             content: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <h2 style="color: #dc2626;">⚠️ Document à renouveler</h2>
-                <p>Bonjour ${leadFirstName || ''},</p>
+                <p>Bonjour ${escapeHtml(leadFirstName)},</p>
                 <p>Nous avons examiné votre document mais nous avons besoin que vous le renouveliez :</p>
                 <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0;">
-                  <strong>${categories.find(c => c.id === doc.document_type)?.label || doc.document_type}</strong><br>
-                  <span style="color: #666; font-size: 14px;">${doc.file_name}</span>
+                  <strong>${escapeHtml(documentLabel)}</strong><br>
+                  <span style="color: #666; font-size: 14px;">${escapeHtml(doc.file_name)}</span>
                 </div>
                 <div style="background-color: #fffbeb; border: 1px solid #fbbf24; padding: 15px; margin: 20px 0; border-radius: 8px;">
                   <strong style="color: #92400e;">Motif du refus :</strong><br>
-                  <p style="color: #78350f; margin-top: 10px;">${rejectionReason}</p>
+                  <p style="color: #78350f; margin-top: 10px;">${escapeHtml(rejectionReason)}</p>
                 </div>
                 <p>Merci de déposer un nouveau document en tenant compte de notre retour.</p>
                 <p style="color: #666; font-size: 14px; margin-top: 30px;">
@@ -524,14 +530,18 @@ export default function DocumentValidationComplete({
           }
         });
 
-        if (emailError) console.error('Error sending rejection email:', emailError);
+        if (emailError || !emailResult?.success) {
+          throw emailError || new Error("L'e-mail de refus n'a pas été envoyé");
+        }
       }
 
       setRejectingDoc(null);
       setRejectionReason('');
       await loadClassifiedDocuments();
       onDocumentClassified?.();
-      toast.success('Document refusé et email envoyé au prospect !');
+      toast.success(leadEmail
+        ? 'Document refusé et email envoyé au prospect !'
+        : 'Document refusé. Aucun email n’est disponible pour ce prospect.');
 
     } catch (error) {
       console.error('Error rejecting document:', error);
@@ -677,7 +687,7 @@ export default function DocumentValidationComplete({
       const safeName = file.name
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^\w.\-]+/g, '_')
+        .replace(/[^\w.-]+/g, '_')
         .replace(/_+/g, '_');
       const filePath = `${caseId}/${finalDocType}/${Date.now()}_${safeName}`;
 
@@ -832,7 +842,7 @@ export default function DocumentValidationComplete({
         const safeName = file.name
           .normalize('NFD')
           .replace(/[\u0300-\u036f]/g, '')
-          .replace(/[^\w.\-]+/g, '_')
+          .replace(/[^\w.-]+/g, '_')
           .replace(/_+/g, '_');
         const filePath = `${caseId}/unclassified/${Date.now()}_${i}_${safeName}`;
 
@@ -1083,15 +1093,7 @@ export default function DocumentValidationComplete({
                           Consulter
                         </button>
                         <button
-                          onClick={() => {
-                            const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-                            const url = `${baseUrl}/storage/v1/object/public/${attachmentBucket}/${attachment.storage_path}`;
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = attachment.filename;
-                            a.click();
-                          }}
-                          className="text-xs py-1.5 px-2.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 font-medium flex items-center gap-1"
+                          onClick={() => void downloadDocument(attachment.storage_path, attachment.filename, attachmentBucket)}
                         >
                           <Download className="h-3 w-3" />
                           Telecharger
@@ -1193,15 +1195,7 @@ export default function DocumentValidationComplete({
                               Consulter
                             </button>
                             <button
-                              onClick={() => {
-                                const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-                                const url = `${baseUrl}/storage/v1/object/public/${viewBucket}/${viewPath}`;
-                                const a = document.createElement('a');
-                                a.href = url;
-                                a.download = att.attachment_filename;
-                                a.click();
-                              }}
-                              className="text-xs py-1.5 px-2.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 font-medium flex items-center gap-1"
+                              onClick={() => void downloadDocument(viewPath, att.attachment_filename, viewBucket)}
                             >
                               <Download className="h-3 w-3" />
                               Telecharger

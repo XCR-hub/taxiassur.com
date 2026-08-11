@@ -21,6 +21,7 @@ import {
   User
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 import { useNavigate } from 'react-router-dom';
 
 interface EmailMessage {
@@ -326,7 +327,7 @@ const EmailInboxOutlook: React.FC = () => {
     if (!selectedMessage || !replyContent.trim()) return;
 
     try {
-      const { error } = await supabase.functions.invoke('send-crm-email', {
+      const { data: sendResult, error } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
         body: {
           to: selectedMessage.from_email,
           subject: `Re: ${selectedMessage.subject}`,
@@ -335,7 +336,7 @@ const EmailInboxOutlook: React.FC = () => {
         }
       });
 
-      if (error) throw error;
+      if (error || !sendResult?.success) throw error || new Error("Envoi refusé");
 
       toast.success('✅ Réponse envoyée !');
       setShowReplyModal(false);

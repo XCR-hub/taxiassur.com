@@ -82,8 +82,8 @@ function App() {
     // Use requestIdleCallback when available for zero impact on main thread
     const schedule = (cb: () => void, ms: number) => {
       if ('requestIdleCallback' in window) {
-        const id = (window as any).requestIdleCallback(cb, { timeout: ms + 2000 });
-        return () => (window as any).cancelIdleCallback(id);
+        const id = window.requestIdleCallback(cb, { timeout: ms + 2000 });
+        return () => window.cancelIdleCallback(id);
       }
       const id = setTimeout(cb, ms);
       return () => clearTimeout(id);

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {
-  CreditCard, Search, User, Mail, Phone, Euro, Send, Loader2,
+  CreditCard, Search, User, Euro, Loader2,
   Check, X, RefreshCw, TrendingUp, Clock, CheckCircle2, XCircle,
-  ChevronRight, Zap, Receipt, BadgeEuro, ArrowUpRight, Calendar,
+  ChevronRight, Zap, Receipt, BadgeEuro, Calendar,
   Hash
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
+import { withTimeout } from '@/lib/promise-timeout';
+import { clearPaymentRequestId, getPaymentRequestId } from '@/lib/payment-idempotency';
 
 interface Lead {
   id: string;
@@ -92,8 +94,8 @@ const LeadInvoicing: React.FC = () => {
       ]);
       if (leadsData) { setLeads(leadsData); setFilteredLeads(leadsData); }
       if (paymentsData) setRecentPayments(paymentsData);
-    } catch (err) {
-      console.error('Erreur chargement:', err);
+    } catch (error) {
+      console.error('Erreur chargement:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -117,22 +119,41 @@ const LeadInvoicing: React.FC = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { toast.info('Session expirée'); return; }
 
-      const { data, error } = await supabase.functions.invoke('create-monetico-payment', {
-        body: { leadId: selectedLead.id, amount: parseFloat(amount), description: description || `Paiement ${selectedLead.first_name} ${selectedLead.last_name}` }
-      });
+      const paymentSignature = JSON.stringify({ leadId: selectedLead.id, amount: parseFloat(amount).toFixed(2), description: description.trim() });
+      const paymentRequestId = getPaymentRequestId(paymentSignature);
+      const { data, error } = await withTimeout(supabase.functions.invoke('create-monetico-payment', {
+        body: { leadId: selectedLead.id, amount: parseFloat(amount), description: description || `Paiement ${selectedLead.first_name} ${selectedLead.last_name}`, requestId: paymentRequestId }
+      }), 45_000);
 
       if (error) { toast.error('Erreur lors de la création du lien de paiement'); return; }
 
-      if (data?.success && data?.htmlForm) {
-        const newWindow = window.open('', '_blank', 'width=800,height=600');
-        if (newWindow) { newWindow.document.write(data.htmlForm); newWindow.document.close(); }
+      if (data?.success && data?.actionUrl && data?.formData) {
+        clearPaymentRequestId(paymentSignature);
+        const action = new URL(data.actionUrl);
+        if (action.protocol !== 'https:' || action.hostname !== 'p.monetico-services.com') {
+          throw new Error('Adresse de paiement invalide');
+        }
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = action.toString();
+        form.target = '_blank';
+        Object.entries(data.formData as Record<string, string>).forEach(([name, value]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = name;
+          input.value = String(value);
+          form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
+        form.remove();
         setPaymentSuccess(true);
         setAmount('');
         setDescription('');
         setSelectedLead(null);
         loadData(true);
       }
-    } catch (err) {
+    } catch {
       toast.error('Erreur lors de la création du paiement');
     } finally {
       setCreating(false);

@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  CreditCard, Send, User, Mail, Phone, FileText,
+  CreditCard, Send, Mail, Phone, FileText,
   Check, Loader2, ArrowLeft, Copy,
-  RefreshCw, TrendingUp, Clock, CheckCircle2, XCircle,
+  RefreshCw, Clock, CheckCircle2, XCircle,
   Search, ReceiptText, ChevronRight, AlertCircle,
   Banknote, Hash, Layers, Zap, ChevronDown, ChevronUp,
-  ExternalLink, Building2, AlertTriangle,
+  ExternalLink, AlertTriangle,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { withTimeout } from '@/lib/promise-timeout';
+import { clearPaymentRequestId, getPaymentRequestId } from '@/lib/payment-idempotency';
 import { Link } from 'react-router-dom';
 
 /* ─────────────── Types ─────────────────────────────────────── */
@@ -157,7 +159,6 @@ export default function FreeInvoicing() {
   const [advancedLeads, setAdvancedLeads] = useState<AdvancedLead[]>([]);
   const [leadsLoading, setLeadsLoading] = useState(false);
   const [leadSearch, setLeadSearch] = useState('');
-  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [expandedLeadId, setExpandedLeadId] = useState<string | null>(null);
   const [leadPayAmount, setLeadPayAmount] = useState('');
   const [leadPayDesc, setLeadPayDesc] = useState('');
@@ -262,25 +263,29 @@ export default function FreeInvoicing() {
       return;
     }
     try {
-      const { data, error } = await supabase.functions.invoke('create-monetico-payment', {
+      const paymentSignature = JSON.stringify({ leadId: form.leadId, amount: amount.toFixed(2), email: form.email.trim().toLowerCase(), description: form.description.trim() });
+      const paymentRequestId = getPaymentRequestId(paymentSignature);
+      const { data, error } = await withTimeout(supabase.functions.invoke('create-monetico-payment', {
         body: {
           amount, lead_id: form.leadId ?? undefined,
           description: form.description || `Paiement ${form.firstName} ${form.lastName}`,
           customerEmail: form.email, customerFirstName: form.firstName,
           customerLastName: form.lastName, customerPhone: form.phone,
-          customReference: form.reference || undefined,
+          customReference: form.reference || undefined, requestId: paymentRequestId,
         },
-      });
+      }), 45_000);
       if (error) throw new Error(error.message);
-      if (data?.success && data?.reference) {
-        const url = `${window.location.origin}/paiement/${data.reference}`;
+      if (data?.success && data?.reference && /^[0-9a-f]{64}$/i.test(data.paymentAccessToken || '')) {
+        const url = `${window.location.origin}/paiement/${encodeURIComponent(data.reference)}?token=${encodeURIComponent(data.paymentAccessToken)}`;
+        clearPaymentRequestId(paymentSignature);
         setPaymentLink(url);
         setLastClientEmail(form.email);
         if (sendEmail && form.email) {
           try {
-            await supabase.functions.invoke('send-payment-link-email', {
+            const { error: emailError } = await withTimeout(supabase.functions.invoke('send-payment-link-email', {
               body: { lead_id: form.leadId ?? null, payment_url: url, amount, email: form.email, first_name: form.firstName, last_name: form.lastName },
-            });
+            }), 45_000);
+            if (emailError) throw emailError;
             setEmailSent(true);
           } catch {
             setFormError("Lien créé, mais l'email n'a pas pu être envoyé. Copiez le lien.");
@@ -302,23 +307,27 @@ export default function FreeInvoicing() {
     if (isNaN(amount) || amount <= 0) return;
     setLeadPayLoading(lead.id);
     try {
-      const { data, error } = await supabase.functions.invoke('create-monetico-payment', {
+      const paymentSignature = JSON.stringify({ leadId: lead.id, amount: amount.toFixed(2), description: leadPayDesc.trim() });
+      const paymentRequestId = getPaymentRequestId(paymentSignature);
+      const { data, error } = await withTimeout(supabase.functions.invoke('create-monetico-payment', {
         body: {
           amount, lead_id: lead.id,
           description: leadPayDesc || `Paiement assurance taxi - ${leadName(lead)}`,
           customerEmail: lead.email,
           customerFirstName: lead.first_name ?? '',
           customerLastName: lead.last_name ?? '',
-          customerPhone: lead.phone ?? '',
+          customerPhone: lead.phone ?? '', requestId: paymentRequestId,
         },
-      });
+      }), 45_000);
       if (error) throw error;
-      if (data?.success && data?.reference) {
-        const url = `${window.location.origin}/paiement/${data.reference}`;
+      if (data?.success && data?.reference && /^[0-9a-f]{64}$/i.test(data.paymentAccessToken || '')) {
+        const url = `${window.location.origin}/paiement/${encodeURIComponent(data.reference)}?token=${encodeURIComponent(data.paymentAccessToken)}`;
+        clearPaymentRequestId(paymentSignature);
         if (sendEmail && lead.email) {
-          await supabase.functions.invoke('send-payment-link-email', {
+          const { error: emailError } = await withTimeout(supabase.functions.invoke('send-payment-link-email', {
             body: { lead_id: lead.id, payment_url: url, amount, email: lead.email, first_name: lead.first_name, last_name: lead.last_name },
-          }).catch(() => {});
+          }), 45_000);
+          if (emailError) throw emailError;
         }
         setLeadPaySuccess({ leadId: lead.id, url });
         setLeadPayAmount('');

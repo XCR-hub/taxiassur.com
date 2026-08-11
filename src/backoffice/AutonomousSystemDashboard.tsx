@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
 import {
@@ -88,7 +89,7 @@ export default function AutonomousSystemDashboard() {
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ultra-autonomous-self-healer`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': (await internalFunctionHeaders()).Authorization,
           'Content-Type': 'application/json'
         }
       });
@@ -106,7 +107,7 @@ export default function AutonomousSystemDashboard() {
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/realtime-monitoring-engine`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': (await internalFunctionHeaders()).Authorization,
           'Content-Type': 'application/json'
         }
       });

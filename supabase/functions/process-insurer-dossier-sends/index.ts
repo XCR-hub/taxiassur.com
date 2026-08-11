@@ -45,7 +45,8 @@ interface LeadRecord {
 interface NormalizedDocument {
   id: string;
   file_name: string;
-  file_url: string;
+  file_path: string;
+  bucket: "prospect-documents" | "crm-documents";
   document_type: string;
   source: string;
   contentType: string;
@@ -120,13 +121,48 @@ function normalizeDocuments(input: unknown): NormalizedDocument[] {
       return {
         id: getString(item.id, `document-${index + 1}`).slice(0, 80),
         file_name: fileName,
-        file_url: getString(item.file_url, getString(item.url, "")).trim(),
+        file_path: getString(item.file_path, "").replace(/^\/?(?:prospect-documents|crm-documents)\//, "").trim(),
+        bucket: item.bucket === "crm-documents" ? "crm-documents" : "prospect-documents",
         document_type: getString(item.document_type, getString(item.type, "document")).slice(0, 80),
         source: getString(item.source, "crm").slice(0, 40),
         contentType: getString(item.contentType, guessContentType(fileName)).slice(0, 120),
       };
     })
-    .filter((item) => item.file_url.length > 0);
+    .filter((item) => item.file_path.length > 0 && !item.file_path.split("/").includes(".."));
+}
+
+async function resolveStoredDocuments(
+  supabase: ReturnType<typeof createClient>,
+  leadId: string,
+  docs: NormalizedDocument[],
+): Promise<NormalizedDocument[]> {
+  if (docs.length > 10) throw new Error("Too many insurer attachments");
+  return await Promise.all(docs.map(async (doc) => {
+    const table = doc.source === "crm" ? "crm_lead_documents" : "prospect_documents";
+    const bucket = doc.source === "crm" ? "crm-documents" : "prospect-documents";
+    const { data, error } = await supabase.from(table)
+      .select("id, file_name, file_path, mime_type, document_type")
+      .eq("id", doc.id).eq("lead_id", leadId).maybeSingle();
+    if (error || !data?.file_path) throw new Error("Insurer attachment does not belong to lead");
+    const path = String(data.file_path).replace(/^\/?(?:prospect-documents|crm-documents)\//, "");
+    if (!path || path.split("/").includes("..")) throw new Error("Invalid insurer attachment path");
+    return {
+      ...doc, file_name: String(data.file_name || doc.file_name).slice(0, 200), file_path: path,
+      document_type: String(data.document_type || doc.document_type).slice(0, 80),
+      contentType: String(data.mime_type || doc.contentType).slice(0, 120), bucket,
+    };
+  }));
+}
+
+async function signDocumentUrls(
+  supabase: ReturnType<typeof createClient>,
+  docs: NormalizedDocument[],
+): Promise<Array<NormalizedDocument & { signed_url: string }>> {
+  return await Promise.all(docs.map(async (doc) => {
+    const { data, error } = await supabase.storage.from(doc.bucket).createSignedUrl(doc.file_path, 300);
+    if (error || !data?.signedUrl) throw new Error("Unable to sign insurer attachment");
+    return { ...doc, signed_url: data.signedUrl };
+  }));
 }
 
 function escapeHtml(value: unknown): string {
@@ -224,10 +260,11 @@ async function callSendEmailIonos(
   item: InsurerDossierSend,
   subject: string,
   html: string,
-  docs: NormalizedDocument[],
+  docs: Array<NormalizedDocument & { signed_url: string }>,
 ): Promise<{ success: boolean; error?: string; response?: unknown }> {
   const response = await fetch(`${supabaseUrl}/functions/v1/send-email-ionos`, {
     method: "POST",
+    signal: AbortSignal.timeout(60000),
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${serviceRoleKey}`,
@@ -237,11 +274,10 @@ async function callSendEmailIonos(
       toName: item.recipient_name || item.company_name || item.recipient_email,
       subject,
       html,
-      from: "team@taxiassur.com",
       fromName: "TaxiAssur",
       attachments: docs.map((doc) => ({
         filename: doc.file_name || "document.pdf",
-        url: doc.file_url,
+        url: doc.signed_url,
         contentType: doc.contentType || guessContentType(doc.file_name),
       })),
     }),
@@ -251,7 +287,7 @@ async function callSendEmailIonos(
   let parsed: unknown = null;
   try {
     parsed = text ? JSON.parse(text) : null;
-  } catch (_) {
+  } catch {
     parsed = text;
   }
 
@@ -412,8 +448,8 @@ Deno.serve(async (req: Request) => {
       const claimedItem = claimed as InsurerDossierSend;
 
       try {
-        const docs = normalizeDocuments(claimedItem.documents);
-        if (docs.length === 0) {
+        const queuedDocs = normalizeDocuments(claimedItem.documents);
+        if (queuedDocs.length === 0) {
           throw new Error("No usable document URL in insurer dossier send");
         }
 
@@ -425,12 +461,14 @@ Deno.serve(async (req: Request) => {
 
         if (leadError) throw leadError;
 
+        const docs = await resolveStoredDocuments(supabase, claimedItem.lead_id, queuedDocs);
         const leadRecord = (lead || null) as LeadRecord | null;
         const subject = mode === "followup"
           ? `Relance ${nextFollowupStep}/2 - ${claimedItem.subject}`
           : claimedItem.subject;
         const html = buildEmailHtml(claimedItem, leadRecord, docs, mode, nextFollowupStep);
-        const sendResult = await callSendEmailIonos(supabaseUrl, serviceRoleKey, claimedItem, subject, html, docs);
+        const signedDocs = await signDocumentUrls(supabase, docs);
+        const sendResult = await callSendEmailIonos(supabaseUrl, serviceRoleKey, claimedItem, subject, html, signedDocs);
 
         if (!sendResult.success) {
           throw new Error(sendResult.error || "send-email-ionos failed");

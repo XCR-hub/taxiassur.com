@@ -31,8 +31,6 @@ const DownPaymentPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [processing, setProcessing] = useState(false);
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   useEffect(() => {
     if (token) {
@@ -69,50 +67,10 @@ const DownPaymentPage: React.FC = () => {
     }
   };
 
-  const handlePayment = async () => {
-    if (!paymentInfo || !token) return;
-
-    setProcessing(true);
-    setError(null);
-
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      const transactionId = `CIC-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/cic-payment-webhook`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-          },
-          body: JSON.stringify({
-            payment_token: token,
-            transaction_id: transactionId,
-            status: 'paid',
-            amount: paymentInfo.amount,
-            provider_data: {
-              payment_method: 'card',
-              card_type: 'visa',
-              last4: '4242'
-            }
-          })
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Erreur lors de l\'enregistrement du paiement');
-      }
-
-      setPaymentSuccess(true);
-    } catch (err) {
-      console.error('Payment error:', err);
-      setError('Une erreur est survenue lors du paiement. Veuillez réessayer.');
-    } finally {
-      setProcessing(false);
-    }
+  const handlePayment = () => {
+    setError(
+      "Ce lien de démonstration a été désactivé pour votre sécurité. Contactez TaxiAssur afin de recevoir un lien de paiement Monético sécurisé.",
+    );
   };
 
   if (loading) {
@@ -126,46 +84,6 @@ const DownPaymentPage: React.FC = () => {
     );
   }
 
-  if (paymentSuccess) {
-    return (
-      <>
-        <SEOHead
-          title="Paiement confirmé - TaxiAssur"
-          description="Votre paiement a été confirmé avec succès"
-          noindex={true}
-        />
-        <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
-          <div className="max-w-md w-full">
-            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-              <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Check className="w-10 h-10 text-white" />
-              </div>
-
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                Paiement confirmé !
-              </h1>
-              <p className="text-gray-600 mb-6">
-                Votre comptant de <span className="font-bold">{paymentInfo?.amount.toFixed(2)} EUR</span> a été reçu avec succès.
-              </p>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <p className="text-sm text-blue-900">
-                  Vous allez recevoir un email de confirmation avec le lien pour signer électroniquement votre contrat.
-                </p>
-              </div>
-
-              <button
-                onClick={() => window.location.href = 'https://taxiassur.com'}
-                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              >
-                Retour à l'accueil
-              </button>
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
 
   if (error || !paymentInfo || !paymentInfo.is_valid) {
     return (
@@ -283,10 +201,9 @@ const DownPaymentPage: React.FC = () => {
                   <div className="flex items-start gap-2">
                     <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
                     <div className="text-sm text-yellow-800">
-                      <p className="font-medium mb-1">Mode démo activé</p>
+                      <p className="font-medium mb-1">Ancien lien désactivé</p>
                       <p>
-                        Ce paiement est simulé pour la démonstration.
-                        En production, vous serez redirigé vers la plateforme sécurisée CIC.
+                        Pour protéger votre dossier, seul un lien Monético signé transmis par TaxiAssur peut être utilisé.
                       </p>
                     </div>
                   </div>
@@ -294,24 +211,15 @@ const DownPaymentPage: React.FC = () => {
 
                 <button
                   onClick={handlePayment}
-                  disabled={processing}
+                  disabled
                   className="w-full px-6 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium text-lg"
                 >
-                  {processing ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Traitement en cours...
-                    </>
-                  ) : (
-                    <>
-                      <CreditCard className="w-5 h-5" />
-                      Payer {paymentInfo.amount.toFixed(2)} EUR
-                    </>
-                  )}
+                  <CreditCard className="w-5 h-5" />
+                  Paiement indisponible sur cet ancien lien
                 </button>
 
                 <p className="text-xs text-gray-500 text-center mt-4">
-                  En cliquant sur "Payer", vous acceptez nos conditions générales de vente
+                  Contactez TaxiAssur pour recevoir un nouveau lien de paiement sécurisé.
                 </p>
               </div>
             </div>

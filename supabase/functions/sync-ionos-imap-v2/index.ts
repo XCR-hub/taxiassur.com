@@ -1,10 +1,12 @@
-import { createClient } from 'npm:@supabase/supabase-js@2';
-import Imap from 'npm:imap@0.8.19';
-import { simpleParser } from 'npm:mailparser@3.7.1';
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { isInternalRequest } from "../_shared/internal-auth.ts";
+import Imap from "npm:imap@0.8.19";
+import { simpleParser } from "npm:mailparser@3.7.1";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 interface ParsedEmail {
@@ -22,21 +24,24 @@ interface ParsedEmail {
 }
 
 function cleanMIMEContent(content: string): string {
-  if (!content) return '';
+  if (!content) return "";
 
   // Supprimer les frontières MIME (commence par --)
-  let cleaned = content.replace(/^--[a-zA-Z0-9_-]+$/gm, '');
+  let cleaned = content.replace(/^--[a-zA-Z0-9_-]+$/gm, "");
 
   // Supprimer les headers MIME (Content-Type, Content-Transfer-Encoding, etc.)
-  cleaned = cleaned.replace(/^Content-[^:]+:.*$/gm, '');
-  cleaned = cleaned.replace(/^MIME-Version:.*$/gm, '');
-  cleaned = cleaned.replace(/^boundary=.*$/gm, '');
+  cleaned = cleaned.replace(/^Content-[^:]+:.*$/gm, "");
+  cleaned = cleaned.replace(/^MIME-Version:.*$/gm, "");
+  cleaned = cleaned.replace(/^boundary=.*$/gm, "");
 
   // Supprimer les encodages base64 ou quoted-printable vides
-  cleaned = cleaned.replace(/^(?:Content-Transfer-Encoding|Content-Disposition|Content-ID):.*$/gm, '');
+  cleaned = cleaned.replace(
+    /^(?:Content-Transfer-Encoding|Content-Disposition|Content-ID):.*$/gm,
+    "",
+  );
 
   // Nettoyer les lignes vides multiples
-  cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+  cleaned = cleaned.replace(/\n{3,}/g, "\n\n");
 
   // Trim
   cleaned = cleaned.trim();
@@ -56,16 +61,16 @@ function extractTextFromParsed(parsed: any): string {
   // Si le texte brut est vide ou trop court, essayer le HTML converti
   if (parsed.html) {
     // Convertir HTML basique en texte
-    let text = parsed.html
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
+    const text = parsed.html
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
       .replace(/&quot;/g, '"')
-      .replace(/\s+/g, ' ')
+      .replace(/\s+/g, " ")
       .trim();
 
     const cleaned = cleanMIMEContent(text);
@@ -75,7 +80,9 @@ function extractTextFromParsed(parsed: any): string {
   }
 
   // En dernier recours, retourner le texte original nettoyé
-  return cleanMIMEContent(parsed.text || parsed.textAsHtml || '(Contenu non disponible)');
+  return cleanMIMEContent(
+    parsed.text || parsed.textAsHtml || "(Contenu non disponible)",
+  );
 }
 
 async function fetchIMAPEmails(
@@ -83,8 +90,8 @@ async function fetchIMAPEmails(
   port: number,
   user: string,
   password: string,
-  boxName: string = 'INBOX',
-  limit: number = 100
+  boxName: string = "INBOX",
+  limit: number = 100,
 ): Promise<ParsedEmail[]> {
   return new Promise((resolve, reject) => {
     const emails: ParsedEmail[] = [];
@@ -92,7 +99,7 @@ async function fetchIMAPEmails(
       if (imap) {
         imap.end();
       }
-      reject(new Error('IMAP connection timeout after 25 seconds'));
+      reject(new Error("IMAP connection timeout after 25 seconds"));
     }, 25000); // Timeout à 25s au lieu de 30s
 
     const imap = new Imap({
@@ -110,7 +117,7 @@ async function fetchIMAPEmails(
       imap.openBox(boxName, true, cb);
     }
 
-    imap.once('ready', () => {
+    imap.once("ready", () => {
       openInbox((err, box) => {
         if (err) {
           clearTimeout(timeoutId);
@@ -131,18 +138,18 @@ async function fetchIMAPEmails(
         console.log(`Fetching ${end - start + 1} messages from ${boxName}`);
 
         const fetch = imap.seq.fetch(`${start}:${end}`, {
-          bodies: '',
+          bodies: "",
           struct: true,
         });
 
         let processedCount = 0;
         const totalToProcess = end - start + 1;
 
-        fetch.on('message', (msg: any) => {
-          msg.on('body', (stream: any) => {
+        fetch.on("message", (msg: any) => {
+          msg.on("body", (stream: any) => {
             simpleParser(stream, async (err: Error | null, parsed: any) => {
               if (err) {
-                console.error('Error parsing email:', err);
+                console.error("Error parsing email:", err);
                 return;
               }
 
@@ -151,13 +158,14 @@ async function fetchIMAPEmails(
                 const cleanText = extractTextFromParsed(parsed);
 
                 const email: ParsedEmail = {
-                  messageId: parsed.messageId || `${Date.now()}-${Math.random()}`,
+                  messageId: parsed.messageId ||
+                    `${Date.now()}-${Math.random()}`,
                   from: parsed.from?.value || [],
                   to: parsed.to?.value || [],
                   cc: parsed.cc?.value || [],
-                  subject: parsed.subject || '(No Subject)',
+                  subject: parsed.subject || "(No Subject)",
                   text: cleanText,
-                  html: parsed.html || '',
+                  html: parsed.html || "",
                   date: parsed.date || new Date(),
                   inReplyTo: parsed.inReplyTo,
                   references: parsed.references,
@@ -172,7 +180,7 @@ async function fetchIMAPEmails(
                   imap.end();
                 }
               } catch (error) {
-                console.error('Error processing email:', error);
+                console.error("Error processing email:", error);
                 processedCount++;
                 if (processedCount >= totalToProcess) {
                   clearTimeout(timeoutId);
@@ -183,26 +191,26 @@ async function fetchIMAPEmails(
           });
         });
 
-        fetch.once('error', (err: Error) => {
+        fetch.once("error", (err: Error) => {
           clearTimeout(timeoutId);
           imap.end();
           reject(err);
         });
 
-        fetch.once('end', () => {
-          console.log('Fetch ended');
+        fetch.once("end", () => {
+          console.log("Fetch ended");
         });
       });
     });
 
-    imap.once('error', (err: Error) => {
+    imap.once("error", (err: Error) => {
       clearTimeout(timeoutId);
       reject(err);
     });
 
-    imap.once('end', () => {
+    imap.once("end", () => {
       clearTimeout(timeoutId);
-      console.log('IMAP connection ended');
+      console.log("IMAP connection ended");
       resolve(emails);
     });
 
@@ -216,39 +224,57 @@ async function fetchIMAPEmails(
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  if (!(await isInternalRequest(req))) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
     // Vérifier d'abord que les credentials sont configurés
-    const imapPassword = Deno.env.get('IMAP_PASS') || Deno.env.get('SMTP_PASS') || Deno.env.get('HMAIL_IMAP_PASS') || Deno.env.get('IONOS_EMAIL_PASSWORD');
+    const imapPassword = Deno.env.get("IMAP_PASS") ||
+      Deno.env.get("SMTP_PASS") || Deno.env.get("HMAIL_IMAP_PASS") ||
+      Deno.env.get("IONOS_EMAIL_PASSWORD");
     if (!imapPassword) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'hMail credentials not configured',
-          message: 'Please configure SMTP_PASS or IMAP_PASS in Supabase Edge Function secrets',
-          instructions: 'Go to Supabase Dashboard > Project Settings > Edge Functions > Secrets',
-          stats: { inserted: 0, skipped: 0, errors: 0, total_retrieved: 0 }
+          error: "hMail credentials not configured",
+          message:
+            "Please configure SMTP_PASS or IMAP_PASS in Supabase Edge Function secrets",
+          instructions:
+            "Go to Supabase Dashboard > Project Settings > Edge Functions > Secrets",
+          stats: { inserted: 0, skipped: 0, errors: 0, total_retrieved: 0 },
         }),
         {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 503 // Service Unavailable
-        }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 503, // Service Unavailable
+        },
       );
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('Starting hMail IMAP sync (v2 with timeout)...');
+    console.log("Starting hMail IMAP sync (v2 with timeout)...");
 
     // Paramètres IMAP depuis env ou defaults
-    const imapHost = Deno.env.get('IMAP_HOST') || Deno.env.get('HMAIL_IMAP_HOST') || Deno.env.get('IONOS_IMAP_HOST') || 'mail.xcr.fr';
-    const imapPort = parseInt(Deno.env.get('IMAP_PORT') || Deno.env.get('HMAIL_IMAP_PORT') || Deno.env.get('IONOS_IMAP_PORT') || '993');
-    const imapUser = Deno.env.get('IMAP_USER') || Deno.env.get('SMTP_USER') || Deno.env.get('HMAIL_IMAP_USER') || Deno.env.get('IONOS_EMAIL_USER') || 'tcerda@xcr.fr';
+    const imapHost = Deno.env.get("IMAP_HOST") ||
+      Deno.env.get("HMAIL_IMAP_HOST") || Deno.env.get("IONOS_IMAP_HOST") ||
+      "mail.xcr.fr";
+    const imapPort = parseInt(
+      Deno.env.get("IMAP_PORT") || Deno.env.get("HMAIL_IMAP_PORT") ||
+        Deno.env.get("IONOS_IMAP_PORT") || "993",
+    );
+    const imapUser = Deno.env.get("IMAP_USER") || Deno.env.get("SMTP_USER") ||
+      Deno.env.get("HMAIL_IMAP_USER") || Deno.env.get("IONOS_EMAIL_USER") ||
+      "tcerda@xcr.fr";
 
     console.log(`Connecting to IMAP: ${imapHost}:${imapPort} as ${imapUser}`);
 
@@ -258,14 +284,14 @@ Deno.serve(async (req) => {
     let totalRetrieved = 0;
 
     try {
-      console.log('Fetching from INBOX (last 100 emails)...');
+      console.log("Fetching from INBOX (last 100 emails)...");
       const inboxEmails = await fetchIMAPEmails(
         imapHost,
         imapPort,
         imapUser,
         imapPassword,
-        'INBOX',
-        100 // Limité à 100 pour éviter timeout
+        "INBOX",
+        100, // Limité à 100 pour éviter timeout
       );
 
       totalRetrieved += inboxEmails.length;
@@ -274,9 +300,9 @@ Deno.serve(async (req) => {
       for (const email of inboxEmails) {
         try {
           const { data: existing } = await supabase
-            .from('email_messages')
-            .select('id')
-            .eq('message_id', email.messageId)
+            .from("email_messages")
+            .select("id")
+            .eq("message_id", email.messageId)
             .maybeSingle();
 
           if (existing) {
@@ -284,10 +310,10 @@ Deno.serve(async (req) => {
             continue;
           }
 
-          const fromAddress = email.from[0]?.address || 'unknown@unknown.com';
+          const fromAddress = email.from[0]?.address || "unknown@unknown.com";
           const fromName = email.from[0]?.name || fromAddress;
-          const toAddresses = email.to.map(t => t.address);
-          const toNames = email.to.map(t => t.name || t.address);
+          const toAddresses = email.to.map((t) => t.address);
+          const toNames = email.to.map((t) => t.name || t.address);
 
           const emailData = {
             message_id: email.messageId,
@@ -299,11 +325,11 @@ Deno.serve(async (req) => {
             body_text: email.text.substring(0, 50000),
             body_html: email.html?.substring(0, 50000),
             received_at: email.date.toISOString(),
-            direction: 'inbound' as const,
-            provider: 'ionos',
+            direction: "inbound" as const,
+            provider: "ionos",
             is_read: false,
             is_important: false,
-            attachments: email.attachments.map(att => ({
+            attachments: email.attachments.map((att) => ({
               filename: att.filename,
               contentType: att.contentType,
               size: att.size,
@@ -311,20 +337,24 @@ Deno.serve(async (req) => {
           };
 
           const { data: insertedEmail, error: insertError } = await supabase
-            .from('email_messages')
+            .from("email_messages")
             .insert(emailData)
-            .select('id')
+            .select("id")
             .single();
 
           if (insertError) {
-            console.error('Insert error:', insertError);
+            console.error("Insert error:", insertError);
             errors++;
           } else {
             inserted++;
 
             // Extraire et uploader les pièces jointes si présentes
-            if (email.attachments && email.attachments.length > 0 && insertedEmail) {
-              console.log(`Processing ${email.attachments.length} attachments for email ${insertedEmail.id}`);
+            if (
+              email.attachments && email.attachments.length > 0 && insertedEmail
+            ) {
+              console.log(
+                `Processing ${email.attachments.length} attachments for email ${insertedEmail.id}`,
+              );
 
               for (const attachment of email.attachments) {
                 try {
@@ -332,74 +362,80 @@ Deno.serve(async (req) => {
 
                   // Convertir le contenu en Buffer puis en base64
                   const buffer = attachment.content;
-                  const base64Content = typeof buffer === 'string'
+                  const base64Content = typeof buffer === "string"
                     ? buffer
                     : btoa(String.fromCharCode(...new Uint8Array(buffer)));
 
                   // Upload vers Storage
-                  const fileExt = attachment.filename?.split('.').pop() || 'bin';
-                  const fileName = `emails/${insertedEmail.id}/${Date.now()}_${attachment.filename}`;
-                  const binaryData = Uint8Array.from(atob(base64Content), c => c.charCodeAt(0));
+                  const fileExt = attachment.filename?.split(".").pop() ||
+                    "bin";
+                  const fileName =
+                    `emails/${insertedEmail.id}/${Date.now()}_${attachment.filename}`;
+                  const binaryData = Uint8Array.from(
+                    atob(base64Content),
+                    (c) => c.charCodeAt(0),
+                  );
 
                   const { error: uploadError } = await supabase.storage
-                    .from('attachments')
+                    .from("email-attachments")
                     .upload(fileName, binaryData, {
-                      contentType: attachment.contentType || 'application/octet-stream',
-                      upsert: false
+                      contentType: attachment.contentType ||
+                        "application/octet-stream",
+                      upsert: false,
                     });
 
                   if (uploadError) {
-                    console.error('Attachment upload error:', uploadError);
+                    console.error("Attachment upload error:", uploadError);
                     continue;
                   }
 
-                  const { data: urlData } = supabase.storage
-                    .from('attachments')
-                    .getPublicUrl(fileName);
 
                   // Créer l'entrée dans email_attachments
-                  await supabase.from('email_attachments').insert({
+                  await supabase.from("email_attachments").insert({
                     email_message_id: insertedEmail.id,
                     file_name: attachment.filename,
                     file_type: fileExt,
                     file_size: attachment.size,
                     mime_type: attachment.contentType,
                     storage_path: fileName,
-                    storage_bucket: 'attachments',
-                    download_url: urlData.publicUrl,
-                    classification_status: 'pending',
+                    storage_bucket: "email-attachments",
+                    download_url: null,
+                    classification_status: "pending",
                     metadata: {
                       email_subject: email.subject,
                       email_from: fromAddress,
-                      processed_at: new Date().toISOString()
-                    }
+                      processed_at: new Date().toISOString(),
+                    },
                   });
 
                   console.log(`Uploaded attachment: ${attachment.filename}`);
                 } catch (attError) {
-                  console.error(`Error processing attachment ${attachment.filename}:`, attError);
+                  console.error(
+                    `Error processing attachment ${attachment.filename}:`,
+                    attError,
+                  );
                 }
               }
             }
           }
         } catch (emailError) {
-          console.error('Error processing email:', emailError);
+          console.error("Error processing email:", emailError);
           errors++;
         }
       }
     } catch (imapError) {
-      console.error('IMAP fetch error:', imapError);
+      console.error("IMAP fetch error:", imapError);
       return new Response(
         JSON.stringify({
           success: false,
           error: imapError.message,
-          message: 'IMAP connection failed',
+          message: "IMAP connection failed",
           stats: { inserted, skipped, errors, total_retrieved: totalRetrieved },
         }),
         {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500
-        }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500,
+        },
       );
     }
 
@@ -415,15 +451,14 @@ Deno.serve(async (req) => {
       timestamp: new Date().toISOString(),
     };
 
-    console.log('Sync completed:', response);
+    console.log("Sync completed:", response);
 
     return new Response(
       JSON.stringify(response),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-
   } catch (error) {
-    console.error('Fatal error in sync-ionos-imap-v2:', error);
+    console.error("Fatal error in sync-ionos-imap-v2:", error);
     return new Response(
       JSON.stringify({
         success: false,
@@ -432,8 +467,8 @@ Deno.serve(async (req) => {
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });

@@ -120,7 +120,7 @@ async function searchKnowledge(supabase: any, query: string, options: any = {}) 
   const queryEmbedding = await getEmbedding(query);
   const topK = options.top_k || 5;
   
-  let rpcQuery = supabase.rpc("match_knowledge_chunks", {
+  const rpcQuery = supabase.rpc("match_knowledge_chunks", {
     query_embedding: queryEmbedding,
     match_threshold: 0.7,
     match_count: topK,

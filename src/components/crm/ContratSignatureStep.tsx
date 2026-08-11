@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Upload, CheckCircle2, X, FileText, Loader2, Ligature as FileSignature, AlertCircle, PartyPopper, Mail, Send } from 'lucide-react';
+import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
+import { SecureDocumentLink } from './SecureDocumentLink';
+import { Upload, CheckCircle2, X, Loader2, Ligature as FileSignature, AlertCircle, PartyPopper, Send } from 'lucide-react';
 import { toast } from '@/lib/toast';
 
 interface ContratSignatureStepProps {
@@ -29,7 +31,7 @@ const REQUIRED_DOCS = [
   { type: 'memo_vehicule', label: 'Mémo du Véhicule', icon: '🚗' }
 ];
 
-export default function ContratSignatureStep({ leadId, onComplete }: ContratSignatureStepProps) {
+export default function ContratSignatureStep({ leadId }: ContratSignatureStepProps) {
   const [documents, setDocuments] = useState<ContractDocument[]>([]);
   const [signature, setSignature] = useState<SignatureHistory | null>(null);
   const [uploading, setUploading] = useState<string | null>(null);
@@ -86,7 +88,7 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
     setUploading(docType);
 
     try {
-      const safeName = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.\-]+/g, '_').replace(/_+/g, '_');
+      const safeName = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.-]+/g, '_').replace(/_+/g, '_');
       const fileName = `${leadId}/${docType}/${Date.now()}_${safeName}`;
       const { data: uploadData, error: uploadError } = await supabase
         .storage
@@ -106,7 +108,10 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
           mime_type: file.type
         });
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        await supabase.storage.from('contract-documents').remove([uploadData.path]);
+        throw insertError;
+      }
 
       toast.success('Document uploadé avec succès !');
       loadDocuments();
@@ -122,14 +127,14 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) return;
 
     try {
-      await supabase.storage.from('contract-documents').remove([filePath]);
-
       const { error } = await supabase
         .from('lead_contract_documents')
         .delete()
         .eq('id', docId);
 
       if (error) throw error;
+      const { error: storageError } = await supabase.storage.from('contract-documents').remove([filePath]);
+      if (storageError) console.warn("Contract document object cleanup failed");
 
       toast.success('Document supprimé');
       loadDocuments();
@@ -185,120 +190,11 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
     setSendingEmail(true);
 
     try {
-      // Récupérer les infos du lead
-      const { data: leadData, error: leadError } = await supabase
-        .from('crm_leads')
-        .select('email, first_name, last_name, access_token')
-        .eq('id', leadId)
-        .single();
-
-      if (leadError) throw leadError;
-
-      if (!leadData.email) {
-        throw new Error('Le prospect n\'a pas d\'email');
-      }
-
-      const prospectName = `${leadData.first_name || ''} ${leadData.last_name || ''}`.trim() || leadData.email;
-      const prospectSpaceUrl = leadData.access_token
-        ? `${window.location.origin}/espace-prospect?token=${leadData.access_token}`
-        : `${window.location.origin}/espace-prospect`;
-
-      // Construire la liste des documents
-      const documentsList = documents.map(doc => {
-        const label = REQUIRED_DOCS.find(r => r.type === doc.document_type)?.label || doc.document_type;
-        const publicUrl = supabase.storage
-          .from('contract-documents')
-          .getPublicUrl(doc.file_path).data.publicUrl;
-
-        return { label, url: publicUrl, name: doc.file_name };
+      const { data: accessResult, error: accessError } = await invokeIdempotentDelivery(supabase, 'email', 'send-client-access', {
+        body: { lead_id: leadId }
       });
-
-      // Construire l'HTML de l'email
-      const emailBody = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; background: #f3f4f6; padding: 20px; }
-            .container { max-width: 650px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-            .header { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 30px; text-align: center; }
-            .content { padding: 30px; }
-            .document-card { background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 15px 0; border-radius: 8px; }
-            .download-btn { background: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 10px; }
-            .cta-button { background: #3b82f6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; margin-top: 20px; }
-            .footer { background: #1f2937; color: white; padding: 20px; text-align: center; font-size: 12px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <div style="font-size: 48px;">📄</div>
-              <h1 style="margin: 10px 0 0 0; font-size: 28px;">VOS DOCUMENTS SONT PRÊTS</h1>
-              <p style="margin: 10px 0 0 0; opacity: 0.9;">TaxiAssur - Documents contractuels</p>
-            </div>
-
-            <div class="content">
-              <p style="font-size: 16px; color: #1f2937;">Bonjour ${prospectName},</p>
-
-              <p style="color: #4b5563;">
-                Votre conseiller TaxiAssur a mis à disposition tous vos documents contractuels.
-                Vous pouvez les consulter et les télécharger dès maintenant.
-              </p>
-
-              <h2 style="color: #1f2937; margin-top: 25px;">📋 Documents disponibles</h2>
-
-              ${documentsList.map(doc => `
-                <div class="document-card">
-                  <h3 style="margin: 0 0 10px 0; color: #1e40af; font-size: 16px;">📄 ${doc.label}</h3>
-                  <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px;">${doc.name}</p>
-                  <a href="${doc.url}" class="download-btn" target="_blank">
-                    ⬇️ Télécharger
-                  </a>
-                </div>
-              `).join('')}
-
-              <div style="background: #eff6ff; border: 2px solid #93c5fd; border-radius: 8px; padding: 20px; margin: 30px 0;">
-                <h3 style="color: #2563eb; margin-top: 0;">💡 Accès à votre espace</h3>
-                <p style="color: #4b5563; margin-bottom: 15px;">
-                  Tous vos documents sont également disponibles dans votre espace personnel sécurisé,
-                  accessible à tout moment.
-                </p>
-                <div style="text-align: center;">
-                  <a href="${prospectSpaceUrl}" class="cta-button">
-                    🔐 ACCÉDER À MON ESPACE
-                  </a>
-                </div>
-              </div>
-
-              <p style="color: #6b7280; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-                💬 <strong>Une question ?</strong> Répondez simplement à cet email ou appelez-nous au <strong>01 80 85 57 86</strong>
-              </p>
-            </div>
-
-            <div class="footer">
-              <strong>TaxiAssur</strong><br>
-              L'assurance taxi en toute simplicité<br>
-              <a href="https://taxiassur.com" style="color: #10b981; text-decoration: none;">taxiassur.com</a>
-            </div>
-          </div>
-        </body>
-        </html>
-      `;
-
-      // Envoyer via l'Edge Function send-crm-email
-      const { error: emailError } = await supabase.functions.invoke('send-crm-email', {
-        body: {
-          to: leadData.email,
-          subject: `📄 Vos ${documents.length} document${documents.length > 1 ? 's' : ''} TaxiAssur`,
-          content: emailBody,
-          leadId: leadId
-        }
-      });
-
-      if (emailError) throw emailError;
-
-      toast.success(`✅ Email envoyé avec succès à ${leadData.email} avec ${documents.length} document(s) !`);
+      if (accessError || !accessResult?.success) throw accessError || new Error("Envoi de l accès sécurisé refusé");
+      toast.success("Accès sécurisé aux documents envoyé au prospect");
     } catch (error) {
       console.error('Error sending documents email:', error);
       toast.error('Erreur lors de l\'envoi de l\'email : ' + (error as Error).message);
@@ -342,44 +238,12 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
       const { error: portalAccessError } = await supabase
         .rpc('ensure_client_app_access', { p_lead_id: leadId });
 
-      if (portalAccessError) {
-        console.warn('Client app access creation failed:', portalAccessError);
-      }
+      if (portalAccessError) throw portalAccessError;
 
-      const { data: accessEmailResult, error: accessEmailError } = await supabase.functions.invoke('send-client-access', {
+      const { data: accessEmailResult, error: accessEmailError } = await invokeIdempotentDelivery(supabase, 'email', 'send-client-access', {
         body: { lead_id: leadId }
       });
-
-      if (accessEmailError || accessEmailResult?.success === false) {
-        console.warn('Dedicated client access email failed, falling back to CRM email:', accessEmailError || accessEmailResult);
-
-        const { data: leadData } = await supabase
-          .from('crm_leads')
-          .select('email, first_name, access_token')
-          .eq('id', leadId)
-          .single();
-
-        if (leadData?.email) {
-          const clientSpaceUrl = leadData.access_token
-            ? `${window.location.origin}/espace-client?token=${leadData.access_token}`
-            : `${window.location.origin}/espace-client`;
-
-          await supabase.functions.invoke('send-crm-email', {
-            body: {
-              to: leadData.email,
-              subject: 'Votre espace client TaxiAssur est pret',
-              content: `
-                <p>Bonjour ${leadData.first_name || 'Cher client'},</p>
-                <p>Votre contrat d assurance taxi est finalise.</p>
-                <p>Votre espace client permet de gerer le contrat, les documents, les paiements, les demandes, les avenants et le suivi client.</p>
-                <p><a href="${clientSpaceUrl}">Acceder a mon espace client</a></p>
-                <p>L equipe TaxiAssur</p>
-              `,
-              leadId: leadId
-            }
-          });
-        }
-      }
+      if (accessEmailError || !accessEmailResult?.success) throw accessEmailError || new Error("E-mail d accès client non envoyé");
 
       toast.success('🎉 Contrat finalisé ! Le prospect est maintenant client.');
 
@@ -522,18 +386,15 @@ export default function ContratSignatureStep({ leadId, onComplete }: ContratSign
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => {
-                          const url = supabase.storage
-                            .from('contract-documents')
-                            .getPublicUrl(doc.file_path).data.publicUrl;
-                          window.open(url, '_blank');
-                        }}
+                      <SecureDocumentLink
+                        filePath={doc.file_path}
+                        source="crm_lead_documents"
+                        bucket="contract-documents"
+                        fileName={doc.file_name}
+                        showText
+                        customText="Voir"
                         className="flex-1 text-xs py-1.5 px-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
-                      >
-                        Voir
-                      </button>
-                      <button
+                      />                      <button
                         onClick={() => deleteDocument(doc.id, doc.file_path)}
                         className="text-xs py-1.5 px-2 bg-red-50 text-red-600 rounded hover:bg-red-100"
                       >

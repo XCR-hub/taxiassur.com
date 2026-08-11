@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { Upload, CheckCircle2, X, FileText, Loader2, AlertCircle, CreditCard, Mail } from 'lucide-react';
 import { MoneticoPaymentManager } from './MoneticoPaymentManager';
 import { toast } from '@/lib/toast';
+import { getSecureDocumentUrl } from '@/lib/secure-document-url';
 
 interface PaiementRIBStepProps {
   leadId: string;
@@ -28,7 +29,6 @@ interface RIBUpload {
 export default function PaiementRIBStep({
   leadId,
   leadEmail,
-  leadFirstName,
   leadAccessToken,
   onComplete
 }: PaiementRIBStepProps) {
@@ -119,7 +119,7 @@ export default function PaiementRIBStep({
 
     try {
       // Upload to storage
-      const safeName = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.\-]+/g, '_').replace(/_+/g, '_');
+      const safeName = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.-]+/g, '_').replace(/_+/g, '_');
       const fileName = `${leadId}/${Date.now()}_${safeName}`;
       const { data: uploadData, error: uploadError } = await supabase
         .storage
@@ -219,6 +219,15 @@ export default function PaiementRIBStep({
     }
   }
 
+  async function openRIB(filePath: string) {
+    try {
+      const url = await getSecureDocumentUrl({ bucket: 'lead-rib', path: filePath });
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (error: unknown) {
+      console.error('Error opening RIB:', error);
+      toast.error(error instanceof Error ? error.message : 'Impossible d\'ouvrir le RIB');
+    }
+  }
   async function sendRIBRequestEmail() {
     if (!leadEmail) {
       toast.warning('Aucune adresse email pour ce lead');
@@ -233,7 +242,10 @@ export default function PaiementRIBStep({
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
+      if (!session?.access_token) {
+        throw new Error('Votre session a expiré. Reconnectez-vous avant d’envoyer la demande.');
+      }
+      const token = session.access_token;
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-intelligent-document-request`,
@@ -339,12 +351,7 @@ export default function PaiementRIBStep({
                 )}
               </div>
               <button
-                onClick={() => {
-                  const url = supabase.storage
-                    .from('lead-rib')
-                    .getPublicUrl(validatedRib.file_path).data.publicUrl;
-                  window.open(url, '_blank');
-                }}
+                onClick={() => void openRIB(validatedRib.file_path)}
                 className="mt-3 inline-flex items-center gap-2 text-sm text-green-700 hover:text-green-800"
               >
                 <FileText className="h-4 w-4" />
@@ -426,12 +433,7 @@ export default function PaiementRIBStep({
                     </p>
                   </div>
                   <button
-                    onClick={() => {
-                      const url = supabase.storage
-                        .from('lead-rib')
-                        .getPublicUrl(rib.file_path).data.publicUrl;
-                      window.open(url, '_blank');
-                    }}
+                    onClick={() => void openRIB(rib.file_path)}
                     className="text-sm py-1 px-3 bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
                   >
                     Voir

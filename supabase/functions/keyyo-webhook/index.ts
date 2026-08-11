@@ -1,371 +1,323 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "jsr:@supabase/supabase-js@2";
+import { constantTimeEqual } from "../_shared/secret-auth.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+const responseHeaders = {
+  "Content-Type": "text/plain; charset=utf-8",
+  "Cache-Control": "no-store",
 };
+const allowedTypes = new Set(["SETUP", "CONNECT", "RELEASE"]);
+const phonePattern = /^[+0-9 ().-]{3,32}$/;
+const idPattern = /^[A-Za-z0-9_.:-]{1,128}$/;
 
-/**
- * Keyyo Webhook Handler
- * Reçoit les notifications d'appels de Keyyo via HTTP GET
- *
- * Documentation: Guide Keyyo CTI/API/TAPI v1.6
- *
- * Paramètres GET envoyés par Keyyo:
- * - _ACCOUNT_: Numéro de la ligne Keyyo (format international)
- * - _CALLER_: Numéro de l'appelant (format international)
- * - _CALLEE_: Numéro de l'appelé (format international)
- * - _CALLREF_: Identifiant de l'appel
- * - _N_TYPE_: Type de notification (SETUP, CONNECT, RELEASE)
- * - _N_VERSION_: Version de l'API (1)
- * - _DREF_: Identifiant du dialogue
- * - _DREF_REPLACE_: Identifiant du dialogue remplacé (interception/transfert)
- * - _SESSION_ID_: Identifiant de session
- * - _IS_ACD_: Si l'appel provient d'un numéro d'accueil (1/0)
- * - _REDIRECTING_NUMBER_: Numéro qui effectue le renvoi
- * - _TSMS_: Timestamp en millisecondes
- *
- * Sécurité: Keyyo envoie depuis l'IP 83.136.160.79
- */
+type CallDirection = "inbound" | "outbound";
+type Metadata = Record<string, string | boolean | null>;
 
-Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 200, headers: corsHeaders });
+function response(body: string, status: number): Response {
+  return new Response(body, { status, headers: responseHeaders });
+}
+
+function parameter(
+  params: URLSearchParams,
+  shortName: string,
+  keyyoName: string,
+): string {
+  return (params.get(shortName) || params.get(keyyoName) || "").trim();
+}
+
+function authorized(request: Request, url: URL): boolean {
+  const expected = Deno.env.get("KEYYO_WEBHOOK_SECRET")?.trim() || "";
+  const supplied = request.headers.get("X-Keyyo-Secret")?.trim() ||
+    url.searchParams.get("webhook_secret")?.trim() || "";
+  return expected.length >= 24 && constantTimeEqual(supplied, expected);
+}
+
+async function findLeadId(
+  supabase: SupabaseClient,
+  direction: CallDirection,
+  caller: string,
+  callee: string,
+): Promise<string | null> {
+  const phone = direction === "inbound" ? caller : callee;
+  const { data, error } = await supabase
+    .from("crm_leads")
+    .select("id")
+    .or(`phone.eq.${phone},mobile.eq.${phone}`)
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(`lead lookup failed: ${error.code || "unknown"}`);
+  return data?.id || null;
+}
+
+async function findUserId(
+  supabase: SupabaseClient,
+  providerId: string,
+  account: string,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("telephony_users")
+    .select("user_id")
+    .eq("provider_id", providerId)
+    .eq("phone_number", account)
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    throw new Error(`telephony user lookup failed: ${error.code || "unknown"}`);
   }
+  return data?.user_id || null;
+}
 
-  try {
-    // Keyyo envoie les notifications via GET
-    const url = new URL(req.url);
-    const params = url.searchParams;
-
-    // Extraire les paramètres Keyyo
-    const account = params.get("account") || params.get("_ACCOUNT_");
-    const caller = params.get("caller") || params.get("_CALLER_");
-    const callee = params.get("callee") || params.get("_CALLEE_");
-    const callRef = params.get("callref") || params.get("_CALLREF_");
-    const notificationType = params.get("type") || params.get("_N_TYPE_");
-    const dref = params.get("dref") || params.get("_DREF_");
-    const drefReplace = params.get("drefreplace") || params.get("_DREF_REPLACE_");
-    const sessionId = params.get("_SESSION_ID_");
-    const isAcd = params.get("_IS_ACD_") === "1";
-    const redirectingNumber = params.get("_REDIRECTING_NUMBER_");
-    const tsms = params.get("_TSMS_");
-
-    // Vérifier l'IP source (sécurité)
-    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-      req.headers.get("x-real-ip");
-
-    console.log("Keyyo webhook received:", {
-      ip: clientIp,
-      account,
-      caller,
-      callee,
-      type: notificationType,
-      callRef,
-      dref,
-    });
-
-    // Valider les paramètres obligatoires
-    if (!account || !caller || !callee || !notificationType) {
-      throw new Error(
-        "Missing required parameters: account, caller, callee, type"
-      );
-    }
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
-
-    // Récupérer le provider Keyyo
-    const { data: provider } = await supabase
-      .from("telephony_providers")
-      .select("id")
-      .eq("name", "keyyo")
-      .single();
-
-    if (!provider) {
-      console.error("Keyyo provider not found");
-      return new Response("OK", { status: 200 }); // Toujours répondre OK pour Keyyo
-    }
-
-    // Déterminer la direction de l'appel
-    // Si ACCOUNT = CALLER, c'est un appel sortant, sinon entrant
-    const direction = account === caller ? "outbound" : "inbound";
-
-    // Créer un ID unique pour l'appel (combinaison de DREF et CALLREF)
-    const externalId = callRef || `keyyo_${dref}_${tsms}`;
-
-    // Timestamp de l'événement
-    const eventTimestamp = tsms
-      ? new Date(parseInt(tsms)).toISOString()
-      : new Date().toISOString();
-
-    // Construire les métadonnées
-    const metadata: any = {
-      account,
-      caller,
-      callee,
-      call_ref: callRef,
-      dref,
-      dref_replace: drefReplace,
-      session_id: sessionId,
-      is_acd: isAcd,
-      redirecting_number: redirectingNumber,
-      notification_type: notificationType,
-      timestamp_ms: tsms,
-    };
-
-    // Traiter selon le type de notification
-    switch (notificationType) {
-      case "SETUP": {
-        // Initiation de l'appel (le téléphone sonne)
-        await handleSetup(
-          supabase,
-          provider.id,
-          externalId,
-          direction,
-          caller,
-          callee,
-          account,
-          eventTimestamp,
-          metadata
-        );
-        break;
-      }
-
-      case "CONNECT": {
-        // Appel décroché
-        await handleConnect(supabase, externalId, eventTimestamp);
-        break;
-      }
-
-      case "RELEASE": {
-        // Appel terminé
-        await handleRelease(supabase, externalId, eventTimestamp);
-        break;
-      }
-
-      default:
-        console.warn(`Unknown notification type: ${notificationType}`);
-    }
-
-    // Toujours répondre OK à Keyyo
-    return new Response("OK", {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "text/plain" },
-    });
-  } catch (error: any) {
-    console.error("Keyyo Webhook error:", error);
-
-    // Même en cas d'erreur, répondre OK pour ne pas que Keyyo réessaie
-    return new Response("OK", {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "text/plain" },
-    });
-  }
-});
-
-/**
- * SETUP: Initiation de l'appel (sonnerie)
- */
 async function handleSetup(
-  supabase: any,
+  supabase: SupabaseClient,
   providerId: string,
   externalId: string,
-  direction: string,
+  direction: CallDirection,
   caller: string,
   callee: string,
   account: string,
   timestamp: string,
-  metadata: any
-) {
-  try {
-    // Essayer de trouver le lead associé au numéro
-    let leadId = null;
-
-    // Pour les appels entrants, chercher le lead par le numéro de l'appelant
-    if (direction === "inbound") {
-      const { data: lead } = await supabase
-        .from("crm_leads")
-        .select("id")
-        .or(`phone.eq.${caller},mobile.eq.${caller}`)
-        .limit(1)
-        .single();
-
-      if (lead) {
-        leadId = lead.id;
-      }
-    }
-
-    // Pour les appels sortants, chercher par le numéro appelé
-    if (direction === "outbound") {
-      const { data: lead } = await supabase
-        .from("crm_leads")
-        .select("id")
-        .or(`phone.eq.${callee},mobile.eq.${callee}`)
-        .limit(1)
-        .single();
-
-      if (lead) {
-        leadId = lead.id;
-      }
-    }
-
-    // Essayer de trouver l'utilisateur associé à cette ligne Keyyo
-    let userId = null;
-    const { data: keyyoUser } = await supabase
-      .from("telephony_users")
-      .select("user_id")
-      .eq("provider_id", providerId)
-      .eq("phone_number", account)
-      .limit(1)
-      .single();
-
-    if (keyyoUser) {
-      userId = keyyoUser.user_id;
-    }
-
-    // Créer ou mettre à jour l'enregistrement de l'appel
-    const { error } = await supabase.from("telephony_calls").upsert(
-      {
-        external_id: externalId,
-        provider_id: providerId,
-        lead_id: leadId,
-        user_id: userId,
-        direction,
-        from_number: caller,
-        to_number: callee,
-        status: "ringing",
-        initiated_at: timestamp,
-        metadata,
-      },
-      {
-        onConflict: "external_id",
-      }
+  metadata: Metadata,
+): Promise<void> {
+  const [leadId, userId] = await Promise.all([
+    findLeadId(supabase, direction, caller, callee),
+    findUserId(supabase, providerId, account),
+  ]);
+  const { error } = await supabase.from("telephony_calls").upsert({
+    external_id: externalId,
+    provider_id: providerId,
+    lead_id: leadId,
+    user_id: userId,
+    direction,
+    from_number: caller,
+    to_number: callee,
+    status: "ringing",
+    initiated_at: timestamp,
+    metadata,
+  }, { onConflict: "external_id" });
+  if (error) {
+    throw new Error(
+      `call setup persistence failed: ${error.code || "unknown"}`,
     );
+  }
 
-    if (error) {
-      console.error("Failed to save call SETUP:", error);
-    } else {
-      console.log(`Call SETUP saved: ${externalId} (${direction})`);
+  if (leadId) {
+    const { data: existingInteraction, error: existingError } = await supabase
+      .from("crm_interactions")
+      .select("id")
+      .eq("lead_id", leadId)
+      .eq("metadata->>call_ref", externalId)
+      .limit(1)
+      .maybeSingle();
+    if (existingError) {
+      throw new Error(
+        `call interaction lookup failed: ${existingError.code || "unknown"}`,
+      );
     }
-
-    // Si un lead est trouvé, créer une interaction
-    if (leadId) {
-      await supabase.from("crm_interactions").insert({
+    if (!existingInteraction) {
+      const { error: interactionError } = await supabase.from(
+        "crm_interactions",
+      ).insert({
         lead_id: leadId,
-        type: "call_incoming",
+        type: direction === "inbound" ? "call_incoming" : "call_outgoing",
         channel: "phone",
         direction,
+        status: "ringing",
         metadata: {
           phone_number: direction === "inbound" ? caller : callee,
-          status: "ringing",
           call_ref: externalId,
         },
       });
+      if (interactionError) {
+        throw new Error(
+          `call interaction persistence failed: ${
+            interactionError.code || "unknown"
+          }`,
+        );
+      }
     }
-  } catch (error) {
-    console.error("Error in handleSetup:", error);
   }
 }
 
-/**
- * CONNECT: Appel décroché
- */
 async function handleConnect(
-  supabase: any,
+  supabase: SupabaseClient,
   externalId: string,
-  timestamp: string
-) {
-  try {
-    const { error } = await supabase
-      .from("telephony_calls")
-      .update({
-        status: "answered",
-        answered_at: timestamp,
-      })
-      .eq("external_id", externalId);
-
-    if (error) {
-      console.error("Failed to update call CONNECT:", error);
-    } else {
-      console.log(`Call CONNECT updated: ${externalId}`);
-    }
-  } catch (error) {
-    console.error("Error in handleConnect:", error);
+  timestamp: string,
+): Promise<void> {
+  const { data, error } = await supabase.from("telephony_calls").update({
+    status: "answered",
+    answered_at: timestamp,
+  }).eq("external_id", externalId).select("id").maybeSingle();
+  if (error) {
+    throw new Error(`call connect update failed: ${error.code || "unknown"}`);
   }
+  if (!data) throw new Error("call connect target missing");
 }
 
-/**
- * RELEASE: Appel terminé
- */
 async function handleRelease(
-  supabase: any,
+  supabase: SupabaseClient,
   externalId: string,
-  timestamp: string
-) {
-  try {
-    // Récupérer l'appel pour calculer la durée
-    const { data: call } = await supabase
-      .from("telephony_calls")
-      .select("*")
-      .eq("external_id", externalId)
-      .single();
+  timestamp: string,
+): Promise<void> {
+  const { data: call, error: callError } = await supabase
+    .from("telephony_calls")
+    .select("id,lead_id,initiated_at,answered_at")
+    .eq("external_id", externalId)
+    .maybeSingle();
+  if (callError) {
+    throw new Error(
+      `call release lookup failed: ${callError.code || "unknown"}`,
+    );
+  }
+  if (!call) throw new Error("call release target missing");
 
-    if (!call) {
-      console.warn(`Call not found for RELEASE: ${externalId}`);
-      return;
-    }
+  const endTime = new Date(timestamp).getTime();
+  const durationSeconds = call.initiated_at
+    ? Math.max(
+      0,
+      Math.round((endTime - new Date(call.initiated_at).getTime()) / 1000),
+    )
+    : 0;
+  const talkTimeSeconds = call.answered_at
+    ? Math.max(
+      0,
+      Math.round((endTime - new Date(call.answered_at).getTime()) / 1000),
+    )
+    : 0;
+  const { error: updateError } = await supabase.from("telephony_calls").update({
+    status: "completed",
+    ended_at: timestamp,
+    duration_seconds: durationSeconds,
+    talk_time_seconds: talkTimeSeconds,
+  }).eq("id", call.id);
+  if (updateError) {
+    throw new Error(
+      `call release update failed: ${updateError.code || "unknown"}`,
+    );
+  }
 
-    // Calculer la durée
-    let durationSeconds = 0;
-    let talkTimeSeconds = 0;
-
-    if (call.initiated_at) {
-      const initiatedTime = new Date(call.initiated_at).getTime();
-      const endTime = new Date(timestamp).getTime();
-      durationSeconds = Math.round((endTime - initiatedTime) / 1000);
-    }
-
-    if (call.answered_at) {
-      const answeredTime = new Date(call.answered_at).getTime();
-      const endTime = new Date(timestamp).getTime();
-      talkTimeSeconds = Math.round((endTime - answeredTime) / 1000);
-    }
-
-    // Mettre à jour l'appel
-    const { error } = await supabase
-      .from("telephony_calls")
-      .update({
-        status: "completed",
-        ended_at: timestamp,
-        duration_seconds: durationSeconds,
-        talk_time_seconds: talkTimeSeconds,
-      })
-      .eq("external_id", externalId);
-
-    if (error) {
-      console.error("Failed to update call RELEASE:", error);
-    } else {
-      console.log(
-        `Call RELEASE updated: ${externalId} (duration: ${durationSeconds}s, talk: ${talkTimeSeconds}s)`
+  if (call.lead_id) {
+    const { data: interaction, error: interactionLookupError } = await supabase
+      .from("crm_interactions")
+      .select("id,metadata")
+      .eq("lead_id", call.lead_id)
+      .eq("metadata->>call_ref", externalId)
+      .limit(1)
+      .maybeSingle();
+    if (interactionLookupError) {
+      throw new Error(
+        `call interaction lookup failed: ${
+          interactionLookupError.code || "unknown"
+        }`,
       );
     }
-
-    // Mettre à jour l'interaction si elle existe
-    if (call.lead_id) {
-      await supabase
-        .from("crm_interactions")
-        .update({
-          metadata: supabase.raw(`metadata || '{"duration_seconds": ${talkTimeSeconds}, "status": "completed"}'::jsonb`),
-        })
-        .eq("lead_id", call.lead_id)
-        .eq("metadata->>call_ref", externalId);
+    if (interaction) {
+      const { error: interactionUpdateError } = await supabase.from(
+        "crm_interactions",
+      ).update({
+        status: "completed",
+        metadata: {
+          ...(interaction.metadata || {}),
+          duration_seconds: talkTimeSeconds,
+          status: "completed",
+        },
+      }).eq("id", interaction.id);
+      if (interactionUpdateError) {
+        throw new Error(
+          `call interaction update failed: ${
+            interactionUpdateError.code || "unknown"
+          }`,
+        );
+      }
     }
-  } catch (error) {
-    console.error("Error in handleRelease:", error);
   }
 }
+
+Deno.serve(async (request: Request) => {
+  if (request.method !== "GET") return response("Method not allowed", 405);
+  const url = new URL(request.url);
+  if (!authorized(request, url)) return response("Unauthorized", 401);
+
+  const account = parameter(url.searchParams, "account", "_ACCOUNT_");
+  const caller = parameter(url.searchParams, "caller", "_CALLER_");
+  const callee = parameter(url.searchParams, "callee", "_CALLEE_");
+  const callRef = parameter(url.searchParams, "callref", "_CALLREF_");
+  const notificationType = parameter(url.searchParams, "type", "_N_TYPE_")
+    .toUpperCase();
+  const dref = parameter(url.searchParams, "dref", "_DREF_");
+  const tsms = parameter(url.searchParams, "tsms", "_TSMS_");
+
+  if (
+    !phonePattern.test(account) || !phonePattern.test(caller) ||
+    !phonePattern.test(callee) ||
+    !allowedTypes.has(notificationType)
+  ) {
+    return response("Invalid webhook payload", 400);
+  }
+  const externalId = callRef || (dref && tsms ? `keyyo_${dref}_${tsms}` : "");
+  if (!idPattern.test(externalId)) {
+    return response("Invalid call identifier", 400);
+  }
+
+  let timestamp = new Date();
+  if (tsms) {
+    if (!/^\d{10,13}$/.test(tsms)) return response("Invalid timestamp", 400);
+    timestamp = new Date(Number(tsms.length === 10 ? `${tsms}000` : tsms));
+    if (
+      !Number.isFinite(timestamp.getTime()) ||
+      Math.abs(Date.now() - timestamp.getTime()) > 7 * 86_400_000
+    ) {
+      return response("Timestamp outside accepted window", 400);
+    }
+  }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  if (!supabaseUrl || !serviceKey) return response("Service unavailable", 503);
+  const supabase = createClient(supabaseUrl, serviceKey);
+
+  try {
+    const { data: provider, error: providerError } = await supabase
+      .from("telephony_providers").select("id").eq("name", "keyyo")
+      .maybeSingle();
+    if (providerError || !provider) {
+      throw new Error("Keyyo provider unavailable");
+    }
+    const direction: CallDirection = account === caller
+      ? "outbound"
+      : "inbound";
+    const metadata: Metadata = {
+      account,
+      caller,
+      callee,
+      call_ref: callRef || null,
+      dref: dref || null,
+      notification_type: notificationType,
+      timestamp_ms: tsms || null,
+    };
+    const eventTimestamp = timestamp.toISOString();
+    if (notificationType === "SETUP") {
+      await handleSetup(
+        supabase,
+        provider.id,
+        externalId,
+        direction,
+        caller,
+        callee,
+        account,
+        eventTimestamp,
+        metadata,
+      );
+    } else if (notificationType === "CONNECT") {
+      await handleConnect(supabase, externalId, eventTimestamp);
+    } else {
+      await handleRelease(supabase, externalId, eventTimestamp);
+    }
+    return response("OK", 200);
+  } catch (error) {
+    console.error(
+      "Keyyo webhook processing failed",
+      error instanceof Error ? error.message.split(":")[0] : "unknown",
+    );
+    return response("Temporary processing failure", 503);
+  }
+});

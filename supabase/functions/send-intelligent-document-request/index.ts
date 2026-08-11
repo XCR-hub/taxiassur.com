@@ -7,6 +7,25 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
+const internalDomains = new Set(["taxiassur.com", "taxiassur.fr", "xcr.fr"]);
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const json = (status: number, body: Record<string, unknown>) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+async function isAuthorized(req: Request, url: string, serviceKey: string): Promise<boolean> {
+  const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+  if (!token) return false;
+  if (token === serviceKey) return true;
+  const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
+  const { data, error } = await admin.auth.getUser(token);
+  if (error) return false;
+  const domain = (data.user?.email || "").toLowerCase().split("@")[1] || "";
+  return internalDomains.has(domain);
+}
 const TAXI_DOC_TYPES: Record<string, { label: string; required: boolean }> = {
   licence_taxi: { label: "Licence de taxi / ADS", required: true },
   permis_conduire: { label: "Permis de conduire", required: true },
@@ -61,13 +80,19 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
+  if (req.method !== "POST") return json(405, { success: false, error: "Method not allowed" });
 
   try {
-    const { lead_id, specific_documents } = await req.json();
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    if (!supabaseUrl || !supabaseKey) return json(503, { success: false, error: "Service indisponible" });
+    if (!await isAuthorized(req, supabaseUrl, supabaseKey)) return json(401, { success: false, error: "Unauthorized" });
 
-    if (!lead_id) {
-      throw new Error("lead_id is required");
-    }
+    let payload: Record<string, unknown>;
+    try { payload = await req.json(); } catch { return json(400, { success: false, error: "JSON invalide" }); }
+    const lead_id = typeof payload.lead_id === "string" ? payload.lead_id.trim() : "";
+    const specific_documents = payload.specific_documents;
+    if (!uuidPattern.test(lead_id)) return json(400, { success: false, error: "lead_id invalide" });
 
     const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
     if (!BREVO_API_KEY) {
@@ -82,8 +107,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     console.log(`[DOCUMENT REQUEST] Processing for lead_id: ${lead_id}`);
@@ -291,21 +314,13 @@ Deno.serve(async (req: Request) => {
         success: true,
         message: `Email envoyé à ${firstName} pour ${documentsToRequest.length} document(s)`,
         documents_requested: documentsToRequest,
-        portal_url: portalUrl,
         brevo_message_id: brevoResult.messageId,
         personalized_for: firstName
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
-    console.error("[DOCUMENT REQUEST] ❌ Error:", error);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message || 'Unknown error',
-        details: error.toString()
-      }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+  } catch (error: unknown) {
+    console.error("[DOCUMENT REQUEST] failure", error instanceof Error ? error.name : "unknown");
+    return json(500, { success: false, error: "Erreur serveur" });
   }
 });

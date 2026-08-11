@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   CreditCard, Check, X, AlertCircle, Lock,
-  Shield, ArrowLeft, Loader2, Phone, Euro, FileText, User, Clock
+  Shield, Loader2, Phone, Euro, FileText, User, Clock
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import SEOHead from '@/components/SEOHead';
@@ -30,6 +30,8 @@ interface MoneticoFormData {
 const PaiementLibre: React.FC = () => {
   const { reference } = useParams<{ reference: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const accessToken = (searchParams.get('token') || '').trim().toLowerCase();
   const formRef = useRef<HTMLFormElement>(null);
 
   const [loading, setLoading] = useState(true);
@@ -39,10 +41,13 @@ const PaiementLibre: React.FC = () => {
   const [formData, setFormData] = useState<MoneticoFormData | null>(null);
 
   useEffect(() => {
-    if (reference) {
+    if (reference && /^[0-9a-f]{64}$/.test(accessToken)) {
       loadPayment(reference);
+    } else {
+      setError('Lien de paiement invalide ou incomplet.');
+      setLoading(false);
     }
-  }, [reference]);
+  }, [reference, accessToken]);
 
   useEffect(() => {
     if (formData && formRef.current) {
@@ -53,7 +58,7 @@ const PaiementLibre: React.FC = () => {
   const loadPayment = async (ref: string) => {
     try {
       const { data, error: dbError } = await supabase
-        .rpc('get_payment_by_reference', { p_reference: ref });
+        .rpc('get_payment_by_access', { p_reference: ref, p_access_token: accessToken });
 
       if (dbError) throw dbError;
 
@@ -65,8 +70,8 @@ const PaiementLibre: React.FC = () => {
       }
 
       setPayment(row as PaymentRecord);
-    } catch (err: any) {
-      console.error('Erreur chargement paiement:', err);
+    } catch (err: unknown) {
+      console.error('Payment lookup failure', err instanceof Error ? err.name : 'unknown');
       setError('Erreur lors du chargement. Veuillez réessayer.');
     } finally {
       setLoading(false);
@@ -87,7 +92,7 @@ const PaiementLibre: React.FC = () => {
             'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ reference: payment.reference }),
+          body: JSON.stringify({ reference: payment.reference, accessToken }),
         }
       );
 
@@ -103,8 +108,8 @@ const PaiementLibre: React.FC = () => {
       }
 
       setFormData(data.formData);
-    } catch (err: any) {
-      console.error('Erreur paiement:', err);
+    } catch (err: unknown) {
+      console.error('Payment form failure', err instanceof Error ? err.name : 'unknown');
       setError('Une erreur est survenue. Veuillez réessayer ou contacter le support.');
       setProcessing(false);
     }

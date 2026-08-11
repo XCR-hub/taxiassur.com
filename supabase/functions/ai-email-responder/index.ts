@@ -57,7 +57,7 @@ Deno.serve(async (req: Request) => {
     const intent = payload.classification.intent;
 
     let responsePrompt = '';
-    let responseSubject = `Re: ${conversation.subject}`;
+    const responseSubject = `Re: ${conversation.subject}`;
 
     switch (contactType) {
       case 'prospect_taxi':

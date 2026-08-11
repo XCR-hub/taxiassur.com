@@ -21,6 +21,8 @@ const netlifySiteId = process.env.NETLIFY_SITE_ID || "9719283a-c221-4e19-8a78-72
 
 const supabaseFunctions = [
   "send-email-ionos",
+  "send-email",
+  "team-email-handler",
   "send-lead-notification",
   "process-lead-queue",
   "send-client-access",
@@ -40,6 +42,7 @@ const supabaseFunctions = [
   "sync-ionos-imap-v2",
   "sync-ionos-imap-documents",
   "notify-claim",
+  "send-lead-magnet-confirmation",
 ];
 
 const publicSupabaseFunctionsNoJwt = new Set([

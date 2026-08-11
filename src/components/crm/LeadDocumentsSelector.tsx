@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   FileText,
   File,
-  FileCheck,
   CheckSquare,
   Square,
   ExternalLink,
@@ -13,15 +12,25 @@ import {
   FileSignature
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { getSecureDocumentUrl } from '@/lib/secure-document-url';
 
 interface LeadDocument {
   id: string;
   name: string;
-  file_url: string;
+  file_url?: string;
+  file_path?: string;
+  bucket?: 'prospect-documents' | 'crm-documents';
   document_type: string;
-  category: 'document' | 'quote' | 'contract';
+  category: DocumentCategory;
   uploaded_at: string;
   file_size?: number;
+}
+
+type DocumentCategory = 'document' | 'quote' | 'contract';
+
+function joinedCompanyName(value: unknown): string {
+  const item = Array.isArray(value) ? value[0] : value;
+  return item && typeof item === "object" && "name" in item ? String((item as { name?: unknown }).name || "") : "";
 }
 
 interface LeadDocumentsSelectorProps {
@@ -90,13 +99,9 @@ export function LeadDocumentsSelector({
     new Set(selectedDocuments.map(d => d.id))
   );
   const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState<'all' | 'document' | 'quote' | 'contract'>('all');
+  const [activeCategory, setActiveCategory] = useState<'all' | DocumentCategory>('all');
 
-  useEffect(() => {
-    loadDocuments();
-  }, [leadId]);
-
-  const loadDocuments = async () => {
+  const loadDocuments = useCallback(async () => {
     try {
       setLoading(true);
       const allDocs: LeadDocument[] = [];
@@ -104,7 +109,7 @@ export function LeadDocumentsSelector({
       // 1. Charger les documents du prospect
       const { data: prospectDocs, error: prospectError } = await supabase
         .from('prospect_documents')
-        .select('id, document_type, file_url, validated, created_at, file_size')
+        .select('id, document_type, file_path, validated, created_at, file_size')
         .eq('lead_id', leadId)
         .eq('validated', true);
 
@@ -112,7 +117,8 @@ export function LeadDocumentsSelector({
         allDocs.push(...prospectDocs.map(doc => ({
           id: `prospect-${doc.id}`,
           name: DOC_TYPE_LABELS[doc.document_type] || doc.document_type,
-          file_url: doc.file_url,
+          file_path: doc.file_path,
+          bucket: 'prospect-documents' as const,
           document_type: doc.document_type,
           category: 'document' as const,
           uploaded_at: doc.created_at,
@@ -123,7 +129,7 @@ export function LeadDocumentsSelector({
       // 2. Charger les documents CRM
       const { data: crmDocs, error: crmError } = await supabase
         .from('crm_lead_documents')
-        .select('id, document_type, file_url, status, created_at')
+        .select('id, document_type, file_path, status, created_at')
         .eq('lead_id', leadId)
         .eq('status', 'validated');
 
@@ -131,7 +137,8 @@ export function LeadDocumentsSelector({
         allDocs.push(...crmDocs.map(doc => ({
           id: `crm-${doc.id}`,
           name: DOC_TYPE_LABELS[doc.document_type] || doc.document_type,
-          file_url: doc.file_url,
+          file_path: doc.file_path,
+          bucket: 'prospect-documents' as const,
           document_type: doc.document_type,
           category: 'document' as const,
           uploaded_at: doc.created_at
@@ -156,7 +163,7 @@ export function LeadDocumentsSelector({
       if (!quotesError && quotes) {
         allDocs.push(...quotes.map(quote => ({
           id: `quote-${quote.id}`,
-          name: `Devis ${(quote.insurance_companies as any)?.name || 'Compagnie'}${quote.quote_amount ? ` - ${quote.quote_amount}€` : ''}`,
+          name: `Devis ${joinedCompanyName(quote.insurance_companies) || 'Compagnie'}${quote.quote_amount ? ` - ${quote.quote_amount}€` : ''}`,
           file_url: quote.quote_file_url!,
           document_type: 'quote',
           category: 'quote' as const,
@@ -188,6 +195,18 @@ export function LeadDocumentsSelector({
     } finally {
       setLoading(false);
     }
+  }, [leadId]);
+
+  useEffect(() => {
+    void loadDocuments();
+  }, [loadDocuments]);
+
+  const openDocument = async (doc: LeadDocument, download = false) => {
+    const url = doc.file_path && doc.bucket
+      ? await getSecureDocumentUrl({ bucket: doc.bucket, path: doc.file_path, download, fileName: doc.name })
+      : doc.file_url;
+    if (!url) return;
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   const toggleDocument = (docId: string) => {
@@ -203,7 +222,7 @@ export function LeadDocumentsSelector({
     onDocumentsSelected(selectedDocs);
   };
 
-  const selectAllInCategory = (category: 'document' | 'quote' | 'contract') => {
+  const selectAllInCategory = (category: DocumentCategory) => {
     const docs = documents.filter(d => d.category === category);
     const newSelected = new Set([...Array.from(selected), ...docs.map(d => d.id)]);
     setSelected(newSelected);
@@ -220,7 +239,7 @@ export function LeadDocumentsSelector({
     return documents.filter(d => d.category === activeCategory);
   };
 
-  const getCountByCategory = (category: 'document' | 'quote' | 'contract') => {
+  const getCountByCategory = (category: DocumentCategory) => {
     return documents.filter(d => d.category === category).length;
   };
 
@@ -278,13 +297,13 @@ export function LeadDocumentsSelector({
           >
             Tous ({documents.length})
           </button>
-          {Object.entries(CATEGORY_CONFIG).map(([key, config]) => {
-            const count = getCountByCategory(key as any);
+          {(Object.entries(CATEGORY_CONFIG) as Array<[DocumentCategory, typeof CATEGORY_CONFIG[DocumentCategory]]>).map(([key, config]) => {
+            const count = getCountByCategory(key);
             const Icon = config.icon;
             return (
               <button
                 key={key}
-                onClick={() => setActiveCategory(key as any)}
+                onClick={() => setActiveCategory(key)}
                 className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
                   activeCategory === key
                     ? `${config.bgColor} ${config.color} border-2 ${config.borderColor}`
@@ -373,26 +392,22 @@ export function LeadDocumentsSelector({
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
-                  <a
-                    href={doc.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
+                  <button
+                    type="button"
+                    onClick={(event) => { event.stopPropagation(); void openDocument(doc); }}
                     className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
                     title="Voir le document"
                   >
                     <ExternalLink className="w-4 h-4" />
-                  </a>
-                  <a
-                    href={doc.file_url}
-                    download
-                    onClick={(e) => e.stopPropagation()}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(event) => { event.stopPropagation(); void openDocument(doc, true); }}
                     className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
                     title="Télécharger"
                   >
                     <Download className="w-4 h-4" />
-                  </a>
-                </div>
+                  </button>                </div>
               </div>
             </div>
           );

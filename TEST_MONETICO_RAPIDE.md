@@ -143,7 +143,7 @@ MONETICO_MODE=test
 MONETICO_TEST_MAC_KEY = (demander à Ingineco)
 
 # La clé doit être en HEXADÉCIMAL (40 caractères)
-# Exemple : 106FA85BF342FD4EE95C883D82865B5CC1F63890
+# Exemple : [REDACTED_MONETICO_MAC_KEY]
 ```
 
 ### Erreur : "TPE inconnu"

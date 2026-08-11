@@ -335,7 +335,7 @@ async function findRelevantQueries(
   const keywords = topic.toLowerCase().split(' ').filter(w => w.length > 3);
 
   // Construire la requête de recherche
-  let query = supabase
+  const query = supabase
     .from('gsc_queries')
     .select('query, impressions, clicks, ctr, position')
     .gte('date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])

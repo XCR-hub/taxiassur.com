@@ -1,30 +1,38 @@
+import { isInternalRequest } from "../_shared/internal-auth.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
+  if (!(await isInternalRequest(req))) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('[Self-Healer] Starting system health check...');
+    console.log("[Self-Healer] Starting system health check...");
 
     const results = {
       checks_performed: 0,
       issues_found: 0,
       auto_fixes_applied: 0,
       manual_intervention_needed: 0,
-      details: [] as any[]
+      details: [] as any[],
     };
 
     // 1. Vérifier les Edge Functions
@@ -80,42 +88,48 @@ Deno.serve(async (req: Request) => {
     results.details.push(metricsCheck);
 
     // 5. Détecter les anomalies
-    const { data: anomalies } = await supabase.rpc('detect_metric_anomalies');
+    const { data: anomalies } = await supabase.rpc("detect_metric_anomalies");
     if (anomalies && anomalies.total_anomalies > 0) {
       results.issues_found += anomalies.total_anomalies;
       results.details.push({
-        component: 'Anomaly Detection',
-        status: 'warning',
+        component: "Anomaly Detection",
+        status: "warning",
         anomalies_detected: anomalies.total_anomalies,
         critical_alerts: anomalies.critical_count,
-        auto_resolved: anomalies.auto_resolved_count
+        auto_resolved: anomalies.auto_resolved_count,
       });
     }
 
     // Enregistrer le health check
-    await supabase.from('system_health_checks').insert({
-      check_type: 'full_system_scan',
-      component_name: 'all_systems',
-      status: results.issues_found === 0 ? 'healthy' : 'degraded',
+    await supabase.from("system_health_checks").insert({
+      check_type: "full_system_scan",
+      component_name: "all_systems",
+      status: results.issues_found === 0 ? "healthy" : "degraded",
       error_details: results,
-      severity: results.manual_intervention_needed > 0 ? 'high' : 'low'
+      severity: results.manual_intervention_needed > 0 ? "high" : "low",
     });
 
-    console.log('[Self-Healer] Health check complete:', results);
+    console.log("[Self-Healer] Health check complete:", results);
 
     return new Response(
       JSON.stringify({
         success: true,
-        system_status: results.issues_found === 0 ? 'healthy' : 'degraded',
-        ...results
+        system_status: results.issues_found === 0 ? "healthy" : "degraded",
+        ...results,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error) {
-    console.error('[Self-Healer] Error:', error);
+    console.error("[Self-Healer] Error:", error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });
@@ -123,31 +137,33 @@ Deno.serve(async (req: Request) => {
 async function checkEdgeFunctions(supabase: any) {
   try {
     const { data: recentExecutions, error } = await supabase
-      .from('cron_execution_log')
-      .select('*')
-      .order('executed_at', { ascending: false })
+      .from("cron_execution_log")
+      .select("*")
+      .order("executed_at", { ascending: false })
       .limit(10);
 
     if (error) throw error;
 
-    const failureRate = recentExecutions ? 
-      recentExecutions.filter((e: any) => e.status === 'failed').length / recentExecutions.length : 0;
+    const failureRate = recentExecutions
+      ? recentExecutions.filter((e: any) => e.status === "failed").length /
+        recentExecutions.length
+      : 0;
 
     const healthy = failureRate < 0.3;
 
     return {
-      component: 'Edge Functions',
+      component: "Edge Functions",
       healthy,
-      failure_rate: (failureRate * 100).toFixed(2) + '%',
+      failure_rate: (failureRate * 100).toFixed(2) + "%",
       recent_executions: recentExecutions?.length || 0,
-      auto_fixed: false
+      auto_fixed: false,
     };
   } catch (error) {
     return {
-      component: 'Edge Functions',
+      component: "Edge Functions",
       healthy: false,
-      error: error.message,
-      auto_fixed: false
+      error: error instanceof Error ? error.message : "Unknown error",
+      auto_fixed: false,
     };
   }
 }
@@ -155,25 +171,25 @@ async function checkEdgeFunctions(supabase: any) {
 async function checkCrons(supabase: any) {
   try {
     const { data: cronConfig } = await supabase
-      .from('cron_jobs_config')
-      .select('*')
-      .eq('is_active', true);
+      .from("cron_jobs_config")
+      .select("*")
+      .eq("is_active", true);
 
     const totalCrons = cronConfig?.length || 0;
     const healthy = totalCrons > 0;
 
     return {
-      component: 'Cron Jobs',
+      component: "Cron Jobs",
       healthy,
       active_crons: totalCrons,
-      auto_fixed: false
+      auto_fixed: false,
     };
   } catch (error) {
     return {
-      component: 'Cron Jobs',
+      component: "Cron Jobs",
       healthy: false,
-      error: error.message,
-      auto_fixed: false
+      error: error instanceof Error ? error.message : "Unknown error",
+      auto_fixed: false,
     };
   }
 }
@@ -181,25 +197,25 @@ async function checkCrons(supabase: any) {
 async function checkDatabase(supabase: any) {
   try {
     const { data: leads, error } = await supabase
-      .from('leads')
-      .select('id', { count: 'exact', head: true });
+      .from("leads")
+      .select("id", { count: "exact", head: true });
 
     if (error) throw error;
 
     const healthy = true;
 
     return {
-      component: 'Database',
+      component: "Database",
       healthy,
-      connection: 'ok',
-      auto_fixed: false
+      connection: "ok",
+      auto_fixed: false,
     };
   } catch (error) {
     return {
-      component: 'Database',
+      component: "Database",
       healthy: false,
-      error: error.message,
-      auto_fixed: false
+      error: error instanceof Error ? error.message : "Unknown error",
+      auto_fixed: false,
     };
   }
 }
@@ -207,10 +223,10 @@ async function checkDatabase(supabase: any) {
 async function checkPerformanceMetrics(supabase: any) {
   try {
     const { data: metrics } = await supabase
-      .from('realtime_metrics')
-      .select('*')
-      .neq('status', 'healthy')
-      .gte('measurement_time', new Date(Date.now() - 3600000).toISOString());
+      .from("realtime_metrics")
+      .select("*")
+      .neq("status", "healthy")
+      .gte("measurement_time", new Date(Date.now() - 3600000).toISOString());
 
     const unhealthyMetrics = metrics?.length || 0;
 
@@ -221,56 +237,67 @@ async function checkPerformanceMetrics(supabase: any) {
     }
 
     return {
-      component: 'Performance Metrics',
+      component: "Performance Metrics",
       healthy: unhealthyMetrics === 0,
       unhealthy_metrics: unhealthyMetrics,
-      auto_fixed: unhealthyMetrics > 0
+      auto_fixed: unhealthyMetrics > 0,
     };
   } catch (error) {
     return {
-      component: 'Performance Metrics',
+      component: "Performance Metrics",
       healthy: false,
-      error: error.message,
-      auto_fixed: false
+      error: error instanceof Error ? error.message : "Unknown error",
+      auto_fixed: false,
     };
   }
 }
 
 async function attemptAutoFix(supabase: any, metric: any) {
   try {
-    console.log(`[Self-Healer] Attempting auto-fix for metric: ${metric.metric_name}`);
+    console.log(
+      `[Self-Healer] Attempting auto-fix for metric: ${metric.metric_name}`,
+    );
 
     let fixApplied = false;
-    let fixAction = '';
+    let fixAction = "";
 
-    if (metric.metric_name === 'api_response_time' && metric.current_value > metric.threshold_max) {
-      fixAction = 'Cleared cache and restarted connections';
+    if (
+      metric.metric_name === "api_response_time" &&
+      metric.current_value > metric.threshold_max
+    ) {
+      fixAction = "Cleared cache and restarted connections";
       fixApplied = true;
     }
 
-    if (metric.metric_name === 'database_connections' && metric.current_value > metric.threshold_max) {
-      fixAction = 'Released idle database connections';
+    if (
+      metric.metric_name === "database_connections" &&
+      metric.current_value > metric.threshold_max
+    ) {
+      fixAction = "Released idle database connections";
       fixApplied = true;
     }
 
     if (fixApplied) {
-      await supabase.from('auto_corrections').insert({
-        problem_type: 'performance_degradation',
-        correction_type: 'automatic',
-        original_state: { metric_name: metric.metric_name, value: metric.current_value },
+      await supabase.from("auto_corrections").insert({
+        problem_type: "performance_degradation",
+        correction_type: "automatic",
+        original_state: {
+          metric_name: metric.metric_name,
+          value: metric.current_value,
+        },
         corrected_state: { action: fixAction },
         success: true,
-        rollback_available: true
+        rollback_available: true,
       });
 
-      await supabase.from('realtime_metrics')
-        .update({ status: 'healthy' })
-        .eq('id', metric.id);
+      await supabase.from("realtime_metrics")
+        .update({ status: "healthy" })
+        .eq("id", metric.id);
     }
 
     return fixApplied;
   } catch (error) {
-    console.error('[Self-Healer] Auto-fix failed:', error);
+    console.error("[Self-Healer] Auto-fix failed:", error);
     return false;
   }
 }

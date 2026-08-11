@@ -57,7 +57,7 @@ $$;
 INSERT INTO system_config (key, value, description) VALUES
   ('supabase_url', 'https://drohhxrkoequjphvabvq.supabase.co', 'URL du projet Supabase'),
   ('supabase_anon_key', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg', 'Clé publique Supabase'),
-  ('supabase_service_role_key', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc4Mzc2MCwiZXhwIjoyMDc1MzU5NzYwfQ.4VThS4e4E2YaSrRhuHxvrWICcYSn5su6UpQNJ0Ds4ik', 'Service role key (à ne jamais exposer côté client)')
+  ('supabase_service_role_key', 'REDACTED_SUPABASE_SERVICE_ROLE_JWT', 'Service role key (à ne jamais exposer côté client)')
 ON CONFLICT (key) DO UPDATE
 SET value = EXCLUDED.value, updated_at = now();
 

@@ -2,6 +2,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { User, Mail, Phone, MapPin, Shield, Calendar, Lock, CreditCard, Car, X, Check, AlertCircle, Loader2, CreditCard as Edit2, Save, Building2 } from 'lucide-react';
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
+import { getClientAccessToken } from '@/lib/client-access';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
@@ -10,7 +11,7 @@ import { createClientPortalRequest } from '@/lib/client-requests';
 export default function ClientProfil() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const email = searchParams.get('email') || sessionStorage.getItem('client_email') || '';
+  const accessToken = getClientAccessToken(searchParams.get('token'));
   const [userData, setUserData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -44,13 +45,13 @@ export default function ClientProfil() {
   });
 
   useEffect(() => {
-    if (!email) {
+    if (!accessToken) {
       navigate('/espace-client');
       return;
     }
 
     loadUserData();
-  }, [email, navigate]);
+  }, [accessToken, navigate]);
 
   const requireLeadId = () => {
     const leadId = userData?.lead_id;
@@ -63,7 +64,7 @@ export default function ClientProfil() {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .rpc('get_client_portal_data_by_email', { p_email: email.toLowerCase().trim() });
+        .rpc('get_client_portal_data_by_token', { p_token: accessToken });
 
       if (error) throw error;
       if (data?.success) {
@@ -93,7 +94,7 @@ export default function ClientProfil() {
     try {
       const leadId = requireLeadId();
       await createClientPortalRequest({
-        email,
+        accessToken,
         requestType: 'address_change',
         title: 'Changement adresse',
         description: 'Demande de changement adresse depuis le profil client.',
@@ -137,7 +138,7 @@ export default function ClientProfil() {
     try {
       const leadId = requireLeadId();
       await createClientPortalRequest({
-        email,
+        accessToken,
         requestType: 'payment_change',
         title: 'Changement RIB',
         description: 'Demande de changement de coordonnees bancaires depuis le profil client.',
@@ -180,7 +181,7 @@ export default function ClientProfil() {
     try {
       const leadId = requireLeadId();
       await createClientPortalRequest({
-        email,
+        accessToken,
         requestType: 'vehicle_change',
         title: 'Changement vehicule',
         description: 'Demande de changement de vehicule depuis le profil client. Un avenant peut etre necessaire.',
@@ -209,7 +210,7 @@ export default function ClientProfil() {
 
   if (loading) {
     return (
-      <ClientLayout email={email}>
+      <ClientLayout email={String(userData?.email || '')}>
         <div className="flex items-center justify-center h-64">
           <Loader2 className="w-8 h-8 text-yellow-600 animate-spin" />
         </div>
@@ -225,7 +226,7 @@ export default function ClientProfil() {
         noIndex={true}
       />
 
-      <ClientLayout email={email}>
+      <ClientLayout email={String(userData?.email || '')}>
         <div className="space-y-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Mon Profil</h1>
@@ -291,7 +292,7 @@ export default function ClientProfil() {
                   <Mail size={20} className="text-gray-600 mt-0.5" />
                   <div>
                     <div className="text-sm text-gray-600">Email</div>
-                    <div className="font-semibold text-gray-900">{email}</div>
+                    <div className="font-semibold text-gray-900">{String(userData?.email || '')}</div>
                   </div>
                 </div>
 

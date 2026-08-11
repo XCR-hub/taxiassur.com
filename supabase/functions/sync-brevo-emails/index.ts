@@ -1,8 +1,10 @@
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { isInternalRequest } from "../_shared/internal-auth.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 interface BrevoEmail {
@@ -18,7 +20,10 @@ interface BrevoEmail {
   templateId?: number;
 }
 
-async function fetchBrevoSentEmails(apiKey: string, limit: number = 500): Promise<BrevoEmail[]> {
+async function fetchBrevoSentEmails(
+  apiKey: string,
+  limit: number = 500,
+): Promise<BrevoEmail[]> {
   const emails: BrevoEmail[] = [];
   let offset = 0;
   const batchSize = 100;
@@ -28,12 +33,12 @@ async function fetchBrevoSentEmails(apiKey: string, limit: number = 500): Promis
       const response = await fetch(
         `https://api.brevo.com/v3/smtp/emails?limit=${batchSize}&offset=${offset}&sort=desc`,
         {
-          method: 'GET',
+          method: "GET",
           headers: {
-            'accept': 'application/json',
-            'api-key': apiKey,
+            "accept": "application/json",
+            "api-key": apiKey,
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -56,38 +61,45 @@ async function fetchBrevoSentEmails(apiKey: string, limit: number = 500): Promis
       }
     }
   } catch (error) {
-    console.error('Error fetching Brevo emails:', error);
+    console.error("Error fetching Brevo emails:", error);
   }
 
   return emails;
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  if (!(await isInternalRequest(req))) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const brevoApiKey = Deno.env.get('BREVO_API_KEY');
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const brevoApiKey = Deno.env.get("BREVO_API_KEY");
 
     if (!brevoApiKey) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'BREVO_API_KEY not configured in environment'
+          error: "BREVO_API_KEY not configured in environment",
         }),
         {
           status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('Fetching emails from Brevo API...');
+    console.log("Fetching emails from Brevo API...");
     const brevoEmails = await fetchBrevoSentEmails(brevoApiKey, 1000);
     console.log(`Retrieved ${brevoEmails.length} emails from Brevo`);
 
@@ -98,9 +110,9 @@ Deno.serve(async (req) => {
     for (const email of brevoEmails) {
       try {
         const { data: existing } = await supabase
-          .from('email_messages')
-          .select('id')
-          .eq('message_id', email.messageId)
+          .from("email_messages")
+          .select("id")
+          .eq("message_id", email.messageId)
           .maybeSingle();
 
         if (existing) {
@@ -113,18 +125,18 @@ Deno.serve(async (req) => {
           thread_id: null,
           from_email: email.sender.email,
           from_name: email.sender.name || email.sender.email,
-          to_emails: email.to.map(t => t.email),
-          to_names: email.to.map(t => t.name || t.email),
-          cc_emails: email.cc?.map(c => c.email) || [],
-          subject: email.subject || '(No Subject)',
-          body_text: email.textContent || '',
-          body_html: email.htmlContent || '',
+          to_emails: email.to.map((t) => t.email),
+          to_names: email.to.map((t) => t.name || t.email),
+          cc_emails: email.cc?.map((c) => c.email) || [],
+          subject: email.subject || "(No Subject)",
+          body_text: email.textContent || "",
+          body_html: email.htmlContent || "",
           received_at: email.date,
           sent_at: email.date,
-          direction: 'outbound',
-          status: 'sent',
-          channel: 'email',
-          provider: 'brevo',
+          direction: "outbound",
+          status: "sent",
+          channel: "email",
+          provider: "brevo",
           is_read: true,
           has_attachments: false,
           tags: email.tags || [],
@@ -135,16 +147,18 @@ Deno.serve(async (req) => {
         };
 
         const { error: insertError } = await supabase
-          .from('email_messages')
+          .from("email_messages")
           .insert(emailData);
 
         if (insertError) {
-          console.error(`Error inserting email ${email.messageId}:`, insertError);
+          console.error(
+            `Error inserting email ${email.messageId}:`,
+            insertError,
+          );
           errors++;
         } else {
           inserted++;
         }
-
       } catch (error) {
         console.error(`Error processing email ${email.messageId}:`, error);
         errors++;
@@ -152,18 +166,18 @@ Deno.serve(async (req) => {
     }
 
     const { error: updateError } = await supabase
-      .from('email_accounts')
+      .from("email_accounts")
       .update({ last_sync_at: new Date().toISOString() })
-      .eq('email', 'team@taxiassur.com');
+      .eq("email", "team@taxiassur.com");
 
     if (updateError) {
-      console.error('Error updating last_sync_at:', updateError);
+      console.error("Error updating last_sync_at:", updateError);
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Brevo emails synced successfully',
+        message: "Brevo emails synced successfully",
         stats: {
           total_retrieved: brevoEmails.length,
           inserted,
@@ -171,20 +185,19 @@ Deno.serve(async (req) => {
           errors,
         },
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-
   } catch (error) {
-    console.error('Error in sync-brevo-emails:', error);
+    console.error("Error in sync-brevo-emails:", error);
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message
+        error: error.message,
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });

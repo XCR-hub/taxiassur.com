@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { verifyBearerSecret } from '../_shared/secret-auth.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,8 +14,13 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    if (!verifyBearerSecret(req, Deno.env.get('BREVO_WEBHOOK_TOKEN'))) {
+      return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     const payload = await req.json();
-    console.log('Brevo webhook received:', JSON.stringify(payload, null, 2));
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -24,12 +30,33 @@ Deno.serve(async (req: Request) => {
     const events = payload.events || [payload];
 
     for (const event of events) {
-      const messageId = event.message_id || event['message-id'];
-      const eventType = event.event;
-      const email = event.email;
+      const messageId = event.messageId || event.message_id || event['message-id'];
+      const eventType = event.msg_status || event.event;
 
       if (!messageId) {
-        console.log('No message ID in event, skipping');
+        console.warn('Brevo event skipped without message identifier');
+        continue;
+      }
+
+      if (event.messageId !== undefined) {
+        const normalizedStatus = String(eventType || '').toLowerCase();
+        const delivered = normalizedStatus === 'delivered';
+        const failed = ['soft_bounce', 'hard_bounce', 'blocked', 'invalid', 'error', 'skip'].includes(normalizedStatus);
+        const sent = ['accepted', 'sent'].includes(normalizedStatus);
+        if (!delivered && !failed && !sent) continue;
+
+        const smsUpdates: Record<string, unknown> = {
+          status: delivered ? 'delivered' : failed ? 'failed' : 'sent',
+          updated_at: new Date().toISOString(),
+        };
+        if (delivered) smsUpdates.delivered_at = new Date().toISOString();
+
+        const { error: smsUpdateError } = await supabase
+          .from('sms_messages')
+          .update(smsUpdates)
+          .eq('provider_message_id', String(messageId))
+          .eq('direction', 'outbound');
+        if (smsUpdateError) throw smsUpdateError;
         continue;
       }
 
@@ -41,7 +68,6 @@ Deno.serve(async (req: Request) => {
         .maybeSingle();
 
       if (fetchError || !tracking) {
-        console.log(`No tracking found for message ${messageId}`);
 
         // Tenter de trouver dans crm_interactions pour les emails CRM
         const { data: interaction } = await supabase
@@ -56,10 +82,8 @@ Deno.serve(async (req: Request) => {
 
           if (eventType === 'opened' || eventType === 'open') {
             crmUpdates.opened_at = event.date || new Date().toISOString();
-            console.log(`👀 CRM Email opened: ${email}`);
           } else if (eventType === 'click' || eventType === 'clicked') {
             crmUpdates.clicked_at = event.date || new Date().toISOString();
-            console.log(`👆 CRM Email clicked: ${email}`);
           }
 
           if (Object.keys(crmUpdates).length > 0) {
@@ -88,7 +112,6 @@ Deno.serve(async (req: Request) => {
           if (!tracking.opened_at) {
             updates.opened_at = event.date || new Date().toISOString();
             updates.status = 'opened';
-            console.log(`👀 Email opened: ${email}`);
           }
           break;
 
@@ -97,12 +120,10 @@ Deno.serve(async (req: Request) => {
           if (!tracking.clicked_at) {
             updates.clicked_at = event.date || new Date().toISOString();
             updates.status = 'clicked';
-            console.log(`👆 Email clicked: ${email}`);
           }
           break;
 
         case 'delivered':
-          console.log(`✅ Email delivered: ${email}`);
           break;
 
         case 'soft_bounce':
@@ -110,17 +131,14 @@ Deno.serve(async (req: Request) => {
         case 'bounce':
           updates.bounced_at = event.date || new Date().toISOString();
           updates.status = 'bounced';
-          console.log(`❌ Email bounced: ${email}`);
           break;
 
         case 'spam':
         case 'complaint':
           updates.status = 'failed';
-          console.log(`⚠️ Spam complaint: ${email}`);
           break;
 
         case 'unsubscribed':
-          console.log(`🚫 Unsubscribed: ${email}`);
           break;
 
         default:
@@ -136,7 +154,6 @@ Deno.serve(async (req: Request) => {
       if (updateError) {
         console.error('Error updating tracking:', updateError);
       } else {
-        console.log(`✅ Tracking updated for ${messageId}`);
       }
     }
 
@@ -148,9 +165,9 @@ Deno.serve(async (req: Request) => {
       }
     );
   } catch (error) {
-    console.error("Error processing Brevo webhook:", error);
+    console.error("Error processing Brevo webhook");
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ success: false, error: "Webhook processing failed" }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" }

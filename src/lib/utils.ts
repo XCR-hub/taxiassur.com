@@ -1,6 +1,5 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { SupabaseClient } from '@supabase/supabase-js';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -108,54 +107,4 @@ export function throttle<T extends (...args: any[]) => any>(
       setTimeout(() => inThrottle = false, limit);
     }
   };
-}
-
-/**
- * Génère une URL publique pour un document stocké dans Supabase Storage
- * Cette fonction gère intelligemment les différents buckets en fonction de la source
- *
- * @param filePath - Chemin du fichier dans le storage
- * @param source - Source du document ('prospect_documents', 'email_attachments', 'crm_lead_documents')
- * @param supabase - Instance Supabase client
- * @returns URL publique du document
- */
-export function getDocumentPublicUrl(
-  filePath: string,
-  source: 'prospect_documents' | 'email_attachments' | 'crm_lead_documents' | string,
-  supabase: SupabaseClient
-): string {
-  // Nettoyer le path initial (enlever les slashes au début)
-  let normalizedPath = filePath.replace(/^\/+/, '');
-
-  // Détecter le bucket depuis le path ou depuis la source
-  let bucket = 'prospect-documents';
-  let cleanPath = normalizedPath;
-
-  // D'abord, vérifier si le path contient déjà le préfixe du bucket
-  if (normalizedPath.startsWith('email-attachments/')) {
-    bucket = 'email-attachments';
-    cleanPath = normalizedPath.replace(/^email-attachments\//, '');
-  } else if (normalizedPath.startsWith('prospect-documents/')) {
-    bucket = 'prospect-documents';
-    cleanPath = normalizedPath.replace(/^prospect-documents\//, '');
-  } else if (normalizedPath.startsWith('crm-documents/')) {
-    bucket = 'crm-documents';
-    cleanPath = normalizedPath.replace(/^crm-documents\//, '');
-  } else {
-    // Pas de préfixe de bucket dans le path, déduire depuis la source
-    if (source === 'email_attachments') {
-      bucket = 'email-attachments';
-    } else if (source === 'prospect_documents') {
-      bucket = 'prospect-documents';
-    } else if (source === 'crm_lead_documents') {
-      // Pour crm_lead_documents, utiliser crm-documents
-      bucket = 'crm-documents';
-    }
-    cleanPath = normalizedPath;
-  }
-
-  // Générer l'URL publique
-  const { data } = supabase.storage.from(bucket).getPublicUrl(cleanPath);
-
-  return data.publicUrl;
 }

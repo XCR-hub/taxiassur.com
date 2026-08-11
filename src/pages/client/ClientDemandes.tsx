@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
+import { getClientAccessToken } from '@/lib/client-access';
 import { useTurnstileGuard } from '@/hooks/useTurnstileGuard';
 import {
   CLIENT_REQUEST_TYPE_LABELS,
@@ -172,7 +173,7 @@ function StatusBadge({ status }: { status: ClientPortalRequest['status'] }) {
 export default function ClientDemandes() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const email = searchParams.get('email') || sessionStorage.getItem('client_email') || '';
+  const accessToken = getClientAccessToken(searchParams.get('token'));
 
   const [requests, setRequests] = useState<ClientPortalRequest[]>([]);
   const [activeType, setActiveType] = useState<ClientPortalRequestType>('support_message');
@@ -199,39 +200,38 @@ export default function ClientDemandes() {
 
   const loadConsentState = useCallback(async () => {
     try {
-      const consents = await loadClientConsentState(email);
+      const consents = await loadClientConsentState(accessToken);
       setPartnerCrossSellConsent(consents.partner_cross_sell);
       setBehavioralPersonalizationConsent(consents.behavioral_personalization);
     } catch {
       setPartnerCrossSellConsent(false);
       setBehavioralPersonalizationConsent(false);
     }
-  }, [email]);
+  }, [accessToken]);
 
   const loadRequests = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const rows = await loadClientPortalRequests(email);
+      const rows = await loadClientPortalRequests(accessToken);
       setRequests(rows);
     } catch {
       setError('Impossible de charger vos demandes pour le moment.');
     } finally {
       setLoading(false);
     }
-  }, [email]);
+  }, [accessToken]);
 
   useEffect(() => {
-    if (!email) {
+    if (!accessToken) {
       navigate('/espace-client');
       return;
     }
 
-    sessionStorage.setItem('client_email', email);
     loadRequests();
     loadConsentState();
-  }, [email, navigate, loadConsentState, loadRequests]);
+  }, [accessToken, navigate, loadConsentState, loadRequests]);
 
   const submitRequest = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -274,7 +274,7 @@ export default function ClientDemandes() {
 
       if (consentTouched.partner_cross_sell) {
         consentWrites.push(recordClientConsent(
-          email,
+          accessToken,
           'partner_cross_sell',
           partnerCrossSellConsent,
           'client_portal_request',
@@ -284,7 +284,7 @@ export default function ClientDemandes() {
 
       if (consentTouched.behavioral_personalization) {
         consentWrites.push(recordClientConsent(
-          email,
+          accessToken,
           'behavioral_personalization',
           behavioralPersonalizationConsent,
           'client_portal_request',
@@ -297,7 +297,7 @@ export default function ClientDemandes() {
       }
 
       await createClientPortalRequest({
-        email,
+        accessToken,
         requestType: activeType,
         title,
         description,
@@ -326,7 +326,7 @@ export default function ClientDemandes() {
   const pendingCount = requests.filter((request) => request.status === 'pending' || request.status === 'in_progress').length;
 
   return (
-    <ClientLayout email={email}>
+    <ClientLayout email=''>
       <SEOHead title="Mes Demandes - Espace Client TaxiAssur" noIndex={true} />
 
       <div className="space-y-6">

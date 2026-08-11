@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { logger } from '@/lib/logger';
 import {
   Zap, Activity, Clock, TrendingUp,
@@ -289,7 +290,7 @@ const AutomationDashboard: React.FC = () => {
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Authorization': (await internalFunctionHeaders()).Authorization,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({})

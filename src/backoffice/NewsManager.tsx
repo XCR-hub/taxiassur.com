@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { useNavigate } from 'react-router-dom';
 import { Play, Pause, RefreshCw, Eye, Settings, TrendingUp, Clock, Zap, Globe, Home, Sparkles } from 'lucide-react';
 import { useNewsSystem } from '../lib/newsAggregator';
@@ -85,7 +86,7 @@ const NewsManager: React.FC = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+            'Authorization': (await internalFunctionHeaders()).Authorization
           },
           body: JSON.stringify({
             keywords: ['assurance taxi', 'taxi professionnel', 'réglementation taxi'],
@@ -142,7 +143,7 @@ const NewsManager: React.FC = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+            'Authorization': (await internalFunctionHeaders()).Authorization
           }
         }
       );

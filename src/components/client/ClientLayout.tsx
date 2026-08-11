@@ -4,6 +4,7 @@ import {
   LayoutDashboard, FileText, Shield, CreditCard, Bell, User, LogOut, Menu, X, Home, Gift, ShieldCheck, ClipboardList
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { clearClientAccess, getClientAccessToken } from '@/lib/client-access';
 
 interface ClientLayoutProps {
   children: React.ReactNode;
@@ -15,49 +16,35 @@ export default function ClientLayout({ children, email }: ClientLayoutProps) {
   const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
+  const accessToken = getClientAccessToken();
 
   useEffect(() => {
-    if (!email) return;
+    if (!accessToken) return;
     loadUnreadCount();
-  }, [email]);
+  }, [accessToken]);
 
   const loadUnreadCount = async () => {
     try {
-      const { data: portal } = await supabase
-        .from('client_portal_users')
-        .select('lead_id')
-        .eq('email', email.toLowerCase().trim())
-        .maybeSingle();
-
-      let leadId = portal?.lead_id;
-      if (!leadId) {
-        const { data: lead } = await supabase
-          .from('crm_leads')
-          .select('id')
-          .eq('email', email.toLowerCase().trim())
-          .maybeSingle();
-        leadId = lead?.id;
+      const { data, error } = await supabase.rpc('get_client_notifications_by_token', {
+        p_token: accessToken,
+      });
+      if (error || !data?.success) {
+        setUnreadCount(0);
+        return;
       }
-      if (!leadId) return;
-
-      const { count } = await supabase
-        .from('crm_event_notifications')
-        .select('id', { count: 'exact', head: true })
-        .eq('lead_id', leadId)
-        .is('read_at', null);
-
-      setUnreadCount(count || 0);
+      const unread = (data.notifications || []).filter((item: { read_at?: string | null }) => !item.read_at);
+      setUnreadCount(unread.length);
     } catch {
       setUnreadCount(0);
     }
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem('client_email');
+    clearClientAccess();
     navigate('/');
   };
 
-  const emailParam = email ? `?email=${encodeURIComponent(email)}` : '';
+  const emailParam = '';
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Tableau de bord', path: '/client/dashboard' },

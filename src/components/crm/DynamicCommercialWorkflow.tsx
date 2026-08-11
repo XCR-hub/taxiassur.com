@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { PipelineStatus, PIPELINE_STATUSES } from '@/lib/crm-pipeline';
 import { supabase } from '@/lib/supabase';
+import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 
 interface WorkflowAction {
   id: string;
@@ -1014,7 +1015,7 @@ export const DynamicCommercialWorkflow: React.FC<Props> = ({
           .replace(/{city}/g, leadData.city || '')
           .replace(/{prospect_link}/g, prospectLink);
 
-        await supabase.functions.invoke('send-crm-email', {
+        const { data: sendResult, error: sendError } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
           body: {
             to: leadData.email,
             subject: action.emailTemplate.subject,
@@ -1022,16 +1023,9 @@ export const DynamicCommercialWorkflow: React.FC<Props> = ({
             leadId
           }
         });
+        if (sendError || !sendResult?.success) throw sendError || new Error("Envoi automatisé refusé");
 
-        // Log interaction
-        await supabase.from('crm_interactions').insert({
-          lead_id: leadId,
-          type: 'email',
-          subject: action.emailTemplate.subject,
-          content: emailBody,
-          direction: 'outbound',
-          to_email: leadData.email
-        });
+        // Interaction already recorded by send-crm-email.
       }
 
       // Change status if needed

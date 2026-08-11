@@ -466,64 +466,7 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
     }
   };
 
-  const getDocumentUrl = (filePath: string, source: string, explicitBucket?: string) => {
-    if (!filePath) {
-      logger.error('getDocumentUrl: filePath is empty');
-      return '';
-    }
-
-    // Normaliser le path (enlever les slashes au début)
-    let normalizedPath = filePath.replace(/^\/+/, '');
-
-    // Si un bucket explicite est fourni, l'utiliser en priorité
-    let bucket = explicitBucket || 'prospect-documents';
-    let cleanPath = normalizedPath;
-
-    if (!explicitBucket) {
-      // Détecter le bucket depuis le path ou depuis la source
-      // D'abord, vérifier si le path contient déjà le préfixe du bucket
-      if (normalizedPath.startsWith('email-attachments/')) {
-        bucket = 'email-attachments';
-        cleanPath = normalizedPath.replace(/^email-attachments\//, '');
-      } else if (normalizedPath.startsWith('prospect-documents/')) {
-        bucket = 'prospect-documents';
-        cleanPath = normalizedPath.replace(/^prospect-documents\//, '');
-      } else if (normalizedPath.startsWith('crm-documents/')) {
-        bucket = 'crm-documents';
-        cleanPath = normalizedPath.replace(/^crm-documents\//, '');
-      } else {
-        // Pas de préfixe de bucket dans le path, déduire depuis la source
-        if (source === 'email_attachments') {
-          bucket = 'email-attachments';
-        } else if (source === 'prospect_documents') {
-          bucket = 'prospect-documents';
-        } else if (source === 'crm_lead_documents') {
-          bucket = 'crm-documents';
-        }
-        cleanPath = normalizedPath;
-      }
-    } else {
-      // Bucket explicite: enlever les préfixes éventuels
-      cleanPath = normalizedPath.replace(/^(email-attachments|prospect-documents|crm-documents)\//, '');
-    }
-
-    const { data } = supabase.storage.from(bucket).getPublicUrl(cleanPath);
-
-    // Log détaillé pour debugging
-    console.log('📄 Document URL:', {
-      fileName: filePath.split('/').pop(),
-      originalPath: filePath,
-      source,
-      detectedBucket: bucket,
-      cleanPath,
-      finalUrl: data.publicUrl,
-      testUrl: `Testez dans un nouvel onglet: ${data.publicUrl}`
-    });
-
-    return data.publicUrl;
-  };
-
-  const unclassifiedDocs = documents.filter(d => !d.document_type);
+const unclassifiedDocs = documents.filter(d => !d.document_type);
   const classifiedDocs = documents.reduce((acc, doc) => {
     if (doc.document_type) {
       if (!acc[doc.document_type]) acc[doc.document_type] = [];

@@ -1,12 +1,25 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { toast } from '@/lib/toast';
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { invokeIdempotentDelivery } from "@/lib/invoke-idempotent-delivery";
+import { toast } from "@/lib/toast";
 import {
-  CheckCircle, XCircle, Clock, FileText, Eye, Building2,
-  AlertTriangle, Mail, MessageSquare, Phone, Loader2, Upload, Send
-} from 'lucide-react';
-import { Badge } from '../Badge';
-import { Modal, ModalFooter } from '../Modal';
+  AlertTriangle,
+  Building2,
+  CheckCircle,
+  Clock,
+  Eye,
+  FileText,
+  Loader2,
+  Mail,
+  MessageSquare,
+  Phone,
+  Send,
+  Upload,
+  XCircle,
+} from "lucide-react";
+import { Badge } from "../Badge";
+import { Modal, ModalFooter } from "../Modal";
+import { SecureDocumentLink } from "./SecureDocumentLink";
 
 interface ValidationDevisStepProps {
   leadId: string;
@@ -27,10 +40,10 @@ interface CompanyQuote {
   id: string;
   lead_id: string;
   company_id: string;
-  status: 'pending' | 'quote_submitted' | 'refused' | 'validated';
+  status: "pending" | "quote_submitted" | "refused" | "validated";
   quote_amount: number | null;
   monthly_price?: number | null;
-  coverage_type?: 'tiers' | 'tiers_plus' | 'tous_risques' | null;
+  coverage_type?: "tiers" | "tiers_plus" | "tous_risques" | null;
   includes_immobilisation?: boolean | null;
   includes_assistance_0km?: boolean | null;
   includes_rc_pro?: boolean | null;
@@ -57,7 +70,7 @@ export default function ValidationDevisStep({
   leadEmail,
   leadPhone,
   leadFirstName,
-  leadAccessToken
+  leadAccessToken,
 }: ValidationDevisStepProps) {
   const [quotes, setQuotes] = useState<CompanyQuote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,27 +80,29 @@ export default function ValidationDevisStep({
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
   const [isRefusalModalOpen, setIsRefusalModalOpen] = useState(false);
   const [refusalReasons, setRefusalReasons] = useState<RefusalReason[]>([]);
-  const [documents, setDocuments] = useState<Array<{ id: string; document_name: string; is_mandatory: boolean }>>([]);
+  const [documents, setDocuments] = useState<
+    Array<{ id: string; document_name: string; is_mandatory: boolean }>
+  >([]);
   const [saving, setSaving] = useState(false);
 
   const [quoteFormData, setQuoteFormData] = useState({
-    quote_amount: '',
-    monthly_price: '',
-    quote_file_url: '',
-    coverage_type: '' as '' | 'tiers' | 'tiers_plus' | 'tous_risques',
+    quote_amount: "",
+    monthly_price: "",
+    quote_file_url: "",
+    coverage_type: "" as "" | "tiers" | "tiers_plus" | "tous_risques",
     includes_immobilisation: false,
     includes_assistance_0km: true,
     includes_rc_pro: true,
     includes_depannage_remorquage: true,
-    coverage_details: '',
-    notes: ''
+    coverage_details: "",
+    notes: "",
   });
 
   const [refusalFormData, setRefusalFormData] = useState({
-    refusal_reason_code: '',
-    refusal_reason: '',
-    refusal_screenshot_url: '',
-    notes: ''
+    refusal_reason_code: "",
+    refusal_reason: "",
+    refusal_screenshot_url: "",
+    notes: "",
   });
 
   useEffect(() => {
@@ -98,16 +113,16 @@ export default function ValidationDevisStep({
     const channel = supabase
       .channel(`quotes-${leadId}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'lead_company_quotes',
-          filter: `lead_id=eq.${leadId}`
+          event: "*",
+          schema: "public",
+          table: "lead_company_quotes",
+          filter: `lead_id=eq.${leadId}`,
         },
         () => {
           loadQuotes();
-        }
+        },
       )
       .subscribe();
 
@@ -119,18 +134,18 @@ export default function ValidationDevisStep({
   const loadQuotes = async () => {
     try {
       const { data, error } = await supabase
-        .from('lead_company_quotes')
+        .from("lead_company_quotes")
         .select(`
           *,
           company:insurance_companies!lead_company_quotes_company_id_fkey(*)
         `)
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: true });
+        .eq("lead_id", leadId)
+        .order("created_at", { ascending: true });
 
       if (error) throw error;
       setQuotes(data || []);
     } catch (error) {
-      console.error('Error loading quotes:', error);
+      console.error("Error loading quotes:", error);
     } finally {
       setLoading(false);
     }
@@ -139,47 +154,49 @@ export default function ValidationDevisStep({
   const loadRefusalReasons = async () => {
     try {
       const { data, error } = await supabase
-        .from('company_quote_refusal_reasons')
-        .select('*')
-        .eq('is_active', true)
-        .order('display_order', { ascending: true });
+        .from("company_quote_refusal_reasons")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
       if (error) throw error;
       setRefusalReasons(data || []);
     } catch (error) {
-      console.error('Erreur chargement motifs refus:', error);
+      console.error("Erreur chargement motifs refus:", error);
     }
   };
 
   const loadCompanyDocuments = async (companyId: string) => {
     try {
       const { data, error } = await supabase
-        .from('company_documents')
-        .select('*')
-        .eq('company_id', companyId)
-        .eq('send_with_quote', true);
+        .from("company_documents")
+        .select("*")
+        .eq("company_id", companyId)
+        .eq("send_with_quote", true);
       if (error) throw error;
       setDocuments(data || []);
     } catch (error) {
-      console.error('Erreur chargement documents:', error);
+      console.error("Erreur chargement documents:", error);
     }
   };
 
   const handleSubmitQuote = (quote: CompanyQuote) => {
     setSelectedQuote(quote);
     loadCompanyDocuments(quote.company_id);
-    const companyNameLower = quote.company?.name?.toLowerCase() || '';
-    const isGenerali = companyNameLower.includes('generali');
+    const companyNameLower = quote.company?.name?.toLowerCase() || "";
+    const isGenerali = companyNameLower.includes("generali");
     setQuoteFormData({
-      quote_amount: quote.quote_amount?.toString() || '',
-      monthly_price: quote.monthly_price?.toString() || '',
-      quote_file_url: quote.quote_file_url || '',
-      coverage_type: (quote.coverage_type as 'tiers' | 'tiers_plus' | 'tous_risques') || '',
+      quote_amount: quote.quote_amount?.toString() || "",
+      monthly_price: quote.monthly_price?.toString() || "",
+      quote_file_url: quote.quote_file_url || "",
+      coverage_type:
+        (quote.coverage_type as "tiers" | "tiers_plus" | "tous_risques") || "",
       includes_immobilisation: quote.includes_immobilisation ?? false,
       includes_assistance_0km: quote.includes_assistance_0km ?? true,
       includes_rc_pro: quote.includes_rc_pro ?? !isGenerali,
-      includes_depannage_remorquage: quote.includes_depannage_remorquage ?? true,
-      coverage_details: quote.coverage_details || '',
-      notes: quote.notes || ''
+      includes_depannage_remorquage: quote.includes_depannage_remorquage ??
+        true,
+      coverage_details: quote.coverage_details || "",
+      notes: quote.notes || "",
     });
     setIsQuoteModalOpen(true);
   };
@@ -187,25 +204,25 @@ export default function ValidationDevisStep({
   const handleSubmitRefusal = (quote: CompanyQuote) => {
     setSelectedQuote(quote);
     setRefusalFormData({
-      refusal_reason_code: '',
-      refusal_reason: quote.refusal_reason || '',
-      refusal_screenshot_url: quote.refusal_screenshot_url || '',
-      notes: quote.notes || ''
+      refusal_reason_code: "",
+      refusal_reason: quote.refusal_reason || "",
+      refusal_screenshot_url: quote.refusal_screenshot_url || "",
+      notes: quote.notes || "",
     });
     setIsRefusalModalOpen(true);
   };
 
   const saveQuote = async () => {
     if (!selectedQuote || !quoteFormData.quote_file_url) {
-      toast.warning('Veuillez uploader le devis');
+      toast.warning("Veuillez uploader le devis");
       return;
     }
     if (!quoteFormData.coverage_type) {
-      toast.warning('Veuillez sélectionner le type de couverture');
+      toast.warning("Veuillez sélectionner le type de couverture");
       return;
     }
     if (!quoteFormData.quote_amount) {
-      toast.warning('Veuillez indiquer le prix annuel');
+      toast.warning("Veuillez indiquer le prix annuel");
       return;
     }
 
@@ -220,9 +237,9 @@ export default function ValidationDevisStep({
         : (annualPrice ? Math.round((annualPrice / 12) * 100) / 100 : null);
 
       const { error } = await supabase
-        .from('lead_company_quotes')
+        .from("lead_company_quotes")
         .update({
-          status: 'quote_submitted',
+          status: "quote_submitted",
           quote_amount: annualPrice,
           monthly_price: monthlyPrice,
           quote_file_url: quoteFormData.quote_file_url,
@@ -230,22 +247,23 @@ export default function ValidationDevisStep({
           includes_immobilisation: quoteFormData.includes_immobilisation,
           includes_assistance_0km: quoteFormData.includes_assistance_0km,
           includes_rc_pro: quoteFormData.includes_rc_pro,
-          includes_depannage_remorquage: quoteFormData.includes_depannage_remorquage,
+          includes_depannage_remorquage:
+            quoteFormData.includes_depannage_remorquage,
           coverage_details: quoteFormData.coverage_details || null,
           notes: quoteFormData.notes,
           submitted_by: user?.id,
-          submitted_at: new Date().toISOString()
+          submitted_at: new Date().toISOString(),
         })
-        .eq('id', selectedQuote.id);
+        .eq("id", selectedQuote.id);
 
       if (error) throw error;
 
       await loadQuotes();
       setIsQuoteModalOpen(false);
-      toast.success('Devis soumis avec succès !');
+      toast.success("Devis soumis avec succès !");
     } catch (error) {
-      console.error('Erreur soumission devis:', error);
-      toast.error('Erreur lors de la soumission');
+      console.error("Erreur soumission devis:", error);
+      toast.error("Erreur lors de la soumission");
     } finally {
       setSaving(false);
     }
@@ -253,38 +271,42 @@ export default function ValidationDevisStep({
 
   const saveRefusal = async () => {
     if (!selectedQuote || !refusalFormData.refusal_reason_code) {
-      toast.warning('Veuillez sélectionner le motif de refus');
+      toast.warning("Veuillez sélectionner le motif de refus");
       return;
     }
 
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const selectedReason = refusalReasons.find(r => r.code === refusalFormData.refusal_reason_code);
+      const selectedReason = refusalReasons.find((r) =>
+        r.code === refusalFormData.refusal_reason_code
+      );
       const fullRefusalReason = selectedReason
-        ? `${selectedReason.label}${refusalFormData.notes ? ` - ${refusalFormData.notes}` : ''}`
+        ? `${selectedReason.label}${
+          refusalFormData.notes ? ` - ${refusalFormData.notes}` : ""
+        }`
         : refusalFormData.notes;
 
       const { error } = await supabase
-        .from('lead_company_quotes')
+        .from("lead_company_quotes")
         .update({
-          status: 'refused',
+          status: "refused",
           refusal_reason: fullRefusalReason,
           refusal_screenshot_url: refusalFormData.refusal_screenshot_url,
           notes: refusalFormData.notes,
           submitted_by: user?.id,
-          submitted_at: new Date().toISOString()
+          submitted_at: new Date().toISOString(),
         })
-        .eq('id', selectedQuote.id);
+        .eq("id", selectedQuote.id);
 
       if (error) throw error;
 
       await loadQuotes();
       setIsRefusalModalOpen(false);
-      toast.success('Refus enregistré avec succès !');
+      toast.success("Refus enregistré avec succès !");
     } catch (error) {
-      console.error('Erreur enregistrement refus:', error);
-      toast.error('Erreur lors de l\'enregistrement');
+      console.error("Erreur enregistrement refus:", error);
+      toast.error("Erreur lors de l'enregistrement");
     } finally {
       setSaving(false);
     }
@@ -292,14 +314,30 @@ export default function ValidationDevisStep({
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending':
-        return <Badge variant="warning" icon={<Clock className="w-3 h-3" />}>En attente</Badge>;
-      case 'quote_submitted':
-        return <Badge variant="info" icon={<FileText className="w-3 h-3" />}>Devis soumis</Badge>;
-      case 'refused':
-        return <Badge variant="danger" icon={<XCircle className="w-3 h-3" />}>Refusé</Badge>;
-      case 'validated':
-        return <Badge variant="success" icon={<CheckCircle className="w-3 h-3" />}>Validé</Badge>;
+      case "pending":
+        return (
+          <Badge variant="warning" icon={<Clock className="w-3 h-3" />}>
+            En attente
+          </Badge>
+        );
+      case "quote_submitted":
+        return (
+          <Badge variant="info" icon={<FileText className="w-3 h-3" />}>
+            Devis soumis
+          </Badge>
+        );
+      case "refused":
+        return (
+          <Badge variant="danger" icon={<XCircle className="w-3 h-3" />}>
+            Refusé
+          </Badge>
+        );
+      case "validated":
+        return (
+          <Badge variant="success" icon={<CheckCircle className="w-3 h-3" />}>
+            Validé
+          </Badge>
+        );
       default:
         return null;
     }
@@ -307,28 +345,35 @@ export default function ValidationDevisStep({
 
   const calculateProgress = () => {
     const submittedOrProcessed = quotes.filter(
-      q => q.status === 'quote_submitted' || q.status === 'validated' || q.status === 'refused'
+      (q) =>
+        q.status === "quote_submitted" || q.status === "validated" ||
+        q.status === "refused",
     ).length;
     return {
       current: submittedOrProcessed,
       total: quotes.length,
-      percentage: quotes.length > 0 ? (submittedOrProcessed / quotes.length) * 100 : 0
+      percentage: quotes.length > 0
+        ? (submittedOrProcessed / quotes.length) * 100
+        : 0,
     };
   };
 
-  const hasValidatedQuote = quotes.some(q => q.status === 'validated');
+  const hasValidatedQuote = quotes.some((q) => q.status === "validated");
   const progress = calculateProgress();
 
   async function sendEmailReminder() {
     if (!leadEmail) {
-      toast.info('Le prospect n\'a pas d\'email renseigné');
+      toast.info("Le prospect n'a pas d'email renseigné");
       return;
     }
 
-    setSendingReminder('email');
+    setSendingReminder("email");
     try {
-      const prospectUrl = `${window.location.origin}/espace-prospect?token=${leadAccessToken}`;
-      const subject = `${leadFirstName || 'Cher client'}, vos devis d'assurance taxi sont prêts ! 📋`;
+      const prospectUrl =
+        `${window.location.origin}/espace-prospect?token=${leadAccessToken}`;
+      const subject = `${
+        leadFirstName || "Cher client"
+      }, vos devis d'assurance taxi sont prêts ! 📋`;
 
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
@@ -338,7 +383,7 @@ export default function ValidationDevisStep({
 
           <div style="padding: 30px 25px;">
             <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-              Bonjour <strong>${leadFirstName || 'Cher client'}</strong>,
+              Bonjour <strong>${leadFirstName || "Cher client"}</strong>,
             </p>
 
             <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">
@@ -376,21 +421,26 @@ export default function ValidationDevisStep({
         </div>
       `;
 
-      const { error } = await supabase.functions.invoke('send-crm-email', {
-        body: {
+      const { data: sendResult, error } = await invokeIdempotentDelivery(
+        supabase,
+        "email",
+        "send-crm-email",
+        {
           to: leadEmail,
           subject: subject,
           content: html,
-          lead_id: leadId
-        }
-      });
+          lead_id: leadId,
+        },
+      );
 
-      if (error) throw error;
+      if (error || !sendResult?.success) {
+        throw error || new Error("Envoi refusé");
+      }
 
-      toast.success('✅ Email de relance envoyé avec succès !');
+      toast.success("✅ Email de relance envoyé avec succès !");
     } catch (error) {
-      console.error('Error sending email reminder:', error);
-      toast.error('❌ Erreur lors de l\'envoi de l\'email');
+      console.error("Error sending email reminder:", error);
+      toast.error("❌ Erreur lors de l'envoi de l'email");
     } finally {
       setSendingReminder(null);
     }
@@ -398,15 +448,16 @@ export default function ValidationDevisStep({
 
   async function sendWhatsAppReminder() {
     if (!leadPhone) {
-      toast.info('Le prospect n\'a pas de numéro de téléphone renseigné');
+      toast.info("Le prospect n'a pas de numéro de téléphone renseigné");
       return;
     }
 
-    setSendingReminder('whatsapp');
+    setSendingReminder("whatsapp");
     try {
-      const prospectUrl = `${window.location.origin}/espace-prospect?token=${leadAccessToken}`;
+      const prospectUrl =
+        `${window.location.origin}/espace-prospect?token=${leadAccessToken}`;
 
-      const message = `Bonjour ${leadFirstName || 'Cher client'} 👋
+      const message = `Bonjour ${leadFirstName || "Cher client"} 👋
 
 Vos 5 devis d'assurance taxi sont prêts ! 📋
 
@@ -421,20 +472,25 @@ Des questions ? Contactez-nous au 01 80 85 57 88
 
 L'équipe TaxiAssur`;
 
-      const { error } = await supabase.functions.invoke('send-whatsapp', {
-        body: {
+      const { data: sendResult, error } = await invokeIdempotentDelivery(
+        supabase,
+        "whatsapp",
+        "send-whatsapp",
+        {
           to: leadPhone,
           message: message,
-          lead_id: leadId
-        }
-      });
+          lead_id: leadId,
+        },
+      );
 
-      if (error) throw error;
+      if (error || sendResult?.success !== true) {
+        throw error || new Error("WhatsApp non envoyé");
+      }
 
-      toast.success('✅ Message WhatsApp envoyé avec succès !');
+      toast.success("✅ Message WhatsApp envoyé avec succès !");
     } catch (error) {
-      console.error('Error sending WhatsApp reminder:', error);
-      toast.error('❌ Erreur lors de l\'envoi du message WhatsApp');
+      console.error("Error sending WhatsApp reminder:", error);
+      toast.error("❌ Erreur lors de l'envoi du message WhatsApp");
     } finally {
       setSendingReminder(null);
     }
@@ -442,30 +498,38 @@ L'équipe TaxiAssur`;
 
   async function sendSMSReminder() {
     if (!leadPhone) {
-      toast.info('Le prospect n\'a pas de numéro de téléphone renseigné');
+      toast.info("Le prospect n'a pas de numéro de téléphone renseigné");
       return;
     }
 
-    setSendingReminder('sms');
+    setSendingReminder("sms");
     try {
-      const prospectUrl = `${window.location.origin}/espace-prospect?token=${leadAccessToken}`;
+      const prospectUrl =
+        `${window.location.origin}/espace-prospect?token=${leadAccessToken}`;
 
-      const message = `${leadFirstName || 'Bonjour'}, vos 5 devis d'assurance taxi sont prêts ! Consultez-les : ${prospectUrl} - TaxiAssur`;
+      const message = `${
+        leadFirstName || "Bonjour"
+      }, vos 5 devis d'assurance taxi sont prêts ! Consultez-les : ${prospectUrl} - TaxiAssur`;
 
-      const { data, error } = await supabase.functions.invoke('send-sms-brevo', {
-        body: {
+      const { data, error } = await invokeIdempotentDelivery(
+        supabase,
+        "sms",
+        "send-sms-brevo",
+        {
           to: leadPhone,
           content: message,
           lead_id: leadId,
-          tag: 'devis-notification'
-        }
-      });
-      if (error || !data?.success) throw new Error(error?.message || data?.error);
+          tag: "devis-notification",
+        },
+      );
+      if (error || !data?.success) {
+        throw new Error(error?.message || data?.error);
+      }
 
-      toast.success('✅ SMS envoyé avec succès !');
+      toast.success("✅ SMS envoyé avec succès !");
     } catch (error) {
-      console.error('Error sending SMS reminder:', error);
-      toast.error('❌ Erreur lors de l\'envoi du SMS');
+      console.error("Error sending SMS reminder:", error);
+      toast.error("❌ Erreur lors de l'envoi du SMS");
     } finally {
       setSendingReminder(null);
     }
@@ -482,28 +546,36 @@ L'équipe TaxiAssur`;
   return (
     <div className="space-y-4">
       {/* En-tête avec statut */}
-      <div className={`rounded-lg p-4 border ${
-        hasValidatedQuote
-          ? 'bg-green-50 border-green-200'
-          : 'bg-purple-50 border-purple-200'
-      }`}>
+      <div
+        className={`rounded-lg p-4 border ${
+          hasValidatedQuote
+            ? "bg-green-50 border-green-200"
+            : "bg-purple-50 border-purple-200"
+        }`}
+      >
         <p className="text-sm font-semibold mb-2 flex items-center gap-2">
-          {hasValidatedQuote ? (
-            <>
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <span className="text-green-900">Devis validé par le prospect !</span>
-            </>
-          ) : (
-            <>
-              <Clock className="w-4 h-4 text-purple-600" />
-              <span className="text-purple-900">En attente de validation par le prospect</span>
-            </>
-          )}
+          {hasValidatedQuote
+            ? (
+              <>
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <span className="text-green-900">
+                  Devis validé par le prospect !
+                </span>
+              </>
+            )
+            : (
+              <>
+                <Clock className="w-4 h-4 text-purple-600" />
+                <span className="text-purple-900">
+                  En attente de validation par le prospect
+                </span>
+              </>
+            )}
         </p>
         <p className="text-sm text-gray-700">
           {hasValidatedQuote
-            ? 'Le prospect a validé un devis. Vous pouvez passer à l\'étape suivante.'
-            : 'Le prospect doit se connecter à son espace pour consulter les devis et en valider un.'}
+            ? "Le prospect a validé un devis. Vous pouvez passer à l'étape suivante."
+            : "Le prospect doit se connecter à son espace pour consulter les devis et en valider un."}
         </p>
       </div>
 
@@ -520,7 +592,7 @@ L'équipe TaxiAssur`;
         <div className="w-full bg-gray-200 rounded-full h-2.5">
           <div
             className={`h-2.5 rounded-full transition-all ${
-              progress.percentage === 100 ? 'bg-green-600' : 'bg-blue-600'
+              progress.percentage === 100 ? "bg-green-600" : "bg-blue-600"
             }`}
             style={{ width: `${progress.percentage}%` }}
           />
@@ -530,47 +602,60 @@ L'équipe TaxiAssur`;
       {/* Liste des devis groupés par compagnie */}
       <div className="space-y-3">
         {Object.entries(
-          quotes.reduce((acc, quote) => {
-            const companyId = quote.company_id;
-            if (!acc[companyId]) {
-              acc[companyId] = {
-                company: quote.company,
-                quotes: []
-              };
-            }
-            acc[companyId].quotes.push(quote);
-            return acc;
-          }, {} as Record<string, { company: InsuranceCompany, quotes: CompanyQuote[] }>)
+          quotes.reduce(
+            (acc, quote) => {
+              const companyId = quote.company_id;
+              if (!acc[companyId]) {
+                acc[companyId] = {
+                  company: quote.company,
+                  quotes: [],
+                };
+              }
+              acc[companyId].quotes.push(quote);
+              return acc;
+            },
+            {} as Record<
+              string,
+              { company: InsuranceCompany; quotes: CompanyQuote[] }
+            >,
+          ),
         ).map(([companyId, { company, quotes: companyQuotes }]) => {
-          const hasValidated = companyQuotes.some(q => q.status === 'validated');
-          const hasRefused = companyQuotes.some(q => q.status === 'refused');
+          const hasValidated = companyQuotes.some((q) =>
+            q.status === "validated"
+          );
+          const hasRefused = companyQuotes.some((q) => q.status === "refused");
 
           return (
             <div
               key={companyId}
               className={`bg-white rounded-lg border p-4 ${
-                hasValidated ? 'border-green-500/30 bg-green-50/30' :
-                hasRefused ? 'border-red-500/30 bg-red-50/30' :
-                'border-gray-200'
+                hasValidated
+                  ? "border-green-500/30 bg-green-50/30"
+                  : hasRefused
+                  ? "border-red-500/30 bg-red-50/30"
+                  : "border-gray-200"
               }`}
             >
               {/* En-tête de la compagnie */}
               <div className="flex items-start gap-3 mb-3 pb-3 border-b border-gray-200">
-                {company.logo_url ? (
-                  <img
-                    src={company.logo_url}
-                    alt={`Logo ${company.name}`}
-                    className="w-12 h-12 object-contain flex-shrink-0"
-                  />
-                ) : (
-                  <Building2 className="w-6 h-6 text-gray-400 flex-shrink-0" />
-                )}
+                {company.logo_url
+                  ? (
+                    <img
+                      src={company.logo_url}
+                      alt={`Logo ${company.name}`}
+                      className="w-12 h-12 object-contain flex-shrink-0"
+                    />
+                  )
+                  : (
+                    <Building2 className="w-6 h-6 text-gray-400 flex-shrink-0" />
+                  )}
                 <div className="flex-1 min-w-0">
                   <h4 className="font-bold text-lg text-gray-900">
                     {company.name}
                   </h4>
                   <p className="text-sm text-gray-600">
-                    {companyQuotes.length} devis disponible{companyQuotes.length > 1 ? 's' : ''}
+                    {companyQuotes.length}{" "}
+                    devis disponible{companyQuotes.length > 1 ? "s" : ""}
                   </p>
                 </div>
               </div>
@@ -578,7 +663,12 @@ L'équipe TaxiAssur`;
               {/* Liste des devis de cette compagnie */}
               <div className="space-y-3">
                 {companyQuotes.map((quote, idx) => (
-                  <div key={quote.id} className={`${idx > 0 ? 'pt-3 border-t border-gray-100' : ''}`}>
+                  <div
+                    key={quote.id}
+                    className={`${
+                      idx > 0 ? "pt-3 border-t border-gray-100" : ""
+                    }`}
+                  >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-start gap-3 flex-1">
                         <FileText className="w-5 h-5 text-blue-500 mt-1 flex-shrink-0" />
@@ -592,61 +682,67 @@ L'équipe TaxiAssur`;
 
                           {quote.quote_amount && (
                             <p className="text-sm text-gray-600">
-                              Montant : <span className="font-semibold text-blue-600">
+                              Montant :{" "}
+                              <span className="font-semibold text-blue-600">
                                 {quote.quote_amount} € / an
                               </span>
                             </p>
                           )}
 
-                          {quote.status === 'validated' && quote.quote_accepted_at && (
-                    <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                      <CheckCircle className="w-3 h-3" />
-                      Validé le {new Date(quote.quote_accepted_at).toLocaleDateString('fr-FR', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </p>
-                  )}
+                          {quote.status === "validated" &&
+                            quote.quote_accepted_at && (
+                            <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3" />
+                              Validé le {new Date(quote.quote_accepted_at)
+                                .toLocaleDateString("fr-FR", {
+                                  day: "numeric",
+                                  month: "long",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                            </p>
+                          )}
 
-                  {quote.status === 'refused' && quote.quote_refused_at && (
-                    <div className="mt-2">
-                      <p className="text-xs text-red-600 flex items-center gap-1">
-                        <XCircle className="w-3 h-3" />
-                        Refusé le {new Date(quote.quote_refused_at).toLocaleDateString('fr-FR', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </p>
-                      {quote.refusal_reason && (
-                        <p className="text-xs text-gray-600 mt-1">
-                          Raison : {quote.refusal_reason}
-                        </p>
-                      )}
-                    </div>
+                          {quote.status === "refused" &&
+                            quote.quote_refused_at && (
+                            <div className="mt-2">
+                              <p className="text-xs text-red-600 flex items-center gap-1">
+                                <XCircle className="w-3 h-3" />
+                                Refusé le {new Date(quote.quote_refused_at)
+                                  .toLocaleDateString("fr-FR", {
+                                    day: "numeric",
+                                    month: "long",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                              </p>
+                              {quote.refusal_reason && (
+                                <p className="text-xs text-gray-600 mt-1">
+                                  Raison : {quote.refusal_reason}
+                                </p>
+                              )}
+                            </div>
                           )}
                         </div>
                       </div>
 
                       {quote.quote_file_url && (
-                        <a
-                          href={quote.quote_file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <SecureDocumentLink
+                          filePath={quote.quote_file_url}
+                          source="crm_lead_documents"
+                          bucket="contract-documents"
+                          fileName="Devis.pdf"
+                          showText
+                          customText="Voir"
                           className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex-shrink-0"
-                        >
-                          <Eye className="w-4 h-4" />
-                          Voir
-                        </a>
+                          iconSize={16}
+                        />
                       )}
                     </div>
 
-                    {quote.status === 'pending' && (
+                    {quote.status === "pending" && (
                       <div className="mt-3 flex gap-2">
                         <button
                           onClick={() => handleSubmitQuote(quote)}
@@ -675,7 +771,9 @@ L'équipe TaxiAssur`;
       {/* Lien Espace Prospect */}
       {leadAccessToken && (
         <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <p className="text-sm font-medium text-gray-900 mb-2">Lien Espace Prospect :</p>
+          <p className="text-sm font-medium text-gray-900 mb-2">
+            Lien Espace Prospect :
+          </p>
           <div className="flex items-center gap-2">
             <input
               type="text"
@@ -685,8 +783,10 @@ L'équipe TaxiAssur`;
             />
             <button
               onClick={() => {
-                navigator.clipboard.writeText(`${window.location.origin}/espace-prospect?token=${leadAccessToken}`);
-                toast.success('Lien copié !');
+                navigator.clipboard.writeText(
+                  `${window.location.origin}/espace-prospect?token=${leadAccessToken}`,
+                );
+                toast.success("Lien copié !");
               }}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
@@ -712,12 +812,10 @@ L'équipe TaxiAssur`;
               disabled={!leadEmail || sendingReminder !== null}
               className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {sendingReminder === 'email' ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Mail className="h-5 w-5" />
-              )}
-              <span>{sendingReminder === 'email' ? 'Envoi...' : 'Email'}</span>
+              {sendingReminder === "email"
+                ? <Loader2 className="h-5 w-5 animate-spin" />
+                : <Mail className="h-5 w-5" />}
+              <span>{sendingReminder === "email" ? "Envoi..." : "Email"}</span>
             </button>
 
             <button
@@ -725,12 +823,12 @@ L'équipe TaxiAssur`;
               disabled={!leadPhone || sendingReminder !== null}
               className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {sendingReminder === 'whatsapp' ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <MessageSquare className="h-5 w-5" />
-              )}
-              <span>{sendingReminder === 'whatsapp' ? 'Envoi...' : 'WhatsApp'}</span>
+              {sendingReminder === "whatsapp"
+                ? <Loader2 className="h-5 w-5 animate-spin" />
+                : <MessageSquare className="h-5 w-5" />}
+              <span>
+                {sendingReminder === "whatsapp" ? "Envoi..." : "WhatsApp"}
+              </span>
             </button>
 
             <button
@@ -738,12 +836,10 @@ L'équipe TaxiAssur`;
               disabled={!leadPhone || sendingReminder !== null}
               className="flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {sendingReminder === 'sms' ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Phone className="h-5 w-5" />
-              )}
-              <span>{sendingReminder === 'sms' ? 'Envoi...' : 'SMS'}</span>
+              {sendingReminder === "sms"
+                ? <Loader2 className="h-5 w-5 animate-spin" />
+                : <Phone className="h-5 w-5" />}
+              <span>{sendingReminder === "sms" ? "Envoi..." : "SMS"}</span>
             </button>
           </div>
         </div>
@@ -752,7 +848,7 @@ L'équipe TaxiAssur`;
       <Modal
         isOpen={isQuoteModalOpen}
         onClose={() => setIsQuoteModalOpen(false)}
-        title={`Soumettre un devis - ${selectedQuote?.company.name || ''}`}
+        title={`Soumettre un devis - ${selectedQuote?.company.name || ""}`}
         size="lg"
       >
         <div className="space-y-4">
@@ -760,8 +856,10 @@ L'équipe TaxiAssur`;
             <div className="flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
               <div className="text-sm text-gray-700">
-                <strong>Important :</strong> Vous devez uploader le devis de la compagnie.
-                Les documents obligatoires seront automatiquement joints lors de l'envoi au client.
+                <strong>Important :</strong>{" "}
+                Vous devez uploader le devis de la compagnie. Les documents
+                obligatoires seront automatiquement joints lors de l'envoi au
+                client.
               </div>
             </div>
           </div>
@@ -773,10 +871,15 @@ L'équipe TaxiAssur`;
               </h4>
               <div className="space-y-2">
                 {documents.map((doc) => (
-                  <div key={doc.id} className="flex items-center gap-2 text-sm text-gray-600">
+                  <div
+                    key={doc.id}
+                    className="flex items-center gap-2 text-sm text-gray-600"
+                  >
                     <FileText className="w-4 h-4 text-blue-600" />
                     <span>{doc.document_name}</span>
-                    {doc.is_mandatory && <Badge variant="warning" size="sm">Obligatoire</Badge>}
+                    {doc.is_mandatory && (
+                      <Badge variant="warning" size="sm">Obligatoire</Badge>
+                    )}
                   </div>
                 ))}
               </div>
@@ -784,24 +887,47 @@ L'équipe TaxiAssur`;
           )}
 
           <div>
-            <label className="block text-gray-700 text-sm font-medium mb-2">Type de couverture *</label>
+            <label className="block text-gray-700 text-sm font-medium mb-2">
+              Type de couverture *
+            </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {[
-                { value: 'tiers', label: 'Tiers', desc: 'Responsabilité civile' },
-                { value: 'tiers_plus', label: 'Tiers + BDG', desc: 'Bris de glace, incendie, vol' },
-                { value: 'tous_risques', label: 'Tous risques', desc: 'Couverture complète' }
+                {
+                  value: "tiers",
+                  label: "Tiers",
+                  desc: "Responsabilité civile",
+                },
+                {
+                  value: "tiers_plus",
+                  label: "Tiers + BDG",
+                  desc: "Bris de glace, incendie, vol",
+                },
+                {
+                  value: "tous_risques",
+                  label: "Tous risques",
+                  desc: "Couverture complète",
+                },
               ].map((opt) => (
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => setQuoteFormData({ ...quoteFormData, coverage_type: opt.value as 'tiers' | 'tiers_plus' | 'tous_risques' })}
+                  onClick={() =>
+                    setQuoteFormData({
+                      ...quoteFormData,
+                      coverage_type: opt.value as
+                        | "tiers"
+                        | "tiers_plus"
+                        | "tous_risques",
+                    })}
                   className={`p-3 rounded-lg border-2 text-left transition-all ${
                     quoteFormData.coverage_type === opt.value
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 bg-white hover:border-gray-300"
                   }`}
                 >
-                  <p className="font-semibold text-gray-900 text-sm">{opt.label}</p>
+                  <p className="font-semibold text-gray-900 text-sm">
+                    {opt.label}
+                  </p>
                   <p className="text-xs text-gray-500 mt-1">{opt.desc}</p>
                 </button>
               ))}
@@ -810,7 +936,9 @@ L'équipe TaxiAssur`;
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-gray-700 text-sm font-medium mb-2">Prix annuel (€) *</label>
+              <label className="block text-gray-700 text-sm font-medium mb-2">
+                Prix annuel (€) *
+              </label>
               <input
                 type="number"
                 step="0.01"
@@ -823,7 +951,7 @@ L'équipe TaxiAssur`;
                     quote_amount: annual,
                     monthly_price: !isNaN(annualNum) && annualNum > 0
                       ? (Math.round((annualNum / 12) * 100) / 100).toString()
-                      : quoteFormData.monthly_price
+                      : quoteFormData.monthly_price,
                   });
                 }}
                 className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900"
@@ -831,52 +959,88 @@ L'équipe TaxiAssur`;
               />
             </div>
             <div>
-              <label className="block text-gray-700 text-sm font-medium mb-2">Prix mensuel (€)</label>
+              <label className="block text-gray-700 text-sm font-medium mb-2">
+                Prix mensuel (€)
+              </label>
               <input
                 type="number"
                 step="0.01"
                 value={quoteFormData.monthly_price}
-                onChange={(e) => setQuoteFormData({ ...quoteFormData, monthly_price: e.target.value })}
+                onChange={(e) =>
+                  setQuoteFormData({
+                    ...quoteFormData,
+                    monthly_price: e.target.value,
+                  })}
                 className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900"
                 placeholder="Auto-calculé"
               />
-              <p className="text-gray-500 text-xs mt-1">Calculé automatiquement si vide</p>
+              <p className="text-gray-500 text-xs mt-1">
+                Calculé automatiquement si vide
+              </p>
             </div>
           </div>
 
           <div>
-            <label className="block text-gray-700 text-sm font-medium mb-2">Garanties incluses</label>
+            <label className="block text-gray-700 text-sm font-medium mb-2">
+              Garanties incluses
+            </label>
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-2">
               {[
-                { key: 'includes_immobilisation' as const, label: 'Indemnisation suite à immobilisation du véhicule' },
-                { key: 'includes_assistance_0km' as const, label: 'Assistance 0 km' },
-                { key: 'includes_rc_pro' as const, label: 'Responsabilité Civile Professionnelle (RC Pro)' },
-                { key: 'includes_depannage_remorquage' as const, label: 'Dépannage et remorquage' }
+                {
+                  key: "includes_immobilisation" as const,
+                  label: "Indemnisation suite à immobilisation du véhicule",
+                },
+                {
+                  key: "includes_assistance_0km" as const,
+                  label: "Assistance 0 km",
+                },
+                {
+                  key: "includes_rc_pro" as const,
+                  label: "Responsabilité Civile Professionnelle (RC Pro)",
+                },
+                {
+                  key: "includes_depannage_remorquage" as const,
+                  label: "Dépannage et remorquage",
+                },
               ].map((g) => (
-                <label key={g.key} className="flex items-center gap-3 cursor-pointer hover:bg-white p-2 rounded">
+                <label
+                  key={g.key}
+                  className="flex items-center gap-3 cursor-pointer hover:bg-white p-2 rounded"
+                >
                   <input
                     type="checkbox"
                     checked={quoteFormData[g.key]}
-                    onChange={(e) => setQuoteFormData({ ...quoteFormData, [g.key]: e.target.checked })}
+                    onChange={(e) =>
+                      setQuoteFormData({
+                        ...quoteFormData,
+                        [g.key]: e.target.checked,
+                      })}
                     className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                   <span className="text-sm text-gray-700">{g.label}</span>
                 </label>
               ))}
             </div>
-            {selectedQuote?.company?.name?.toLowerCase().includes('generali') && (
-              <p className="text-yellow-700 text-xs mt-2 flex items-center gap-1">
-                <AlertTriangle className="w-3 h-3" />
-                Generali n'inclut pas la RC Pro par défaut
-              </p>
-            )}
+            {selectedQuote?.company?.name?.toLowerCase().includes("generali") &&
+              (
+                <p className="text-yellow-700 text-xs mt-2 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  Generali n'inclut pas la RC Pro par défaut
+                </p>
+              )}
           </div>
 
           <div>
-            <label className="block text-gray-700 text-sm font-medium mb-2">Détails complémentaires sur les garanties</label>
+            <label className="block text-gray-700 text-sm font-medium mb-2">
+              Détails complémentaires sur les garanties
+            </label>
             <textarea
               value={quoteFormData.coverage_details}
-              onChange={(e) => setQuoteFormData({ ...quoteFormData, coverage_details: e.target.value })}
+              onChange={(e) =>
+                setQuoteFormData({
+                  ...quoteFormData,
+                  coverage_details: e.target.value,
+                })}
               className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900"
               rows={2}
               placeholder="Franchise, plafonds, exclusions particulières... (visible par le prospect)"
@@ -884,11 +1048,17 @@ L'équipe TaxiAssur`;
           </div>
 
           <div>
-            <label className="block text-gray-700 text-sm font-medium mb-2">URL du devis *</label>
+            <label className="block text-gray-700 text-sm font-medium mb-2">
+              URL du devis *
+            </label>
             <input
               type="url"
               value={quoteFormData.quote_file_url}
-              onChange={(e) => setQuoteFormData({ ...quoteFormData, quote_file_url: e.target.value })}
+              onChange={(e) =>
+                setQuoteFormData({
+                  ...quoteFormData,
+                  quote_file_url: e.target.value,
+                })}
               className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900"
               placeholder="https://..."
               required
@@ -899,10 +1069,13 @@ L'équipe TaxiAssur`;
           </div>
 
           <div>
-            <label className="block text-gray-700 text-sm font-medium mb-2">Notes internes</label>
+            <label className="block text-gray-700 text-sm font-medium mb-2">
+              Notes internes
+            </label>
             <textarea
               value={quoteFormData.notes}
-              onChange={(e) => setQuoteFormData({ ...quoteFormData, notes: e.target.value })}
+              onChange={(e) =>
+                setQuoteFormData({ ...quoteFormData, notes: e.target.value })}
               className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900"
               rows={3}
               placeholder="Notes pour l'équipe..."
@@ -923,7 +1096,7 @@ L'équipe TaxiAssur`;
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg flex items-center gap-2"
           >
             <Send className="w-4 h-4" />
-            {saving ? 'Envoi...' : 'Soumettre le devis'}
+            {saving ? "Envoi..." : "Soumettre le devis"}
           </button>
         </ModalFooter>
       </Modal>
@@ -931,7 +1104,7 @@ L'équipe TaxiAssur`;
       <Modal
         isOpen={isRefusalModalOpen}
         onClose={() => setIsRefusalModalOpen(false)}
-        title={`Déclarer un refus - ${selectedQuote?.company.name || ''}`}
+        title={`Déclarer un refus - ${selectedQuote?.company.name || ""}`}
         size="lg"
       >
         <div className="space-y-4">
@@ -939,17 +1112,23 @@ L'équipe TaxiAssur`;
             <div className="flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-1" />
               <div className="text-sm text-gray-700">
-                Sélectionnez le motif de refus de la compagnie.
-                Une capture d'écran du refus est recommandée pour la traçabilité.
+                Sélectionnez le motif de refus de la compagnie. Une capture
+                d'écran du refus est recommandée pour la traçabilité.
               </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-gray-700 text-sm font-medium mb-2">Motif du refus *</label>
+            <label className="block text-gray-700 text-sm font-medium mb-2">
+              Motif du refus *
+            </label>
             <select
               value={refusalFormData.refusal_reason_code}
-              onChange={(e) => setRefusalFormData({ ...refusalFormData, refusal_reason_code: e.target.value })}
+              onChange={(e) =>
+                setRefusalFormData({
+                  ...refusalFormData,
+                  refusal_reason_code: e.target.value,
+                })}
               className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900"
               required
             >
@@ -962,17 +1141,25 @@ L'équipe TaxiAssur`;
             </select>
             {refusalFormData.refusal_reason_code && (
               <p className="text-gray-500 text-sm mt-2">
-                {refusalReasons.find(r => r.code === refusalFormData.refusal_reason_code)?.description}
+                {refusalReasons.find((r) =>
+                  r.code === refusalFormData.refusal_reason_code
+                )?.description}
               </p>
             )}
           </div>
 
           <div>
-            <label className="block text-gray-700 text-sm font-medium mb-2">Capture d'écran du refus (recommandé)</label>
+            <label className="block text-gray-700 text-sm font-medium mb-2">
+              Capture d'écran du refus (recommandé)
+            </label>
             <input
               type="url"
               value={refusalFormData.refusal_screenshot_url}
-              onChange={(e) => setRefusalFormData({ ...refusalFormData, refusal_screenshot_url: e.target.value })}
+              onChange={(e) =>
+                setRefusalFormData({
+                  ...refusalFormData,
+                  refusal_screenshot_url: e.target.value,
+                })}
               className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900"
               placeholder="https://..."
             />
@@ -982,10 +1169,16 @@ L'équipe TaxiAssur`;
           </div>
 
           <div>
-            <label className="block text-gray-700 text-sm font-medium mb-2">Détails complémentaires</label>
+            <label className="block text-gray-700 text-sm font-medium mb-2">
+              Détails complémentaires
+            </label>
             <textarea
               value={refusalFormData.notes}
-              onChange={(e) => setRefusalFormData({ ...refusalFormData, notes: e.target.value })}
+              onChange={(e) =>
+                setRefusalFormData({
+                  ...refusalFormData,
+                  notes: e.target.value,
+                })}
               className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900"
               rows={2}
               placeholder="Informations supplémentaires sur le refus..."
@@ -1006,7 +1199,7 @@ L'équipe TaxiAssur`;
             className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg flex items-center gap-2"
           >
             <XCircle className="w-4 h-4" />
-            {saving ? 'Enregistrement...' : 'Enregistrer le refus'}
+            {saving ? "Enregistrement..." : "Enregistrer le refus"}
           </button>
         </ModalFooter>
       </Modal>

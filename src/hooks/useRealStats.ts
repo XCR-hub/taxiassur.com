@@ -23,7 +23,7 @@ type StatsData = Omit<RealStats, 'loading' | 'error'>;
 
 let cachedStats: StatsData | null = null;
 let fetchPromise: Promise<StatsData> | null = null;
-let listeners: Set<() => void> = new Set();
+const listeners: Set<() => void> = new Set();
 
 function notifyListeners() {
   listeners.forEach(fn => fn());

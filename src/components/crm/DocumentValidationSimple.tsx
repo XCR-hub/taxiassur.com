@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Check, X, Download, ExternalLink, AlertCircle, RefreshCw, Eye } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { getSecureDocumentUrl } from '@/lib/secure-document-url';
 import { logger } from '@/lib/logger';
 import DocumentViewer from './DocumentViewer';
 import { toast } from '@/lib/toast';
@@ -118,11 +119,24 @@ const DocumentValidationSimple: React.FC<DocumentValidationSimpleProps> = ({ lea
     }
   };
 
-  const getDocumentUrl = (filePath: string) => {
-    const { data } = supabase.storage
-      .from('prospect-documents')
-      .getPublicUrl(filePath);
-    return data.publicUrl;
+  const viewDocument = async (doc: Document) => {
+    try {
+      const url = await getSecureDocumentUrl({ bucket: 'prospect-documents', path: doc.file_path });
+      setViewingDoc({ url, fileName: doc.file_name, mimeType: doc.file_type });
+    } catch (error) {
+      logger.error('Error opening document:', error);
+      toast.error('Document indisponible');
+    }
+  };
+
+  const downloadDocument = async (doc: Document) => {
+    try {
+      const url = await getSecureDocumentUrl({ bucket: 'prospect-documents', path: doc.file_path, download: true, fileName: doc.file_name });
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      logger.error('Error downloading document:', error);
+      toast.error('Téléchargement indisponible');
+    }
   };
 
   const getDocumentsByType = () => {
@@ -189,24 +203,13 @@ const DocumentValidationSimple: React.FC<DocumentValidationSimpleProps> = ({ lea
                     </div>
                     <div className="flex gap-2 mb-3">
                       <button
-                        onClick={() => setViewingDoc({
-                          url: getDocumentUrl(doc.file_path),
-                          fileName: doc.file_name,
-                          mimeType: doc.file_type
-                        })}
+                        onClick={() => void viewDocument(doc)}
                         className="flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300"
                       >
                         <Eye size={14} />
                         Voir
                       </button>
-                      <a
-                        href={getDocumentUrl(doc.file_path)}
-                        download
-                        className="flex items-center gap-1 text-sm text-green-400 hover:text-green-300"
-                      >
-                        <Download size={14} />
-                        Télécharger
-                      </a>
+                      <button type="button" onClick={() => void downloadDocument(doc)} className="flex items-center gap-1 text-sm text-green-400 hover:text-green-300"><Download size={14} /> Télécharger</button>
                     </div>
 
                     <div className="text-sm text-gray-400">
@@ -288,11 +291,7 @@ const DocumentValidationSimple: React.FC<DocumentValidationSimpleProps> = ({ lea
                             </div>
                             <div className="flex items-center gap-2">
                               <button
-                                onClick={() => setViewingDoc({
-                                  url: getDocumentUrl(doc.file_path),
-                                  fileName: doc.file_name,
-                                  mimeType: doc.file_type
-                                })}
+                                onClick={() => void viewDocument(doc)}
                                 className="p-2 hover:bg-gray-800 rounded transition-all"
                                 title="Voir"
                               >

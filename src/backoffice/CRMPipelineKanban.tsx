@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import RealtimeNotifications from '@/components/crm/RealtimeNotifications';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 
 interface ColumnNotifications {
   newEmails: number;
@@ -391,7 +392,7 @@ const CRMPipelineKanban: React.FC = () => {
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            ...(await internalFunctionHeaders()),
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({ limit: 50 })
@@ -413,7 +414,7 @@ const CRMPipelineKanban: React.FC = () => {
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            ...(await internalFunctionHeaders()),
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({})

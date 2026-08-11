@@ -77,7 +77,7 @@ supabase secrets set MONETICO_MAC_KEY=REDACTED
 3. Section **Clé de sécurité** ou **Clé MAC**
 4. Copiez la clé hexadécimale (40 caractères)
 
-**Format attendu** : `106FA85BF342FD4EE95C883D82865B5CC1F63890` (exemple)
+**Format attendu** : `[REDACTED_MONETICO_MAC_KEY]` (exemple)
 
 ## 🧪 Tests Après Configuration
 

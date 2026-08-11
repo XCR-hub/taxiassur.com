@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { verifyBearerSecret } from "../_shared/secret-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,6 +22,12 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    if (!verifyBearerSecret(req, Deno.env.get("BREVO_SMS_WEBHOOK_TOKEN"))) {
+      return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -48,7 +55,7 @@ Deno.serve(async (req: Request) => {
       };
     }
 
-    if (!payload.from || !payload.text) {
+    if (!payload.from || !payload.text || payload.text.length > 1600 || payload.from.length > 40) {
       return new Response(
         JSON.stringify({ success: false, error: "Missing from or text" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -63,7 +70,6 @@ Deno.serve(async (req: Request) => {
       phoneNumber = "+" + phoneNumber;
     }
 
-    console.log(`[SMS INBOUND] From: ${phoneNumber}, Content: ${payload.text.substring(0, 50)}...`);
 
     // Find matching lead by phone
     const phoneVariants = [
@@ -130,6 +136,7 @@ Notre numero: 07 44 41 05 98. On vend de l'assurance taxi.`,
             temperature: 0.3,
             max_tokens: 500,
           }),
+          signal: AbortSignal.timeout(20_000),
         });
 
         if (aiResponse.ok) {
@@ -169,28 +176,34 @@ Notre numero: 07 44 41 05 98. On vend de l'assurance taxi.`,
       .select("id")
       .single();
 
+    if (insertError?.code === "23505") {
+      return new Response(JSON.stringify({ success: true, duplicate: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     if (insertError) {
-      console.error("Insert error:", insertError);
+      console.error("Error inserting inbound SMS");
+      throw insertError;
     }
 
-    // Update conversation
-    await supabase
+    // Update conversation and increment unread count exactly once.
+    const { error: conversationError } = await supabase
       .from("sms_conversations")
       .update({
         last_message_at: new Date().toISOString(),
-        unread_count: supabase.rpc ? 1 : 1,
         updated_at: new Date().toISOString(),
       })
       .eq("id", conversationId);
+    if (conversationError) throw conversationError;
 
-    // Increment unread count
-    await supabase.rpc("increment_sms_unread", { p_conversation_id: conversationId }).catch(() => {
-      // Fallback if function doesn't exist yet
+    const { error: unreadError } = await supabase.rpc("increment_sms_unread", {
+      p_conversation_id: conversationId,
     });
-
+    if (unreadError) throw unreadError;
     // Log as CRM interaction
     if (leadId) {
-      await supabase.from("crm_interactions").insert({
+      const { error: interactionError } = await supabase.from("crm_interactions").insert({
         lead_id: leadId,
         type: "sms",
         direction: "inbound",
@@ -203,11 +216,12 @@ Notre numero: 07 44 41 05 98. On vend de l'assurance taxi.`,
           provider_message_id: payload.messageId,
         },
       });
+      if (interactionError) throw interactionError;
     }
 
     // Create notification for commercial
     if (leadId) {
-      await supabase.from("crm_event_notifications").insert({
+      const { error: notificationError } = await supabase.from("crm_event_notifications").insert({
         lead_id: leadId,
         type: "sms_received",
         title: `SMS recu de ${matchingLead?.first_name || phoneNumber}`,
@@ -218,7 +232,8 @@ Notre numero: 07 44 41 05 98. On vend de l'assurance taxi.`,
           phone: phoneNumber,
           ai_suggested_reply: aiSuggestedReply,
         },
-      }).catch(() => {});
+      });
+      if (notificationError) console.error("Unable to create inbound SMS notification");
     }
 
     return new Response(
@@ -234,7 +249,7 @@ Notre numero: 07 44 41 05 98. On vend de l'assurance taxi.`,
   } catch (error) {
     console.error("Inbound SMS error:", error);
     return new Response(
-      JSON.stringify({ success: false, error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({ success: false, error: "Inbound SMS processing failed" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

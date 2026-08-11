@@ -11,7 +11,7 @@
 MONETICO_CONFIG = {
   tpe: '7374133',
   societe: 'taxiassur',
-  macKey: '106FA85BF342FD4EE95C883D82865B5CC1F63890',
+  macKey: '[REDACTED_MONETICO_MAC_KEY]',
   version: '3.0',
   urlServeur: 'https://p.monetico-services.com/paiement.cgi',
   urlOK: 'https://taxiassur.com/espace-prospect/paiement-success',
@@ -45,7 +45,7 @@ MONETICO_CONFIG = {
 
 ### 1. Clé MAC Incorrecte ⚠️ **PLUS PROBABLE**
 
-La clé MAC `106FA85BF342FD4EE95C883D82865B5CC1F63890` doit être **EXACTEMENT** celle fournie par Monético.
+La clé MAC `[REDACTED_MONETICO_MAC_KEY]` doit être **EXACTEMENT** celle fournie par Monético.
 
 **Action requise:**
 1. Se connecter sur **Monético Manager**

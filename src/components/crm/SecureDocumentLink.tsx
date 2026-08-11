@@ -1,6 +1,6 @@
 import React from 'react';
 import { ExternalLink, Download } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { getSecureDocumentUrl } from '@/lib/secure-document-url';
 import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
 
@@ -39,7 +39,7 @@ export const SecureDocumentLink: React.FC<SecureDocumentLinkProps> = ({
 
     try {
       // Nettoyer le path initial (enlever les slashes au début)
-      let normalizedPath = filePath.replace(/^\/+/, '');
+      const normalizedPath = filePath.replace(/^\/+/, '');
 
       // Si un bucket explicite est fourni (depuis la DB), l'utiliser en priorité absolue
       let bucket = explicitBucket || 'prospect-documents';
@@ -47,7 +47,7 @@ export const SecureDocumentLink: React.FC<SecureDocumentLinkProps> = ({
 
       if (explicitBucket) {
         // Bucket explicite: enlever tous les préfixes de bucket du path
-        cleanPath = normalizedPath.replace(/^(email-attachments|prospect-documents|crm-documents)\//, '');
+        cleanPath = normalizedPath.replace(/^(email-attachments|prospect-documents|crm-documents|contract-documents)\//, '');
         logger.info('✅ Using explicit bucket from DB:', { bucket: explicitBucket, cleanPath });
       } else {
         // Pas de bucket explicite: détecter depuis le path ou la source
@@ -72,32 +72,17 @@ export const SecureDocumentLink: React.FC<SecureDocumentLinkProps> = ({
 
       logger.info('📂 Opening document:', { originalPath: filePath, explicitBucket, finalBucket: bucket, cleanPath, fileName });
 
-      // Créer une URL signée pour éviter les problèmes CORS
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .createSignedUrl(cleanPath, 3600, {
-          download: mode === 'download' ? fileName || true : false
-        });
-
-      if (error) {
-        logger.error('Error creating signed URL:', error);
-        toast.error(`Erreur lors de l'ouverture du document : ${error.message}`);
-        return;
-      }
-
-      if (!data?.signedUrl) {
-        logger.error('No signed URL returned');
-        toast.error('Erreur : URL de document introuvable');
-        return;
-      }
-
-      // Ouvrir dans un nouvel onglet
-      window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
-
-      logger.info('Document opened successfully:', data.signedUrl);
-    } catch (err) {
+      const signedUrl = await getSecureDocumentUrl({
+        bucket,
+        path: cleanPath,
+        download: mode === 'download',
+        fileName,
+      });
+      window.open(signedUrl, '_blank', 'noopener,noreferrer');
+      logger.info('Document opened successfully');
+    } catch (err: unknown) {
       logger.error('Exception opening document:', err);
-      toast.error(`Erreur : ${err.message || 'Impossible d\'ouvrir le document'}`);
+      toast.error(`Erreur : ${err instanceof Error ? err.message : 'Impossible d\'ouvrir le document'}`);
     }
   };
 

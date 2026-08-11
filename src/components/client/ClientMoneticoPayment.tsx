@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { CreditCard, Loader2, ExternalLink, Lock } from 'lucide-react';
+import { Loader2, ExternalLink, Lock } from 'lucide-react';
 
 interface Props {
   leadId: string;
   amount: number;
   reference: string;
+  accessToken: string;
   description?: string;
   customerEmail?: string;
   customerFirstName?: string;
@@ -12,16 +13,7 @@ interface Props {
   customerPhone?: string;
 }
 
-export default function ClientMoneticoPayment({
-  leadId,
-  amount,
-  reference,
-  description,
-  customerEmail,
-  customerFirstName,
-  customerLastName,
-  customerPhone
-}: Props) {
+export default function ClientMoneticoPayment({ reference, accessToken }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,58 +22,54 @@ export default function ClientMoneticoPayment({
       setLoading(true);
       setError(null);
 
-      // Créer le formulaire de paiement Monetico via l'Edge Function
+      // Charger un formulaire signé pour le paiement existant, sans recréer ni modifier son montant.
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-monetico-payment`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-monetico-payment-form`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
-          body: JSON.stringify({
-            leadId,
-            amount,
-            description: description || 'Paiement comptant assurance taxi',
-            customReference: reference,
-            customerEmail,
-            customerFirstName,
-            customerLastName,
-            customerPhone,
-          }),
+          body: JSON.stringify({ reference, accessToken }),
         }
       );
 
-      const result = await response.json();
+      const result = await response.json() as {
+        success?: boolean;
+        error?: string;
+        formData?: { action?: string; fields?: Record<string, string> };
+      };
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Erreur lors de la création du paiement');
+      if (!response.ok || !result.success || !result.formData?.action || !result.formData.fields) {
+        throw new Error(result.error || 'Impossible de préparer le paiement');
       }
 
-      // Afficher le formulaire HTML Monetico dans une nouvelle fenêtre
-      if (result.success && result.htmlForm) {
-        const newWindow = window.open('', '_blank');
-        if (newWindow) {
-          newWindow.document.write(result.htmlForm);
-          newWindow.document.close();
-        } else {
-          throw new Error('Impossible d\'ouvrir la fenêtre de paiement. Veuillez autoriser les pop-ups.');
-        }
-      } else {
-        throw new Error(result.error || 'Formulaire de paiement non reçu');
+      const action = new URL(result.formData.action);
+      if (action.protocol !== 'https:' || action.hostname !== 'p.monetico-services.com') {
+        throw new Error('Destination de paiement invalide');
       }
-    } catch (err) {
+
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = action.toString();
+      form.style.display = 'none';
+      for (const [name, value] of Object.entries(result.formData.fields)) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+      }
+      document.body.appendChild(form);
+      form.submit();
+    } catch (err: unknown) {
       console.error('Erreur paiement:', err);
-      setError(err.message || 'Erreur lors de la création du paiement');
+      setError(err instanceof Error ? err.message : 'Erreur lors de la création du paiement');
     } finally {
       setLoading(false);
     }
   };
-
-  const formattedAmount = new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR'
-  }).format(amount);
 
   return (
     <div>

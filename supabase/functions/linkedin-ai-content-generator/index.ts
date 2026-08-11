@@ -1,10 +1,12 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { isInternalRequest } from "../_shared/internal-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
 const POST_TOPICS = [
@@ -22,7 +24,7 @@ const POST_TOPICS = [
   "amendement N-15 : comment valoriser son historique sans sinistre",
   "grand froid et pneus hiver : impact sur votre contrat taxi",
   "double activite taxi-VTC : comment structurer son assurance",
-  "taxi moto : specificites et pieges a eviter lors de la souscription"
+  "taxi moto : specificites et pieges a eviter lors de la souscription",
 ];
 
 const HASHTAG_POOLS = [
@@ -30,18 +32,22 @@ const HASHTAG_POOLS = [
   ["#ChauffeurTaxi", "#AssurancePro", "#Taxi"],
   ["#MobilityPro", "#AssuranceFrance", "#Taxi"],
   ["#TaxiParis", "#AssuranceTaxi", "#Mobilite"],
-  ["#Courtage", "#AssuranceTaxi", "#Entrepreneur"]
+  ["#Courtage", "#AssuranceTaxi", "#Entrepreneur"],
 ];
 
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-async function generateWithOpenAI(topic: string, hashtags: string[]): Promise<string> {
+async function generateWithOpenAI(
+  topic: string,
+  hashtags: string[],
+): Promise<string> {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
   if (!apiKey) throw new Error("OPENAI_API_KEY not configured");
 
-  const prompt = `Tu es community manager pour TaxiAssur, courtier francais specialise en assurance taxi (site taxiassur.fr).
+  const prompt =
+    `Tu es community manager pour TaxiAssur, courtier francais specialise en assurance taxi (site taxiassur.fr).
 Ecris un post LinkedIn professionnel et engageant sur le sujet suivant : "${topic}".
 
 Regles strictes:
@@ -63,8 +69,11 @@ Regles strictes:
     body: JSON.stringify({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "Tu es un community manager specialise BtoB francais." },
-        { role: "user", content: prompt }
+        {
+          role: "system",
+          content: "Tu es un community manager specialise BtoB francais.",
+        },
+        { role: "user", content: prompt },
       ],
       temperature: 0.8,
       max_tokens: 600,
@@ -91,9 +100,20 @@ Deno.serve(async (req: Request) => {
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
+  if (!(await isInternalRequest(req))) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     let body: Record<string, unknown> = {};
-    try { body = await req.json(); } catch (_e) { body = {}; }
+    try {
+      body = await req.json();
+    } catch (_e) {
+      body = {};
+    }
 
     const publishNow = body.publish_now !== false;
     const customTopic = typeof body.topic === "string" ? body.topic : null;
@@ -124,7 +144,9 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (existing) {
-      throw new Error("Generated content is a duplicate of an existing post, retry");
+      throw new Error(
+        "Generated content is a duplicate of an existing post, retry",
+      );
     }
 
     const { data: inserted, error: insertErr } = await supabase
@@ -159,7 +181,7 @@ Deno.serve(async (req: Request) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ post_id: inserted.id }),
-        }
+        },
       );
       publishResult = await publishResp.json();
     }
@@ -168,7 +190,9 @@ Deno.serve(async (req: Request) => {
       await supabase.from("automation_logs").insert({
         automation_name: "linkedin_ai_content_generator",
         status: "success",
-        message: `Generated LinkedIn post ${inserted.id} (topic: ${topic.slice(0, 60)})`,
+        message: `Generated LinkedIn post ${inserted.id} (topic: ${
+          topic.slice(0, 60)
+        })`,
       });
     } catch (_e) { /* ignore */ }
 
@@ -180,7 +204,7 @@ Deno.serve(async (req: Request) => {
         published: publishNow,
         publish_result: publishResult,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -196,7 +220,10 @@ Deno.serve(async (req: Request) => {
 
     return new Response(
       JSON.stringify({ success: false, error: message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });

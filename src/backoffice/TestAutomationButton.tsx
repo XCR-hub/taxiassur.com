@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
+import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { PlayCircle, CheckCircle, XCircle, Loader } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 
 interface AutomationTest {
   name: string;
@@ -27,15 +27,12 @@ const TestAutomationButton: React.FC<TestAutomationButtonProps> = ({
     setTesting(test.functionName);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
-
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${test.functionName}`,
         {
           method: test.method || 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`,
+            'Authorization': (await internalFunctionHeaders()).Authorization,
             'Content-Type': 'application/json',
           },
           body: test.body ? JSON.stringify(test.body) : undefined,

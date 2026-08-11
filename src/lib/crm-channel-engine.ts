@@ -84,21 +84,34 @@ export const channelEngineService = {
       throw new Error(`Channel ${message.channel} not supported for sending`);
     }
 
-    const { data, error } = await supabase.functions.invoke(functionName, {
-      body: {
-        lead_id: message.lead_id,
-        subject: message.subject,
-        content: message.body,
-        template_id: message.template_id,
-        scheduled_for: message.scheduled_for,
-        tracking_enabled: message.tracking_enabled === true,
-        tracking_consent: message.tracking_consent === true,
-        tracking_purpose: message.tracking_purpose || 'crm_channel_message'
-      }
-    });
+    const { data: lead, error: leadError } = await supabase
+      .from('crm_leads')
+      .select('email, phone')
+      .eq('id', message.lead_id)
+      .single();
+    if (leadError || !lead) throw leadError || new Error('Lead introuvable');
 
-    if (error) throw error;
+    const commonPayload = { lead_id: message.lead_id };
+    const payload = message.channel === 'email'
+      ? {
+          ...commonPayload,
+          to: lead.email,
+          subject: message.subject,
+          content: message.body,
+          template_id: message.template_id,
+          scheduled_for: message.scheduled_for,
+          tracking_enabled: message.tracking_enabled === true,
+          tracking_consent: message.tracking_consent === true,
+          tracking_purpose: message.tracking_purpose || 'crm_channel_message'
+        }
+      : message.channel === 'sms'
+        ? { ...commonPayload, to: lead.phone, content: message.body }
+        : { ...commonPayload, to: lead.phone, message: message.body };
 
+    const { data, error } = await supabase.functions.invoke(functionName, { body: payload });
+    if (error || data?.success !== true) {
+      throw error || new Error(`${message.channel} non envoyé`);
+    }
     const { data: messageRecord, error: insertError } = await supabase
       .from('crm_communications')
       .insert({

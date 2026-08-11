@@ -1,10 +1,12 @@
+import { isInternalRequest } from "../_shared/internal-auth.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
 interface PublishItem {
@@ -38,9 +40,10 @@ async function commitToGitHub(
   content: string,
   message: string,
   branch: string,
-  token: string
+  token: string,
 ): Promise<{ success: boolean; sha?: string; error?: string }> {
-  const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
+  const apiUrl =
+    `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
 
   try {
     // 1. Récupérer le SHA actuel du fichier s'il existe
@@ -136,6 +139,12 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
+  if (!(await isInternalRequest(req))) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -163,7 +172,7 @@ Deno.serve(async (req: Request) => {
           success: false,
           message: "Publication automatique désactivée",
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -174,7 +183,7 @@ Deno.serve(async (req: Request) => {
     // 2. Récupérer les modifications en attente
     const { data: pendingItems, error: queueError } = await supabase.rpc(
       "get_pending_code_publishes",
-      { p_limit: 10 }
+      { p_limit: 10 },
     );
 
     if (queueError) {
@@ -189,14 +198,16 @@ Deno.serve(async (req: Request) => {
           message: "Aucune modification en attente",
           published: 0,
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     console.log(`📝 ${pendingItems.length} modification(s) à publier`);
 
     // 3. Extraire owner/repo de l'URL
-    const repoMatch = config.repository_url.match(/github\.com\/([^/]+)\/([^/]+)/);
+    const repoMatch = config.repository_url.match(
+      /github\.com\/([^/]+)\/([^/]+)/,
+    );
     if (!repoMatch) {
       throw new Error("URL repository invalide");
     }
@@ -222,7 +233,7 @@ Deno.serve(async (req: Request) => {
         item.file_content,
         `${config.commit_message_prefix} ${item.commit_message}`,
         config.branch_name,
-        githubToken
+        githubToken,
       );
 
       // Marquer comme publié ou échoué
@@ -243,7 +254,7 @@ Deno.serve(async (req: Request) => {
       console.log(
         commitResult.success
           ? `✅ ${item.file_path} publié (${commitResult.sha})`
-          : `❌ ${item.file_path} échoué: ${commitResult.error}`
+          : `❌ ${item.file_path} échoué: ${commitResult.error}`,
       );
     }
 
@@ -276,7 +287,10 @@ Deno.serve(async (req: Request) => {
         success: false,
         error: error instanceof Error ? error.message : "Erreur inconnue",
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });

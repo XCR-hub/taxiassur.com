@@ -1,19 +1,29 @@
+import { isInternalRequest } from "../_shared/internal-auth.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? Deno.env.get("OpenAI_API_KEY") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
+  "";
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ??
+  Deno.env.get("OpenAI_API_KEY") ?? "";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
+  }
+  if (!(await isInternalRequest(req))) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
@@ -29,14 +39,18 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (fetchErr || !decision) throw new Error("Décision introuvable");
-    if (decision.status !== "approved") throw new Error("Décision non approuvée");
+    if (decision.status !== "approved") {
+      throw new Error("Décision non approuvée");
+    }
 
     let actionResult: string | null = null;
 
     if (decision.lead_id) {
       const { data: lead } = await supabase
         .from("crm_leads")
-        .select("id, first_name, last_name, email, phone, status, pipeline_stage")
+        .select(
+          "id, first_name, last_name, email, phone, status, pipeline_stage",
+        )
         .eq("id", decision.lead_id)
         .maybeSingle();
 
@@ -44,32 +58,37 @@ Deno.serve(async (req: Request) => {
         switch (decision.agent) {
           case "email_composer": {
             if (OPENAI_API_KEY && lead.email) {
-              const res = await fetch("https://api.openai.com/v1/chat/completions", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${OPENAI_API_KEY}`,
-                },
-                body: JSON.stringify({
-                  model: "gpt-4o-mini",
-                  max_tokens: 400,
-                  messages: [
-                    {
-                      role: "system",
-                      content: "Tu es un commercial expert en assurance taxi chez TaxiAssur. Rédige des emails professionnels, chaleureux et orientés action.",
-                    },
-                    {
-                      role: "user",
-                      content: `Rédige un email de relance pour ce prospect taxi:
+              const res = await fetch(
+                "https://api.openai.com/v1/chat/completions",
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${OPENAI_API_KEY}`,
+                  },
+                  body: JSON.stringify({
+                    model: "gpt-4o-mini",
+                    max_tokens: 400,
+                    messages: [
+                      {
+                        role: "system",
+                        content:
+                          "Tu es un commercial expert en assurance taxi chez TaxiAssur. Rédige des emails professionnels, chaleureux et orientés action.",
+                      },
+                      {
+                        role: "user",
+                        content:
+                          `Rédige un email de relance pour ce prospect taxi:
 Nom: ${lead.first_name} ${lead.last_name}
 Contexte: ${decision.description}
 Action suggérée: ${decision.suggested_action}
 
 Email court (3-4 paragraphes), objet inclus, signature TaxiAssur.`,
-                    },
-                  ],
-                }),
-              });
+                      },
+                    ],
+                  }),
+                },
+              );
               if (res.ok) {
                 const data = await res.json();
                 const emailContent = data.choices[0].message.content;
@@ -79,7 +98,8 @@ Email court (3-4 paragraphes), objet inclus, signature TaxiAssur.`,
                   direction: "outbound",
                   subject: `[IA] ${decision.title}`,
                   content: emailContent,
-                  notes: `Email généré automatiquement par l'agent ${decision.agent} suite à approbation de la décision IA`,
+                  notes:
+                    `Email généré automatiquement par l'agent ${decision.agent} suite à approbation de la décision IA`,
                 });
                 actionResult = "Email de relance créé dans les interactions";
               }
@@ -110,7 +130,8 @@ Email court (3-4 paragraphes), objet inclus, signature TaxiAssur.`,
               type: "note",
               direction: "internal",
               subject: `[Alerte IA] ${decision.title}`,
-              content: `${decision.description}\n\nRaisonnement: ${decision.rationale}\n\nAction recommandée: ${decision.suggested_action}`,
+              content:
+                `${decision.description}\n\nRaisonnement: ${decision.rationale}\n\nAction recommandée: ${decision.suggested_action}`,
               notes: `Alerte générée par l'agent IA ${decision.agent}`,
             });
             actionResult = "Note d'alerte ajoutée à la timeline du lead";
@@ -123,7 +144,8 @@ Email court (3-4 paragraphes), objet inclus, signature TaxiAssur.`,
               type: "note",
               direction: "internal",
               subject: `[IA Appliqué] ${decision.title}`,
-              content: `${decision.suggested_action}\n\n${decision.description}`,
+              content:
+                `${decision.suggested_action}\n\n${decision.description}`,
               notes: `Action IA appliquée — Agent: ${decision.agent}`,
             });
             actionResult = "Action enregistrée dans la timeline";
@@ -143,14 +165,21 @@ Email court (3-4 paragraphes), objet inclus, signature TaxiAssur.`,
       .eq("id", decision_id);
 
     return new Response(
-      JSON.stringify({ success: true, action_result: actionResult, decision_id }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({
+        success: true,
+        action_result: actionResult,
+        decision_id,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
     console.error("apply-ai-decision error:", err);
-    return new Response(JSON.stringify({ success: false, error: String(err) }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ success: false, error: String(err) }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 });

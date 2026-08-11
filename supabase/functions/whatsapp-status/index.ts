@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { verifyTwilioWebhook } from "../_shared/twilio-webhook.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,31 +26,40 @@ Deno.serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const formData = await req.formData();
-    const payload: any = {};
+    if (!(await verifyTwilioWebhook(req, formData, "TWILIO_WHATSAPP_STATUS_URL"))) {
+      return new Response("Forbidden", { status: 403, headers: corsHeaders });
+    }
+    const payload: Record<string, string> = {};
     formData.forEach((value, key) => {
-      payload[key] = value;
+      payload[key] = String(value);
     });
 
-    console.log("WhatsApp status webhook:", payload);
 
-    const { MessageSid, MessageStatus, ErrorCode, ErrorMessage } = payload as TwilioStatusPayload;
+    const { MessageSid, MessageStatus, ErrorCode, ErrorMessage } = payload as unknown as TwilioStatusPayload;
+    if (!/^SM[a-f0-9]{32}$/i.test(String(MessageSid || ''))) {
+      return new Response('Invalid message identifier', { status: 400, headers: corsHeaders });
+    }
 
-    const updateData: any = {
-      status: MessageStatus.toLowerCase(),
+    const providerStatus = String(MessageStatus || '').toLowerCase();
+    const statusMap: Record<string, 'queued' | 'sent' | 'delivered' | 'read' | 'failed'> = {
+      accepted: 'queued',
+      queued: 'queued',
+      sending: 'queued',
+      sent: 'sent',
+      delivered: 'delivered',
+      read: 'read',
+      undelivered: 'failed',
+      failed: 'failed',
     };
-
-    if (ErrorCode) {
-      updateData.error_code = ErrorCode;
+    const normalizedStatus = statusMap[providerStatus];
+    if (!normalizedStatus) {
+      return new Response('Invalid message status', { status: 400, headers: corsHeaders });
     }
 
-    if (ErrorMessage) {
-      updateData.error_message = ErrorMessage;
-    }
-
-    if (MessageStatus.toLowerCase() === "read") {
-      updateData.read_at = new Date().toISOString();
-    }
-
+    const updateData: Record<string, string> = { status: normalizedStatus };
+    if (ErrorCode) updateData.error_code = String(ErrorCode).replace(/[\r\n]/g, ' ').slice(0, 50);
+    if (ErrorMessage) updateData.error_message = String(ErrorMessage).replace(/[\r\n]/g, ' ').slice(0, 500);
+    if (normalizedStatus === 'read') updateData.read_at = new Date().toISOString();
     const { error: updateError } = await supabase
       .from("wa_messages")
       .update(updateData)
@@ -63,7 +73,7 @@ Deno.serve(async (req: Request) => {
     await supabase.from("wa_webhooks_log").insert({
       webhook_type: "status_callback",
       message_sid: MessageSid,
-      payload: payload,
+      payload: { message_status: normalizedStatus, error_code: updateData.error_code || null },
       processed: true,
     });
 

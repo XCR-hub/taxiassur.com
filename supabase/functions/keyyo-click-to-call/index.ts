@@ -1,10 +1,12 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { isInternalRequest } from "../_shared/internal-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
 /**
@@ -33,7 +35,7 @@ async function makeKeyyoCall(
   baseUrl: string,
   params: URLSearchParams,
   sipLogin: string,
-  sipPassword: string
+  sipPassword: string,
 ): Promise<Response> {
   const url = `${baseUrl}/makecall.html?${params.toString()}`;
 
@@ -72,10 +74,17 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
+  if (!(await isInternalRequest(req))) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
     // Get request body
@@ -141,7 +150,7 @@ Deno.serve(async (req: Request) => {
       config.base_url,
       params,
       config.sip_login || account,
-      config.sip_password || ""
+      config.sip_password || "",
     );
 
     const responseText = await keyyoResponse.text();
@@ -156,15 +165,17 @@ Deno.serve(async (req: Request) => {
       // Vérifier les erreurs spécifiques
       if (keyyoResponse.status === 401) {
         throw new Error(
-          "Authentification Keyyo échouée. Vérifiez le login/password SIP ou l'IP whitelistée."
+          "Authentification Keyyo échouée. Vérifiez le login/password SIP ou l'IP whitelistée.",
         );
-      } else if (keyyoResponse.status === 500 && responseText.includes("Come Back Later")) {
+      } else if (
+        keyyoResponse.status === 500 && responseText.includes("Come Back Later")
+      ) {
         throw new Error(
-          "Limite de débit Keyyo atteinte (1 appel/seconde). Réessayez dans 1 seconde."
+          "Limite de débit Keyyo atteinte (1 appel/seconde). Réessayez dans 1 seconde.",
         );
       } else {
         throw new Error(
-          `Keyyo API error: ${keyyoResponse.status} - ${responseText}`
+          `Keyyo API error: ${keyyoResponse.status} - ${responseText}`,
         );
       }
     }
@@ -227,7 +238,7 @@ Deno.serve(async (req: Request) => {
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      },
     );
   } catch (error: any) {
     console.error("Keyyo Click-to-Call error:", error);
@@ -241,7 +252,7 @@ Deno.serve(async (req: Request) => {
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      },
     );
   }
 });

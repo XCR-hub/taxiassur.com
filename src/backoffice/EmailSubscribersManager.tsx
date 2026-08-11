@@ -113,8 +113,8 @@ const EmailSubscribersManager: React.FC = () => {
     const matchSearch = !q || s.email.toLowerCase().includes(q) || (s.name || '').toLowerCase().includes(q);
     return matchStatus && matchSearch;
   }).sort((a, b) => {
-    let va: string = a[sortField] || '';
-    let vb: string = b[sortField] || '';
+    const va: string = a[sortField] || '';
+    const vb: string = b[sortField] || '';
     return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
   });
 

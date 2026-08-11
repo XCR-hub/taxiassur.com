@@ -92,7 +92,7 @@ const DragDropUploader: React.FC<DragDropUploaderProps> = ({
     e.stopPropagation();
     setIsDragging(false);
 
-    let files = Array.from(e.dataTransfer.files);
+    const files = Array.from(e.dataTransfer.files);
     if (files.length === 0 && e.dataTransfer.items) {
       for (let i = 0; i < e.dataTransfer.items.length; i++) {
         if (e.dataTransfer.items[i].kind === 'file') {

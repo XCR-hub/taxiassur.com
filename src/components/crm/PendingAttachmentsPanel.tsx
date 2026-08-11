@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from '@/lib/toast';
 import {
-  Paperclip, FileText, Image, File, Check, X, AlertCircle,
-  Download, Eye, Mail, Clock, Sparkles, ChevronDown, ChevronUp
+  Paperclip, FileText, Image, File, Check, X,
+  Mail, Sparkles, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { SecureDocumentLink } from './SecureDocumentLink';
 
 interface PendingAttachment {
   id: string;
@@ -13,6 +14,7 @@ interface PendingAttachment {
   file_type: string | null;
   file_size: number;
   download_url: string | null;
+  storage_path: string | null;
   auto_detected_type: string | null;
   confidence_score: number | null;
   created_at: string;
@@ -83,7 +85,7 @@ export const PendingAttachmentsPanel: React.FC<PendingAttachmentsPanelProps> = (
   const handleClassify = async (attachmentId: string, documentType: string) => {
     setClassifying(attachmentId);
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .rpc('classify_attachment', {
           p_attachment_id: attachmentId,
           p_document_type: documentType
@@ -192,16 +194,16 @@ export const PendingAttachmentsPanel: React.FC<PendingAttachmentsPanelProps> = (
                           Reçu {new Date(attachment.created_at).toLocaleDateString('fr-FR')}
                         </p>
                       </div>
-                      {attachment.download_url && (
-                        <a
-                          href={attachment.download_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                      {attachment.storage_path && (
+                        <SecureDocumentLink
+                          filePath={attachment.storage_path}
+                          source="email_attachments"
+                          bucket="email-attachments"
+                          fileName={attachment.file_name}
+                          mode="download"
                           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                          title="Télécharger"
-                        >
-                          <Download size={18} className="text-gray-600" />
-                        </a>
+                          iconSize={18}
+                        />
                       )}
                     </div>
 

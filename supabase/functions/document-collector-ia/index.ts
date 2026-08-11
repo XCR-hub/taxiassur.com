@@ -243,7 +243,7 @@ Deno.serve(async (req: Request) => {
     const url = new URL(req.url);
     const action = url.searchParams.get("action") || "all";
     
-    let result: any = {};
+    const result: any = {};
     
     if (action === "all" || action === "verify") {
       result.verification = await verifyAllDocuments();

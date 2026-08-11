@@ -33,46 +33,14 @@ function markDismissed(): void {
 }
 
 async function sendConfirmationEmail(to: string, firstName: string): Promise<void> {
-  const firstName_ = firstName || 'Chauffeur';
-  const downloadUrl = `${window.location.origin}/guides/guide-assurance-taxi-2026.html`;
-  const devisUrl = `${window.location.origin}/#devis`;
-
-  const html = `
-<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;background:#f4f6fa;font-family:Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fa;padding:32px 16px;">
-  <tr><td align="center">
-    <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;max-width:100%;">
-      <tr><td style="background:linear-gradient(135deg,#1a1a2e 0%,#0f3460 100%);padding:40px;text-align:center;">
-        <div style="font-size:28px;font-weight:900;color:#f5b400;margin-bottom:8px;">TaxiAssur</div>
-        <div style="color:rgba(255,255,255,0.6);font-size:14px;">Votre guide est pret</div>
-      </td></tr>
-      <tr><td style="padding:40px;">
-        <p style="font-size:22px;font-weight:700;color:#1a1a2e;margin:0 0 16px;">Bonjour ${firstName_},</p>
-        <p style="color:#555;font-size:16px;line-height:1.7;margin:0 0 24px;">Votre <strong>Guide Complet Assurance Taxi 2026</strong> est disponible maintenant :</p>
-        <div style="background:linear-gradient(135deg,#fff8e1,#fffde7);border:2px solid #f5b400;border-radius:12px;padding:24px;margin:0 0 32px;text-align:center;">
-          <a href="${downloadUrl}" style="display:inline-block;background:#f5b400;color:#1a1a2e;font-weight:700;font-size:16px;padding:14px 32px;border-radius:8px;text-decoration:none;">Telecharger le guide</a>
-        </div>
-        <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 24px;">Vous y trouverez les 7 erreurs qui font exploser votre prime, le comparatif des 5 assureurs specialistes et une methode pas-a-pas pour economiser 35%.</p>
-        <a href="${devisUrl}" style="display:inline-block;background:#0f3460;color:#fff;font-weight:700;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none;">Obtenir mon devis gratuit</a>
-      </td></tr>
-      <tr><td style="background:#f8f9fa;padding:20px 40px;border-top:1px solid #e8e8e8;">
-        <p style="color:#aaa;font-size:12px;margin:0;text-align:center;">TaxiAssur · taxiassur.com</p>
-      </td></tr>
-    </table>
-  </td></tr>
-</table>
-</body></html>`;
-
-  try {
-    const url = import.meta.env.VITE_SUPABASE_URL;
-    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    await fetch(`${url}/functions/v1/send-email-ionos`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}`, 'Apikey': key },
-      body: JSON.stringify({ to, toName: firstName_, subject: 'Votre Guide Complet Assurance Taxi 2026 — TaxiAssur', html }),
-    });
-  } catch { /* fire and forget */ }
+  const url = import.meta.env.VITE_SUPABASE_URL;
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const response = await fetch(`${url}/functions/v1/send-lead-magnet-confirmation`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}`, Apikey: key },
+    body: JSON.stringify({ email: to, first_name: firstName, guide_type: 'guide-complet' }),
+  });
+  if (!response.ok) throw new Error(`GuideEmailError:${response.status}`);
 }
 
 const ITEMS = [
@@ -157,7 +125,7 @@ const LeadMagnetPopup: React.FC<LeadMagnetPopupProps> = ({ onClose }) => {
 
       if (error) throw error;
 
-      sendConfirmationEmail(cleanEmail, firstName.trim());
+      await sendConfirmationEmail(cleanEmail, firstName.trim());
       markDismissed();
       setStatus('success');
 

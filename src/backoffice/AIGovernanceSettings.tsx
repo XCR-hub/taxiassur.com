@@ -101,8 +101,6 @@ const AIGovernanceSettings: React.FC = () => {
     }
   };
 
-  const loadRules = loadAll;
-
   const toggleRule = async (rule: GovernanceRule) => {
     setSaving(rule.id);
     try {
