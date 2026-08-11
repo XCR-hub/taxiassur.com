@@ -22,20 +22,20 @@ SET search_path = public
 AS $$
   SELECT
     ea.id,
-    ea.file_name,
-    ea.file_type,
+    ea.filename AS file_name,
+    ea.content_type AS file_type,
     ea.file_size,
     NULL::text AS download_url,
     ea.storage_path,
-    ea.auto_detected_type,
-    ea.confidence_score,
+    ea.proposed_doc_type AS auto_detected_type,
+    ea.classification_confidence AS confidence_score,
     ea.created_at,
     em.subject,
     em.from_email
   FROM public.email_attachments ea
   LEFT JOIN public.email_messages em ON em.id = ea.email_message_id
-  WHERE ea.lead_id = p_lead_id
-    AND ea.classification_status = 'pending'
+  WHERE em.lead_id = p_lead_id
+    AND ea.status IN ('pending', 'pending_validation', 'unclassified')
   ORDER BY ea.created_at DESC;
 $$;
 

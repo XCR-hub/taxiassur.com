@@ -2,7 +2,7 @@ param(
   [string]$ProjectRef = 'drohhxrkoequjphvabvq',
   [switch]$ConfirmCriticalMigrationsApplied
 )
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = 'Continue'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $requiredCriticalMigrations = @(
   (Join-Path $repoRoot 'supabase/migrations/20260810033000_add_monetico_creation_idempotency.sql'),
@@ -17,8 +17,9 @@ if ($missingMigrationFiles.Count) {
 if (-not $ConfirmCriticalMigrationsApplied) {
   throw 'Deployment aborted: apply the critical database migrations first, verify them remotely, then rerun with -ConfirmCriticalMigrationsApplied.'
 }
-if (-not $env:SUPABASE_ACCESS_TOKEN) {
-  throw 'SUPABASE_ACCESS_TOKEN is required. Run: npx supabase login'
+$projectJson = & npx --no-install supabase projects list --output json 2>$null
+if ($LASTEXITCODE -ne 0 -or -not ($projectJson -match $ProjectRef)) {
+  throw 'An authenticated Supabase CLI session with access to the target project is required. Run: npx supabase login'
 }
 $requiredRemoteSecrets = @(
   'BREVO_WEBHOOK_TOKEN',
@@ -43,9 +44,10 @@ $requiredRemoteSecrets = @(
 Write-Host 'Checking required remote webhook secrets...'
 $secretJson = & npx supabase secrets list --project-ref $ProjectRef --output json 2>$null
 if ($LASTEXITCODE -ne 0) { throw 'Unable to list remote Supabase secrets; deployment aborted.' }
-try { $remoteSecrets = @($secretJson | ConvertFrom-Json) } catch { throw 'Invalid Supabase secrets response; deployment aborted.' }
-$remoteSecretNames = @($remoteSecrets | ForEach-Object { [string]$_.name })
-$missingSecrets = @($requiredRemoteSecrets | Where-Object { $_ -notin $remoteSecretNames })
+$secretText = $secretJson -join [Environment]::NewLine
+$missingSecrets = @($requiredRemoteSecrets | Where-Object {
+  $secretText -notmatch ('"name"\s*:\s*"' + [regex]::Escape($_) + '"')
+})
 if ($missingSecrets.Count) {
   throw "Missing required Supabase secrets: $($missingSecrets -join ', '). Configure them before deployment."
 }

@@ -13,10 +13,11 @@ FOR SELECT
 TO authenticated
 USING (bucket_id = 'email-attachments');
 
-UPDATE public.email_attachments
-SET download_url = NULL
-WHERE download_url IS NOT NULL
-  AND (
-    storage_bucket = 'email-attachments'
-    OR download_url LIKE '%/storage/v1/object/public/email-attachments/%'
-  );
+DO $migration$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema = 'public' AND table_name = 'email_attachments' AND column_name = 'download_url') THEN
+    EXECUTE 'UPDATE public.email_attachments SET download_url = NULL WHERE download_url IS NOT NULL';
+  END IF;
+END
+$migration$;

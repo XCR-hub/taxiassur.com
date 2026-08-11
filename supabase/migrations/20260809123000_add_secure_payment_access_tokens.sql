@@ -69,11 +69,23 @@ REVOKE ALL ON FUNCTION public.get_payment_by_access(text, text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_payment_by_access(text, text)
 TO anon, authenticated, service_role;
 
-UPDATE public.lead_contracts contract
-SET down_payment_link =
-  payment.reference || '?token=' || payment.payment_access_token
-FROM public.monetico_payments payment
-WHERE contract.down_payment_link IS NOT NULL
-  AND contract.down_payment_link NOT LIKE '%?token=%'
-  AND btrim(contract.down_payment_link) = btrim(payment.reference)
-  AND payment.status IN ('pending', 'sent', 'processing');
+DO $block$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'lead_contracts'
+      AND column_name = 'down_payment_link'
+  ) THEN
+    EXECUTE $sql$
+      UPDATE public.lead_contracts contract
+      SET down_payment_link = payment.reference || '?token=' || payment.payment_access_token
+      FROM public.monetico_payments payment
+      WHERE contract.down_payment_link IS NOT NULL
+        AND contract.down_payment_link NOT LIKE '%?token=%'
+        AND btrim(contract.down_payment_link) = btrim(payment.reference)
+        AND payment.status IN ('pending', 'sent', 'processing')
+    $sql$;
+  END IF;
+END
+ $block$;
