@@ -43,10 +43,14 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
     setLoading(true);
 
     try {
-      await nativeAdminLogin(email.trim().toLowerCase(), password);
-      localStorage.setItem('taxiassur-admin-permanent', 'true');
-      window.location.reload();
-      return;
+      try {
+        await nativeAdminLogin(email.trim().toLowerCase(), password);
+        localStorage.setItem('taxiassur-admin-permanent', 'true');
+        window.location.reload();
+        return;
+      } catch {
+        // Transitional fallback until each active collaborator has initialized a local credential.
+      }
       const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
       if (signInError) throw signInError;
       if (!data.user) throw new Error('Échec de la connexion');
