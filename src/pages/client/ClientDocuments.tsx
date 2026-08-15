@@ -9,7 +9,7 @@ import {
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
 import { supabase } from '@/lib/supabase';
-import { getSecureDocumentUrl } from '@/lib/secure-document-url';
+import { downloadSecureDocument, viewSecureDocument } from '@/lib/secure-document-url';
 import { logger } from '@/lib/logger';
 import { getClientAccessToken } from '@/lib/client-access';
 import { withTimeout } from '@/lib/promise-timeout';
@@ -151,8 +151,7 @@ export default function ClientDocuments() {
     try {
       const bucket = documentBucket(doc);
       if (!bucket) return void window.open(doc.file_url, '_blank', 'noopener,noreferrer');
-      const signedUrl = await getSecureDocumentUrl({ path: doc.file_url, bucket, accessToken });
-      window.open(signedUrl, '_blank', 'noopener,noreferrer');
+      await viewSecureDocument({ path: doc.file_url, bucket, accessToken, fileName: doc.name });
     } catch (error: unknown) {
       setUploadError(error instanceof Error ? error.message : "Impossible d'ouvrir le document");
     }
@@ -162,9 +161,11 @@ export default function ClientDocuments() {
     if (!doc.file_url || !accessToken) return;
     try {
       const bucket = documentBucket(doc);
-      const signedUrl = bucket
-        ? await getSecureDocumentUrl({ path: doc.file_url, bucket, accessToken, download: true, fileName: doc.name })
-        : doc.file_url;
+      if (bucket) {
+        await downloadSecureDocument({ path: doc.file_url, bucket, accessToken, fileName: doc.name });
+        return;
+      }
+      const signedUrl = doc.file_url;
       const response = await fetch(signedUrl);
       if (!response.ok) throw new Error(`Téléchargement impossible (HTTP ${response.status})`);
       const blob = await response.blob();
@@ -545,6 +546,6 @@ export default function ClientDocuments() {
 
 function documentBucket(doc: Document): 'prospect-documents' | 'crm-documents' | null {
   if (doc.category === 'company_document') return null;
-  if (doc.file_url.includes('/crm-documents/')) return 'crm-documents';
+  if (doc.category === 'crm_upload' || doc.file_url.includes('/crm-documents/')) return 'crm-documents';
   return 'prospect-documents';
 }

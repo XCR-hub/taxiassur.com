@@ -25,6 +25,13 @@ const whatsapp = 'supabase/functions/send-whatsapp/index.ts';
 const publicPaymentMigration = 'supabase/migrations/20260809061000_minimize_public_payment_reference_data.sql';
 const hardenedPaymentProcessingMigration = 'supabase/migrations/20260809120000_harden_monetico_payment_processing.sql';
 const paymentAccessTokenMigration = 'supabase/migrations/20260809123000_add_secure_payment_access_tokens.sql';
+const prospectDocumentSigner = 'supabase/functions/sign-document-url/index.ts';
+const prospectDocumentUploader = 'supabase/functions/upload-client-document/index.ts';
+const publishScript = 'scripts/publish.js';
+requireMatch(prospectDocumentSigner, /tokenPattern[\s\S]*crm_leads[\s\S]*lead_id[\s\S]*createSignedUrl/, 'prospect document signing is not token-bound to document ownership');
+requireMatch(prospectDocumentUploader, /createSignedUploadUrl[\s\S]*actualSize !== declaredSize[\s\S]*actualMime !== mimeType/, 'client uploads are not signed or verified after storage');
+requireMatch(publishScript, /"upload-client-document"[\s\S]*"sign-document-url"/, 'prospect upload or download functions are missing from the publication set');
+requireMatch('supabase/migrations/20260815003000_restore_prospect_document_downloads.sql', /prospect_documents[\s\S]*p_token ~ '\^\[0-9A-Fa-f\]\{64\}\$'[\s\S]*lead\.access_token = p_token/, 'legacy prospect document listing is not bound to a strong access token');
 for (const file of [createPayment, paymentEmail, sms, whatsapp]) {
   requireMatch(file, /admin\.auth\.getUser\(token\)/, 'missing server-side user-token validation');
   forbidMatch(file, /tokenRole|JSON\.parse\(atob|role\s*===\s*["']service_role/, 'trusts an unverified JWT payload');
@@ -318,9 +325,9 @@ requireMatch(clientClaimMigration, /ACCIDENT_RESPONSABLE[\s\S]*ASSISTANCE[\s\S]*
 requireMatch(clientClaimMigration, /incident_location[\s\S]*REVOKE ALL[\s\S]*FROM PUBLIC[\s\S]*GRANT EXECUTE/, 'claim location is not persisted or RPC grants are unsafe');
 requireMatch('src/lib/secure-document-url.ts', /sign-document-url/, 'frontend secure URL helper bypasses the signer');
 forbidMatch('src/components/crm/SecureDocumentLink.tsx', /createSignedUrl|getPublicUrl|signedUrl\)/, 'back-office document link bypasses the server signer or logs its URL');
-requireMatch('src/pages/client/ClientDocuments.tsx', /getSecureDocumentUrl[\s\S]*accessToken/, 'client documents are opened without token-bound signing');
+requireMatch('src/pages/client/ClientDocuments.tsx', /(?:view|download)SecureDocument[\s\S]*accessToken/, 'client documents are opened without token-bound signing');
 requireMatch('supabase/functions/sign-document-url/index.ts', /lead_company_quotes[\s\S]*quote_file_url, quote_pdf_url, rc_pro_addon_file_url/, 'quote signer does not verify prospect ownership');
-requireMatch('src/components/client/ClientQuotesViewer.tsx', /getSecureDocumentUrl[\s\S]*bucket:\s*["']contract-documents["'][\s\S]*accessToken:\s*token/, 'prospect quotes do not use token-bound short-lived URLs');
+requireMatch('src/components/client/ClientQuotesViewer.tsx', /(?:view|download)SecureDocument[\s\S]*bucket:\s*["']contract-documents["'][\s\S]*accessToken:\s*token/, 'prospect quotes do not use token-bound short-lived URLs');
 forbidMatch('src/components/client/ClientQuotesViewer.tsx', /href=\{(?:fileUrl|quote\.rc_pro_addon_file_url)\}|window\.open\(fileUrl/, 'prospect quotes still expose stored document URLs directly');
 const submitQuoteModal = 'src/components/crm/SubmitQuoteModal.tsx';
 forbidMatch(submitQuoteModal, /getPublicUrl|href=\{formData\.quote_file_url\}|upsert:\s*true|body:\s*html,/, 'quote submission exposes private files, overwrites objects, or stores a portal token in audit HTML');

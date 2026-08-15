@@ -28,6 +28,8 @@ const supabaseFunctions = [
   "send-client-access",
   "process-client-access-outbox",
   "process-insurer-dossier-sends",
+  "upload-client-document",
+  "sign-document-url",
   "send-document-notification",
   "send-email-universal",
   "send-crm-email",

@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { toast } from "@/lib/toast";
-import { getSecureDocumentUrl } from "@/lib/secure-document-url";
+import { downloadSecureDocument, viewSecureDocument } from "@/lib/secure-document-url";
 
 interface InsuranceCompany {
   id: string;
@@ -183,14 +183,9 @@ export default function ClientQuotesViewer({ token, supabaseClient }: Props) {
       return;
     }
     try {
-      const signedUrl = await getSecureDocumentUrl({
-        path,
-        bucket: "contract-documents",
-        accessToken: token,
-        download,
-        fileName,
-      });
-      window.open(signedUrl, "_blank", "noopener,noreferrer");
+      const options = { path, bucket: "contract-documents", accessToken: token, fileName };
+      if (download) await downloadSecureDocument(options);
+      else await viewSecureDocument(options);
     } catch (error) {
       toast.error(
         error instanceof Error
