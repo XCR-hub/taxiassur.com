@@ -25,10 +25,12 @@ function cleanPath(value: unknown, bucket: string) {
   let path = String(value || "").trim().replace(/^\/+/, "");
   try {
     const parsed = new URL(path);
-    const marker = `/storage/v1/object/public/${bucket}/`;
-    const index = parsed.pathname.indexOf(marker);
-    if (index >= 0) {
-      path = decodeURIComponent(parsed.pathname.slice(index + marker.length));
+    const markers = ["public", "sign", "authenticated"].map((visibility) =>
+      `/storage/v1/object/${visibility}/${bucket}/`
+    );
+    const marker = markers.find((candidate) => parsed.pathname.includes(candidate));
+    if (marker) {
+      path = decodeURIComponent(parsed.pathname.slice(parsed.pathname.indexOf(marker) + marker.length));
     }
   } catch { /* already a storage path */ }
   path = path.replace(new RegExp(`^${bucket}/`), "");

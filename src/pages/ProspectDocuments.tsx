@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useParams, Link } from 'react-router-dom';
-import { Upload, CheckCircle, AlertCircle, FileText, Loader2, X } from 'lucide-react';
+import { Upload, CheckCircle, AlertCircle, FileText, Loader2, X, Download } from 'lucide-react';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
 import { withTimeout } from '@/lib/promise-timeout';
+import { downloadSecureDocument } from '@/lib/secure-document-url';
 import ComplementaryDocuments from '@/components/client/ComplementaryDocuments';
 
 interface DocumentType {
@@ -24,6 +25,8 @@ interface UploadedDocument {
   document_type: string;
   document_name: string;
   file_name?: string;
+  file_path: string;
+  file_url?: string;
   file_size: number;
   uploaded_at: string;
   status: string;
@@ -212,6 +215,21 @@ const ProspectDocuments: React.FC = () => {
     }
   };
 
+  const handleDownload = async (uploaded: UploadedDocument) => {
+    if (!token) return;
+    setError(null);
+    try {
+      await downloadSecureDocument({
+        path: uploaded.file_path || uploaded.file_url || '',
+        bucket: 'prospect-documents',
+        accessToken: token,
+        fileName: uploaded.document_name || uploaded.file_name || 'document',
+      });
+    } catch (err) {
+      setError(getErrorMessage(err, 'Document indisponible'));
+    }
+  };
+
   if (!token) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center p-4">
@@ -331,9 +349,14 @@ const ProspectDocuments: React.FC = () => {
                           </p>
                         </div>
                       </div>
-                      <span className="text-xs bg-green-500/20 text-green-400 px-3 py-1 rounded-full">
-                        Reçu
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() => void handleDownload(uploaded)}
+                        className="inline-flex items-center gap-2 rounded-lg border border-green-500/40 bg-green-500/15 px-3 py-2 text-xs font-semibold text-green-300 hover:bg-green-500/25"
+                      >
+                        <Download size={15} />
+                        Télécharger
+                      </button>
                     </div>
                   </div>
                 ) : (

@@ -3,7 +3,7 @@ import { useSearchParams, useParams, Link } from 'react-router-dom';
 import { Upload, CheckCircle, AlertCircle, FileText, Loader2, X, Download, User, Phone, Mail, MapPin, Car, Shield, CreditCard, Ligature as FileSignature, Clock, CheckCircle2, XCircle, ChevronRight, Lock, RefreshCw, Euro, FileCheck, AlertTriangle } from 'lucide-react';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
-import { getSecureDocumentUrl } from '@/lib/secure-document-url';
+import { downloadSecureDocument } from '@/lib/secure-document-url';
 import { withTimeout } from '@/lib/promise-timeout';
 import ClientQuotesViewer from '../components/client/ClientQuotesViewer';
 import ClientSubscriptionForm from '../components/client/ClientSubscriptionForm';
@@ -65,6 +65,8 @@ interface UploadedDocument {
   id: string;
   document_type: string;
   file_name: string;
+  file_path: string;
+  file_url?: string;
   file_size: number;
   uploaded_at: string;
   status: string;
@@ -126,6 +128,7 @@ interface FinalClientDocument {
   id: string;
   document_type: string;
   file_name: string;
+  file_path: string;
   file_url: string;
   uploaded_at: string;
   custom_label?: string;
@@ -373,8 +376,20 @@ const EspaceProspect: React.FC = () => {
   const handleFinalDocument = async (doc: FinalClientDocument) => {
     if (!token) return;
     try {
-      const signedUrl = await getSecureDocumentUrl({ path: doc.file_url, bucket: 'crm-documents', accessToken: token, download: true, fileName: doc.file_name });
-      window.open(signedUrl, '_blank', 'noopener,noreferrer');
+      await downloadSecureDocument({ path: doc.file_path || doc.file_url, bucket: 'crm-documents', accessToken: token, fileName: doc.file_name });
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'Document indisponible');
+    }
+  };
+  const handleUploadedDocument = async (doc: UploadedDocument) => {
+    if (!token) return;
+    try {
+      await downloadSecureDocument({
+        path: doc.file_path || doc.file_url,
+        bucket: 'prospect-documents',
+        accessToken: token,
+        fileName: doc.file_name,
+      });
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Document indisponible');
     }
@@ -877,9 +892,21 @@ const EspaceProspect: React.FC = () => {
                             </p>
                           </div>
                         </div>
-                        {status.validated && (
-                          <CheckCircle2 className="text-green-400" size={24} />
-                        )}
+                        <div className="flex items-center gap-2">
+                          {uploaded && (
+                            <button
+                              type="button"
+                              onClick={() => void handleUploadedDocument(uploaded)}
+                              className="inline-flex items-center gap-2 rounded-lg border border-green-500/40 bg-green-500/15 px-3 py-2 text-sm font-semibold text-green-300 hover:bg-green-500/25"
+                            >
+                              <Download size={16} />
+                              Télécharger
+                            </button>
+                          )}
+                          {status.validated && (
+                            <CheckCircle2 className="text-green-400" size={24} />
+                          )}
+                        </div>
                       </div>
                     </div>
                   ) : (
