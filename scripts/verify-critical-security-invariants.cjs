@@ -628,7 +628,11 @@ function sourceFiles(directory) {
   });
 }
 for (const file of sourceFiles('src')) {
-  for (const match of read(file).matchAll(/functions\.invoke(?:<[^>]+>)?\(\s*['"]([^'"]+)['"]/g)) {
+  const edgeReferences = [
+    ...read(file).matchAll(/functions\.invoke(?:<[^>]+>)?\(\s*['"]([^'"]+)['"]/g),
+    ...read(file).matchAll(/functionName:\s*['"]([^'"]+)['"]/g),
+  ];
+  for (const match of edgeReferences) {
     const functionName = match[1];
     const functionEntry = path.join(root, 'supabase', 'functions', functionName, 'index.ts');
     try {

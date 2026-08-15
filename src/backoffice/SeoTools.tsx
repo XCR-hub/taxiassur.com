@@ -617,15 +617,9 @@ const SeoTools: React.FC = () => {
           tests={[
             {
               name: 'Sync Google Search Console',
-              functionName: 'sync-google-search-console',
+              functionName: 'gsc-sync-performance',
               method: 'POST',
               description: 'Récupère les vraies métriques SEO depuis GSC'
-            },
-            {
-              name: 'Refresh SEO Daily',
-              functionName: 'seo-daily-refresh',
-              method: 'POST',
-              description: 'Actualise les données SEO quotidiennes'
             },
             {
               name: 'IndexNow Ping',

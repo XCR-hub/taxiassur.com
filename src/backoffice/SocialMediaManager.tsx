@@ -1207,19 +1207,6 @@ export default function SocialMediaManager() {
             body: { title: "Test", imageUrl: "https://placehold.co/600x400" },
             description: "Teste publication Pinterest"
           },
-          {
-            name: "Publier YouTube",
-            functionName: "youtube-publisher",
-            method: "POST",
-            body: { title: "Test", description: "Test video" },
-            description: "Teste publication YouTube"
-          },
-          {
-            name: "Auto Publisher",
-            functionName: "social-media-auto-publisher",
-            method: "POST",
-            description: "Publication auto multi-plateformes"
-          }
         ]}
       />
     </div>

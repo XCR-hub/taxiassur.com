@@ -893,13 +893,6 @@ const ContentManager: React.FC = () => {
         title="Tester Automatisations Contenu"
         tests={[
           {
-            name: "Générer Article Blog",
-            functionName: "blog-articles",
-            method: "POST",
-            body: { topic: "assurance taxi électrique" },
-            description: "Génère article blog optimisé SEO"
-          },
-          {
             name: "Générer SEO Content",
             functionName: "generate-seo-content",
             method: "POST",
@@ -908,9 +901,9 @@ const ContentManager: React.FC = () => {
           },
           {
             name: "Générer Page Ville",
-            functionName: "generate-city-page",
+            functionName: "generate-city-complete",
             method: "POST",
-            body: { city: "Paris" },
+            body: { city_name: "Paris", dept: "75", region: "Île-de-France", taxi_count: 19000 },
             description: "Génère page ville complète"
           }
         ]}

@@ -466,13 +466,8 @@ const NewsManager: React.FC = () => {
             name: "Trend Analyzer",
             functionName: "trend-analyzer-proxy",
             method: "POST",
+            body: { type: "google_suggest", keyword: "assurance taxi" },
             description: "Analyse tendances secteur"
-          },
-          {
-            name: "Auto Content Scheduler",
-            functionName: "auto-content-scheduler",
-            method: "POST",
-            description: "Planifie publications automatiques"
           }
         ]}
       />
