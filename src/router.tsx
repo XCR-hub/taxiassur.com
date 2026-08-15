@@ -109,6 +109,7 @@ const CRMRetentionCenter = lazy(() => import('./backoffice/CRMRetentionCenter'))
 const ClaimsManager = lazy(() => import('./backoffice/ClaimsManager'));
 const CRMAIGovernance = lazy(() => import('./backoffice/CRMAIGovernance'));
 const CRMAdminSettings = lazy(() => import('./backoffice/CRMAdminSettings'));
+const NativePasswordSettings = lazy(() => import('./backoffice/NativePasswordSettings'));
 const EmailBlacklistManager = lazy(() => import('./backoffice/EmailBlacklistManager'));
 const CRMTemplatesManager = lazy(() => import('./backoffice/CRMTemplatesManager'));
 const CRMCommercial = lazy(() => import('./backoffice/CRMCommercial'));
@@ -639,6 +640,7 @@ export const router = createBrowserRouter([
 
       /* ── CRM direct routes ── */
       { path: 'crm/create-lead', element: <ManualLeadCreation /> },
+      { path: 'change-password', element: <NativePasswordSettings /> },
       { path: 'crm/lead/:leadId', element: <CRMLeadDetail /> },
 
       /* ── Leads & Clients ── */

@@ -3,7 +3,7 @@ import { createReadStream, createWriteStream, existsSync, mkdirSync, readFileSyn
 import { spawn } from 'node:child_process';
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import path from 'node:path';
-import { createSession, verifyPassword, verifySession } from './native-auth.mjs';
+import { createSession, hashPassword, verifyPassword, verifySession } from './native-auth.mjs';
 
 const env = loadEnv([
   process.env.TAXIASSUR_PLATFORM_ENV_FILE,
@@ -61,6 +61,7 @@ const server = createServer(async (req, res) => {
     if (req.method === 'POST' && url.pathname === '/v1/auth/login') return adminLogin(req, res, origin, requestId);
     if (req.method === 'GET' && url.pathname === '/v1/auth/session') return adminSession(req, res, origin, requestId);
     if (req.method === 'POST' && url.pathname === '/v1/auth/logout') return adminLogout(req, res, origin, requestId);
+    if (req.method === 'POST' && url.pathname === '/v1/auth/change-password') return adminChangePassword(req, res, origin, requestId);
     if (req.method === 'POST' && url.pathname === '/v1/prospect/documents') return uploadProspectDocument(req, res, origin, requestId);
     const downloadMatch = url.pathname.match(/^\/v1\/prospect\/documents\/([0-9a-f-]{36})\/download$/i);
     if (req.method === 'GET' && downloadMatch) return downloadProspectDocument(req, res, origin, requestId, downloadMatch[1]);
@@ -97,6 +98,19 @@ async function adminLogout(req, res, origin, requestId) {
   const session = await verifiedAdminSession(req);
   if (session) await runPsql(`INSERT INTO taxiassur.revoked_sessions(session_id,user_id,expires_at) VALUES(${quoteLiteral(session.jti)},${quoteLiteral(session.sub)}::uuid,to_timestamp(${Number(session.exp)})) ON CONFLICT(session_id) DO NOTHING;`);
   return json(res, origin, 200, { ok: true }, requestId);
+}
+async function adminChangePassword(req, res, origin, requestId) {
+  const session = await verifiedAdminSession(req);
+  if (!session) return json(res, origin, 401, { ok: false, error: 'invalid_session' }, requestId);
+  const body = await readJsonBody(req);
+  const currentPassword = String(body.current_password || '');
+  const newPassword = String(body.new_password || '');
+  if (newPassword.length < 14 || newPassword.length > 1024 || !/[a-z]/.test(newPassword) || !/[A-Z]/.test(newPassword) || !/[0-9]/.test(newPassword) || !/[^A-Za-z0-9]/.test(newPassword)) return json(res, origin, 400, { ok: false, error: 'weak_password' }, requestId);
+  const row = parseJsonLine(await runPsql(`SELECT json_build_object('password_hash',password_hash)::text FROM taxiassur.auth_users WHERE id=${quoteLiteral(session.sub)}::uuid AND is_active=true LIMIT 1;`));
+  if (!row?.password_hash || !verifyPassword(currentPassword, row.password_hash)) return json(res, origin, 401, { ok: false, error: 'invalid_current_password' }, requestId);
+  const encoded = hashPassword(newPassword);
+  await runPsql(`BEGIN; UPDATE taxiassur.auth_users SET password_hash=${quoteLiteral(encoded)},password_initialized_at=now(),updated_at=now() WHERE id=${quoteLiteral(session.sub)}::uuid; INSERT INTO taxiassur.revoked_sessions(session_id,user_id,expires_at) VALUES(${quoteLiteral(session.jti)},${quoteLiteral(session.sub)}::uuid,to_timestamp(${Number(session.exp)})) ON CONFLICT(session_id) DO NOTHING; INSERT INTO taxiassur.audit_events(actor_type,actor_id,action,target_type,target_id,request_id) VALUES('admin',${quoteLiteral(session.sub)},'password_changed','auth_user',${quoteLiteral(session.sub)},${quoteLiteral(requestId)}::uuid); COMMIT;`);
+  return json(res, origin, 200, { ok: true, session_revoked: true }, requestId);
 }
 async function verifiedAdminSession(req) {
   const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
