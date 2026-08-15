@@ -628,6 +628,15 @@ function sourceFiles(directory) {
   });
 }
 for (const file of sourceFiles('src')) {
+  for (const match of read(file).matchAll(/functions\.invoke(?:<[^>]+>)?\(\s*['"]([^'"]+)['"]/g)) {
+    const functionName = match[1];
+    const functionEntry = path.join(root, 'supabase', 'functions', functionName, 'index.ts');
+    try {
+      readFileSync(functionEntry, 'utf8');
+    } catch {
+      failures.push(`${file}: invokes missing Edge function ${functionName}`);
+    }
+  }
   if (/functions\.invoke\(['"](?:send-crm-email|send-sms-brevo|send-whatsapp|send-client-access)['"]/.test(read(file)) && !directDeliveryAllowlist.has(file)) {
     failures.push(`${file}: direct multichannel delivery bypasses the shared idempotent caller`);
   }

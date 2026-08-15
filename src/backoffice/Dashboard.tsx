@@ -132,8 +132,6 @@ const Dashboard: React.FC = () => {
   const loadSystemStats = useCallback(async () => {
     try {
       // Compter les edge functions déployées
-      const { data: functions } = await supabase.functions.invoke('list');
-
       // Compter les cron jobs
       const { count: cronCount } = await supabase
         .from('automation_status')

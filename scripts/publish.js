@@ -30,6 +30,7 @@ const supabaseFunctions = [
   "process-insurer-dossier-sends",
   "upload-client-document",
   "sign-document-url",
+  "trend-analyzer-proxy",
   "send-document-notification",
   "send-email-universal",
   "send-crm-email",

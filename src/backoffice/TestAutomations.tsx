@@ -70,23 +70,6 @@ export default function TestAutomations() {
       }
     },
     {
-      id: 'scan-backlinks',
-      name: 'Scanner Backlinks',
-      description: 'Scan opportunités backlinks',
-      category: 'Backlinks',
-      payload: {
-        competitors: ['https://www.april-moto.com/'],
-        maxResults: 5
-      }
-    },
-    {
-      id: 'auto-followup',
-      name: 'Auto Follow-up',
-      description: 'Relances automatiques leads',
-      category: 'Leads',
-      payload: { max_followups: 5 }
-    },
-    {
       id: 'backlink-auto-outreach',
       name: 'Outreach Automatique',
       description: 'Envoi emails outreach',

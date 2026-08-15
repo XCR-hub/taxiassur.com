@@ -195,16 +195,6 @@ export const backlinkApi = {
     return data as ScanHistory[];
   },
 
-  // Edge Functions
-  async triggerScan() {
-    const { data, error } = await supabase.functions.invoke('scan-backlinks', {
-      method: 'POST',
-    });
-
-    if (error) throw error;
-    return data;
-  },
-
   async sendOutreachEmails(payload: {
     opportunityIds: string[];
     campaignId?: string;
@@ -214,15 +204,6 @@ export const backlinkApi = {
     const { data, error } = await supabase.functions.invoke('send-outreach-emails', {
       method: 'POST',
       body: payload,
-    });
-
-    if (error) throw error;
-    return data;
-  },
-
-  async triggerFollowup() {
-    const { data, error } = await supabase.functions.invoke('auto-followup', {
-      method: 'POST',
     });
 
     if (error) throw error;

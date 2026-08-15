@@ -539,24 +539,12 @@ const BacklinkReports: React.FC = () => {
         title="Tester Automatisations Backlinks"
         tests={[
           {
-            name: "Scanner Backlinks",
-            functionName: "scan-backlinks",
-            method: "POST",
-            description: "Scan 10 nouveaux sites concurrents"
-          },
-          {
             name: "Envoyer Outreach Emails",
             functionName: "backlink-auto-outreach",
             method: "POST",
             body: { maxEmailsPerRun: 5 },
             description: "Envoie 5 emails aux opportunités pending"
           },
-          {
-            name: "Auto Followup",
-            functionName: "auto-followup",
-            method: "POST",
-            description: "Envoie relances automatiques J+7/14/21"
-          }
         ]}
       />
     </div>
