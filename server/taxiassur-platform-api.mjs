@@ -3,6 +3,7 @@ import { createReadStream, createWriteStream, existsSync, mkdirSync, readFileSyn
 import { spawn } from 'node:child_process';
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import path from 'node:path';
+import { createSession, verifyPassword, verifySession } from './native-auth.mjs';
 
 const env = loadEnv([
   process.env.TAXIASSUR_PLATFORM_ENV_FILE,
@@ -20,6 +21,7 @@ const config = {
   dbPassword: env.TAXIASSUR_APP_PASSWORD || '',
   psqlPath: env.ASSUR_LOCAL_PSQL_PATH || 'F:/TaxiAssur/PostgreSQL/runtime/pgsql/bin/psql.exe',
   internalToken: env.TAXIASSUR_PLATFORM_API_TOKEN || '',
+  sessionSecret: env.TAXIASSUR_NATIVE_AUTH_SESSION_SECRET || env.TAXIASSUR_PLATFORM_API_TOKEN || '',
   documentRoot: env.TAXIASSUR_DOCUMENT_ROOT || 'F:/TaxiAssur/Documents',
   legacyDocumentRoot: env.TAXIASSUR_LEGACY_DOCUMENT_ROOT || 'F:/TaxiAssur/Documents/legacy',
   clamScanPath: env.CLAMSCAN_PATH || 'C:/Program Files/ClamAV/clamscan.exe',
@@ -56,6 +58,9 @@ const server = createServer(async (req, res) => {
       return json(res, origin, 200, { ok: true, service: 'taxiassur-platform-api', storage: 'local', database: config.dbName, checked_at: new Date().toISOString() }, requestId);
     }
     if (req.method === 'GET' && url.pathname === '/v1/prospect/session') return prospectSession(req, res, origin, requestId);
+    if (req.method === 'POST' && url.pathname === '/v1/auth/login') return adminLogin(req, res, origin, requestId);
+    if (req.method === 'GET' && url.pathname === '/v1/auth/session') return adminSession(req, res, origin, requestId);
+    if (req.method === 'POST' && url.pathname === '/v1/auth/logout') return adminLogout(req, res, origin, requestId);
     if (req.method === 'POST' && url.pathname === '/v1/prospect/documents') return uploadProspectDocument(req, res, origin, requestId);
     const downloadMatch = url.pathname.match(/^\/v1\/prospect\/documents\/([0-9a-f-]{36})\/download$/i);
     if (req.method === 'GET' && downloadMatch) return downloadProspectDocument(req, res, origin, requestId, downloadMatch[1]);
@@ -68,6 +73,39 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(config.port, config.host, () => console.log(`[taxiassur-platform-api] listening on http://${config.host}:${config.port}`));
+
+async function adminLogin(req, res, origin, requestId) {
+  const body = await readJsonBody(req);
+  const email = String(body.email || '').trim().toLowerCase();
+  const password = String(body.password || '');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length < 1) return json(res, origin, 400, { ok: false, error: 'invalid_credentials' }, requestId);
+  const sql = `SELECT json_build_object('id',id,'email',email,'name',full_name,'role',role,'password_hash',password_hash,'locked',locked_until > now())::text FROM taxiassur.auth_users WHERE lower(email)=${quoteLiteral(email)} AND is_active=true LIMIT 1;`;
+  const user = parseJsonLine(await runPsql(sql));
+  if (!user || user.locked || !user.password_hash || !verifyPassword(password, user.password_hash)) {
+    if (user?.id) await runPsql(`UPDATE taxiassur.auth_users SET failed_login_count=failed_login_count+1, locked_until=CASE WHEN failed_login_count+1 >= 5 THEN now()+interval '15 minutes' ELSE locked_until END WHERE id=${quoteLiteral(user.id)}::uuid;`);
+    return json(res, origin, 401, { ok: false, error: 'invalid_credentials' }, requestId);
+  }
+  const token = createSession(user, config.sessionSecret, { ttlSeconds: 8 * 60 * 60 });
+  await runPsql(`UPDATE taxiassur.auth_users SET failed_login_count=0, locked_until=NULL, last_login_at=now(), updated_at=now() WHERE id=${quoteLiteral(user.id)}::uuid;`);
+  return json(res, origin, 200, { ok: true, access_token: token, expires_in: 28800, user: publicAdmin(user) }, requestId);
+}
+async function adminSession(req, res, origin, requestId) {
+  const session = await verifiedAdminSession(req);
+  return session ? json(res, origin, 200, { ok: true, user: publicAdmin(session) }, requestId) : json(res, origin, 401, { ok: false, error: 'invalid_session' }, requestId);
+}
+async function adminLogout(req, res, origin, requestId) {
+  const session = await verifiedAdminSession(req);
+  if (session) await runPsql(`INSERT INTO taxiassur.revoked_sessions(session_id,user_id,expires_at) VALUES(${quoteLiteral(session.jti)},${quoteLiteral(session.sub)}::uuid,to_timestamp(${Number(session.exp)})) ON CONFLICT(session_id) DO NOTHING;`);
+  return json(res, origin, 200, { ok: true }, requestId);
+}
+async function verifiedAdminSession(req) {
+  const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
+  const session = token ? verifySession(token, config.sessionSecret) : null;
+  if (!session) return null;
+  const revoked = String(await runPsql(`SELECT EXISTS(SELECT 1 FROM taxiassur.revoked_sessions WHERE session_id=${quoteLiteral(session.jti)} AND expires_at > now());`)).trim() === 't';
+  return revoked ? null : session;
+}
+function publicAdmin(user) { return { id: user.sub || user.id, email: user.email, full_name: user.name || user.full_name || user.email, role: user.role, is_active: true }; }
 
 async function prospectSession(req, res, origin, requestId) {
   const token = prospectToken(req);
@@ -183,6 +221,12 @@ function receiveFile(req, destination, limit) {
     output.on('finish', () => { if (!settled) { settled = true; resolve({ size, sha256: hash.digest('hex') }); } });
     req.pipe(output);
   });
+}
+
+async function readJsonBody(req) {
+  let raw = '';
+  for await (const chunk of req) { raw += chunk; if (raw.length > 65536) throw publicError(413, 'payload_too_large'); }
+  try { return raw ? JSON.parse(raw) : {}; } catch { throw publicError(400, 'invalid_json'); }
 }
 
 function scanFile(filePath) {
