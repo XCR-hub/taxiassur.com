@@ -5,6 +5,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
 import { withTimeout } from '@/lib/promise-timeout';
 import { downloadSecureDocument } from '@/lib/secure-document-url';
+import { prepareCompatibleDocumentUpload } from '@/lib/document-upload-compat';
 import ComplementaryDocuments from '@/components/client/ComplementaryDocuments';
 
 interface DocumentType {
@@ -197,13 +198,13 @@ const ProspectDocuments: React.FC = () => {
       const acceptedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
       if (file.size < 1 || file.size > 10 * 1024 * 1024) throw new Error('Fichier trop volumineux (max 10 Mo)');
       if (!acceptedTypes.includes(file.type)) throw new Error('Format accepté : PDF, JPG, PNG ou WebP');
-      const request = { accessToken: token, scope: 'prospect', documentType, fileName: file.name, fileSize: file.size, mimeType: file.type };
-      const { data: prepared, error: prepareError } = await withTimeout(anonClient.functions.invoke('upload-client-document', { body: { action: 'prepare', ...request } }), 20_000);
+      const request = { accessToken: token, scope: 'prospect' as const, documentType, fileName: file.name, fileSize: file.size, mimeType: file.type };
+      const { data: prepared, error: prepareError, wireDocumentType } = await prepareCompatibleDocumentUpload(anonClient, request);
       if (prepareError || !prepared?.path || !prepared.uploadToken) throw prepareError || new Error('Préparation impossible');
       const path = String(prepared.path);
       const { error: uploadError } = await withTimeout(anonClient.storage.from('prospect-documents').uploadToSignedUrl(path, String(prepared.uploadToken), file, { contentType: file.type }), 60_000);
       if (uploadError) throw uploadError;
-      const { data: finalized, error: finalizeError } = await withTimeout(anonClient.functions.invoke('upload-client-document', { body: { action: 'finalize', path, ...request } }), 20_000);
+      const { data: finalized, error: finalizeError } = await withTimeout(anonClient.functions.invoke('upload-client-document', { body: { action: 'finalize', path, ...request, documentType: wireDocumentType } }), 20_000);
       if (finalizeError || !finalized?.success) throw finalizeError || new Error(finalized?.error || 'Finalisation impossible');
 
       setSuccess(`Document "${file.name}" uploadé avec succès !`);

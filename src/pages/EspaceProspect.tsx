@@ -5,6 +5,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
 import { downloadSecureDocument } from '@/lib/secure-document-url';
 import { withTimeout } from '@/lib/promise-timeout';
+import { prepareCompatibleDocumentUpload } from '@/lib/document-upload-compat';
 import ClientQuotesViewer from '../components/client/ClientQuotesViewer';
 import ClientSubscriptionForm from '../components/client/ClientSubscriptionForm';
 import ClientPaymentButton from '../components/client/ClientPaymentButton';
@@ -418,13 +419,8 @@ const EspaceProspect: React.FC = () => {
       const acceptedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
       if (file.size < 1 || file.size > maxSize) throw new Error('Fichier trop volumineux. Taille max : 10 Mo');
       if (!acceptedTypes.includes(file.type)) throw new Error('Format accepté : PDF, JPG, PNG ou WebP');
-      const request = { accessToken: token, scope: 'prospect', documentType, fileName: file.name, fileSize: file.size, mimeType: file.type };
-      const { data: prepared, error: prepareError } = await withTimeout(
-        anonClient.functions.invoke('upload-client-document', {
-          body: { action: 'prepare', ...request },
-        }),
-        20_000,
-      );
+      const request = { accessToken: token, scope: 'prospect' as const, documentType, fileName: file.name, fileSize: file.size, mimeType: file.type };
+      const { data: prepared, error: prepareError, wireDocumentType } = await prepareCompatibleDocumentUpload(anonClient, request);
       if (prepareError || !prepared?.success || !prepared.path || !prepared.uploadToken) {
         throw prepareError || new Error(prepared?.error || 'Préparation du dépôt impossible');
       }
@@ -437,7 +433,7 @@ const EspaceProspect: React.FC = () => {
       if (uploadError) throw uploadError;
       const { data: finalized, error: finalizeError } = await withTimeout(
         anonClient.functions.invoke('upload-client-document', {
-          body: { action: 'finalize', path, ...request },
+          body: { action: 'finalize', path, ...request, documentType: wireDocumentType },
         }),
         20_000,
       );

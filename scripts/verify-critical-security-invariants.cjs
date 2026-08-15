@@ -583,7 +583,10 @@ requireMatch(portalTimeout, /timeoutMs = 15_000/, 'portal requests do not have a
 requireMatch(portalTimeout, /window\.clearTimeout\(timeout\)[\s\S]*window\.clearTimeout\(timeout\)/, 'portal timeout is not cleared on both resolve and reject');
 requireMatch('src/pages/ClientAccessByToken.tsx', /withTimeout\([\s\S]*get_or_create_client_portal_access/, 'client token verification can spin forever');
 requireMatch('src/pages/EspaceProspect.tsx', /withTimeout\([\s\S]*get_lead_by_token[\s\S]*withTimeout\([\s\S]*get_payments_by_token/, 'prospect initial loading can spin forever');
-requireMatch('src/pages/EspaceProspect.tsx', /withTimeout\([\s\S]*action: 'prepare'[\s\S]*20_000[\s\S]*withTimeout\([\s\S]*uploadToSignedUrl[\s\S]*60_000[\s\S]*withTimeout\([\s\S]*action: 'finalize'[\s\S]*20_000/, 'prospect document upload stages can spin forever');
+requireMatch('src/lib/document-upload-compat.ts', /withTimeout\([\s\S]*action: 'prepare'[\s\S]*20_000[\s\S]*documentType: 'autre'[\s\S]*withTimeout\([\s\S]*action: 'prepare'[\s\S]*20_000/, 'compatible document preparation lacks bounded primary or fallback requests');
+for (const file of ['src/pages/EspaceProspect.tsx', 'src/pages/ProspectDocuments.tsx']) {
+  requireMatch(file, /prepareCompatibleDocumentUpload[\s\S]*withTimeout\([\s\S]*uploadToSignedUrl[\s\S]*60_000[\s\S]*withTimeout\([\s\S]*action: 'finalize'[\s\S]*20_000/, 'prospect document upload stages can spin forever');
+}
 forbidMatch(portalTimeout, /timeoutMs = (?:2\d|[3-9]\d|\d{3,})_000/, 'portal timeout exceeds 20 seconds');
 for (const [file, endpoint] of [
   ['src/components/crm/SMSSendModal.tsx', 'send-sms-brevo'],
@@ -594,7 +597,6 @@ for (const [file, endpoint] of [
   requireMatch(file, new RegExp(`withTimeout\\([\\s\\S]*${endpoint}[\\s\\S]*45_000`), `${endpoint} manual send can spin forever`);
 }
 for (const file of [
-  'src/pages/ProspectDocuments.tsx',
   'src/components/client/ComplementaryDocuments.tsx',
   'src/pages/client/ClientDocuments.tsx',
 ]) {
