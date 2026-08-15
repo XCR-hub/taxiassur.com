@@ -9,6 +9,7 @@ import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
 
 const ProspectReview: React.FC = () => {
+  const navigate = useNavigate();
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
@@ -111,8 +112,7 @@ const ProspectReview: React.FC = () => {
   };
 
   const getTypeColor = (type: Prospect['type']) => {
-  const navigate = useNavigate();
-const colors = {
+    const colors = {
       annuaire: 'bg-orange-100 text-orange-800',
       asso: 'bg-green-100 text-green-800',
       blog: 'bg-orange-100 text-orange-800',

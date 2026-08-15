@@ -9,6 +9,8 @@ import { truncateText } from '../lib/utils';
 import Seo from '../components/Seo';
 import JsonLd from '../components/JsonLd';
 import Card from '../components/Card';
+import AITaxiBackground from '../components/AITaxiBackground';
+import StickyCTA from '../components/StickyCTA';
 import { logger } from '@/lib/logger';
 
 const Offers: React.FC = () => {

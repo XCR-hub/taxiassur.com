@@ -15,7 +15,20 @@ const allowedTypes = new Map([
   ['image/webp', 'webp'],
 ]);
 const maxFileSize = 10 * 1024 * 1024;
-const documentTypes = new Set(['licence_taxi', 'permis_conduire', 'piece_identite', 'carte_grise', 'releve_information', 'autorisation_stationnement', 'rib', 'autre']);
+const documentTypes = new Set([
+  'licence_taxi',
+  'permis_conduire',
+  'piece_identite',
+  'carte_grise',
+  'releve_information',
+  'autorisation_stationnement',
+  'rib',
+  'kbis',
+  'carte_pro_vtc',
+  'inscription_registre_vtc',
+  'controle_technique',
+  'autre',
+]);
 
 function respond(status: number, body: Record<string, unknown>) {
   return new Response(JSON.stringify(body), { status, headers: jsonHeaders });

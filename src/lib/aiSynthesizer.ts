@@ -1,4 +1,4 @@
-import { RawNewsItem, ProcessedNews } from './newsAggregator';
+import { NewsAggregator, type RawNewsItem, type ProcessedNews } from './newsAggregator';
 import { BlogPostSchema } from './schema';
 import { logger } from '@/lib/logger';
 

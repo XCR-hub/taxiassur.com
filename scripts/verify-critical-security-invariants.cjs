@@ -373,6 +373,9 @@ requireMatch(clientDocumentUpload, /await bucket\.remove\(\[path\]\)/, 'invalid 
 forbidMatch(clientDocumentUpload, /\.or\(`/ , 'document authorization constructs a dynamic PostgREST OR filter');
 requireMatch(clientDocumentUpload, /scope === 'client' && !portal/, 'prospect scope and client portal authorization are not separated');
 requireMatch(clientDocumentUpload, /documentTypes\.has\(documentType\)/, 'document type is not constrained before upload');
+for (const documentType of ['kbis', 'carte_pro_vtc', 'inscription_registre_vtc', 'controle_technique']) {
+  requireMatch(clientDocumentUpload, new RegExp(`['"]${documentType}['"]`), `prospect upload rejects the ${documentType} document type exposed by the UI`);
+}
 requireMatch(clientDocumentUpload, /actualMime !== mimeType/, 'stored document MIME metadata is optional instead of mandatory');
 forbidMatch('src/pages/EspaceProspect.tsx', /upload_prospect_document_by_token|\.upload\(fileName/, 'prospect page still uploads or writes metadata directly');
 requireMatch('src/pages/EspaceProspect.tsx', /scope: 'prospect'[\s\S]*uploadToSignedUrl[\s\S]*action: 'finalize'/, 'prospect page does not use signed prepare/upload/finalize');

@@ -36,6 +36,7 @@ interface Newsletter {
 }
 
 const ContentManager: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'articles' | 'faq' | 'newsletter'>('articles');
   const [articles, setArticles] = useState<Article[]>([]);
   const [faqs, setFaqs] = useState<FAQ[]>([]);
@@ -285,8 +286,7 @@ const ContentManager: React.FC = () => {
   };
 
   const editArticle = (article: Article) => {
-  const navigate = useNavigate();
-setEditingArticle(article);
+    setEditingArticle(article);
     setArticleForm({
       title: article.title,
       summary: article.summary,

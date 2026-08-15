@@ -4,7 +4,6 @@
 # Legacy offer and service URLs
 /offres/flotte-vehicules /flotte-vehicules 301
 /offres/rc-professionnelle /rc-professionnelle 301
-/offres /assurance-taxi 301
 /comparateur-axa-taxi /assurance-taxi 301
 /devis-instantane /contact 301
 /devis /contact 301

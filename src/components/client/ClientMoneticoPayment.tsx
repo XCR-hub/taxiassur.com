@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Loader2, ExternalLink, Lock } from 'lucide-react';
 
 interface Props {
-  leadId: string;
   amount: number;
   reference: string;
   accessToken: string;

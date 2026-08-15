@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { logger } from '@/lib/logger';
 
 interface PerformanceOptimizerProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 const PerformanceOptimizer: React.FC<PerformanceOptimizerProps> = ({ children }) => {

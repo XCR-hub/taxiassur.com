@@ -384,8 +384,10 @@ const EspaceProspect: React.FC = () => {
   const handleUploadedDocument = async (doc: UploadedDocument) => {
     if (!token) return;
     try {
+      const path = doc.file_path || doc.file_url;
+      if (!path) throw new Error('Document indisponible');
       await downloadSecureDocument({
-        path: doc.file_path || doc.file_url,
+        path,
         bucket: 'prospect-documents',
         accessToken: token,
         fileName: doc.file_name,
@@ -974,7 +976,7 @@ const EspaceProspect: React.FC = () => {
                           <p className="text-gray-400">
                             <span className="text-gray-500">Montant :</span>{' '}
                             <span className="text-white font-bold text-xl">
-                              {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(parseFloat(payment.amount))}
+                              {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(Number(payment.amount))}
                             </span>
                           </p>
                           <p className="text-gray-400">
@@ -1002,7 +1004,7 @@ const EspaceProspect: React.FC = () => {
                     </div>
 
                     <ClientMoneticoPayment
-                      amount={parseFloat(payment.amount)}
+                      amount={Number(payment.amount)}
                       reference={payment.reference}
                       accessToken={token}
                       description={payment.description}
@@ -1032,7 +1034,7 @@ const EspaceProspect: React.FC = () => {
                           <p className="text-gray-400">
                             <span className="text-gray-500">Montant :</span>{' '}
                             <span className="text-white font-bold text-xl">
-                              {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(parseFloat(payment.amount))}
+                              {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(Number(payment.amount))}
                             </span>
                           </p>
                           <p className="text-gray-400">

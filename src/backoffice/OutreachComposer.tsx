@@ -9,6 +9,7 @@ import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
 
 const OutreachComposer: React.FC = () => {
+  const navigate = useNavigate();
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [outreaches, setOutreaches] = useState<Outreach[]>([]);
   const [templates] = useState(getTemplates());
@@ -54,8 +55,7 @@ const OutreachComposer: React.FC = () => {
   );
 
   const handleTemplateChange = (templateId: string) => {
-  const navigate = useNavigate();
-setSelectedTemplate(templateId);
+    setSelectedTemplate(templateId);
     setEmailValidation(null);
   };
 

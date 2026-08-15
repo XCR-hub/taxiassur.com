@@ -772,9 +772,9 @@ export default function ClientSinistres() {
       <SEOHead
         title="Mes Sinistres - Espace Client TaxiAssur"
         description="Déclarez et suivez vos sinistres"
-        noIndex={true}
+        noindex={true}
       />
-      <ClientLayout email={userData?.email || ""}>
+      <ClientLayout email="">
         <div className="space-y-6">
           <div className="flex items-start justify-between gap-4">
             <div>

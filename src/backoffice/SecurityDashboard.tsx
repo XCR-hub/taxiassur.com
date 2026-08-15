@@ -34,6 +34,7 @@ interface SecurityStats {
 }
 
 const SecurityDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [securityLogs, setSecurityLogs] = useState<SecurityLog[]>([]);
   const [stats, setStats] = useState<SecurityStats>({
     totalRequests: 0,
@@ -62,8 +63,7 @@ const SecurityDashboard: React.FC = () => {
   }, [timeRange, liveMode]);
 
   const getTimeRangeQuery = () => {
-  const navigate = useNavigate();
-const now = new Date();
+    const now = new Date();
     const timeAgo = new Date();
 
     switch (timeRange) {

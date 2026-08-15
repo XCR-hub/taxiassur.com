@@ -1,4 +1,4 @@
-import { OutreachSchema, type Outreach } from './schema';
+import { OutreachSchema, type Outreach, type Prospect } from './schema';
 import outreachTemplates from '../data/outreach-templates.json';
 
 export type Template = {

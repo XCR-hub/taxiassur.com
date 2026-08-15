@@ -274,7 +274,7 @@ export default function ClientDocuments() {
         noIndex={true}
       />
 
-      <ClientLayout email={userData?.email || ''}>
+      <ClientLayout email="">
         <div className="space-y-5">
 
           {/* Header */}

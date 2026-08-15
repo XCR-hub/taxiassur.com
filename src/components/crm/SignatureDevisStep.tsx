@@ -4,6 +4,7 @@ import {
   AlertCircle,
   CheckCircle2,
   FileCheck,
+  ExternalLink,
   Ligature as FileSignature,
   Loader2,
   Upload,

@@ -7,6 +7,7 @@ import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
 
 const PartnerManager: React.FC = () => {
+  const navigate = useNavigate();
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -79,8 +80,7 @@ const PartnerManager: React.FC = () => {
   };
 
   const getCategoryColor = (category: string) => {
-  const navigate = useNavigate();
-const colors = {
+    const colors = {
       directory: 'bg-orange-100 text-orange-800',
       equipment: 'bg-green-100 text-green-800',
       service: 'bg-orange-100 text-orange-800',

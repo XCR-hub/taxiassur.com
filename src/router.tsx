@@ -325,8 +325,12 @@ export const router = createBrowserRouter([
     element: <Reviews />,
   },
   {
-    path: '/offers',
+    path: '/offres',
     element: <Offers />,
+  },
+  {
+    path: '/offers',
+    element: <Navigate to="/offres" replace />,
   },
   {
     path: '/partners',

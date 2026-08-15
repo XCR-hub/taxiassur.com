@@ -154,6 +154,9 @@ if (!existsSync(redirectsPath)) {
     }
 
     const [source, destination, status] = parts;
+    if (source === '/offres') {
+      fail(`${redirectsPath}:${number} must not redirect the canonical /offres application route`);
+    }
     if (/^https?:\/\//i.test(source)) {
       fail(`${redirectsPath}:${number} uses a domain-level source; use Cloudflare Redirect Rules instead`);
     }

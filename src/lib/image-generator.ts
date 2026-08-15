@@ -31,10 +31,9 @@ export async function generateImageForArticle(
   articleTitle: string,
   keywords: string[]
 ): Promise<GeneratedImage | null> {
+  const searchQuery = extractImageQuery(articleTitle, keywords);
   try {
     // Extraire les mots-clés pertinents pour la recherche d'image
-    const searchQuery = extractImageQuery(articleTitle, keywords);
-
     // Option 1: Utiliser Unsplash (GRATUIT, haute qualité)
     if (UNSPLASH_ACCESS_KEY && UNSPLASH_ACCESS_KEY !== 'YOUR_UNSPLASH_ACCESS_KEY') {
       return await fetchUnsplashImage(searchQuery);
