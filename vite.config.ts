@@ -170,9 +170,25 @@ export default defineConfig(({ mode }) => ({
 
           // Backoffice chunks - order matters to prevent circular deps
           if (id.includes('/backoffice/')) {
-            // CRM first as it's most used
-            if (id.includes('CRM') || id.includes('Lead') || id.includes('Pipeline') || id.includes('Kanban') || id.includes('Duplicate')) {
-              return 'backoffice-crm';
+            const backofficeFeature = id
+              .split('/')
+              .pop()
+              ?.replace(/\.[^.]+$/, '')
+              .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+              .toLowerCase();
+            // Keep the large CRM surface split by feature so every Cloudflare asset
+            // remains below the enforced 500 KiB deployment limit.
+            if (/Lead|Duplicate|MergeLeads|ManualLead|LostLead/.test(id)) {
+              return 'backoffice-crm-leads';
+            }
+            if (/Pipeline|Kanban|CRMCommercial|CRMProduction|CRMRetention/.test(id)) {
+              return 'backoffice-crm-workflows';
+            }
+            if (/CRMAdmin|CRMInbox|CRMTemplates/.test(id)) {
+              return 'backoffice-crm-operations';
+            }
+            if (id.includes('CRM')) {
+              return 'backoffice-crm-core';
             }
             // AI after CRM
             if (id.includes('AI') || id.includes('Master') || id.includes('Autonomous')) {
@@ -194,16 +210,14 @@ export default defineConfig(({ mode }) => ({
             if (id.includes('Document') || id.includes('Quote') || id.includes('Insurance') || id.includes('Claims') || id.includes('Invoice') || id.includes('Invoicing')) {
               return 'backoffice-documents';
             }
-            // Automation, Cron, Compliance
-            if (id.includes('Automation') || id.includes('Cron') || id.includes('Compliance') || id.includes('Security') || id.includes('User') || id.includes('Notification')) {
-              return 'backoffice-admin';
-            }
             // GSC, GA4, LLM
             if (id.includes('GSC') || id.includes('GA4') || id.includes('LLM') || id.includes('Ultron') || id.includes('Trend')) {
               return 'backoffice-ai';
             }
-            // Core last as fallback
-            return 'backoffice-core';
+            // Keep remaining route screens independent. Grouping them into one
+            // administration chunk makes Rolldown merge their shared graph into
+            // an asset above Cloudflare Pages' 500 KiB limit.
+            return backofficeFeature ? `backoffice-${backofficeFeature}` : 'backoffice-core';
           }
 
           // Client portal
