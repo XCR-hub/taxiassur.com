@@ -6,6 +6,7 @@ import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
 import { downloadSecureDocument } from '@/lib/secure-document-url';
 import { withTimeout } from '@/lib/promise-timeout';
 import { prepareCompatibleDocumentUpload } from '@/lib/document-upload-compat';
+import { uploadProspectPlatformDocument } from '@/lib/platform-api';
 import ClientQuotesViewer from '../components/client/ClientQuotesViewer';
 import ClientSubscriptionForm from '../components/client/ClientSubscriptionForm';
 import ClientPaymentButton from '../components/client/ClientPaymentButton';
@@ -406,7 +407,7 @@ const EspaceProspect: React.FC = () => {
   };
 
   const handleFileUpload = async (documentType: string, file: File) => {
-    if (!token || !anonClient) {
+    if (!token) {
       throw new Error('Configuration manquante');
     }
 
@@ -415,6 +416,12 @@ const EspaceProspect: React.FC = () => {
     setSuccess(null);
 
     try {
+      const uploaded = await uploadProspectPlatformDocument(token, documentType, file);
+      if (uploaded?.document) setUploadedDocuments((current) => [uploaded.document as UploadedDocument, ...current]);
+      setSuccess(`Document "${file.name}" envoyé avec succès !`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+      if (!anonClient) return;
       const maxSize = 10 * 1024 * 1024;
       const acceptedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
       if (file.size < 1 || file.size > maxSize) throw new Error('Fichier trop volumineux. Taille max : 10 Mo');

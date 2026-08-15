@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { createReadStream, createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, unlinkSync } from 'node:fs';
+import { createReadStream, createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, statSync, unlinkSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import path from 'node:path';
@@ -21,6 +21,7 @@ const config = {
   psqlPath: env.ASSUR_LOCAL_PSQL_PATH || 'F:/TaxiAssur/PostgreSQL/runtime/pgsql/bin/psql.exe',
   internalToken: env.TAXIASSUR_PLATFORM_API_TOKEN || '',
   documentRoot: env.TAXIASSUR_DOCUMENT_ROOT || 'F:/TaxiAssur/Documents',
+  legacyDocumentRoot: env.TAXIASSUR_LEGACY_DOCUMENT_ROOT || 'F:/TaxiAssur/Documents/legacy',
   clamScanPath: env.CLAMSCAN_PATH || 'C:/Program Files/ClamAV/clamscan.exe',
   clamDatabasePath: env.CLAMSCAN_DATABASE_PATH || 'F:/TaxiAssur/ClamAV/db',
   allowedOrigins: new Set((env.TAXIASSUR_PLATFORM_ALLOWED_ORIGINS || 'https://taxiassur.com,https://www.taxiassur.com,http://localhost:5173,http://localhost:4173').split(',').map((value) => value.trim().replace(/\/$/, '')).filter(Boolean)),
@@ -130,9 +131,17 @@ async function downloadProspectDocument(req, res, origin, requestId, documentId)
   const lead = token ? await leadByToken(token) : null;
   if (!lead) return json(res, origin, 403, { ok: false, error: 'invalid_access' }, requestId);
   const sql = `SELECT jsonb_build_object('id', id, 'storage_path', storage_path, 'original_name', original_name, 'mime_type', mime_type, 'size_bytes', size_bytes, 'scan_status', scan_status)::text FROM taxiassur.file_objects WHERE id = ${quoteLiteral(documentId)}::uuid AND owner_id = ${quoteLiteral(String(lead.id))} AND scan_status = 'clean' LIMIT 1;`;
-  const row = parseJsonLine(await runPsql(sql));
-  if (!row) return json(res, origin, 404, { ok: false, error: 'not_found' }, requestId);
-  const filePath = safeStoragePath(row.storage_path);
+  let row = parseJsonLine(await runPsql(sql));
+  let filePath;
+  if (row) {
+    filePath = safeStoragePath(row.storage_path);
+  } else {
+    const legacySql = `SELECT jsonb_build_object('id', data ->> 'id', 'storage_path', data ->> 'file_path', 'original_name', COALESCE(data ->> 'file_name', data ->> 'document_name', 'document'), 'mime_type', COALESCE(data ->> 'mime_type', 'application/octet-stream'))::text FROM taxiassur.records WHERE collection = 'prospect_documents' AND record_id = ${quoteLiteral(documentId)} AND data ->> 'lead_id' = ${quoteLiteral(String(lead.id))} LIMIT 1;`;
+    row = parseJsonLine(await runPsql(legacySql));
+    if (!row?.storage_path) return json(res, origin, 404, { ok: false, error: 'not_found' }, requestId);
+    filePath = safeLegacyStoragePath('prospect-documents', row.storage_path);
+    if (existsSync(filePath)) row.size_bytes = statSync(filePath).size;
+  }
   if (!existsSync(filePath)) return json(res, origin, 404, { ok: false, error: 'file_missing' }, requestId);
   res.writeHead(200, responseHeaders(origin, requestId, { 'Content-Type': row.mime_type, 'Content-Length': String(row.size_bytes), 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(row.original_name)}`, 'Cache-Control': 'private, no-store' }));
   createReadStream(filePath).pipe(res);
@@ -210,6 +219,7 @@ function secureEqual(left, right) { const a = Buffer.from(left); const b = Buffe
 function decodeHeader(value) { try { return decodeURIComponent(String(value || '')); } catch { return ''; } }
 function safeFileName(value) { return String(value || '').normalize('NFKC').replace(/[\x00-\x1f\x7f/\\]/g, '_').trim().slice(0, 180); }
 function safeStoragePath(relative) { const root = path.resolve(config.documentRoot); const target = path.resolve(root, relative); if (!target.startsWith(`${root}${path.sep}`)) throw publicError(400, 'invalid_path'); return target; }
+function safeLegacyStoragePath(bucket, relative) { const root = path.resolve(config.legacyDocumentRoot, bucket); const target = path.resolve(root, relative); if (!target.startsWith(`${root}${path.sep}`)) throw publicError(400, 'invalid_path'); return target; }
 function safeUnlink(file) { try { unlinkSync(file); } catch {} }
 function originAllowed(origin) { return !origin || config.allowedOrigins.has(origin); }
 function clientIp(req) { return String(req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim(); }
