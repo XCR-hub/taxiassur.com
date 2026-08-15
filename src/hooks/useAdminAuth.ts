@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { getSupabaseUrl } from '@/lib/env';
 import { supabaseRestFetch } from '@/lib/supabase-rest';
+import { NATIVE_ADMIN_TOKEN_KEY, nativeAdminLogout, nativeAdminSession } from '@/lib/native-admin-auth';
 
 interface AdminUser {
   id: string;
@@ -212,6 +213,19 @@ export function useAdminAuth() {
     const initAuth = async () => {
       if (!mounted) return;
 
+      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
+        try {
+          const native = await nativeAdminSession();
+          const nativeUser = { ...native.user, cachedAt: Date.now() } as AdminUser;
+          localStorage.setItem('taxiassur_user', JSON.stringify(nativeUser));
+          updateGlobalState({ user: nativeUser, loading: false, isAuthenticated: true });
+          return;
+        } catch {
+          localStorage.removeItem(NATIVE_ADMIN_TOKEN_KEY);
+          localStorage.removeItem('taxiassur_user');
+        }
+      }
+
       let usingCachedUser = false;
       try {
         console.log('🔍 Checking auth session...');
@@ -322,6 +336,7 @@ export function useAdminAuth() {
 
   const signOut = async () => {
     try {
+      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) await nativeAdminLogout();
       await supabase.auth.signOut();
 
       localStorage.removeItem('taxiassur-auth');

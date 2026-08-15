@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { Lock, Mail, AlertCircle, ArrowRight, Shield, Car, Users, Zap, CheckCircle, RefreshCw } from 'lucide-react';
+import { nativeAdminLogin } from '@/lib/native-admin-auth';
 
 interface AdminLoginProps {
   onSuccess: () => void;
@@ -42,6 +43,10 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
     setLoading(true);
 
     try {
+      await nativeAdminLogin(email.trim().toLowerCase(), password);
+      localStorage.setItem('taxiassur-admin-permanent', 'true');
+      window.location.reload();
+      return;
       const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
       if (signInError) throw signInError;
       if (!data.user) throw new Error('Échec de la connexion');

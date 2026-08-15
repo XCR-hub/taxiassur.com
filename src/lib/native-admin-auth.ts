@@ -1,0 +1,6 @@
+const BASE=(import.meta.env.VITE_PLATFORM_API_URL||'https://postgres-read-api.taxiassur.com/platform').replace(/\/$/,'');
+export const NATIVE_ADMIN_TOKEN_KEY='taxiassur-native-admin-token';
+async function request(path:string,init:RequestInit={}){const token=localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY);const response=await fetch(`${BASE}${path}`,{...init,cache:'no-store',credentials:'omit',headers:{'Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`}:{}),...init.headers}});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error==='invalid_credentials'?'Identifiants incorrects':'Session administrateur invalide');return data;}
+export async function nativeAdminLogin(email:string,password:string){const data=await request('/v1/auth/login',{method:'POST',body:JSON.stringify({email,password})});localStorage.setItem(NATIVE_ADMIN_TOKEN_KEY,data.access_token);localStorage.setItem('taxiassur_user',JSON.stringify({...data.user,cachedAt:Date.now()}));return data;}
+export async function nativeAdminSession(){return request('/v1/auth/session');}
+export async function nativeAdminLogout(){try{await request('/v1/auth/logout',{method:'POST'});}finally{localStorage.removeItem(NATIVE_ADMIN_TOKEN_KEY);}}
