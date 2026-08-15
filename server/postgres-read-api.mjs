@@ -1,4 +1,4 @@
-import { createServer } from 'node:http';
+import { createServer, request as httpRequest } from 'node:http';
 import { spawn } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { timingSafeEqual } from 'node:crypto';
@@ -93,6 +93,13 @@ const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
 
+    if (url.pathname === '/platform/health' || url.pathname.startsWith('/platform/v1/')) {
+      if (!isOriginAllowed(origin)) {
+        return sendJson(res, origin, 403, { ok: false, error: 'origin_not_allowed' });
+      }
+      return proxyPlatformRequest(req, res, url);
+    }
+
     if (req.method === 'OPTIONS') {
       return sendCors(res, origin, 204, '');
     }
@@ -155,6 +162,23 @@ const server = createServer(async (req, res) => {
     });
   }
 });
+
+function proxyPlatformRequest(req, res, url) {
+  const upstreamPath = url.pathname.replace(/^\/platform/, '') + url.search;
+  const headers = { ...req.headers, host: '127.0.0.1:8796' };
+  delete headers['cf-connecting-ip'];
+  delete headers['cf-ray'];
+  const upstream = httpRequest({ hostname: '127.0.0.1', port: 8796, path: upstreamPath, method: req.method, headers }, (upstreamResponse) => {
+    res.writeHead(upstreamResponse.statusCode || 502, upstreamResponse.headers);
+    upstreamResponse.pipe(res);
+  });
+  upstream.setTimeout(70000, () => upstream.destroy(new Error('platform_api_timeout')));
+  upstream.on('error', () => {
+    if (!res.headersSent) sendJson(res, '', 503, { ok: false, error: 'platform_api_unavailable' });
+    else res.destroy();
+  });
+  req.pipe(upstream);
+}
 
 server.listen(config.port, config.host, () => {
   console.log(`[taxiassur-postgres-read-api] listening on http://${config.host}:${config.port}`);

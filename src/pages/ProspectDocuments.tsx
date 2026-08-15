@@ -6,6 +6,7 @@ import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
 import { withTimeout } from '@/lib/promise-timeout';
 import { downloadSecureDocument } from '@/lib/secure-document-url';
 import { prepareCompatibleDocumentUpload } from '@/lib/document-upload-compat';
+import { downloadProspectPlatformDocument, uploadProspectPlatformDocument } from '@/lib/platform-api';
 import ComplementaryDocuments from '@/components/client/ComplementaryDocuments';
 
 interface DocumentType {
@@ -195,6 +196,10 @@ const ProspectDocuments: React.FC = () => {
     setSuccess(null);
 
     try {
+      const uploaded = await uploadProspectPlatformDocument(token, documentType, file);
+      setSuccess(`Document "${file.name}" envoyé avec succès !`);
+      if (uploaded?.document) setUploadedDocuments((current) => [uploaded.document as UploadedDocument, ...current]);
+      return;
       const acceptedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
       if (file.size < 1 || file.size > 10 * 1024 * 1024) throw new Error('Fichier trop volumineux (max 10 Mo)');
       if (!acceptedTypes.includes(file.type)) throw new Error('Format accepté : PDF, JPG, PNG ou WebP');
@@ -220,6 +225,8 @@ const ProspectDocuments: React.FC = () => {
     if (!token) return;
     setError(null);
     try {
+      await downloadProspectPlatformDocument(token, uploaded.id, uploaded.document_name || uploaded.file_name || 'document');
+      return;
       await downloadSecureDocument({
         path: uploaded.file_path || uploaded.file_url || '',
         bucket: 'prospect-documents',

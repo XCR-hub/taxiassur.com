@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { withTimeout } from '@/lib/promise-timeout';
+import { uploadProspectPlatformDocument } from '@/lib/platform-api';
 import { Upload, CheckCircle, Clock, AlertCircle, FileText, Loader2, X } from 'lucide-react';
 
 interface DocumentRequest {
@@ -75,6 +76,12 @@ export const ComplementaryDocuments: React.FC<ComplementaryDocumentsProps> = ({
     setSuccess(null);
 
     try {
+      await uploadProspectPlatformDocument(token, 'autre', file, requestId);
+      setSuccess(`Document "${file.name}" envoyé avec succès !`);
+      setRequests((current) => current.map((request) => request.id === requestId ? { ...request, statut: 'recu', document_filename: file.name } : request));
+      onDocumentUploaded?.();
+      setTimeout(() => setSuccess(null), 5000);
+      return;
       const acceptedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
       if (file.size < 1 || file.size > 10 * 1024 * 1024) throw new Error('Fichier trop volumineux (max 10 Mo)');
       if (!acceptedTypes.includes(file.type)) throw new Error('Format accepté : PDF, JPG, PNG ou WebP');
