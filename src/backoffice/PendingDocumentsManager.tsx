@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { getSecureDocumentUrl } from '@/lib/secure-document-url';
+import { NATIVE_ADMIN_TOKEN_KEY } from '@/lib/native-admin-auth';
+import { nativeAdminDocumentUrl, nativeAdminDocuments, nativeAdminDownloadDocument, nativeAdminUpdateDocument } from '@/lib/native-admin-data';
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface PendingDocument {
@@ -122,6 +124,10 @@ function PreviewThumb({ doc }: { doc: PendingDocument }) {
   useEffect(() => {
     let active = true;
     if (!mime.startsWith('image/')) return;
+    if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
+      void nativeAdminDocumentUrl(doc.id).then((localUrl)=>{if(active)setUrl(localUrl);else URL.revokeObjectURL(localUrl);}).catch(()=>{if(active)setErr(true);});
+      return () => { active=false; if(url) URL.revokeObjectURL(url); };
+    }
     void getSecureDocumentUrl({ bucket: getDocumentBucket(doc), path: doc.file_path })
       .then((signedUrl) => { if (active) setUrl(signedUrl); })
       .catch(() => { if (active) setErr(true); });
@@ -155,6 +161,10 @@ function PreviewThumb({ doc }: { doc: PendingDocument }) {
 function SecureDocumentActions({ doc }: { doc: PendingDocument }) {
   const open = async (download: boolean) => {
     try {
+      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
+        if (download) return void await nativeAdminDownloadDocument(doc.id, doc.file_name);
+        const localUrl=await nativeAdminDocumentUrl(doc.id); window.open(localUrl,'_blank','noopener,noreferrer'); setTimeout(()=>URL.revokeObjectURL(localUrl),60000); return;
+      }
       const url = await getSecureDocumentUrl({ bucket: getDocumentBucket(doc), path: doc.file_path, download, fileName: doc.file_name });
       window.open(url, '_blank', 'noopener,noreferrer');
     } catch (error) { console.error('Document unavailable', error); }
@@ -254,6 +264,9 @@ export default function PendingDocumentsManager() {
   const loadDocuments = useCallback(async () => {
     setLoading(true);
     try {
+      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
+        const result=await nativeAdminDocuments('pending'); const formatted=result.documents as PendingDocument[]; setAllDocs(formatted); setExpandedLeads(new Set(formatted.filter(d=>!isSuspectDocument(d)).map(d=>d.lead_id))); return;
+      }
       const { data, error } = await supabase
         .from('prospect_documents')
         .select(`
@@ -371,6 +384,9 @@ export default function PendingDocumentsManager() {
   const handleValidate = async (docId: string) => {
     setProcessing(prev => new Set(prev).add(docId));
     try {
+      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
+        await nativeAdminUpdateDocument(docId,{status:'validated'}); setAllDocs(prev=>prev.filter(d=>d.id!==docId)); setSelectedIds(prev=>{const s=new Set(prev);s.delete(docId);return s;}); return;
+      }
       const { error } = await supabase
         .from('prospect_documents')
         .update({ status: 'validated', validated_at: new Date().toISOString() })
@@ -449,6 +465,10 @@ Acceder a mon espace
         setProcessing(prev => new Set(prev).add(id));
       }
       try {
+        if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
+          await Promise.all(ids.map(id=>nativeAdminUpdateDocument(id,{status:'rejected',rejection_reason:reason})));
+          setAllDocs(prev=>prev.filter(d=>!ids.includes(d.id)));setSelectedIds(new Set());return;
+        }
         const { error } = await supabase
           .from('prospect_documents')
           .update({ status: 'rejected', rejection_reason: reason })
@@ -476,6 +496,9 @@ Acceder a mon espace
     setProcessing(prev => new Set(prev).add(docId));
     try {
       const doc = allDocs.find(d => d.id === docId);
+      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
+        await nativeAdminUpdateDocument(docId,{status:'rejected',rejection_reason:reason}); setAllDocs(prev=>prev.filter(d=>d.id!==docId));setSelectedIds(prev=>{const s=new Set(prev);s.delete(docId);return s;});if(doc)await sendRejectionEmail(doc,reason);return;
+      }
       const { error } = await supabase
         .from('prospect_documents')
         .update({ status: 'rejected', rejection_reason: reason })

@@ -66,6 +66,10 @@ const server = createServer(async (req, res) => {
     const adminLeadMatch = url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})$/i);
     if (adminLeadMatch && req.method === 'GET') return adminLeadGet(req, res, origin, requestId, adminLeadMatch[1]);
     if (adminLeadMatch && req.method === 'PATCH') return adminLeadPatch(req, res, origin, requestId, adminLeadMatch[1]);
+    if (req.method === 'GET' && url.pathname === '/v1/admin/documents') return adminDocuments(req, res, origin, requestId, url);
+    const adminDocumentMatch=url.pathname.match(/^\/v1\/admin\/documents\/([0-9a-f-]{36})(\/download)?$/i);
+    if(adminDocumentMatch&&req.method==='PATCH'&&!adminDocumentMatch[2])return adminDocumentPatch(req,res,origin,requestId,adminDocumentMatch[1]);
+    if(adminDocumentMatch&&req.method==='GET'&&adminDocumentMatch[2])return adminDocumentDownload(req,res,origin,requestId,adminDocumentMatch[1]);
     if (req.method === 'POST' && url.pathname === '/v1/prospect/documents') return uploadProspectDocument(req, res, origin, requestId);
     const downloadMatch = url.pathname.match(/^\/v1\/prospect\/documents\/([0-9a-f-]{36})\/download$/i);
     if (req.method === 'GET' && downloadMatch) return downloadProspectDocument(req, res, origin, requestId, downloadMatch[1]);
@@ -139,6 +143,25 @@ async function adminLeadPatch(req, res, origin, requestId, leadId) {
   updates.updated_at=new Date().toISOString(); if(Object.keys(updates).length===1)return json(res,origin,400,{ok:false,error:'no_valid_fields'},requestId);
   const sql=`WITH updated AS (UPDATE taxiassur.records SET data=data||${quoteLiteral(JSON.stringify(updates))}::jsonb,updated_at=now(),revision=revision+1 WHERE collection='crm_leads' AND record_id=${quoteLiteral(leadId)} RETURNING data) INSERT INTO taxiassur.audit_events(actor_type,actor_id,action,target_type,target_id,request_id,metadata) SELECT 'admin',${quoteLiteral(session.sub)},'lead_updated','crm_lead',${quoteLiteral(leadId)},${quoteLiteral(requestId)}::uuid,${quoteLiteral(JSON.stringify({fields:Object.keys(updates)}))}::jsonb FROM updated RETURNING (SELECT data::text FROM updated);`;
   const lead=parseJsonLine(await runPsql(sql)); return lead?json(res,origin,200,{ok:true,lead},requestId):json(res,origin,404,{ok:false,error:'not_found'},requestId);
+}
+async function adminDocuments(req,res,origin,requestId,url){
+  if(!await verifiedAdminSession(req))return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
+  const status=String(url.searchParams.get('status')||'').trim(); const leadId=String(url.searchParams.get('lead_id')||'').trim();
+  const filters=[`d.collection='prospect_documents'`]; if(status)filters.push(`d.data->>'status'=${quoteLiteral(status)}`); if(uuidPattern.test(leadId))filters.push(`d.data->>'lead_id'=${quoteLiteral(leadId)}`);
+  const sql=`SELECT COALESCE(jsonb_agg(d.data||jsonb_build_object('lead_email',l.data->>'email','lead_first_name',l.data->>'first_name','lead_last_name',l.data->>'last_name','lead_phone',l.data->>'phone') ORDER BY COALESCE(d.data->>'uploaded_at',d.data->>'created_at','') DESC),'[]'::jsonb)::text FROM taxiassur.records d LEFT JOIN taxiassur.records l ON l.collection='crm_leads' AND l.record_id=d.data->>'lead_id' WHERE ${filters.join(' AND ')};`;
+  return json(res,origin,200,{ok:true,documents:parseJsonLine(await runPsql(sql))||[]},requestId);
+}
+async function adminDocumentPatch(req,res,origin,requestId,documentId){
+  const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);const body=await readJsonBody(req);const status=String(body.status||'');if(!['pending','validated','verified','rejected'].includes(status))return json(res,origin,400,{ok:false,error:'invalid_status'},requestId);
+  const updates={status,updated_at:new Date().toISOString(),...(status==='validated'||status==='verified'?{validated_at:new Date().toISOString(),validated_by:session.sub}:{rejection_reason:String(body.rejection_reason||'').slice(0,500)})};
+  const sql=`WITH updated AS (UPDATE taxiassur.records SET data=data||${quoteLiteral(JSON.stringify(updates))}::jsonb,updated_at=now(),revision=revision+1 WHERE collection='prospect_documents' AND record_id=${quoteLiteral(documentId)} RETURNING data) INSERT INTO taxiassur.audit_events(actor_type,actor_id,action,target_type,target_id,request_id,metadata) SELECT 'admin',${quoteLiteral(session.sub)},'document_${status}','prospect_document',${quoteLiteral(documentId)},${quoteLiteral(requestId)}::uuid,${quoteLiteral(JSON.stringify({status}))}::jsonb FROM updated RETURNING (SELECT data::text FROM updated);`;const document=parseJsonLine(await runPsql(sql));return document?json(res,origin,200,{ok:true,document},requestId):json(res,origin,404,{ok:false,error:'not_found'},requestId);
+}
+async function adminDocumentDownload(req,res,origin,requestId,documentId){
+  if(!await verifiedAdminSession(req))return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
+  const row=parseJsonLine(await runPsql(`SELECT data::text FROM taxiassur.records WHERE collection='prospect_documents' AND record_id=${quoteLiteral(documentId)} LIMIT 1;`));if(!row)return json(res,origin,404,{ok:false,error:'not_found'},requestId);
+  let filePath;const local=parseJsonLine(await runPsql(`SELECT json_build_object('storage_path',storage_path,'mime_type',mime_type,'original_name',original_name)::text FROM taxiassur.file_objects WHERE id=${quoteLiteral(documentId)}::uuid LIMIT 1;`));
+  if(local){filePath=safeStoragePath(local.storage_path);}else{const bucket=String(row.file_path||'').startsWith('00000000-0000-0000-0000-000000000001/')?'email-attachments':'prospect-documents';filePath=safeLegacyStoragePath(bucket,row.file_path);}
+  if(!existsSync(filePath))return json(res,origin,404,{ok:false,error:'file_missing'},requestId);const size=statSync(filePath).size;const name=local?.original_name||row.file_name||row.document_name||'document';const mime=local?.mime_type||row.mime_type||'application/octet-stream';res.writeHead(200,responseHeaders(origin,requestId,{'Content-Type':mime,'Content-Length':String(size),'Content-Disposition':`attachment; filename*=UTF-8''${encodeURIComponent(name)}`}));createReadStream(filePath).pipe(res);
 }
 async function verifiedAdminSession(req) {
   const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
