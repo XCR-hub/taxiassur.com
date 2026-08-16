@@ -62,6 +62,10 @@ const server = createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/v1/auth/session') return adminSession(req, res, origin, requestId);
     if (req.method === 'POST' && url.pathname === '/v1/auth/logout') return adminLogout(req, res, origin, requestId);
     if (req.method === 'POST' && url.pathname === '/v1/auth/change-password') return adminChangePassword(req, res, origin, requestId);
+    if (req.method === 'GET' && url.pathname === '/v1/admin/dashboard') return adminDashboard(req, res, origin, requestId);
+    const adminLeadMatch = url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})$/i);
+    if (adminLeadMatch && req.method === 'GET') return adminLeadGet(req, res, origin, requestId, adminLeadMatch[1]);
+    if (adminLeadMatch && req.method === 'PATCH') return adminLeadPatch(req, res, origin, requestId, adminLeadMatch[1]);
     if (req.method === 'POST' && url.pathname === '/v1/prospect/documents') return uploadProspectDocument(req, res, origin, requestId);
     const downloadMatch = url.pathname.match(/^\/v1\/prospect\/documents\/([0-9a-f-]{36})\/download$/i);
     if (req.method === 'GET' && downloadMatch) return downloadProspectDocument(req, res, origin, requestId, downloadMatch[1]);
@@ -111,6 +115,29 @@ async function adminChangePassword(req, res, origin, requestId) {
   const encoded = hashPassword(newPassword);
   await runPsql(`BEGIN; UPDATE taxiassur.auth_users SET password_hash=${quoteLiteral(encoded)},password_initialized_at=now(),updated_at=now() WHERE id=${quoteLiteral(session.sub)}::uuid; INSERT INTO taxiassur.revoked_sessions(session_id,user_id,expires_at) VALUES(${quoteLiteral(session.jti)},${quoteLiteral(session.sub)}::uuid,to_timestamp(${Number(session.exp)})) ON CONFLICT(session_id) DO NOTHING; INSERT INTO taxiassur.audit_events(actor_type,actor_id,action,target_type,target_id,request_id) VALUES('admin',${quoteLiteral(session.sub)},'password_changed','auth_user',${quoteLiteral(session.sub)},${quoteLiteral(requestId)}::uuid); COMMIT;`);
   return json(res, origin, 200, { ok: true, session_revoked: true }, requestId);
+}
+async function adminDashboard(req, res, origin, requestId) {
+  if (!await verifiedAdminSession(req)) return json(res, origin, 401, { ok: false, error: 'invalid_session' }, requestId);
+  const sql = `SELECT json_build_object(
+    'leads',COALESCE((SELECT jsonb_agg(data ORDER BY COALESCE(data->>'created_at','') DESC) FROM (SELECT data FROM taxiassur.records WHERE collection='crm_leads' ORDER BY COALESCE(data->>'created_at','') DESC LIMIT 2000) q),'[]'::jsonb),
+    'ai_decisions',COALESCE((SELECT jsonb_agg(data ORDER BY COALESCE(data->>'created_at','') DESC) FROM (SELECT data FROM taxiassur.records WHERE collection='ai_decisions' ORDER BY COALESCE(data->>'created_at','') DESC LIMIT 5) q),'[]'::jsonb),
+    'unread_messages',(SELECT count(*) FROM taxiassur.records WHERE collection='email_messages' AND COALESCE(data->>'is_read','false')='false'),
+    'critical_alerts',(SELECT count(*) FROM taxiassur.records WHERE collection='crm_retention_alerts' AND data->>'alert_type'='churn_risk'),
+    'ready_for_quote',(SELECT count(*) FROM taxiassur.records WHERE collection='ready_for_quote_queue' AND data->>'status'='waiting'))::text;`;
+  return json(res, origin, 200, { ok: true, ...parseJsonLine(await runPsql(sql)) }, requestId);
+}
+async function adminLeadGet(req, res, origin, requestId, leadId) {
+  if (!await verifiedAdminSession(req)) return json(res, origin, 401, { ok: false, error: 'invalid_session' }, requestId);
+  const lead=parseJsonLine(await runPsql(`SELECT data::text FROM taxiassur.records WHERE collection='crm_leads' AND record_id=${quoteLiteral(leadId)} LIMIT 1;`));
+  return lead ? json(res, origin, 200, { ok:true, lead }, requestId) : json(res, origin, 404, { ok:false, error:'not_found' }, requestId);
+}
+async function adminLeadPatch(req, res, origin, requestId, leadId) {
+  const session=await verifiedAdminSession(req); if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
+  const body=await readJsonBody(req); const allowed=new Set(['first_name','last_name','email','phone','city','company_name','immatriculation','vehicle_type','status','current_stage_key','pipeline_stage','notes','assigned_to']); const updates={};
+  for(const [key,value] of Object.entries(body)) if(allowed.has(key) && (typeof value==='string'||value===null)) updates[key]=value;
+  updates.updated_at=new Date().toISOString(); if(Object.keys(updates).length===1)return json(res,origin,400,{ok:false,error:'no_valid_fields'},requestId);
+  const sql=`WITH updated AS (UPDATE taxiassur.records SET data=data||${quoteLiteral(JSON.stringify(updates))}::jsonb,updated_at=now(),revision=revision+1 WHERE collection='crm_leads' AND record_id=${quoteLiteral(leadId)} RETURNING data) INSERT INTO taxiassur.audit_events(actor_type,actor_id,action,target_type,target_id,request_id,metadata) SELECT 'admin',${quoteLiteral(session.sub)},'lead_updated','crm_lead',${quoteLiteral(leadId)},${quoteLiteral(requestId)}::uuid,${quoteLiteral(JSON.stringify({fields:Object.keys(updates)}))}::jsonb FROM updated RETURNING (SELECT data::text FROM updated);`;
+  const lead=parseJsonLine(await runPsql(sql)); return lead?json(res,origin,200,{ok:true,lead},requestId):json(res,origin,404,{ok:false,error:'not_found'},requestId);
 }
 async function verifiedAdminSession(req) {
   const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
@@ -284,7 +311,7 @@ function clientIp(req) { return String(req.headers['cf-connecting-ip'] || req.he
 function takeRateSlot(ip) { const now = Date.now(); const value = rateBuckets.get(ip) || { start: now, count: 0 }; if (now - value.start > 60000) { value.start = now; value.count = 0; } value.count += 1; rateBuckets.set(ip, value); return value.count <= 120; }
 function positiveInt(value, fallback, max) { const number = Number(value); return Number.isInteger(number) && number > 0 && number <= max ? number : fallback; }
 function publicError(statusCode, publicCode) { const error = new Error(publicCode); error.statusCode = statusCode; error.publicCode = publicCode; return error; }
-function responseHeaders(origin, requestId, extra = {}) { return { 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'no-referrer', 'Cache-Control': 'no-store', 'X-Request-Id': requestId, ...(origin && config.allowedOrigins.has(origin) ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type,Content-Length,X-Prospect-Token,X-Document-Type,X-Document-Request-Id,X-File-Name,Authorization', 'Access-Control-Max-Age': '600' } : {}), ...extra }; }
+function responseHeaders(origin, requestId, extra = {}) { return { 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'no-referrer', 'Cache-Control': 'no-store', 'X-Request-Id': requestId, ...(origin && config.allowedOrigins.has(origin) ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin', 'Access-Control-Allow-Methods': 'GET,POST,PATCH,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type,Content-Length,X-Prospect-Token,X-Document-Type,X-Document-Request-Id,X-File-Name,Authorization', 'Access-Control-Max-Age': '600' } : {}), ...extra }; }
 function send(res, origin, status, body, headers, requestId) { res.writeHead(status, responseHeaders(origin, requestId, headers)); res.end(body); }
 function json(res, origin, status, body, requestId) { send(res, origin, status, JSON.stringify(body), { 'Content-Type': 'application/json; charset=utf-8' }, requestId); }
 function drainAndJson(req, res, origin, status, body, requestId) { req.resume(); return json(res, origin, status, body, requestId); }

@@ -16,6 +16,8 @@ import CompleteTimeline from '@/components/crm/CompleteTimeline';
 import LeadDeleteSecure from '@/components/crm/LeadDeleteSecure';
 import SMSSendModal from '@/components/crm/SMSSendModal';
 import SMSConversationPanel from '@/components/crm/SMSConversationPanel';
+import { NATIVE_ADMIN_TOKEN_KEY } from '@/lib/native-admin-auth';
+import { nativeAdminLead, nativeAdminUpdateLead } from '@/lib/native-admin-data';
 
 interface Lead {
   id: string;
@@ -79,6 +81,11 @@ const CRMLeadDetail: React.FC = () => {
   const loadLeadData = async () => {
     try {
       setLoading(true);
+      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY) && leadId) {
+        const native = await nativeAdminLead(leadId);
+        setLead(native.lead);
+        return;
+      }
       const { data, error: fetchError } = await supabase
         .from('crm_leads')
         .select('*')
@@ -102,6 +109,12 @@ const CRMLeadDetail: React.FC = () => {
 
   const updateVehicleType = async (type: string) => {
     if (!leadId) return;
+    if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
+      const native = await nativeAdminUpdateLead(leadId, { vehicle_type: type });
+      setLead(native.lead);
+      setEditingVehicleType(false);
+      return;
+    }
     const { error } = await supabase
       .from('crm_leads')
       .update({ vehicle_type: type, updated_at: new Date().toISOString() })
@@ -142,6 +155,14 @@ const CRMLeadDetail: React.FC = () => {
       if (editForm.city !== (lead.city || '')) updates.city = editForm.city;
       if (editForm.company_name !== (lead.company_name || '')) updates.company_name = editForm.company_name;
       if (editForm.immatriculation !== (lead.immatriculation || '')) updates.immatriculation = editForm.immatriculation;
+
+      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
+        const native = await nativeAdminUpdateLead(leadId, updates);
+        setLead(native.lead);
+        setEditingContact(false);
+        showToast('Coordonnees mises a jour', 'success');
+        return;
+      }
 
       const { error: updateError } = await supabase
         .from('crm_leads')

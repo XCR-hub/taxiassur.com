@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { NATIVE_ADMIN_TOKEN_KEY } from '@/lib/native-admin-auth';
+import { nativeAdminDashboard } from '@/lib/native-admin-data';
 
 interface DashboardStats {
   total_leads: number;
@@ -121,7 +123,10 @@ const CRMKillerDashboard: React.FC = () => {
       const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
       const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
-      const [leadsRes, aiDecisionsRes, unreadCount, criticalAlerts, quoteQueue] = await Promise.all([
+      const native = localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY) ? await nativeAdminDashboard() : null;
+      const [leadsRes, aiDecisionsRes, unreadCount, criticalAlerts, quoteQueue] = native ? [
+        { data: native.leads }, { data: native.ai_decisions }, { count: native.unread_messages }, { count: native.critical_alerts }, { count: native.ready_for_quote },
+      ] : await Promise.all([
         supabase.from('crm_leads').select('*').order('created_at', { ascending: false }),
         supabase.from('ai_decisions').select('*').order('created_at', { ascending: false }).limit(5),
         supabase.from('email_messages').select('id', { count: 'exact', head: true }).eq('is_read', false),
