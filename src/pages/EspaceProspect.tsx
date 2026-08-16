@@ -4,9 +4,7 @@ import { Upload, CheckCircle, AlertCircle, FileText, Loader2, X, Download, User,
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
 import { downloadSecureDocument } from '@/lib/secure-document-url';
-import { withTimeout } from '@/lib/promise-timeout';
-import { prepareCompatibleDocumentUpload } from '@/lib/document-upload-compat';
-import { uploadProspectPlatformDocument } from '@/lib/platform-api';
+import { downloadProspectPlatformDocument, loadProspectPlatformSession, uploadProspectPlatformDocument } from '@/lib/platform-api';
 import ClientQuotesViewer from '../components/client/ClientQuotesViewer';
 import ClientSubscriptionForm from '../components/client/ClientSubscriptionForm';
 import ClientPaymentButton from '../components/client/ClientPaymentButton';
@@ -199,9 +197,7 @@ const EspaceProspect: React.FC = () => {
         const supabaseUrl = getSupabaseUrl();
         const supabaseKey = getSupabaseAnonKey();
 
-        if (!supabaseUrl || !supabaseKey) {
-          throw new Error('Configuration Supabase publique manquante pour l espace prospect');
-        }
+        if (!supabaseUrl || !supabaseKey) return;
 
         const client = createClient(supabaseUrl, supabaseKey, {
           auth: {
@@ -212,17 +208,13 @@ const EspaceProspect: React.FC = () => {
         });
 
         setAnonClient(client);
-      } catch {
-        setError('Erreur de configuration');
-        setLoading(false);
-      }
+      } catch { /* Les fonctions historiques restent simplement indisponibles. */ }
     };
     initClient();
   }, []);
 
   const loadLeadInfo = useCallback(async () => {
-    if (!anonClient || !token) {
-      console.log('Missing anonClient or token:', { hasClient: !!anonClient, token });
+    if (!token) {
       setError('Configuration manquante');
       setLoading(false);
       return;
@@ -231,36 +223,19 @@ const EspaceProspect: React.FC = () => {
     console.log('Loading lead info with token:', token);
 
     try {
-      // Utiliser la fonction RPC sécurisée au lieu de la requête directe
-      const { data: leadData, error: leadError } = await withTimeout(
-        anonClient.rpc('get_lead_by_token', { p_token: token }).maybeSingle(),
-      );
+      const platformSession = await loadProspectPlatformSession(token);
+      const lead = platformSession.lead as unknown as LeadInfo;
 
-      console.log('Lead query result:', { data: leadData, error: leadError });
-
-      if (leadError) {
-        console.error('Lead query error:', leadError);
-        throw leadError;
-      }
-
-      if (leadData && leadData.lead) {
-        console.log('Lead found:', leadData.lead.id);
-        // Extraire les données du lead depuis la structure imbriquée
-        setLeadInfo(leadData.lead);
-        if (leadData.lead.converted_to_client) {
+      if (lead?.id) {
+        setLeadInfo(lead);
+        setUploadedDocuments(platformSession.documents as unknown as UploadedDocument[]);
+        if (lead.converted_to_client) {
           setActiveTab('contrat');
         }
 
-        // Charger tous les paiements via RPC (utilise le token du prospect)
-        const { data: payments, error: paymentsError } = await withTimeout(
-          anonClient.rpc('get_payments_by_token', { p_token: token }),
-        );
-
-        if (!paymentsError && payments) {
-          console.log('Tous les paiements:', payments);
-          setAllPayments(payments || []);
-          setPendingPayments(payments?.filter((p: { status?: string }) => p.status === 'pending') || []);
-        }
+        const payments = platformSession.payments as unknown as ProspectPayment[];
+        setAllPayments(payments);
+        setPendingPayments(payments.filter((payment) => payment.status === 'pending'));
       } else {
         console.warn('No lead found for token');
         setError('Ce lien d\'acces n\'est plus valide. Il a peut-etre expire ou ete regenere. Contactez-nous au 01 80 85 57 86 ou par email a team@taxiassur.com pour obtenir un nouveau lien d\'acces a votre espace.');
@@ -271,34 +246,30 @@ const EspaceProspect: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [anonClient, token]);
+  }, [token]);
 
   useEffect(() => {
-    if (token && anonClient) {
+    if (token) {
       loadLeadInfo();
     }
-  }, [token, anonClient]); // Retirer loadLeadInfo des dépendances
+  }, [token, loadLeadInfo]);
 
   const loadDocuments = useCallback(async () => {
-    if (!token || !anonClient) return;
+    if (!token) return;
 
     try {
-      // Utiliser la fonction RPC sécurisée (nouvelle version)
-      const { data, error } = await anonClient
-        .rpc('get_lead_documents_by_token', { p_token: token });
-
-      if (error) throw error;
-      setUploadedDocuments(data || []);
+      const session = await loadProspectPlatformSession(token);
+      setUploadedDocuments(session.documents as unknown as UploadedDocument[]);
     } catch (err) {
       console.error('Error loading documents:', err);
     }
-  }, [token, anonClient]);
+  }, [token]);
 
   useEffect(() => {
-    if (token && anonClient && leadInfo) {
+    if (token && leadInfo) {
       loadDocuments();
     }
-  }, [token, anonClient, leadInfo]); // Retirer loadDocuments des dépendances
+  }, [token, leadInfo, loadDocuments]);
 
   // ========================================
   // REALTIME: Écouter les changements sur crm_lead_documents
@@ -353,7 +324,7 @@ const EspaceProspect: React.FC = () => {
       console.log('🔴 Cleaning up realtime subscription');
       anonClient.removeChannel(channel);
     };
-  }, [anonClient, leadInfo?.id]); // loadDocuments et loadLeadInfo sont stables
+  }, [anonClient, leadInfo?.id, loadDocuments, loadLeadInfo]);
 
   const loadFinalDocuments = useCallback(async () => {
     if (!token || !anonClient) return;
@@ -373,7 +344,7 @@ const EspaceProspect: React.FC = () => {
     if (token && anonClient && leadInfo) {
       loadFinalDocuments();
     }
-  }, [token, anonClient, leadInfo]);
+  }, [token, anonClient, leadInfo, loadFinalDocuments]);
 
   const handleFinalDocument = async (doc: FinalClientDocument) => {
     if (!token) return;
@@ -386,14 +357,7 @@ const EspaceProspect: React.FC = () => {
   const handleUploadedDocument = async (doc: UploadedDocument) => {
     if (!token) return;
     try {
-      const path = doc.file_path || doc.file_url;
-      if (!path) throw new Error('Document indisponible');
-      await downloadSecureDocument({
-        path,
-        bucket: 'prospect-documents',
-        accessToken: token,
-        fileName: doc.file_name,
-      });
+      await downloadProspectPlatformDocument(token, doc.id, doc.file_name || 'document');
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Document indisponible');
     }
@@ -420,46 +384,6 @@ const EspaceProspect: React.FC = () => {
       if (uploaded?.document) setUploadedDocuments((current) => [uploaded.document as UploadedDocument, ...current]);
       setSuccess(`Document "${file.name}" envoyé avec succès !`);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-      if (!anonClient) return;
-      const maxSize = 10 * 1024 * 1024;
-      const acceptedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
-      if (file.size < 1 || file.size > maxSize) throw new Error('Fichier trop volumineux. Taille max : 10 Mo');
-      if (!acceptedTypes.includes(file.type)) throw new Error('Format accepté : PDF, JPG, PNG ou WebP');
-      const request = { accessToken: token, scope: 'prospect' as const, documentType, fileName: file.name, fileSize: file.size, mimeType: file.type };
-      const { data: prepared, error: prepareError, wireDocumentType } = await prepareCompatibleDocumentUpload(anonClient, request);
-      if (prepareError || !prepared?.success || !prepared.path || !prepared.uploadToken) {
-        throw prepareError || new Error(prepared?.error || 'Préparation du dépôt impossible');
-      }
-      const path = String(prepared.path);
-      const { error: uploadError } = await withTimeout(
-        anonClient.storage.from('prospect-documents')
-          .uploadToSignedUrl(path, String(prepared.uploadToken), file, { contentType: file.type }),
-        60_000,
-      );
-      if (uploadError) throw uploadError;
-      const { data: finalized, error: finalizeError } = await withTimeout(
-        anonClient.functions.invoke('upload-client-document', {
-          body: { action: 'finalize', path, ...request, documentType: wireDocumentType },
-        }),
-        20_000,
-      );
-      if (finalizeError || !finalized?.success) {
-        throw finalizeError || new Error(finalized?.error || 'Finalisation du dépôt impossible');
-      }
-
-      setSuccess(`✅ Document "${file.name}" uploadé avec succès ! Vous recevrez un email de confirmation sous 60 secondes.`);
-
-      // Scroll vers le haut pour afficher le message de succès
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-
-      // Les documents seront rechargés automatiquement via realtime
-      // Mais on force un refresh immédiat pour être sûr
-      setTimeout(() => {
-        loadDocuments();
-        loadLeadInfo();
-      }, 500);
-
     } catch (err) {
       console.error('❌ [UPLOAD] Global error:', err);
       const errorMessage = getErrorMessage(err, "Erreur inconnue lors de l'upload");
