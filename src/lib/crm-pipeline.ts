@@ -1,4 +1,6 @@
 import { supabase } from './supabase';
+import { NATIVE_ADMIN_TOKEN_KEY } from './native-admin-auth';
+import { nativeAdminDashboard, nativeAdminLead, nativeAdminUpdateLead } from './native-admin-data';
 
 export interface PipelineActionResult {
   success: boolean;
@@ -223,6 +225,15 @@ export const pipelineService = {
     source?: string;
     search?: string;
   }) {
+    if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
+      const result = await nativeAdminDashboard();
+      let rows = (result.leads || []).filter((lead: any) => !lead.deleted_at);
+      if (filters?.status) rows = rows.filter((lead: any) => lead.status === filters.status);
+      if (filters?.assignedTo) rows = rows.filter((lead: any) => lead.assigned_to === filters.assignedTo);
+      if (filters?.source) rows = rows.filter((lead: any) => lead.source === filters.source);
+      if (filters?.search) { const needle=filters.search.toLowerCase(); rows=rows.filter((lead:any)=>[lead.first_name,lead.last_name,lead.email,lead.phone].some(value=>String(value||'').toLowerCase().includes(needle))); }
+      return rows.map((lead:any)=>({...lead,full_name:`${lead.first_name||''} ${lead.last_name||''}`.trim()||lead.email,vehicle_type:lead.vehicle_type||lead.metadata?.vehicle_type||null})) as CRMLead[];
+    }
     let query = supabase
       .from('crm_leads')
       .select('*')
@@ -256,6 +267,10 @@ export const pipelineService = {
   },
 
   async getLead(id: string) {
+    if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
+      const result=await nativeAdminLead(id); const data=result.lead;
+      return {...data,full_name:`${data.first_name||''} ${data.last_name||''}`.trim()||data.email,vehicle_type:data.vehicle_type||data.metadata?.vehicle_type||null} as CRMLead;
+    }
     const { data, error } = await supabase
       .from('crm_leads')
       .select('*')
@@ -288,6 +303,11 @@ export const pipelineService = {
       if (newStatus === 'LOST_RECONTACT_SCHEDULED' && recontactDate) {
         updateData.recontact_scheduled_date = recontactDate;
         updateData.lost_reason = note || 'Non spécifié';
+      }
+
+      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
+        const result=await nativeAdminUpdateLead(leadId,updateData as Record<string,string|null>);
+        return {success:true,message:`Statut mis à jour vers ${PIPELINE_STATUSES[newStatus].label}`,actionsQueued:0,details:{lead:result.lead}};
       }
 
       const { data: lead, error: leadError } = await supabase
@@ -493,6 +513,7 @@ export const pipelineService = {
   },
 
   async assignLead(leadId: string, userId: string) {
+    if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) return (await nativeAdminUpdateLead(leadId,{assigned_to:userId})).lead;
     const { data, error } = await supabase
       .from('crm_leads')
       .update({ assigned_to: userId })
@@ -523,6 +544,7 @@ export const pipelineService = {
   },
 
   async getAdminUsers(): Promise<AdminUser[]> {
+    if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) return (await nativeAdminDashboard()).admin_users || [];
     const { data, error } = await supabase
       .from('admin_users')
       .select('id, email, full_name, role')
@@ -537,6 +559,7 @@ export const pipelineService = {
   },
 
   async autoAssignLead(leadId: string, userId: string): Promise<boolean> {
+    if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) { await nativeAdminUpdateLead(leadId,{assigned_to:userId}); return true; }
     const { error } = await supabase
       .from('crm_leads')
       .update({ assigned_to: userId, assigned_at: new Date().toISOString() })

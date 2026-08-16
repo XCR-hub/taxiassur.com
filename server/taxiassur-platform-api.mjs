@@ -123,7 +123,8 @@ async function adminDashboard(req, res, origin, requestId) {
     'ai_decisions',COALESCE((SELECT jsonb_agg(data ORDER BY COALESCE(data->>'created_at','') DESC) FROM (SELECT data FROM taxiassur.records WHERE collection='ai_decisions' ORDER BY COALESCE(data->>'created_at','') DESC LIMIT 5) q),'[]'::jsonb),
     'unread_messages',(SELECT count(*) FROM taxiassur.records WHERE collection='email_messages' AND COALESCE(data->>'is_read','false')='false'),
     'critical_alerts',(SELECT count(*) FROM taxiassur.records WHERE collection='crm_retention_alerts' AND data->>'alert_type'='churn_risk'),
-    'ready_for_quote',(SELECT count(*) FROM taxiassur.records WHERE collection='ready_for_quote_queue' AND data->>'status'='waiting'))::text;`;
+    'ready_for_quote',(SELECT count(*) FROM taxiassur.records WHERE collection='ready_for_quote_queue' AND data->>'status'='waiting'),
+    'admin_users',COALESCE((SELECT json_agg(json_build_object('id',id,'email',email,'full_name',full_name,'role',role) ORDER BY full_name) FROM taxiassur.auth_users WHERE is_active=true),'[]'::json))::text;`;
   return json(res, origin, 200, { ok: true, ...parseJsonLine(await runPsql(sql)) }, requestId);
 }
 async function adminLeadGet(req, res, origin, requestId, leadId) {
@@ -133,7 +134,7 @@ async function adminLeadGet(req, res, origin, requestId, leadId) {
 }
 async function adminLeadPatch(req, res, origin, requestId, leadId) {
   const session=await verifiedAdminSession(req); if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
-  const body=await readJsonBody(req); const allowed=new Set(['first_name','last_name','email','phone','city','company_name','immatriculation','vehicle_type','status','current_stage_key','pipeline_stage','notes','assigned_to']); const updates={};
+  const body=await readJsonBody(req); const allowed=new Set(['first_name','last_name','email','phone','city','company_name','immatriculation','vehicle_type','status','current_stage_key','pipeline_stage','notes','assigned_to','recontact_scheduled_date','lost_reason']); const updates={};
   for(const [key,value] of Object.entries(body)) if(allowed.has(key) && (typeof value==='string'||value===null)) updates[key]=value;
   updates.updated_at=new Date().toISOString(); if(Object.keys(updates).length===1)return json(res,origin,400,{ok:false,error:'no_valid_fields'},requestId);
   const sql=`WITH updated AS (UPDATE taxiassur.records SET data=data||${quoteLiteral(JSON.stringify(updates))}::jsonb,updated_at=now(),revision=revision+1 WHERE collection='crm_leads' AND record_id=${quoteLiteral(leadId)} RETURNING data) INSERT INTO taxiassur.audit_events(actor_type,actor_id,action,target_type,target_id,request_id,metadata) SELECT 'admin',${quoteLiteral(session.sub)},'lead_updated','crm_lead',${quoteLiteral(leadId)},${quoteLiteral(requestId)}::uuid,${quoteLiteral(JSON.stringify({fields:Object.keys(updates)}))}::jsonb FROM updated RETURNING (SELECT data::text FROM updated);`;
