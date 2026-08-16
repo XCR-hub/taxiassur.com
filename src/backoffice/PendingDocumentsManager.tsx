@@ -121,18 +121,31 @@ function PreviewThumb({ doc }: { doc: PendingDocument }) {
   const [err, setErr] = useState(false);
   const [url, setUrl] = useState('');
   const mime = doc.mime_type || '';
+  const bucket = getDocumentBucket(doc);
   useEffect(() => {
     let active = true;
+    let objectUrl = '';
+    setErr(false);
+    setUrl('');
     if (!mime.startsWith('image/')) return;
     if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
-      void nativeAdminDocumentUrl(doc.id).then((localUrl)=>{if(active)setUrl(localUrl);else URL.revokeObjectURL(localUrl);}).catch(()=>{if(active)setErr(true);});
-      return () => { active=false; if(url) URL.revokeObjectURL(url); };
+      void nativeAdminDocumentUrl(doc.id)
+        .then((localUrl) => {
+          objectUrl = localUrl;
+          if (active) setUrl(localUrl);
+          else URL.revokeObjectURL(localUrl);
+        })
+        .catch(() => { if (active) setErr(true); });
+      return () => {
+        active = false;
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+      };
     }
-    void getSecureDocumentUrl({ bucket: getDocumentBucket(doc), path: doc.file_path })
+    void getSecureDocumentUrl({ bucket, path: doc.file_path })
       .then((signedUrl) => { if (active) setUrl(signedUrl); })
       .catch(() => { if (active) setErr(true); });
     return () => { active = false; };
-  }, [doc.file_path, mime]);
+  }, [bucket, doc.file_path, doc.id, mime]);
 
   if (mime.startsWith('image/') && !err && url) {
     return (
