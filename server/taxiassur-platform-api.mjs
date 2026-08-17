@@ -103,11 +103,11 @@ async function adminLogin(req, res, origin, requestId) {
   }
   const token = createSession(user, config.sessionSecret, { ttlSeconds: 8 * 60 * 60 });
   await runPsql(`UPDATE taxiassur.auth_users SET failed_login_count=0, locked_until=NULL, last_login_at=now(), updated_at=now() WHERE id=${quoteLiteral(user.id)}::uuid;`);
-  return json(res, origin, 200, { ok: true, access_token: token, expires_in: 28800, user: publicAdmin(user) }, requestId);
+  return json(res, origin, 200, { ok: true, access_token: token, expires_in: 28800, user: publicAdmin(user), permissions: await adminPermissions(user.id) }, requestId);
 }
 async function adminSession(req, res, origin, requestId) {
   const session = await verifiedAdminSession(req);
-  return session ? json(res, origin, 200, { ok: true, user: publicAdmin(session) }, requestId) : json(res, origin, 401, { ok: false, error: 'invalid_session' }, requestId);
+  return session ? json(res, origin, 200, { ok: true, user: publicAdmin(session), permissions: await adminPermissions(session.sub) }, requestId) : json(res, origin, 401, { ok: false, error: 'invalid_session' }, requestId);
 }
 async function adminLogout(req, res, origin, requestId) {
   const session = await verifiedAdminSession(req);
@@ -178,6 +178,10 @@ async function verifiedAdminSession(req) {
   return revoked ? null : session;
 }
 function publicAdmin(user) { return { id: user.sub || user.id, email: user.email, full_name: user.name || user.full_name || user.email, role: user.role, is_active: true }; }
+async function adminPermissions(userId) {
+  const sql = `SELECT COALESCE(jsonb_agg(data ORDER BY data->>'permission_type'), '[]'::jsonb)::text FROM taxiassur.records WHERE collection='user_permissions' AND data->>'user_id'=${quoteLiteral(String(userId))};`;
+  return parseJsonLine(await runPsql(sql)) || [];
+}
 
 async function prospectSession(req, res, origin, requestId) {
   const token = prospectToken(req);

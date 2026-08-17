@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { Lock, Mail, AlertCircle, ArrowRight, Shield, Car, Users, Zap, CheckCircle, RefreshCw } from 'lucide-react';
@@ -6,11 +6,6 @@ import { nativeAdminLogin } from '@/lib/native-admin-auth';
 
 interface AdminLoginProps {
   onSuccess: () => void;
-}
-
-interface LiveStats {
-  leads: number;
-  automations: number;
 }
 
 export default function AdminLogin({ onSuccess }: AdminLoginProps) {
@@ -21,21 +16,6 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
   const [resetLoading, setResetLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [resetError, setResetError] = useState('');
-  const [liveStats, setLiveStats] = useState<LiveStats>({ leads: 0, automations: 0 });
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      const [leadsRes, cronsRes] = await Promise.all([
-        supabase.from('crm_leads').select('id', { count: 'exact', head: true }),
-        supabase.from('cron_jobs_config').select('id', { count: 'exact', head: true }).eq('is_enabled', true),
-      ]);
-      setLiveStats({
-        leads: leadsRes.count ?? 0,
-        automations: cronsRes.count ?? 0,
-      });
-    };
-    fetchStats();
-  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,32 +23,9 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
     setLoading(true);
 
     try {
-      try {
-        await nativeAdminLogin(email.trim().toLowerCase(), password);
-        localStorage.setItem('taxiassur-admin-permanent', 'true');
-        window.location.reload();
-        return;
-      } catch {
-        // Transitional fallback until each active collaborator has initialized a local credential.
-      }
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
-      if (signInError) throw signInError;
-      if (!data.user) throw new Error('Échec de la connexion');
-
-      logger.info('Connexion auth réussie:', email);
-
-      if (data.session) {
-        localStorage.setItem('taxiassur-admin-session', JSON.stringify({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-          expires_at: data.session.expires_at,
-          user: data.session.user,
-          timestamp: Date.now(),
-        }));
-        localStorage.setItem('taxiassur-admin-permanent', 'true');
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await nativeAdminLogin(email.trim().toLowerCase(), password);
+      localStorage.setItem('taxiassur-admin-permanent', 'true');
+      onSuccess();
       window.location.reload();
     } catch (err) {
       logger.error('Erreur de connexion:', err);
@@ -107,8 +64,8 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
   };
 
   const stats = [
-    { label: 'Leads gérés', value: liveStats.leads > 0 ? `${liveStats.leads}+` : '...', icon: <Users size={18} /> },
-    { label: 'Automations actives', value: liveStats.automations > 0 ? liveStats.automations.toString() : '...', icon: <Zap size={18} /> },
+    { label: 'Données centralisées', value: '100%', icon: <Users size={18} /> },
+    { label: 'Base autonome', value: 'PostgreSQL', icon: <Zap size={18} /> },
     { label: 'Monitoring IA', value: '24/7', icon: <Car size={18} /> },
   ];
 
@@ -163,7 +120,7 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
           {/* Bottom security badge */}
           <div className="flex items-center gap-2 text-gray-500 text-xs">
             <Shield size={14} />
-            Sécurisé par Supabase Auth &amp; RLS
+            Sécurisé par TaxiAssur Auth &amp; PostgreSQL
           </div>
         </div>
       </div>
