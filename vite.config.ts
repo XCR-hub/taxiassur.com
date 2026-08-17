@@ -58,7 +58,7 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp}'],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/drohhxrkoequjphvabvq\.supabase\.co\/.*/i,
+            urlPattern: /^https:\/\/postgres-read-api\.taxiassur\.com\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase-cache',

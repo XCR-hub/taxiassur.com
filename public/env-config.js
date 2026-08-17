@@ -1,7 +1,7 @@
 // Runtime public configuration for browser-only values.
 window.ENV_CONFIG = {
-  VITE_SUPABASE_URL: 'https://drohhxrkoequjphvabvq.supabase.co',
-  VITE_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyb2hoeHJrb2VxdWpwaHZhYnZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk3ODM3NjAsImV4cCI6MjA3NTM1OTc2MH0.LP9fh10fY0nRDjpG4VW2yGZ5sT4BkiDalox8ToMbMlg',
+  VITE_SUPABASE_URL: 'https://postgres-read-api.taxiassur.com',
+  VITE_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzg2OTI3NjAzLCJleHAiOjE5NDQ2MDc2MDN9.qKHo0g8E8GW_1jVZh4eH1MPdpkFunCzS9cbuiPP1iw8',
   VITE_GTAG_ID: 'G-VDR9C5QDLD',
   VITE_GA_MEASUREMENT_ID: 'G-VDR9C5QDLD',
   VITE_GTM_ID: 'GTM-52JDP8VB',
