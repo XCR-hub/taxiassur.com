@@ -1,42 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { nativeAdminRequestPasswordReset, nativeAdminResetPassword } from '../lib/native-admin-auth';
 import { Lock, CheckCircle, AlertCircle, Eye, EyeOff, Mail, RefreshCw } from 'lucide-react';
 
 const SetPassword: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const location = useLocation();
-
-  const authCode = searchParams.get('code');
-  const tokenHash = searchParams.get('token_hash');
-  const legacyToken = searchParams.get('token');
-  const queryType = searchParams.get('type') || searchParams.get('otp_type');
-
-  const hashParams = new URLSearchParams(location.hash.substring(1));
-  const accessToken = hashParams.get('access_token');
-  const refreshToken = hashParams.get('refresh_token');
-  const hashType = hashParams.get('type');
-  const hashError = hashParams.get('error');
-  const hashErrorCode = hashParams.get('error_code');
-  const hashErrorDescription = hashParams.get('error_description');
-
-  type VerifyOtpType = Parameters<typeof supabase.auth.verifyOtp>[0]['type'];
-  const allowedOtpTypes = new Set(['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email']);
-  const otpType: VerifyOtpType = (allowedOtpTypes.has(queryType || '') ? queryType : 'recovery') as VerifyOtpType;
-
-  const isHashFlow = !!(accessToken && (hashType === 'recovery' || hashType === 'invite'));
-  const isCodeFlow = !!authCode;
-  const hasOtpToken = !!(tokenHash || legacyToken);
-  const hasValidEntry = isHashFlow || isCodeFlow || hasOtpToken;
+  const resetToken = searchParams.get('token') || '';
+  const hasValidEntry = /^[0-9a-f]{64}$/i.test(resetToken);
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [sessionReady, setSessionReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
@@ -45,51 +23,15 @@ const SetPassword: React.FC = () => {
   const [resetError, setResetError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (hashError) {
-      let msg = 'Lien invalide ou expire.';
-      if (hashErrorCode === 'otp_expired') {
-        msg = 'Le lien d\'invitation a expire. Demandez une nouvelle invitation.';
-      } else if (hashErrorDescription) {
-        msg = decodeURIComponent(hashErrorDescription.replace(/\+/g, ' '));
-      }
-      setError(msg);
-      return;
-    }
-
-    if (isHashFlow && accessToken && refreshToken) {
-      supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
-        .then(({ error: sessionError }) => {
-          if (sessionError) {
-            setError('Session invalide. Demandez une nouvelle invitation.');
-          } else {
-            setSessionReady(true);
-          }
-        });
-      return;
-    }
-
-    if (authCode) {
-      supabase.auth.exchangeCodeForSession(authCode)
-        .then(({ error: exchangeError }) => {
-          if (exchangeError) {
-            setError('Code de recuperation invalide ou expire. Demandez un nouveau lien.');
-          } else {
-            setSessionReady(true);
-          }
-        });
-      return;
-    }
-
-    if (hasOtpToken) return;
-
-    setError('Token de verification manquant. Utilisez le lien recu par email.');
-  }, []);
+    if (!hasValidEntry) setError('Lien invalide ou expire. Demandez un nouveau lien.');
+  }, [hasValidEntry]);
 
   const criteria = {
-    length: password.length >= 8,
+    length: password.length >= 14,
     upper: /[A-Z]/.test(password),
     lower: /[a-z]/.test(password),
     digit: /[0-9]/.test(password),
+    special: /[^A-Za-z0-9]/.test(password),
   };
 
   const passwordValid = Object.values(criteria).every(Boolean);
@@ -110,30 +52,19 @@ const SetPassword: React.FC = () => {
     setLoading(true);
 
     try {
-      if (isHashFlow || isCodeFlow) {
-        const { error: updateError } = await supabase.auth.updateUser({ password });
-        if (updateError) throw updateError;
-      } else {
-        const { error: verifyError } = await supabase.auth.verifyOtp({
-          token_hash: tokenHash || legacyToken!,
-          type: otpType,
-        });
-        if (verifyError) throw verifyError;
-
-        const { error: updateError } = await supabase.auth.updateUser({ password });
-        if (updateError) throw updateError;
-      }
+      await nativeAdminResetPassword(resetToken, password);
 
       setSuccess(true);
       setTimeout(() => navigate('/backoffice/crm-killer'), 2000);
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '';
       let msg = 'Erreur lors de la creation du mot de passe';
-      if (err.message?.includes('expired')) {
+      if (errorMessage.includes('invalid_reset_token')) {
         msg = 'Le lien a expire. Demandez une nouvelle invitation.';
-      } else if (err.message?.includes('invalid') || err.message?.includes('Invalid')) {
+      } else if (errorMessage.includes('invalid') || errorMessage.includes('Invalid')) {
         msg = 'Lien invalide. Demandez une nouvelle invitation.';
-      } else if (err.message) {
-        msg = err.message;
+      } else if (errorMessage) {
+        msg = errorMessage;
       }
       setError(msg);
     } finally {
@@ -147,13 +78,10 @@ const SetPassword: React.FC = () => {
     setResetLoading(true);
     setResetError(null);
     try {
-      const { error: resetErr } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/auth/set-password`,
-      });
-      if (resetErr) throw resetErr;
+      await nativeAdminRequestPasswordReset(resetEmail);
       setResetSent(true);
     } catch (err) {
-      setResetError(err.message || 'Erreur lors de l\'envoi du lien');
+      setResetError(err instanceof Error ? err.message : 'Erreur lors de l\'envoi du lien');
     } finally {
       setResetLoading(false);
     }
@@ -263,7 +191,7 @@ const SetPassword: React.FC = () => {
     );
   }
 
-  const isRecoveryFlow = hashType === 'recovery';
+  const isRecoveryFlow = true;
   const passwordPageTitle = isRecoveryFlow ? 'Nouveau mot de passe' : 'Creer votre compte';
   const passwordPageSubtitle = isRecoveryFlow
     ? 'Definissez un nouveau mot de passe pour votre acces TaxiAssur'
@@ -288,7 +216,7 @@ const SetPassword: React.FC = () => {
     );
   }
 
-  const formDisabled = (isHashFlow || isCodeFlow) ? !sessionReady : !hasOtpToken;
+  const formDisabled = !hasValidEntry;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
@@ -301,12 +229,6 @@ const SetPassword: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">{passwordPageTitle}</h1>
           <p className="text-gray-600">{passwordPageSubtitle}</p>
         </div>
-
-        {isHashFlow && !sessionReady && !error && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800 text-center">
-            Verification du lien en cours...
-          </div>
-        )}
 
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
@@ -327,7 +249,7 @@ const SetPassword: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
-                placeholder="Minimum 8 caracteres"
+                placeholder="Minimum 14 caracteres"
                 required
                 disabled={formDisabled}
               />
@@ -340,10 +262,11 @@ const SetPassword: React.FC = () => {
               </button>
             </div>
             <ul className="mt-2 space-y-1 text-xs text-gray-600">
-              <li className={criteria.length ? 'text-green-600' : ''}>• Au moins 8 caracteres</li>
+              <li className={criteria.length ? 'text-green-600' : ''}>• Au moins 14 caracteres</li>
               <li className={criteria.upper ? 'text-green-600' : ''}>• Au moins une majuscule</li>
               <li className={criteria.lower ? 'text-green-600' : ''}>• Au moins une minuscule</li>
               <li className={criteria.digit ? 'text-green-600' : ''}>• Au moins un chiffre</li>
+              <li className={criteria.special ? 'text-green-600' : ''}>• Au moins un caractere special</li>
             </ul>
           </div>
 

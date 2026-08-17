@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { createReadStream, createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, statSync, unlinkSync } from 'node:fs';
 import { spawn } from 'node:child_process';
-import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import path from 'node:path';
 import { createSession, hashPassword, verifyPassword, verifySession } from './native-auth.mjs';
 
@@ -69,6 +69,8 @@ const server = createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/v1/auth/session') return adminSession(req, res, origin, requestId);
     if (req.method === 'POST' && url.pathname === '/v1/auth/logout') return adminLogout(req, res, origin, requestId);
     if (req.method === 'POST' && url.pathname === '/v1/auth/change-password') return adminChangePassword(req, res, origin, requestId);
+    if (req.method === 'POST' && url.pathname === '/v1/auth/request-password-reset') return requestAdminPasswordReset(req, res, origin, requestId);
+    if (req.method === 'POST' && url.pathname === '/v1/auth/reset-password') return resetAdminPassword(req, res, origin, requestId);
     if (req.method === 'GET' && url.pathname === '/v1/admin/dashboard') return adminDashboard(req, res, origin, requestId);
     const adminLeadMatch = url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})$/i);
     if (adminLeadMatch && req.method === 'GET') return adminLeadGet(req, res, origin, requestId, adminLeadMatch[1]);
@@ -133,6 +135,34 @@ async function adminChangePassword(req, res, origin, requestId) {
   const encoded = hashPassword(newPassword);
   await runPsql(`BEGIN; UPDATE taxiassur.auth_users SET password_hash=${quoteLiteral(encoded)},password_initialized_at=now(),updated_at=now() WHERE id=${quoteLiteral(session.sub)}::uuid; INSERT INTO taxiassur.revoked_sessions(session_id,user_id,expires_at) VALUES(${quoteLiteral(session.jti)},${quoteLiteral(session.sub)}::uuid,to_timestamp(${Number(session.exp)})) ON CONFLICT(session_id) DO NOTHING; INSERT INTO taxiassur.audit_events(actor_type,actor_id,action,target_type,target_id,request_id) VALUES('admin',${quoteLiteral(session.sub)},'password_changed','auth_user',${quoteLiteral(session.sub)},${quoteLiteral(requestId)}::uuid); COMMIT;`);
   return json(res, origin, 200, { ok: true, session_revoked: true }, requestId);
+}
+async function requestAdminPasswordReset(req, res, origin, requestId) {
+  const body = await readJsonBody(req);
+  const email = String(body.email || '').trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json(res, origin, 200, { ok: true }, requestId);
+  const user = parseJsonLine(await runPsql(`SELECT json_build_object('id',id,'email',email)::text FROM taxiassur.auth_users WHERE lower(email)=${quoteLiteral(email)} AND is_active=true LIMIT 1;`));
+  if (!user) return json(res, origin, 200, { ok: true }, requestId);
+  const token = randomBytes(32).toString('hex');
+  const resetId = randomUUID();
+  const outboxId = randomUUID();
+  const now = new Date();
+  const reset = { id: resetId, user_id: user.id, email, token_hash: createHash('sha256').update(token).digest('hex'), expires_at: new Date(now.getTime() + 60 * 60 * 1000).toISOString(), used_at: null, created_at: now.toISOString() };
+  const resetUrl = `https://taxiassur.com/auth/set-password?token=${token}`;
+  const outbox = { id: outboxId, reset_id: resetId, recipient: email, subject: 'Réinitialisation de votre mot de passe TaxiAssur', body: `Un changement de mot de passe a été demandé pour votre compte TaxiAssur.\n\nOuvrez ce lien dans l’heure :\n${resetUrl}\n\nSi vous n’êtes pas à l’origine de cette demande, ignorez cet email.`, status: 'pending', attempts: 0, next_attempt_at: now.toISOString(), created_at: now.toISOString() };
+  await runPsql(`BEGIN; DELETE FROM taxiassur.records WHERE collection='auth_password_resets' AND data->>'user_id'=${quoteLiteral(String(user.id))} AND COALESCE(data->>'used_at','')=''; INSERT INTO taxiassur.records(collection,record_id,data,origin) VALUES('auth_password_resets',${quoteLiteral(resetId)},${quoteLiteral(JSON.stringify(reset))}::jsonb,'local'),('native_email_outbox',${quoteLiteral(outboxId)},${quoteLiteral(JSON.stringify(outbox))}::jsonb,'local'); INSERT INTO taxiassur.audit_events(actor_type,actor_id,action,target_type,target_id,request_id) VALUES('system',${quoteLiteral(String(user.id))},'password_reset_queued','auth_user',${quoteLiteral(String(user.id))},${quoteLiteral(requestId)}::uuid); COMMIT;`);
+  return json(res, origin, 200, { ok: true }, requestId);
+}
+
+async function resetAdminPassword(req, res, origin, requestId) {
+  const body = await readJsonBody(req);
+  const token = String(body.token || '').trim();
+  const password = String(body.password || '');
+  if (!tokenPattern.test(token)) return json(res, origin, 400, { ok: false, error: 'invalid_reset_token' }, requestId);
+  if (password.length < 14 || password.length > 1024 || !/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) return json(res, origin, 400, { ok: false, error: 'weak_password' }, requestId);
+  const tokenHash = createHash('sha256').update(token).digest('hex');
+  const encoded = hashPassword(password);
+  const changed = String(await runPsql(`WITH reset AS (SELECT record_id,data FROM taxiassur.records WHERE collection='auth_password_resets' AND data->>'token_hash'=${quoteLiteral(tokenHash)} AND COALESCE(data->>'used_at','')='' AND (data->>'expires_at')::timestamptz>now() LIMIT 1 FOR UPDATE), changed AS (UPDATE taxiassur.auth_users u SET password_hash=${quoteLiteral(encoded)},password_initialized_at=now(),updated_at=now(),failed_login_count=0,locked_until=NULL FROM reset WHERE u.id=(reset.data->>'user_id')::uuid RETURNING u.id), consumed AS (UPDATE taxiassur.records r SET data=r.data||jsonb_build_object('used_at',now()::text),updated_at=now(),revision=revision+1 FROM reset,changed WHERE r.collection='auth_password_resets' AND r.record_id=reset.record_id RETURNING changed.id) INSERT INTO taxiassur.audit_events(actor_type,actor_id,action,target_type,target_id,request_id) SELECT 'system',id::text,'password_reset_completed','auth_user',id::text,${quoteLiteral(requestId)}::uuid FROM consumed RETURNING target_id;`)).trim();
+  return changed ? json(res, origin, 200, { ok: true }, requestId) : json(res, origin, 400, { ok: false, error: 'invalid_reset_token' }, requestId);
 }
 async function adminDashboard(req, res, origin, requestId) {
   if (!await verifiedAdminSession(req)) return json(res, origin, 401, { ok: false, error: 'invalid_session' }, requestId);

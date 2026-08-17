@@ -21,8 +21,8 @@ const checks = [];
 
 const PASSWORD_RESET_MARKERS = [
   { name: 'reset_text', pattern: /Mot de passe oubli/i },
-  { name: 'supabase_reset_call', value: 'resetPasswordForEmail' },
-  { name: 'reset_redirect', value: '/auth/set-password' },
+  { name: 'native_reset_endpoint', value: '/v1/auth/request-password-reset' },
+  { name: 'native_reset_token', value: 'invalid_reset_token' },
 ];
 
 const CRM_SIDEBAR_MARKERS = [
@@ -242,19 +242,16 @@ function verifySourceGuards() {
     addCheck(`reset route exists: ${route}`, router.includes(`path: '${route}'`), { file: 'src/router.tsx' });
   }
 
-  addCheck('login exposes password reset action', login.includes('Mot de passe oubli') && login.includes('resetPasswordForEmail'), {
+  addCheck('login exposes native password reset action', login.includes('Mot de passe oubli') && login.includes('nativeAdminRequestPasswordReset'), {
     file: 'src/components/AdminLogin.tsx',
   });
-  addCheck('login reset redirects to /auth/set-password', login.includes('/auth/set-password'), {
-    file: 'src/components/AdminLogin.tsx',
-  });
-  addCheck('set-password handles Supabase PKCE code flow', setPassword.includes('exchangeCodeForSession(authCode)'), {
+  addCheck('set-password accepts strong native reset tokens', setPassword.includes("searchParams.get('token')") && setPassword.includes('[0-9a-f]{64}'), {
     file: 'src/pages/SetPassword.tsx',
   });
-  addCheck('set-password handles Supabase token_hash flow', setPassword.includes("searchParams.get('token_hash')") && setPassword.includes('verifyOtp'), {
+  addCheck('set-password invokes native password reset', setPassword.includes('nativeAdminResetPassword(resetToken, password)'), {
     file: 'src/pages/SetPassword.tsx',
   });
-  addCheck('set-password handles implicit hash recovery flow', setPassword.includes('setSession({ access_token: accessToken, refresh_token: refreshToken })'), {
+  addCheck('set-password no longer uses Supabase auth flows', !setPassword.includes('supabase.auth') && !login.includes('supabase.auth'), {
     file: 'src/pages/SetPassword.tsx',
   });
   addCheck('set-password is noindex', setPassword.includes('noindex, nofollow'), {

@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { Lock, Mail, AlertCircle, ArrowRight, Shield, Car, Users, Zap, CheckCircle, RefreshCw } from 'lucide-react';
-import { nativeAdminLogin } from '@/lib/native-admin-auth';
+import { nativeAdminLogin, nativeAdminRequestPasswordReset } from '@/lib/native-admin-auth';
 
 interface AdminLoginProps {
   onSuccess: () => void;
@@ -48,12 +47,7 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
 
     setResetLoading(true);
     try {
-      const redirectTo = `${window.location.origin}/auth/set-password`;
-      const { error: resetPasswordError } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-        redirectTo,
-      });
-
-      if (resetPasswordError) throw resetPasswordError;
+      await nativeAdminRequestPasswordReset(normalizedEmail);
       setResetSent(true);
     } catch (err) {
       logger.error('Erreur mot de passe oublie:', err);

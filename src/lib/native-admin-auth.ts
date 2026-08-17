@@ -28,6 +28,8 @@ export async function nativeAdminLogin(email: string, password: string) {
 }
 
 export async function nativeAdminSession() { return request('/v1/auth/session'); }
+export async function nativeAdminRequestPasswordReset(email: string) { return request('/v1/auth/request-password-reset', { method: 'POST', body: JSON.stringify({ email }) }); }
+export async function nativeAdminResetPassword(token: string, password: string) { return request('/v1/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) }); }
 export async function nativeAdminLogout() {
   try { await request('/v1/auth/logout', { method: 'POST' }); }
   finally { localStorage.removeItem(NATIVE_ADMIN_TOKEN_KEY); }
