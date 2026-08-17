@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useParams, Link } from 'react-router-dom';
 import { Upload, CheckCircle, AlertCircle, FileText, Loader2, X, Download, User, Phone, Mail, MapPin, Car, Shield, CreditCard, Ligature as FileSignature, Clock, CheckCircle2, XCircle, ChevronRight, Lock, RefreshCw, Euro, FileCheck, AlertTriangle } from 'lucide-react';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
-import { downloadSecureDocument } from '@/lib/secure-document-url';
-import { downloadProspectPlatformDocument, loadProspectPlatformSession, uploadProspectPlatformDocument } from '@/lib/platform-api';
+import { downloadProspectFinalDocument, downloadProspectPlatformDocument, loadProspectPlatformSession, uploadProspectPlatformDocument } from '@/lib/platform-api';
 import ClientQuotesViewer from '../components/client/ClientQuotesViewer';
 import ClientSubscriptionForm from '../components/client/ClientSubscriptionForm';
 import ClientPaymentButton from '../components/client/ClientPaymentButton';
@@ -156,7 +153,6 @@ const EspaceProspect: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [anonClient, setAnonClient] = useState<SupabaseClient | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>(() => {
     // Lire le paramètre tab de l'URL au chargement
     const tabParam = searchParams.get('tab');
@@ -191,28 +187,6 @@ const EspaceProspect: React.FC = () => {
     }
   }, [searchParams]);
 
-  useEffect(() => {
-    const initClient = () => {
-      try {
-        const supabaseUrl = getSupabaseUrl();
-        const supabaseKey = getSupabaseAnonKey();
-
-        if (!supabaseUrl || !supabaseKey) return;
-
-        const client = createClient(supabaseUrl, supabaseKey, {
-          auth: {
-            persistSession: false,
-            autoRefreshToken: false,
-            detectSessionInUrl: false
-          }
-        });
-
-        setAnonClient(client);
-      } catch { /* Les fonctions historiques restent simplement indisponibles. */ }
-    };
-    initClient();
-  }, []);
-
   const loadLeadInfo = useCallback(async () => {
     if (!token) {
       setError('Configuration manquante');
@@ -229,6 +203,7 @@ const EspaceProspect: React.FC = () => {
       if (lead?.id) {
         setLeadInfo(lead);
         setUploadedDocuments(platformSession.documents as unknown as UploadedDocument[]);
+        setFinalDocuments(platformSession.final_documents as unknown as FinalClientDocument[]);
         if (lead.converted_to_client) {
           setActiveTab('contrat');
         }
@@ -274,82 +249,10 @@ const EspaceProspect: React.FC = () => {
   // ========================================
   // REALTIME: Écouter les changements sur crm_lead_documents
   // ========================================
-  useEffect(() => {
-    if (!anonClient || !leadInfo?.id) return;
-
-    console.log('🔴 Setting up realtime subscription for crm_lead_documents');
-
-    // Créer une souscription realtime
-    const channel = anonClient
-      .channel('crm_lead_documents_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // Écouter tous les événements (INSERT, UPDATE, DELETE)
-          schema: 'public',
-          table: 'crm_lead_documents',
-          filter: `lead_id=eq.${leadInfo.id}`,
-        },
-        (payload) => {
-          console.log('🔴 REALTIME: Document change detected!', payload);
-
-          // Recharger automatiquement les documents
-          loadDocuments();
-
-          // Recharger aussi les infos du lead pour mettre à jour les compteurs
-          loadLeadInfo();
-
-          // Afficher une notification visuelle
-          if (payload.eventType === 'INSERT') {
-            setSuccess('✅ Nouveau document ajouté !');
-            setTimeout(() => setSuccess(null), 3000);
-          } else if (payload.eventType === 'UPDATE') {
-            const newRecord = payload.new as Partial<UploadedDocument>;
-            if (newRecord.validated) {
-              setSuccess('✅ Document validé par notre équipe !');
-              setTimeout(() => setSuccess(null), 3000);
-            } else if (newRecord.status === 'refused') {
-              setError('❌ Un document a été refusé. Veuillez le re-soumettre.');
-              setTimeout(() => setError(null), 5000);
-            }
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log('🔴 REALTIME subscription status:', status);
-      });
-
-    // Cleanup: Se désabonner quand le composant est démonté
-    return () => {
-      console.log('🔴 Cleaning up realtime subscription');
-      anonClient.removeChannel(channel);
-    };
-  }, [anonClient, leadInfo?.id, loadDocuments, loadLeadInfo]);
-
-  const loadFinalDocuments = useCallback(async () => {
-    if (!token || !anonClient) return;
-
-    try {
-      const { data, error } = await anonClient
-        .rpc('get_final_documents_by_token', { p_token: token });
-
-      if (error) throw error;
-      setFinalDocuments(data || []);
-    } catch (err) {
-      console.error('Error loading final documents:', err);
-    }
-  }, [token, anonClient]);
-
-  useEffect(() => {
-    if (token && anonClient && leadInfo) {
-      loadFinalDocuments();
-    }
-  }, [token, anonClient, leadInfo, loadFinalDocuments]);
-
   const handleFinalDocument = async (doc: FinalClientDocument) => {
     if (!token) return;
     try {
-      await downloadSecureDocument({ path: doc.file_path || doc.file_url, bucket: 'crm-documents', accessToken: token, fileName: doc.file_name });
+      await downloadProspectFinalDocument(token, doc.id, doc.file_name || 'document');
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Document indisponible');
     }
@@ -365,8 +268,6 @@ const EspaceProspect: React.FC = () => {
   const handleRefresh = async () => {
     setRefreshing(true);
     await loadLeadInfo();
-    await loadDocuments();
-    await loadFinalDocuments();
     setRefreshing(false);
   };
 
@@ -880,7 +781,7 @@ const EspaceProspect: React.FC = () => {
                 </div>
               )}
 
-              {token && anonClient && <ClientQuotesViewer token={token} supabaseClient={anonClient} />}
+              {token && <ClientQuotesViewer token={token} />}
             </div>
           </div>
         )}

@@ -73,6 +73,13 @@ const server = createServer(async (req, res) => {
     if (req.method === 'POST' && url.pathname === '/v1/prospect/documents') return uploadProspectDocument(req, res, origin, requestId);
     const downloadMatch = url.pathname.match(/^\/v1\/prospect\/documents\/([0-9a-f-]{36})\/download$/i);
     if (req.method === 'GET' && downloadMatch) return downloadProspectDocument(req, res, origin, requestId, downloadMatch[1]);
+    const finalDownloadMatch = url.pathname.match(/^\/v1\/prospect\/final-documents\/([0-9a-f-]{36})\/download$/i);
+    if (req.method === 'GET' && finalDownloadMatch) return downloadProspectFinalDocument(req, res, origin, requestId, finalDownloadMatch[1]);
+    const quoteMatch = url.pathname.match(/^\/v1\/prospect\/quotes\/([0-9a-f-]{36})(\/download)?$/i);
+    if (req.method === 'PATCH' && quoteMatch && !quoteMatch[2]) return updateProspectQuote(req, res, origin, requestId, quoteMatch[1]);
+    if (req.method === 'GET' && quoteMatch?.[2]) return downloadProspectQuote(req, res, origin, requestId, quoteMatch[1]);
+    const companyDocumentMatch = url.pathname.match(/^\/v1\/prospect\/company-documents\/([0-9a-f-]{36})\/download$/i);
+    if (req.method === 'GET' && companyDocumentMatch) return downloadProspectCompanyDocument(req, res, origin, requestId, companyDocumentMatch[1]);
     if (url.pathname.startsWith('/v1/internal/') && !internalAuthorized(req)) return json(res, origin, 401, { ok: false, error: 'unauthorized' }, requestId);
     return json(res, origin, 404, { ok: false, error: 'not_found' }, requestId);
   } catch (error) {
@@ -178,13 +185,29 @@ async function prospectSession(req, res, origin, requestId) {
   const lead = await leadByToken(token);
   if (!lead) return json(res, origin, 403, { ok: false, error: 'invalid_access' }, requestId);
   const leadId = String(lead.id || '');
-  const [documents, requests, payments] = await Promise.all([
+  const [documents, requests, payments, crmDocuments, rawQuotes, companies, allCompanyDocuments] = await Promise.all([
     recordsWhere('prospect_documents', 'lead_id', leadId),
     recordsWhere('crm_document_requests', 'lead_id', leadId),
     recordsWhere('monetico_payments', 'lead_id', leadId),
+    recordsWhere('crm_lead_documents', 'lead_id', leadId),
+    recordsWhere('lead_company_quotes', 'lead_id', leadId),
+    recordsAll('insurance_companies'),
+    recordsAll('company_documents'),
   ]);
+  const companiesById = new Map(companies.map((company) => [String(company.id || ''), company]));
+  const quotes = rawQuotes.map((quote) => {
+    const companyId = String(quote.company_id || quote.insurance_company_id || '');
+    const company = companiesById.get(companyId) || {};
+    const rcCompany = companiesById.get(String(quote.rc_pro_addon_company_id || '')) || {};
+    return { ...quote, company_id: companyId, company_name: quote.company_name || company.name || null, company_code: quote.company_code || company.code || null, company_logo_url: quote.company_logo_url || company.logo_url || null, rc_pro_addon_company_name: quote.rc_pro_addon_company_name || rcCompany.name || null };
+  });
+  const quotedCompanyIds = new Set(quotes.map((quote) => String(quote.company_id || '')).filter(Boolean));
+  const companyDocuments = allCompanyDocuments
+    .filter((document) => quotedCompanyIds.has(String(document.company_id || '')) && document.send_with_quote === true)
+    .sort((left, right) => (Number(left.display_order || 0) - Number(right.display_order || 0)) || String(left.document_name || '').localeCompare(String(right.document_name || '')));
+  const finalDocuments = crmDocuments.filter((document) => ['contrat_signe', 'attestation_assurance', 'memo_vehicule'].includes(String(document.document_type || '')) && document.status === 'validated');
   const safeLead = Object.fromEntries(['id', 'first_name', 'last_name', 'full_name', 'email', 'phone', 'address', 'postal_code', 'city', 'status', 'pipeline_stage', 'document_checklist', 'documents_complete', 'quote_amount', 'can_pay', 'can_sign_contract', 'selected_quote_id', 'contract_signed', 'payment_confirmed'].map((key) => [key, lead[key] ?? null]));
-  return json(res, origin, 200, { ok: true, lead: safeLead, documents, document_requests: requests, payments }, requestId);
+  return json(res, origin, 200, { ok: true, lead: safeLead, documents, final_documents: finalDocuments, document_requests: requests, payments, quotes, company_documents: companyDocuments }, requestId);
 }
 
 async function uploadProspectDocument(req, res, origin, requestId) {
@@ -250,6 +273,76 @@ async function downloadProspectDocument(req, res, origin, requestId, documentId)
   createReadStream(filePath).pipe(res);
 }
 
+async function downloadProspectFinalDocument(req, res, origin, requestId, documentId) {
+  if (!uuidPattern.test(documentId)) return json(res, origin, 404, { ok: false, error: 'not_found' }, requestId);
+  const token = prospectToken(req);
+  const lead = token ? await leadByToken(token) : null;
+  if (!lead) return json(res, origin, 403, { ok: false, error: 'invalid_access' }, requestId);
+  const sql = `SELECT jsonb_build_object('storage_path', data ->> 'file_path', 'original_name', COALESCE(data ->> 'file_name', 'document'), 'mime_type', COALESCE(data ->> 'mime_type', 'application/octet-stream'))::text FROM taxiassur.records WHERE collection = 'crm_lead_documents' AND record_id = ${quoteLiteral(documentId)} AND data ->> 'lead_id' = ${quoteLiteral(String(lead.id))} AND data ->> 'status' = 'validated' AND data ->> 'document_type' IN ('contrat_signe','attestation_assurance','memo_vehicule') LIMIT 1;`;
+  const row = parseJsonLine(await runPsql(sql));
+  if (!row?.storage_path) return json(res, origin, 404, { ok: false, error: 'not_found' }, requestId);
+  const filePath = safeLegacyStoragePath('crm-documents', row.storage_path);
+  if (!existsSync(filePath)) return json(res, origin, 404, { ok: false, error: 'file_missing' }, requestId);
+  const size = statSync(filePath).size;
+  res.writeHead(200, responseHeaders(origin, requestId, { 'Content-Type': row.mime_type, 'Content-Length': String(size), 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(row.original_name)}`, 'Cache-Control': 'private, no-store' }));
+  createReadStream(filePath).pipe(res);
+}
+
+async function updateProspectQuote(req, res, origin, requestId, quoteId) {
+  const token = prospectToken(req);
+  const lead = token ? await leadByToken(token) : null;
+  if (!lead) return json(res, origin, 403, { ok: false, error: 'invalid_access' }, requestId);
+  const body = await readJsonBody(req);
+  const action = String(body.action || '');
+  if (!['validate', 'refuse', 'request_modification'].includes(action)) return json(res, origin, 400, { ok: false, error: 'invalid_action' }, requestId);
+  const now = new Date().toISOString();
+  const updates = action === 'validate'
+    ? { status: 'validated', validated_at: now }
+    : action === 'refuse'
+      ? { status: 'refused', refused_at: now, refusal_reason: String(body.reason || '').slice(0, 500) }
+      : { modification_requested: true, modification_requested_at: now, requested_options: body.options || {}, modification_message: String(body.message || '').slice(0, 1000) };
+  const sql = `WITH updated AS (UPDATE taxiassur.records SET data=data||${quoteLiteral(JSON.stringify(updates))}::jsonb,updated_at=now(),revision=revision+1 WHERE collection='lead_company_quotes' AND record_id=${quoteLiteral(quoteId)} AND data->>'lead_id'=${quoteLiteral(String(lead.id))} RETURNING data) INSERT INTO taxiassur.audit_events(actor_type,actor_id,action,target_type,target_id,request_id,metadata) SELECT 'prospect',${quoteLiteral(String(lead.id))},${quoteLiteral(`quote_${action}`)},'lead_company_quote',${quoteLiteral(quoteId)},${quoteLiteral(requestId)}::uuid,${quoteLiteral(JSON.stringify({ action }))}::jsonb FROM updated RETURNING (SELECT data::text FROM updated);`;
+  const quote = parseJsonLine(await runPsql(sql));
+  return quote ? json(res, origin, 200, { ok: true, quote }, requestId) : json(res, origin, 404, { ok: false, error: 'not_found' }, requestId);
+}
+
+async function downloadProspectQuote(req, res, origin, requestId, quoteId) {
+  const token = prospectToken(req);
+  const lead = token ? await leadByToken(token) : null;
+  if (!lead) return json(res, origin, 403, { ok: false, error: 'invalid_access' }, requestId);
+  const sql = `SELECT data::text FROM taxiassur.records WHERE collection='lead_company_quotes' AND record_id=${quoteLiteral(quoteId)} AND data->>'lead_id'=${quoteLiteral(String(lead.id))} LIMIT 1;`;
+  const quote = parseJsonLine(await runPsql(sql));
+  if (!quote) return json(res, origin, 404, { ok: false, error: 'not_found' }, requestId);
+  const kind = new URL(req.url || '/', 'http://localhost').searchParams.get('kind');
+  const source = kind === 'rc_pro' ? quote.rc_pro_addon_file_url : (quote.quote_file_url || quote.file_url || quote.file_path);
+  const storagePath = storageObjectPath(source, 'contract-documents');
+  if (!storagePath) return json(res, origin, 404, { ok: false, error: 'not_found' }, requestId);
+  const filePath = safeLegacyStoragePath('contract-documents', storagePath);
+  if (!existsSync(filePath)) return json(res, origin, 404, { ok: false, error: 'file_missing' }, requestId);
+  const name = quote.file_name || path.basename(storagePath) || 'devis.pdf';
+  const size = statSync(filePath).size;
+  res.writeHead(200, responseHeaders(origin, requestId, { 'Content-Type': quote.mime_type || 'application/pdf', 'Content-Length': String(size), 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(name)}`, 'Cache-Control': 'private, no-store' }));
+  createReadStream(filePath).pipe(res);
+}
+
+async function downloadProspectCompanyDocument(req, res, origin, requestId, documentId) {
+  if (!uuidPattern.test(documentId)) return json(res, origin, 404, { ok: false, error: 'not_found' }, requestId);
+  const token = prospectToken(req);
+  const lead = token ? await leadByToken(token) : null;
+  if (!lead) return json(res, origin, 403, { ok: false, error: 'invalid_access' }, requestId);
+  const sql = `SELECT document.data::text FROM taxiassur.records document WHERE document.collection='company_documents' AND document.record_id=${quoteLiteral(documentId)} AND document.data->>'send_with_quote'='true' AND EXISTS (SELECT 1 FROM taxiassur.records quote WHERE quote.collection='lead_company_quotes' AND quote.data->>'lead_id'=${quoteLiteral(String(lead.id))} AND COALESCE(quote.data->>'company_id', quote.data->>'insurance_company_id')=document.data->>'company_id') LIMIT 1;`;
+  const document = parseJsonLine(await runPsql(sql));
+  if (!document) return json(res, origin, 404, { ok: false, error: 'not_found' }, requestId);
+  const storagePath = storageObjectPath(document.file_url || document.file_path, 'company-documents');
+  if (!storagePath) return json(res, origin, 404, { ok: false, error: 'not_found' }, requestId);
+  const filePath = safeLegacyStoragePath('company-documents', storagePath);
+  if (!existsSync(filePath)) return json(res, origin, 404, { ok: false, error: 'file_missing' }, requestId);
+  const name = document.document_name || document.file_name || path.basename(storagePath) || 'document.pdf';
+  const size = statSync(filePath).size;
+  res.writeHead(200, responseHeaders(origin, requestId, { 'Content-Type': document.mime_type || 'application/pdf', 'Content-Length': String(size), 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(name)}`, 'Cache-Control': 'private, no-store' }));
+  createReadStream(filePath).pipe(res);
+}
+
 async function leadByToken(token) {
   const sql = `SELECT data::text FROM taxiassur.records WHERE collection = 'crm_leads' AND data ->> 'access_token' = ${quoteLiteral(token)} AND COALESCE(data ->> 'deleted_at', '') = '' LIMIT 1;`;
   return parseJsonLine(await runPsql(sql));
@@ -257,6 +350,11 @@ async function leadByToken(token) {
 
 async function recordsWhere(collection, field, value) {
   const sql = `SELECT COALESCE(jsonb_agg(data ORDER BY COALESCE(data ->> 'updated_at', data ->> 'created_at', '') DESC), '[]'::jsonb)::text FROM taxiassur.records WHERE collection = ${quoteLiteral(collection)} AND data ->> ${quoteLiteral(field)} = ${quoteLiteral(value)};`;
+  return parseJsonLine(await runPsql(sql)) || [];
+}
+
+async function recordsAll(collection) {
+  const sql = `SELECT COALESCE(jsonb_agg(data), '[]'::jsonb)::text FROM taxiassur.records WHERE collection = ${quoteLiteral(collection)};`;
   return parseJsonLine(await runPsql(sql)) || [];
 }
 
@@ -329,6 +427,7 @@ function decodeHeader(value) { try { return decodeURIComponent(String(value || '
 function safeFileName(value) { return String(value || '').normalize('NFKC').replace(/[\x00-\x1f\x7f/\\]/g, '_').trim().slice(0, 180); }
 function safeStoragePath(relative) { const root = path.resolve(config.documentRoot); const target = path.resolve(root, relative); if (!target.startsWith(`${root}${path.sep}`)) throw publicError(400, 'invalid_path'); return target; }
 function safeLegacyStoragePath(bucket, relative) { const root = path.resolve(config.legacyDocumentRoot, bucket); const target = path.resolve(root, relative); if (!target.startsWith(`${root}${path.sep}`)) throw publicError(400, 'invalid_path'); return target; }
+function storageObjectPath(value, bucket) { const raw=String(value||'').trim(); if(!raw)return ''; try{const parsed=new URL(raw); const marker=`/${bucket}/`; const index=parsed.pathname.indexOf(marker); return index>=0?decodeURIComponent(parsed.pathname.slice(index+marker.length)):'';}catch{ return raw.replace(new RegExp(`^/?${bucket}/`),'').replace(/^\/+/, ''); } }
 function safeUnlink(file) { try { unlinkSync(file); } catch {} }
 function originAllowed(origin) { return !origin || config.allowedOrigins.has(origin); }
 function clientIp(req) { return String(req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim(); }

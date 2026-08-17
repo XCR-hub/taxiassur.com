@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   AlertCircle,
   Building2,
@@ -17,9 +17,8 @@ import {
   ThumbsUp,
   X,
 } from "lucide-react";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { toast } from "@/lib/toast";
-import { downloadSecureDocument, viewSecureDocument } from "@/lib/secure-document-url";
+import { downloadProspectCompanyDocument, loadProspectPlatformSession, openProspectQuote, updateProspectQuote } from "@/lib/platform-api";
 
 interface InsuranceCompany {
   id: string;
@@ -139,7 +138,6 @@ interface Quote {
 
 interface Props {
   token?: string;
-  supabaseClient?: SupabaseClient;
 }
 
 interface CompanyDocument {
@@ -151,7 +149,7 @@ interface CompanyDocument {
   description: string | null;
 }
 
-export default function ClientQuotesViewer({ token, supabaseClient }: Props) {
+export default function ClientQuotesViewer({ token }: Props) {
   const [companies, setCompanies] = useState<InsuranceCompany[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [companyDocs, setCompanyDocs] = useState<CompanyDocument[]>([]);
@@ -169,23 +167,18 @@ export default function ClientQuotesViewer({ token, supabaseClient }: Props) {
   const [submittingModification, setSubmittingModification] = useState(false);
   const [openInfoKey, setOpenInfoKey] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [token]);
-
   const openQuoteDocument = async (
-    path: string,
+    quoteId: string,
     fileName: string,
     download = false,
+    kind: 'quote' | 'rc_pro' = 'quote',
   ) => {
     if (!token) {
       toast.error("Votre session prospect a expiré. Rechargez la page.");
       return;
     }
     try {
-      const options = { path, bucket: "contract-documents", accessToken: token, fileName };
-      if (download) await downloadSecureDocument(options);
-      else await viewSecureDocument(options);
+      await openProspectQuote(token, quoteId, fileName, download, kind);
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -206,25 +199,13 @@ export default function ClientQuotesViewer({ token, supabaseClient }: Props) {
   };
 
   const submitModificationRequest = async () => {
-    if (!supabaseClient || !token || !modifyingQuoteId) {
+    if (!token || !modifyingQuoteId) {
       toast.error("Erreur de configuration. Veuillez recharger la page.");
       return;
     }
     setSubmittingModification(true);
     try {
-      const { data, error } = await supabaseClient.rpc(
-        "request_quote_modification_by_token",
-        {
-          p_token: token,
-          p_quote_id: modifyingQuoteId,
-          p_requested_options: modifyOptions,
-          p_message: modifyMessage,
-        },
-      );
-      if (error) throw error;
-      if (!data?.success) {
-        throw new Error(data?.error || "Erreur lors de la soumission");
-      }
+      const data = await updateProspectQuote(token, modifyingQuoteId, 'request_modification', { options: modifyOptions, message: modifyMessage });
       toast.success(
         `Votre demande de modification a été envoyée à notre équipe${
           data.company_name ? ` pour ${data.company_name}` : ""
@@ -244,7 +225,7 @@ export default function ClientQuotesViewer({ token, supabaseClient }: Props) {
   };
 
   const handleValidateQuote = async (quoteId: string, companyName: string) => {
-    if (!supabaseClient || !token) {
+    if (!token) {
       toast.error("❌ Erreur de configuration. Veuillez recharger la page.");
       return;
     }
@@ -252,23 +233,7 @@ export default function ClientQuotesViewer({ token, supabaseClient }: Props) {
     setValidating(quoteId);
     try {
       // Utiliser la fonction RPC sécurisée pour valider le devis
-      const { data, error } = await supabaseClient.rpc(
-        "validate_quote_by_token",
-        {
-          p_quote_id: quoteId,
-          p_token: token,
-        },
-      );
-
-      if (error) {
-        console.error("Error calling validate_quote_by_token:", error);
-        throw error;
-      }
-
-      // Vérifier le résultat de la fonction
-      if (!data?.success) {
-        throw new Error(data?.error || "Erreur lors de la validation");
-      }
+      const data = await updateProspectQuote(token, quoteId, 'validate');
 
       // Recharger les données
       await loadData();
@@ -295,7 +260,7 @@ export default function ClientQuotesViewer({ token, supabaseClient }: Props) {
   };
 
   const handleRefuseQuote = async (quoteId: string, companyName: string) => {
-    if (!supabaseClient || !token) {
+    if (!token) {
       toast.error("❌ Erreur de configuration. Veuillez recharger la page.");
       return;
     }
@@ -303,24 +268,7 @@ export default function ClientQuotesViewer({ token, supabaseClient }: Props) {
     setRefusing(quoteId);
     try {
       // Utiliser la fonction RPC sécurisée pour refuser le devis
-      const { data, error } = await supabaseClient.rpc(
-        "refuse_quote_by_token",
-        {
-          p_quote_id: quoteId,
-          p_token: token,
-          p_reason: refusalReason || null,
-        },
-      );
-
-      if (error) {
-        console.error("Error calling refuse_quote_by_token:", error);
-        throw error;
-      }
-
-      // Vérifier le résultat de la fonction
-      if (!data?.success) {
-        throw new Error(data?.error || "Erreur lors du refus");
-      }
+      const data = await updateProspectQuote(token, quoteId, 'refuse', { reason: refusalReason || '' });
 
       // Recharger les données
       await loadData();
@@ -347,19 +295,13 @@ export default function ClientQuotesViewer({ token, supabaseClient }: Props) {
     }
   };
 
-  const loadData = async () => {
-    if (!supabaseClient) return;
-
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
 
       if (!token) throw new Error("Jeton prospect manquant");
-      const { data, error } = await supabaseClient.rpc(
-        "get_lead_quotes_by_token",
-        { p_token: token },
-      );
-      if (error) throw error;
-      const quotesData: Quote[] = data || [];
+      const session = await loadProspectPlatformSession(token);
+      const quotesData = session.quotes as unknown as Quote[];
       setQuotes(quotesData);
       const companyMap = new Map<string, InsuranceCompany>();
       for (const quote of quotesData) {
@@ -375,21 +317,17 @@ export default function ClientQuotesViewer({ token, supabaseClient }: Props) {
         }
       }
       setCompanies([...companyMap.values()]);
-      const { data: docsData, error: docsError } = await supabaseClient.rpc(
-        "get_company_documents_by_token",
-        {
-          p_token: token,
-          p_filter: "quote",
-        },
-      );
-      if (docsError) throw docsError;
-      setCompanyDocs(docsData || []);
+      setCompanyDocs(session.company_documents as unknown as CompanyDocument[]);
     } catch (error) {
       console.error("Erreur chargement devis:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   // Grouper les devis par compagnie
   const quotesByCompany = quotes.reduce((acc, quote) => {
@@ -803,8 +741,10 @@ export default function ClientQuotesViewer({ token, supabaseClient }: Props) {
                                 type="button"
                                 onClick={() =>
                                   openQuoteDocument(
-                                    quote.rc_pro_addon_file_url!,
+                                    quote.id,
                                     "Devis-RC-Pro.pdf",
+                                    false,
+                                    'rc_pro',
                                   )}
                                 className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg text-xs transition-colors"
                               >
@@ -815,9 +755,10 @@ export default function ClientQuotesViewer({ token, supabaseClient }: Props) {
                                 type="button"
                                 onClick={() =>
                                   openQuoteDocument(
-                                    quote.rc_pro_addon_file_url!,
+                                    quote.id,
                                     "Devis-RC-Pro.pdf",
                                     true,
+                                    'rc_pro',
                                   )}
                                 className="inline-flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg text-xs transition-colors"
                               >
@@ -832,7 +773,7 @@ export default function ClientQuotesViewer({ token, supabaseClient }: Props) {
                       <div className="flex flex-wrap items-center gap-3">
                         <button
                           type="button"
-                          onClick={() => openQuoteDocument(filePath, fileName)}
+                          onClick={() => openQuoteDocument(quote.id, fileName)}
                           className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 text-black font-semibold rounded-lg transition-all text-sm"
                         >
                           <Eye className="w-4 h-4" />
@@ -842,7 +783,7 @@ export default function ClientQuotesViewer({ token, supabaseClient }: Props) {
                         <button
                           type="button"
                           onClick={() =>
-                            openQuoteDocument(filePath, fileName, true)}
+                            openQuoteDocument(quote.id, fileName, true)}
                           className="flex items-center gap-2 px-5 py-2.5 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors text-sm"
                         >
                           <Download className="w-4 h-4" />
@@ -851,7 +792,7 @@ export default function ClientQuotesViewer({ token, supabaseClient }: Props) {
 
                         <button
                           type="button"
-                          onClick={() => openQuoteDocument(filePath, fileName)}
+                          onClick={() => openQuoteDocument(quote.id, fileName)}
                           className="flex items-center gap-2 px-5 py-2.5 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors text-sm"
                         >
                           <Printer className="w-4 h-4" />
@@ -931,11 +872,10 @@ export default function ClientQuotesViewer({ token, supabaseClient }: Props) {
                   </h5>
                   <div className="grid sm:grid-cols-2 gap-2">
                     {companyAttachedDocs.map((doc) => (
-                      <a
+                      <button
                         key={doc.id}
-                        href={doc.file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        type="button"
+                        onClick={() => token && downloadProspectCompanyDocument(token, doc.id, doc.document_name).catch((error) => toast.error(error instanceof Error ? error.message : "Impossible de télécharger ce document"))}
                         className="flex items-center gap-3 px-4 py-3 bg-gray-900/60 border border-gray-700 hover:border-amber-400/60 rounded-lg transition-colors group"
                       >
                         <FileText className="w-5 h-5 text-amber-400 flex-shrink-0" />
@@ -950,7 +890,7 @@ export default function ClientQuotesViewer({ token, supabaseClient }: Props) {
                           )}
                         </div>
                         <Download className="w-4 h-4 text-gray-400 group-hover:text-amber-300 flex-shrink-0" />
-                      </a>
+                      </button>
                     ))}
                   </div>
                 </div>

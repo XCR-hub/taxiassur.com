@@ -327,7 +327,8 @@ requireMatch('src/lib/secure-document-url.ts', /sign-document-url/, 'frontend se
 forbidMatch('src/components/crm/SecureDocumentLink.tsx', /createSignedUrl|getPublicUrl|signedUrl\)/, 'back-office document link bypasses the server signer or logs its URL');
 requireMatch('src/pages/client/ClientDocuments.tsx', /(?:view|download)SecureDocument[\s\S]*accessToken/, 'client documents are opened without token-bound signing');
 requireMatch('supabase/functions/sign-document-url/index.ts', /lead_company_quotes[\s\S]*quote_file_url, quote_pdf_url, rc_pro_addon_file_url/, 'quote signer does not verify prospect ownership');
-requireMatch('src/components/client/ClientQuotesViewer.tsx', /(?:view|download)SecureDocument[\s\S]*bucket:\s*["']contract-documents["'][\s\S]*accessToken:\s*token/, 'prospect quotes do not use token-bound short-lived URLs');
+requireMatch('src/components/client/ClientQuotesViewer.tsx', /openProspectQuote[\s\S]*downloadProspectCompanyDocument/, 'prospect quotes do not use token-bound platform downloads');
+requireMatch('server/taxiassur-platform-api.mjs', /downloadProspectQuote[\s\S]*leadByToken[\s\S]*lead_company_quotes[\s\S]*contract-documents/, 'platform quote download does not verify prospect ownership');
 forbidMatch('src/components/client/ClientQuotesViewer.tsx', /href=\{(?:fileUrl|quote\.rc_pro_addon_file_url)\}|window\.open\(fileUrl/, 'prospect quotes still expose stored document URLs directly');
 const submitQuoteModal = 'src/components/crm/SubmitQuoteModal.tsx';
 forbidMatch(submitQuoteModal, /getPublicUrl|href=\{formData\.quote_file_url\}|upsert:\s*true|body:\s*html,/, 'quote submission exposes private files, overwrites objects, or stores a portal token in audit HTML');
@@ -378,7 +379,8 @@ for (const documentType of ['kbis', 'carte_pro_vtc', 'inscription_registre_vtc',
 }
 requireMatch(clientDocumentUpload, /actualMime !== mimeType/, 'stored document MIME metadata is optional instead of mandatory');
 forbidMatch('src/pages/EspaceProspect.tsx', /upload_prospect_document_by_token|\.upload\(fileName/, 'prospect page still uploads or writes metadata directly');
-requireMatch('src/pages/EspaceProspect.tsx', /scope: 'prospect'[\s\S]*uploadToSignedUrl[\s\S]*action: 'finalize'/, 'prospect page does not use signed prepare/upload/finalize');
+requireMatch('src/pages/EspaceProspect.tsx', /uploadProspectPlatformDocument[\s\S]*downloadProspectPlatformDocument/, 'prospect page does not use token-bound platform upload/download');
+requireMatch('server/taxiassur-platform-api.mjs', /uploadProspectDocument[\s\S]*leadByToken[\s\S]*scanFile[\s\S]*insertFileObject/, 'platform prospect upload loses token authorization or antivirus scanning');
 forbidMatch('src/pages/client/ClientDocuments.tsx', /supabase\.from\(['"]prospect_documents|\.getPublicUrl\(filePath\)/, 'client page writes document metadata directly');
 requireMatch('src/pages/client/ClientDocuments.tsx', /uploadToSignedUrl[\s\S]*action: 'finalize'/, 'client page does not use prepare/upload/finalize flow');
 forbidMatch('src/pages/client/ClientDashboard.tsx', /\.from\(/, 'dashboard queries client tables directly instead of token-bound RPCs');
@@ -387,7 +389,7 @@ requireMatch(portalTokenMigration, /get_client_quotes_by_token[\s\S]*client_emai
 forbidMatch('src/router.tsx', /element:\s*<ClientInsuranceSpace/, 'legacy insurance route is still executable');
 requireMatch('src/router.tsx', /path:\s*['"]\/espace-client\/assurances['"][\s\S]*Navigate to=['"]\/client\/dashboard['"]/, 'legacy insurance URL is not redirected to the token portal');
 forbidMatch('src/components/client/ClientQuotesViewer.tsx', /leadId|\.from\(/, 'prospect quotes bypass token-bound RPCs');
-requireMatch('src/components/client/ClientQuotesViewer.tsx', /get_lead_quotes_by_token[\s\S]*get_company_documents_by_token/, 'prospect quotes and documents are not loaded through token RPCs');
+requireMatch('src/components/client/ClientQuotesViewer.tsx', /loadProspectPlatformSession[\s\S]*session\.quotes[\s\S]*session\.company_documents/, 'prospect quotes and documents are not loaded through the token-bound platform session');
 forbidMatch('src/components/client/ClientPaymentButton.tsx', /\.from\(['"]lead_contracts|leadId/, 'prospect down-payment button trusts a lead identifier');
 requireMatch('src/components/client/ClientPaymentButton.tsx', /get_client_down_payment_by_token[\s\S]*p_token:\s*token/, 'prospect down-payment button is not token-bound');
 requireMatch(portalTokenMigration, /get_client_down_payment_by_token[\s\S]*client_lead_id_for_access_token/, 'down-payment RPC does not derive lead ownership from the token');
@@ -582,10 +584,10 @@ const portalTimeout = 'src/lib/promise-timeout.ts';
 requireMatch(portalTimeout, /timeoutMs = 15_000/, 'portal requests do not have a bounded default timeout');
 requireMatch(portalTimeout, /window\.clearTimeout\(timeout\)[\s\S]*window\.clearTimeout\(timeout\)/, 'portal timeout is not cleared on both resolve and reject');
 requireMatch('src/pages/ClientAccessByToken.tsx', /withTimeout\([\s\S]*get_or_create_client_portal_access/, 'client token verification can spin forever');
-requireMatch('src/pages/EspaceProspect.tsx', /withTimeout\([\s\S]*get_lead_by_token[\s\S]*withTimeout\([\s\S]*get_payments_by_token/, 'prospect initial loading can spin forever');
+requireMatch('src/lib/platform-api.ts', /platformRequest[\s\S]*timeoutMs = 20_000[\s\S]*AbortSignal\.timeout\(timeoutMs\)/, 'prospect platform requests can spin forever');
 requireMatch('src/lib/document-upload-compat.ts', /withTimeout\([\s\S]*action: 'prepare'[\s\S]*20_000[\s\S]*documentType: 'autre'[\s\S]*withTimeout\([\s\S]*action: 'prepare'[\s\S]*20_000/, 'compatible document preparation lacks bounded primary or fallback requests');
 for (const file of ['src/pages/EspaceProspect.tsx', 'src/pages/ProspectDocuments.tsx']) {
-  requireMatch(file, /prepareCompatibleDocumentUpload[\s\S]*withTimeout\([\s\S]*uploadToSignedUrl[\s\S]*60_000[\s\S]*withTimeout\([\s\S]*action: 'finalize'[\s\S]*20_000/, 'prospect document upload stages can spin forever');
+  requireMatch('src/lib/platform-api.ts', /uploadProspectPlatformDocument[\s\S]*platformRequest\([\s\S]*60_000/, 'prospect document upload can spin forever');
 }
 forbidMatch(portalTimeout, /timeoutMs = (?:2\d|[3-9]\d|\d{3,})_000/, 'portal timeout exceeds 20 seconds');
 for (const [file, endpoint] of [
