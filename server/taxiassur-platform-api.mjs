@@ -9,6 +9,9 @@ const env = loadEnv([
   process.env.TAXIASSUR_PLATFORM_ENV_FILE,
   'F:/TaxiAssur/Secrets/taxiassur-platform-api.env',
   'F:/TaxiAssur/Secrets/postgresql.env',
+  'F:/TaxiAssur/Secrets/mailxcr.env',
+  'F:/TaxiAssur/Secrets/smtp.env',
+  'F:/TaxiAssur/Secrets/email.env',
 ].filter(Boolean));
 
 const config = {
@@ -26,6 +29,10 @@ const config = {
   legacyDocumentRoot: env.TAXIASSUR_LEGACY_DOCUMENT_ROOT || 'F:/TaxiAssur/Documents/legacy',
   clamScanPath: env.CLAMSCAN_PATH || 'C:/Program Files/ClamAV/clamscan.exe',
   clamDatabasePath: env.CLAMSCAN_DATABASE_PATH || 'F:/TaxiAssur/ClamAV/db',
+  smtpHost: env.SMTP_HOST || env.HMAIL_SMTP_HOST || env.IONOS_SMTP_HOST || 'mail.xcr.fr',
+  smtpPort: positiveInt(env.SMTP_PORT || env.HMAIL_SMTP_PORT || env.IONOS_SMTP_PORT, 587, 65535),
+  smtpUser: env.SMTP_USER || env.HMAIL_SMTP_USER || env.IONOS_EMAIL_USER || env.IONOS_SMTP_USER || 'tcerda@xcr.fr',
+  smtpPassword: env.SMTP_PASS || env.HMAIL_SMTP_PASS || env.HMAIL_EMAIL_PASSWORD || env.IONOS_EMAIL_PASSWORD || env.IONOS_SMTP_PASSWORD || '',
   allowedOrigins: new Set((env.TAXIASSUR_PLATFORM_ALLOWED_ORIGINS || 'https://taxiassur.com,https://www.taxiassur.com,http://localhost:5173,http://localhost:4173').split(',').map((value) => value.trim().replace(/\/$/, '')).filter(Boolean)),
 };
 
@@ -55,7 +62,7 @@ const server = createServer(async (req, res) => {
     if (!takeRateSlot(clientIp(req))) return json(res, origin, 429, { ok: false, error: 'rate_limited' }, requestId);
     const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
     if (req.method === 'GET' && url.pathname === '/health') {
-      return json(res, origin, 200, { ok: true, service: 'taxiassur-platform-api', storage: 'local', database: config.dbName, checked_at: new Date().toISOString() }, requestId);
+      return json(res, origin, 200, { ok: true, service: 'taxiassur-platform-api', storage: 'local', database: config.dbName, password_reset_mail: Boolean(config.smtpHost && config.smtpUser && config.smtpPassword), checked_at: new Date().toISOString() }, requestId);
     }
     if (req.method === 'GET' && url.pathname === '/v1/prospect/session') return prospectSession(req, res, origin, requestId);
     if (req.method === 'POST' && url.pathname === '/v1/auth/login') return adminLogin(req, res, origin, requestId);
