@@ -1,4 +1,8 @@
-const PLATFORM_BASE_URL = (import.meta.env.VITE_PLATFORM_API_URL || 'https://postgres-read-api.taxiassur.com/platform').replace(/\/$/, '');
+const PLATFORM_BASE_URL = (
+  import.meta.env.VITE_NATIVE_PLATFORM_URL ||
+  import.meta.env.VITE_PLATFORM_API_URL ||
+  'https://postgres-read-api.taxiassur.com/platform'
+).replace(/\/$/, '');
 
 export interface ProspectPlatformSession {
   ok: true;

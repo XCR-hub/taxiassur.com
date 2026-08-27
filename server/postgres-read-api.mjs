@@ -93,6 +93,14 @@ const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
 
+    if (/^\/aviation\/(rest|auth|storage|functions|realtime)\/v1(?:\/|$)/.test(url.pathname)) {
+      return proxyAviationSupabaseRequest(req, res, url);
+    }
+
+    if (/^\/(rest|auth|storage|functions|realtime)\/v1(?:\/|$)/.test(url.pathname)) {
+      return proxySupabaseRequest(req, res, url);
+    }
+
     if (url.pathname === '/platform/health' || url.pathname.startsWith('/platform/v1/')) {
       if (!isOriginAllowed(origin)) {
         return sendJson(res, origin, 403, { ok: false, error: 'origin_not_allowed' });
@@ -162,6 +170,39 @@ const server = createServer(async (req, res) => {
     });
   }
 });
+
+function proxyAviationSupabaseRequest(req, res, url) {
+  const upstreamPath = url.pathname.replace(/^\/aviation/, '') + url.search;
+  const headers = { ...req.headers, host: '127.0.0.1:8831' };
+  delete headers['cf-connecting-ip'];
+  delete headers['cf-ray'];
+  const upstream = httpRequest({ hostname: '127.0.0.1', port: 8831, path: upstreamPath, method: req.method, headers }, (upstreamResponse) => {
+    res.writeHead(upstreamResponse.statusCode || 502, upstreamResponse.headers);
+    upstreamResponse.pipe(res);
+  });
+  upstream.setTimeout(70000, () => upstream.destroy(new Error('aviation_supabase_api_timeout')));
+  upstream.on('error', () => {
+    if (!res.headersSent) sendJson(res, '', 503, { ok: false, error: 'aviation_supabase_api_unavailable' });
+    else res.destroy();
+  });
+  req.pipe(upstream);
+}
+
+function proxySupabaseRequest(req, res, url) {
+  const headers = { ...req.headers, host: '127.0.0.1:8811' };
+  delete headers['cf-connecting-ip'];
+  delete headers['cf-ray'];
+  const upstream = httpRequest({ hostname: '127.0.0.1', port: 8811, path: url.pathname + url.search, method: req.method, headers }, (upstreamResponse) => {
+    res.writeHead(upstreamResponse.statusCode || 502, upstreamResponse.headers);
+    upstreamResponse.pipe(res);
+  });
+  upstream.setTimeout(70000, () => upstream.destroy(new Error('supabase_api_timeout')));
+  upstream.on('error', () => {
+    if (!res.headersSent) sendJson(res, '', 503, { ok: false, error: 'supabase_api_unavailable' });
+    else res.destroy();
+  });
+  req.pipe(upstream);
+}
 
 function proxyPlatformRequest(req, res, url) {
   const upstreamPath = url.pathname.replace(/^\/platform/, '') + url.search;

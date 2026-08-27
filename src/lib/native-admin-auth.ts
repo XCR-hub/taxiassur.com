@@ -1,4 +1,8 @@
-const BASE = (import.meta.env.VITE_PLATFORM_API_URL || 'https://postgres-read-api.taxiassur.com/platform').replace(/\/$/, '');
+const BASE = (
+  import.meta.env.VITE_NATIVE_PLATFORM_URL ||
+  import.meta.env.VITE_PLATFORM_API_URL ||
+  'https://postgres-read-api.taxiassur.com/platform'
+).replace(/\/$/, '');
 export const NATIVE_ADMIN_TOKEN_KEY = 'taxiassur-native-admin-token';
 
 async function request(path: string, init: RequestInit = {}) {
