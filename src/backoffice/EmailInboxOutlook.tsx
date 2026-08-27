@@ -20,8 +20,7 @@ import {
   CheckCircle,
   User
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
+import { nativeAdminInbox, nativeAdminInboxAction, nativeAdminInboxSync, nativeAdminInboxWorkflow } from '@/lib/native-admin-data';
 import { useNavigate } from 'react-router-dom';
 
 interface EmailMessage {
@@ -57,82 +56,34 @@ const EmailInboxOutlook: React.FC = () => {
 
   useEffect(() => {
     loadMessages();
-    loadStats();
     const interval = setInterval(() => {
       loadMessages();
-      loadStats();
     }, 30000);
     return () => clearInterval(interval);
   }, [selectedFolder, searchQuery]);
 
-  const loadStats = async () => {
-    try {
-      const { count: total } = await supabase
-        .from('email_messages')
-        .select('*', { count: 'exact', head: true });
-
-      const { count: inbox } = await supabase
-        .from('email_messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('direction', 'inbound');
-
-      const { count: sent } = await supabase
-        .from('email_messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('direction', 'outbound');
-
-      const { count: starred } = await supabase
-        .from('email_messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_starred', true);
-
-      const { count: leads } = await supabase
-        .from('email_messages')
-        .select('*', { count: 'exact', head: true })
-        .not('lead_id', 'is', null);
-
-      setStats({
-        inbox: inbox || 0,
-        sent: sent || 0,
-        starred: starred || 0,
-        leads: leads || 0,
-        total: total || 0,
-      });
-    } catch (error) {
-      console.error('Error loading stats:', error);
-    }
-  };
-
   const loadMessages = async () => {
     setLoading(true);
     try {
-      let query = supabase
-        .from('email_messages')
-        .select('*')
-        .order('received_at', { ascending: false })
-        .limit(200);
-
-      if (selectedFolder === 'inbox') {
-        query = query.eq('direction', 'inbound');
-      } else if (selectedFolder === 'sent') {
-        query = query.eq('direction', 'outbound');
-      } else if (selectedFolder === 'starred') {
-        query = query.eq('is_starred', true);
-      } else if (selectedFolder === 'leads') {
-        query = query.not('lead_id', 'is', null);
-      }
-
-      if (searchQuery) {
-        query = query.or(
-          `subject.ilike.%${searchQuery}%,from_email.ilike.%${searchQuery}%,body_text.ilike.%${searchQuery}%`
-        );
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      setMessages(data || []);
+      const serverFilter = selectedFolder === 'starred' ? 'starred' : selectedFolder === 'leads' ? 'leads' : 'all';
+      const data = await nativeAdminInbox(serverFilter, searchQuery) as {
+        messages?: EmailMessage[];
+        stats?: { total?: number; starred?: number; leads?: number };
+      };
+      const all = data.messages || [];
+      const visible = selectedFolder === 'inbox'
+        ? all.filter(message => message.direction === 'inbound')
+        : selectedFolder === 'sent'
+          ? all.filter(message => message.direction === 'outbound')
+          : all;
+      setMessages(visible);
+      setStats({
+        inbox: all.filter(message => message.direction === 'inbound').length,
+        sent: all.filter(message => message.direction === 'outbound').length,
+        starred: data.stats?.starred || 0,
+        leads: data.stats?.leads || 0,
+        total: data.stats?.total || all.length,
+      });
     } catch (error) {
       console.error('Failed to load messages:', error);
     } finally {
@@ -143,14 +94,9 @@ const EmailInboxOutlook: React.FC = () => {
   const syncEmails = async () => {
     setSyncing(true);
     try {
-      const { error } = await supabase.functions.invoke('sync-all-emails-complete', {
-        body: { forceFullSync: true }
-      });
-
-      if (error) throw error;
+      await nativeAdminInboxSync();
 
       await loadMessages();
-      await loadStats();
       toast.success('✅ Synchronisation réussie !');
     } catch (error) {
       console.error('Sync error:', error);
@@ -162,10 +108,7 @@ const EmailInboxOutlook: React.FC = () => {
 
   const markAsRead = async (id: string) => {
     try {
-      await supabase
-        .from('email_messages')
-        .update({ is_read: true })
-        .eq('id', id);
+      await nativeAdminInboxAction('mark_read', [id]);
 
       setMessages(prev =>
         prev.map(m => m.id === id ? { ...m, is_read: true } : m)
@@ -177,10 +120,7 @@ const EmailInboxOutlook: React.FC = () => {
 
   const toggleStar = async (id: string, currentState: boolean) => {
     try {
-      await supabase
-        .from('email_messages')
-        .update({ is_starred: !currentState })
-        .eq('id', id);
+      await nativeAdminInboxAction('star', [id], { value: !currentState });
 
       setMessages(prev =>
         prev.map(m => m.id === id ? { ...m, is_starred: !currentState } : m)
@@ -290,10 +230,7 @@ const EmailInboxOutlook: React.FC = () => {
   const handleArchive = async () => {
     if (!selectedMessage) return;
     try {
-      await supabase
-        .from('email_messages')
-        .update({ email_status: 'archived', archived_at: new Date().toISOString() })
-        .eq('id', selectedMessage.id);
+      await nativeAdminInboxAction('archive', [selectedMessage.id]);
 
       toast.success('✅ Email archivé');
       await loadMessages();
@@ -309,10 +246,7 @@ const EmailInboxOutlook: React.FC = () => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cet email ?')) return;
 
     try {
-      await supabase
-        .from('email_messages')
-        .update({ email_status: 'deleted', deleted_at: new Date().toISOString() })
-        .eq('id', selectedMessage.id);
+      await nativeAdminInboxAction('delete', [selectedMessage.id]);
 
       toast.success('✅ Email supprimé');
       await loadMessages();
@@ -327,16 +261,11 @@ const EmailInboxOutlook: React.FC = () => {
     if (!selectedMessage || !replyContent.trim()) return;
 
     try {
-      const { data: sendResult, error } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
-        body: {
-          to: selectedMessage.from_email,
-          subject: `Re: ${selectedMessage.subject}`,
-          body: replyContent,
-          lead_id: selectedMessage.lead_id
-        }
-      });
-
-      if (error || !sendResult?.success) throw error || new Error("Envoi refusé");
+      const sendResult = await nativeAdminInboxWorkflow('reply', {
+        email_id: selectedMessage.id,
+        content: replyContent,
+      }) as { queued?: boolean };
+      if (!sendResult?.queued) throw new Error("Envoi refusé");
 
       toast.success('✅ Réponse envoyée !');
       setShowReplyModal(false);

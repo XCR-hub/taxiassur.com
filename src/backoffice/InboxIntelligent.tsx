@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { nativeAdminIntelligentInbox, nativeAdminIntelligentInboxAction, nativeAdminInboxWorkflow } from '@/lib/native-admin-data';
 import { supabase } from '@/lib/supabase';
 import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 import { toast } from '@/lib/toast';
@@ -106,12 +107,8 @@ export default function InboxIntelligent() {
 
   async function loadFolders() {
     try {
-      const { data, error } = await supabase
-        .from('inbox_folders')
-        .select('*')
-        .order('position', { ascending: true });
-
-      if (error) throw error;
+      const response = await nativeAdminIntelligentInbox() as { folders?: EmailFolder[] };
+      const data = response.folders || [];
 
       // Organiser en arborescence
       const folderTree = buildFolderTree(data || []);
@@ -156,18 +153,8 @@ export default function InboxIntelligent() {
   async function loadEmails() {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('email_messages')
-        .select(`
-          *,
-          classification:email_classifications(*),
-          folders:email_folder_assignments(folder:inbox_folders(*))
-        `)
-        .order('received_at', { ascending: false })
-        .limit(100);
-
-      if (error) throw error;
-      setEmails(data || []);
+      const data = await nativeAdminIntelligentInbox() as { emails?: Email[] };
+      setEmails(data.emails || []);
     } catch (error) {
       console.error('Error loading emails:', error);
     } finally {
@@ -178,20 +165,8 @@ export default function InboxIntelligent() {
   async function loadEmailsForFolder(folderId: string) {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('email_folder_assignments')
-        .select(`
-          email:email_messages(
-            *,
-            classification:email_classifications(*)
-          )
-        `)
-        .eq('folder_id', folderId);
-
-      if (error) throw error;
-
-      const emailsList = data?.map(d => d.email).filter(Boolean) || [];
-      setEmails(emailsList as any);
+      const data = await nativeAdminIntelligentInbox(folderId) as { emails?: Email[] };
+      setEmails(data.emails || []);
     } catch (error) {
       console.error('Error loading folder emails:', error);
     } finally {
@@ -202,11 +177,8 @@ export default function InboxIntelligent() {
   async function classifyEmail(emailId: string) {
     try {
       setClassifying(emailId);
-      const { data, error } = await supabase.rpc('classify_email', {
-        p_email_id: emailId
-      });
-
-      if (error) throw error;
+      const response = await nativeAdminIntelligentInboxAction('classify', { email_id: emailId }) as { classification: EmailClassification };
+      const data = response.classification;
 
       toast.success(`✅ Email classifié: ${data.classification_type}\n${data.reason}`);
       loadEmails();
@@ -225,15 +197,7 @@ export default function InboxIntelligent() {
     if (!newFolderName.trim()) return;
 
     try {
-      const { error } = await supabase
-        .from('inbox_folders')
-        .insert({
-          name: newFolderName,
-          folder_type: 'custom',
-          parent_folder_id: selectedFolder
-        });
-
-      if (error) throw error;
+      await nativeAdminIntelligentInboxAction('create_folder', { name: newFolderName, parent_folder_id: selectedFolder });
 
       setNewFolderName('');
       setShowNewFolderModal(false);
@@ -247,14 +211,7 @@ export default function InboxIntelligent() {
 
   async function moveToFolder(emailId: string, folderId: string) {
     try {
-      const { error } = await supabase
-        .from('email_folder_assignments')
-        .insert({
-          email_id: emailId,
-          folder_id: folderId
-        });
-
-      if (error) throw error;
+      await nativeAdminIntelligentInboxAction('move', { email_id: emailId, folder_id: folderId });
 
       toast.success('✅ Email déplacé');
       loadEmails();
@@ -278,31 +235,17 @@ export default function InboxIntelligent() {
 
     try {
       // Créer le lead
-      const { data: lead, error: leadError } = await supabase
-        .from('crm_leads')
-        .insert({
-          email: email.from_email,
-          full_name: email.from_name || email.from_email.split('@')[0],
-          status: 'nouveau_lead',
-          source: 'email'
-        })
-        .select()
-        .single();
-
-      if (leadError) throw leadError;
+      const response = await nativeAdminInboxWorkflow('create_lead', {
+        email_id: emailId,
+        email: email.from_email,
+        name: email.from_name || email.from_email.split('@')[0],
+      }) as { lead: { id: string } };
+      const lead = response.lead;
 
       // Lier l'email au lead
-      await supabase
-        .from('email_messages')
-        .update({ lead_id: lead.id })
-        .eq('id', emailId);
+      void lead;
 
       // Créer le dossier lead automatique
-      await supabase.rpc('assign_email_to_folder', {
-        p_email_id: emailId,
-        p_classification_type: 'lead',
-        p_lead_id: lead.id
-      });
 
       toast.success('✅ Lead créé avec succès !');
       loadEmails();
