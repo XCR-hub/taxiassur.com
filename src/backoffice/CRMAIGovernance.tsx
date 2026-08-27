@@ -6,11 +6,11 @@ import {
   Play, RefreshCw, Filter, Zap, Shield, BarChart2, Users,
   CheckSquare, X, Wand2, Timer, Cpu
 } from 'lucide-react';
-import { aiGovernanceService, AIDecision, AI_AGENTS, AIAgent, AICouncilMeeting, AI_AGENT_MODELS, AI_PROVIDERS } from '@/lib/crm-ai-governance';
+import { AIDecision, AI_AGENTS, AIAgent, AICouncilMeeting, AI_AGENT_MODELS, AI_PROVIDERS } from '@/lib/crm-ai-governance';
 import { AIDecisionCard } from '@/components/crm/AIDecisionCard';
 import AIGovernanceAgents from './AIGovernanceAgents';
 import AIGovernanceSettings from './AIGovernanceSettings';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -131,8 +131,8 @@ const CRMAIGovernance: React.FC = () => {
 
   const loadAutoStatus = useCallback(async () => {
     try {
-      const { data } = await supabase.rpc('get_ai_governance_status');
-      if (data) setAutoStatus(data as typeof autoStatus);
+      const data = await nativeAdminCall<{ status?: typeof autoStatus }>('/v1/admin/ai-governance');
+      if (data.status) setAutoStatus(data.status);
     } catch (e) {
       console.warn('loadAutoStatus:', e);
     }
@@ -141,8 +141,8 @@ const CRMAIGovernance: React.FC = () => {
   const loadAllDecisions = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await aiGovernanceService.getDecisions();
-      setAllDecisions(data);
+      const data = await nativeAdminCall<{ decisions?: AIDecision[] }>('/v1/admin/ai-governance');
+      setAllDecisions(data.decisions || []);
     } catch (e) {
       console.error(e);
     } finally {
@@ -158,12 +158,8 @@ const CRMAIGovernance: React.FC = () => {
   }, [loadAllDecisions, loadAutoStatus]);
 
   const loadRecentLeads = async () => {
-    const { data } = await supabase
-      .from('crm_leads')
-      .select('id, first_name, last_name, email, status')
-      .order('created_at', { ascending: false })
-      .limit(20);
-    setRecentLeads((data as RecentLead[]) || []);
+    const data = await nativeAdminCall<{ recent_leads?: RecentLead[] }>('/v1/admin/ai-governance');
+    setRecentLeads(data.recent_leads || []);
   };
 
   const handleRefresh = async () => {
@@ -177,10 +173,10 @@ const CRMAIGovernance: React.FC = () => {
     setGenerateResult(null);
     setGenerateError(null);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-ai-decisions', {
-        body: { limit: 5 },
+      const data = await nativeAdminCall<{ generated: number; leads_analyzed: number; providers_used?: Record<string, number> }>('/v1/admin/ai-governance/generate', {
+        method: 'POST',
+        body: JSON.stringify({ limit: 5 }),
       });
-      if (error) throw error;
       setGenerateResult({ generated: data.generated, leads: data.leads_analyzed, providers_used: data.providers_used });
       await loadAllDecisions();
       setTimeout(() => setGenerateResult(null), 6000);
@@ -194,7 +190,7 @@ const CRMAIGovernance: React.FC = () => {
 
   const handleApprove = async (id: string) => {
     try {
-      await aiGovernanceService.approveDecision(id, 'admin');
+      await nativeAdminCall(`/v1/admin/ai-decisions/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ status: 'approved' }) });
       setApproveResult({ id, message: 'Décision approuvée et action appliquée.' });
       setTimeout(() => setApproveResult(null), 4000);
     } catch (e) {
@@ -205,14 +201,14 @@ const CRMAIGovernance: React.FC = () => {
   };
 
   const handleReject = async (id: string) => {
-    await aiGovernanceService.rejectDecision(id);
+    await nativeAdminCall(`/v1/admin/ai-decisions/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ status: 'rejected' }) });
     await loadAllDecisions();
     setSelectedDecisions(prev => { const n = new Set(prev); n.delete(id); return n; });
   };
 
   const handleBulkApprove = async () => {
     for (const id of selectedDecisions) {
-      await aiGovernanceService.approveDecision(id, 'admin');
+      await nativeAdminCall(`/v1/admin/ai-decisions/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ status: 'approved' }) });
     }
     setSelectedDecisions(new Set());
     await loadAllDecisions();
@@ -220,7 +216,7 @@ const CRMAIGovernance: React.FC = () => {
 
   const handleBulkReject = async () => {
     for (const id of selectedDecisions) {
-      await aiGovernanceService.rejectDecision(id);
+      await nativeAdminCall(`/v1/admin/ai-decisions/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ status: 'rejected' }) });
     }
     setSelectedDecisions(new Set());
     await loadAllDecisions();
@@ -231,10 +227,10 @@ const CRMAIGovernance: React.FC = () => {
     setCouncilRunning(true);
     setCouncilResult(null);
     try {
-      const { error } = await supabase.functions.invoke('generate-ai-decisions', {
-        body: { limit: 1, agents: ['lead_scorer', 'risk_analyzer', 'negotiation_assistant', 'email_composer', 'churn_predictor', 'cross_sell_recommender', 'sentiment_analyzer', 'response_generator'] },
+      await nativeAdminCall('/v1/admin/ai-governance/generate', {
+        method: 'POST',
+        body: JSON.stringify({ lead_id: councilLeadId, limit: 1 }),
       });
-      if (error) throw error;
       setCouncilResult('success');
       await loadAllDecisions();
     } catch {

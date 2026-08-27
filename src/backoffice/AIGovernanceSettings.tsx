@@ -4,7 +4,7 @@ import {
   ChevronRight, AlertTriangle, CheckCircle, Lock, Clock,
   Users, RefreshCw, Save
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 interface GovernanceRule {
   id: string;
@@ -77,23 +77,13 @@ const AIGovernanceSettings: React.FC = () => {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [{ data: rulesData }, { data: configData }] = await Promise.all([
-        supabase
-          .from('ai_governance_rules')
-          .select('id, rule_name, rule_type, description, is_active, priority')
-          .order('priority', { ascending: false }),
-        supabase
-          .from('system_config')
-          .select('key, value')
-          .in('key', ['ai_auto_approve_threshold', 'ai_max_decisions_per_day']),
-      ]);
-      setRules((rulesData as GovernanceRule[]) || []);
-      if (configData) {
-        for (const row of configData) {
-          if (row.key === 'ai_auto_approve_threshold') setAutoApproveThreshold(Number(row.value));
-          if (row.key === 'ai_max_decisions_per_day') setMaxDecisionsPerDay(Number(row.value));
-        }
-      }
+      const data = await nativeAdminCall<{
+        rules?: GovernanceRule[];
+        config?: { auto_approve_threshold?: number; max_decisions_per_day?: number };
+      }>('/v1/admin/ai-governance/settings');
+      setRules((data.rules || []).sort((a, b) => b.priority - a.priority));
+      setAutoApproveThreshold(Number(data.config?.auto_approve_threshold || 90));
+      setMaxDecisionsPerDay(Number(data.config?.max_decisions_per_day || 50));
     } catch (e) {
       console.error(e);
     } finally {
@@ -104,10 +94,10 @@ const AIGovernanceSettings: React.FC = () => {
   const toggleRule = async (rule: GovernanceRule) => {
     setSaving(rule.id);
     try {
-      await supabase
-        .from('ai_governance_rules')
-        .update({ is_active: !rule.is_active })
-        .eq('id', rule.id);
+      await nativeAdminCall('/v1/admin/ai-governance/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({ rule_id: rule.id, is_active: !rule.is_active }),
+      });
       setRules(prev => prev.map(r => r.id === rule.id ? { ...r, is_active: !r.is_active } : r));
     } finally {
       setSaving(null);
@@ -117,16 +107,13 @@ const AIGovernanceSettings: React.FC = () => {
   const saveThresholds = async () => {
     setSaving('thresholds');
     try {
-      await Promise.all([
-        supabase.from('system_config').upsert(
-          { key: 'ai_auto_approve_threshold', value: String(autoApproveThreshold) },
-          { onConflict: 'key' }
-        ),
-        supabase.from('system_config').upsert(
-          { key: 'ai_max_decisions_per_day', value: String(maxDecisionsPerDay) },
-          { onConflict: 'key' }
-        ),
-      ]);
+      await nativeAdminCall('/v1/admin/ai-governance/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          auto_approve_threshold: autoApproveThreshold,
+          max_decisions_per_day: maxDecisionsPerDay,
+        }),
+      });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (e) {
