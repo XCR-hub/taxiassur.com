@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { Activity, TrendingUp, Zap, Target, Brain, AlertTriangle, CheckCircle, Clock, ArrowLeft } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { useNavigate } from 'react-router-dom';
 import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
@@ -49,27 +48,27 @@ const AIMasterDashboard: React.FC = () => {
 
   const loadData = async () => {
     try {
-      const [decisionsRes, metricsRes, keywordsRes] = await Promise.all([
-        supabase
-          .from('ai_decisions_log')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(20),
-        supabase
-          .from('ai_performance_metrics')
-          .select('*')
-          .order('metric_date', { ascending: false })
-          .limit(7),
-        supabase
-          .from('ai_keywords_strategy')
-          .select('*')
-          .order('priority_score', { ascending: false })
-          .limit(10)
-      ]);
-
-      if (decisionsRes.data) setDecisions(decisionsRes.data);
-      if (metricsRes.data) setMetrics(metricsRes.data);
-      if (keywordsRes.data) setKeywords(keywordsRes.data);
+      const data = await nativeAdminCall<{
+        insights?: Array<{ type?: string; title?: string; description?: string; priority?: number; executed?: boolean }>;
+        metrics?: { total_leads?: number; conversion_rate?: number; trafic_organique?: number };
+      }>('/v1/admin/master-ai');
+      setDecisions((data.insights || []).map((item, index) => ({
+        id: `${item.type || 'insight'}-${index}`,
+        decision_type: item.type || 'analyse',
+        action_taken: item.description || item.title || 'Recommandation à examiner',
+        data_analyzed: {},
+        confidence_score: Math.min(100, Math.max(0, Number(item.priority || 5) * 10)),
+        status: item.executed ? 'executed' : 'pending',
+        created_at: new Date().toISOString(),
+      })));
+      setMetrics([{
+        metric_date: new Date().toISOString(),
+        total_leads: Number(data.metrics?.total_leads || 0),
+        conversion_rate: Number(data.metrics?.conversion_rate || 0),
+        organic_traffic: Number(data.metrics?.trafic_organique || 0),
+        ai_actions_count: data.insights?.length || 0,
+      }]);
+      setKeywords([]);
     } catch (error) {
       logger.error('Error loading AI data:', error);
     } finally {
@@ -80,19 +79,13 @@ const AIMasterDashboard: React.FC = () => {
   const executeAIMaster = async () => {
     setExecuting(true);
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const response = await fetch(`${supabaseUrl}/functions/v1/master-ai-decision-engine`, {
+      const result = await nativeAdminCall<{ success?: boolean }>('/v1/admin/master-ai', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': (await internalFunctionHeaders()).Authorization
-        }
+        body: JSON.stringify({ action: 'analyze' }),
       });
-
-      const result = await response.json();
       logger.log('IA Master exécutée:', result);
 
-      toast.success(`✅ IA Master exécutée avec succès!\n\n${result.decisions_count} décisions prises\nTendance: ${result.performance_trend}\nLeads 24h: ${result.leads_24h}`);
+      toast.success(result.success ? 'Analyse IA Master ajoutée avec succès' : 'Analyse IA terminée');
 
       await loadData();
     } catch (error) {

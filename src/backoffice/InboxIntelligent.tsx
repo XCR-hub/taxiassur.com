@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import { nativeAdminIntelligentInbox, nativeAdminIntelligentInboxAction, nativeAdminInboxWorkflow } from '@/lib/native-admin-data';
-import { supabase } from '@/lib/supabase';
-import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 import { toast } from '@/lib/toast';
 import {
   Mail,
@@ -260,35 +258,12 @@ export default function InboxIntelligent() {
     const leadId = prompt('Entrez l\'ID du lead ou son email:');
     if (!leadId) return;
 
+    if (!confirm(`Lier cet email au lead correspondant à « ${leadId} » ?`)) return;
+
     try {
-      // Chercher le lead
-      const { data: lead, error: searchError } = await supabase
-        .from('crm_leads')
-        .select('id, email, full_name')
-        .or(`id.eq.${leadId},email.ilike.%${leadId}%`)
-        .limit(1)
-        .single();
-
-      if (searchError) throw new Error('Lead non trouvé');
-
-      const confirmed = confirm(
-        `Lier cet email au lead ?\n\n` +
-        `Lead: ${lead.full_name} (${lead.email})`
-      );
-
-      if (!confirmed) return;
-
-      // Lier l'email
-      await supabase
-        .from('email_messages')
-        .update({ lead_id: lead.id })
-        .eq('id', emailId);
-
-      // Assigner au dossier lead
-      await supabase.rpc('assign_email_to_folder', {
-        p_email_id: emailId,
-        p_classification_type: 'lead',
-        p_lead_id: lead.id
+      await nativeAdminIntelligentInboxAction('link', {
+        email_id: emailId,
+        lead_query: leadId,
       });
 
       toast.success('✅ Email lié au lead');
@@ -309,25 +284,11 @@ export default function InboxIntelligent() {
     if (!email) return;
 
     try {
-      const { data: sendResult, error } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
-        body: {
-          to: email.from_email,
-          subject: `Re: ${email.subject}`,
-          content: replyContent,
-          reply_to_message_id: emailId
-        }
-      });
-
-      if (error || !sendResult?.success) throw error || new Error("Envoi refusé");
-
-      // Enregistrer l'action
-      await supabase
-        .from('email_actions')
-        .insert({
-          email_id: emailId,
-          action_type: 'reply',
-          metadata: { content: replyContent }
-        });
+      const sendResult = await nativeAdminInboxWorkflow('reply', {
+        email_id: emailId,
+        content: replyContent,
+      }) as { queued?: boolean };
+      if (!sendResult.queued) throw new Error("Envoi refusé");
 
       toast.success('✅ Réponse envoyée');
       setReplyingTo(null);

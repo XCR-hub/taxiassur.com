@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import {
   Brain, Zap, Users, Activity, RefreshCw,
   CheckCircle, AlertTriangle, Code, Rocket,
@@ -7,7 +6,7 @@ import {
   Cpu, GitBranch, Database, Sparkles,
   ArrowUp, ArrowDown, Minus,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { logger } from '@/lib/logger';
 
 /* ── Types ── */
@@ -171,16 +170,16 @@ export default function AIAutonomousDashboard() {
 
   const loadData = useCallback(async () => {
     try {
-      const [metricsRes, decisionsRes, suggestionsRes, deploymentsRes] = await Promise.all([
-        supabase.rpc('calculate_ai_metrics'),
-        supabase.from('ai_decisions').select('*').order('created_at', { ascending: false }).limit(15),
-        supabase.from('ai_code_suggestions').select('*').order('created_at', { ascending: false }).limit(10),
-        supabase.from('ai_deployments').select('*').order('created_at', { ascending: false }).limit(10),
-      ]);
-      if (metricsRes.data) setMetrics(metricsRes.data);
-      if (decisionsRes.data) setDecisions(decisionsRes.data);
-      if (suggestionsRes.data) setSuggestions(suggestionsRes.data);
-      if (deploymentsRes.data) setDeployments(deploymentsRes.data);
+      const data = await nativeAdminCall<{
+        metrics: AIMetrics;
+        decisions: AIDecision[];
+        suggestions: CodeSuggestion[];
+        deployments: Deployment[];
+      }>('/v1/admin/ai-autonomous');
+      setMetrics(data.metrics);
+      setDecisions(data.decisions || []);
+      setSuggestions(data.suggestions || []);
+      setDeployments(data.deployments || []);
       setLastRefresh(new Date());
     } catch (err) {
       logger.error('loadData', err);
@@ -199,12 +198,10 @@ export default function AIAutonomousDashboard() {
     setConfirm(null);
     setAiRunning(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/autonomous-ai-engine`, {
+      const data = await nativeAdminCall<{ success?: boolean }>('/v1/admin/ai-autonomous', {
         method: 'POST',
-        headers: { Authorization: (await internalFunctionHeaders()).Authorization, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ context: { currentMetrics: metrics, timestamp: new Date().toISOString() }, decisionType: 'performance_optimization' }),
+        body: JSON.stringify({ action: 'analyze' }),
       });
-      const data = await res.json();
       if (data.success) {
         showToast('Analyse IA terminée avec succès');
         await loadData();
@@ -223,12 +220,10 @@ export default function AIAutonomousDashboard() {
     setConfirm(null);
     setDeploying(true);
     try {
-      await supabase.from('ai_code_suggestions').update({ status: 'approved' }).eq('status', 'pending').in('priority', ['high', 'medium']);
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-deploy-improvements`, {
+      const data = await nativeAdminCall<{ success?: boolean; changesApplied?: number; message?: string }>('/v1/admin/ai-autonomous', {
         method: 'POST',
-        headers: { Authorization: (await internalFunctionHeaders()).Authorization, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'approve_batch' }),
       });
-      const data = await res.json();
       if (data.success) {
         showToast(`${data.changesApplied ?? 0} modification(s) déployée(s)`);
         await loadData();
@@ -244,13 +239,13 @@ export default function AIAutonomousDashboard() {
   };
 
   const approveSuggestion = async (id: string) => {
-    await supabase.from('ai_code_suggestions').update({ status: 'approved' }).eq('id', id);
+    await nativeAdminCall('/v1/admin/ai-autonomous', { method: 'POST', body: JSON.stringify({ action: 'review', id, status: 'approved' }) });
     await loadData();
     showToast('Suggestion approuvée');
   };
 
   const rejectSuggestion = async (id: string) => {
-    await supabase.from('ai_code_suggestions').update({ status: 'rejected' }).eq('id', id);
+    await nativeAdminCall('/v1/admin/ai-autonomous', { method: 'POST', body: JSON.stringify({ action: 'review', id, status: 'rejected' }) });
     await loadData();
     showToast('Suggestion rejetée');
   };
