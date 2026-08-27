@@ -28,7 +28,7 @@ import { CRMPushNotifications } from '@/components/CRMPushNotifications';
 import { IncomingCallNotification } from '@/components/crm/IncomingCallNotification';
 import AdminLogin from '@/components/AdminLogin';
 import NavigationMenu from './NavigationMenu';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminRequestPasswordReset } from '@/lib/native-admin-auth';
 import { logger } from '@/lib/logger';
 
 const CRMLayout: React.FC = () => {
@@ -86,9 +86,7 @@ const CRMLayout: React.FC = () => {
     setPasswordResetMessage(null);
 
     try {
-      const redirectTo = `${window.location.origin}/auth/set-password`;
-      const { error } = await supabase.auth.resetPasswordForEmail(user.email, { redirectTo });
-      if (error) throw error;
+      await nativeAdminRequestPasswordReset(user.email);
 
       setPasswordResetMessage({ type: 'success', text: 'Email de réinitialisation envoyé.' });
     } catch (error) {

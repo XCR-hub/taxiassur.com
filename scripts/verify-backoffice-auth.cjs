@@ -254,6 +254,9 @@ function verifySourceGuards() {
   addCheck('set-password no longer uses Supabase auth flows', !setPassword.includes('supabase.auth') && !login.includes('supabase.auth'), {
     file: 'src/pages/SetPassword.tsx',
   });
+  addCheck('authenticated backoffice uses native password reset', crmLayout.includes('nativeAdminRequestPasswordReset(user.email)') && !crmLayout.includes('resetPasswordForEmail'), {
+    file: 'src/backoffice/CRMLayout.tsx',
+  });
   addCheck('set-password is noindex', setPassword.includes('noindex, nofollow'), {
     file: 'src/pages/SetPassword.tsx',
   });
