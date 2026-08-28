@@ -7,16 +7,6 @@ interface PerformanceOptimizerProps {
 
 const PerformanceOptimizer: React.FC<PerformanceOptimizerProps> = ({ children }) => {
   useEffect(() => {
-    // Preload critical resources (removed heavy image preload for mobile performance)
-    const preloadCriticalResources = () => {
-      // Preload fonts only
-      const fontLink = document.createElement('link');
-      fontLink.rel = 'preload';
-      fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap';
-      fontLink.as = 'style';
-      document.head.appendChild(fontLink);
-    };
-
     // Optimize images on scroll
     const optimizeImagesOnScroll = () => {
       const images = document.querySelectorAll('img[loading="lazy"]');
@@ -58,7 +48,6 @@ const PerformanceOptimizer: React.FC<PerformanceOptimizerProps> = ({ children })
     };
 
     // Initialize optimizations
-    preloadCriticalResources();
     optimizeImagesOnScroll();
     preventLayoutShifts();
 

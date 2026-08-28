@@ -108,9 +108,9 @@ export default defineConfig(({ mode }) => ({
     minify: 'terser',
     target: ['es2020', 'chrome80', 'safari14'],
     chunkSizeWarningLimit: 500,
-    modulePreload: {
-      polyfill: false,
-    },
+    // Route chunks are lazy-loaded. Preloading the entry's full dependency graph
+    // fetched most of the backoffice on every page and produced unused-preload warnings.
+    modulePreload: false,
     rollupOptions: {
       external: ['@sentry/react'],
       output: {
