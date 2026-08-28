@@ -265,6 +265,8 @@ requireMatch('src/pages/ClientAccessByToken.tsx', /storeClientAccessToken\(token
 forbidMatch('src/pages/client/ClientPaiements.tsx', /supabase|VITE_SUPABASE|send-payment-link-monetico/i, 'client payments page still sends links through Supabase');
 forbidMatch('src/pages/AssuranceTaxiSollyAzar.tsx', /supabase|VITE_SUPABASE/i, 'Solly Azar public page still reads from Supabase');
 requireMatch('src/pages/AssuranceTaxiSollyAzar.tsx', /loadPublicInsuranceCompany\('SOLLY_AZAR'\)/, 'Solly Azar public page does not use the native insurance company endpoint');
+forbidMatch('src/router.tsx', /ProspectDocuments/, 'legacy Supabase prospect documents page is still bundled');
+requireMatch('src/router.tsx', /path:\s*['"]\/prospect\/documents['"][\s\S]{0,100}element:\s*<EspaceProspect\s*\/>/, 'legacy prospect document links do not resolve to the native XCR portal');
 requireMatch('src/pages/client/ClientPaiements.tsx', /emailClientPlatformPaymentLink\(accessToken, paymentId\)/, 'client payment e-mail is not bound to the native client token');
 requireMatch('src/lib/client-platform-api.ts', /\/v1\/client\/payments\/\$\{encodeURIComponent\(paymentId\)\}\/email/, 'native client payment e-mail helper is missing');
 forbidMatch('src/lib/two-factor-auth.ts', /Math\.random\(\)[\s\S]*send-sms\.php|sendSMSVerificationCode/, 'browser can generate and send its own SMS verification code');
@@ -413,10 +415,6 @@ requireMatch(clientSubscription, /rib_file_path[\s\S]*remove\(\[existing\.rib_fi
 forbidMatch(clientSubscriptionForm, /leadId|\.from\(['"]lead_subscription_details|\.getPublicUrl/, 'subscription form trusts a lead id or writes sensitive data directly');
 requireMatch(clientSubscriptionForm, /uploadClientPlatformDocument\(token, rib, 'rib'\)[\s\S]*saveClientPlatformSubscription\(token/, 'subscription form does not use the native antivirus RIB workflow');
 requireMatch('src/pages/EspaceProspect.tsx', /<ClientSubscriptionForm[\s\S]{0,120}token=\{token/, 'prospect subscription is not token-bound');
-forbidMatch('src/pages/ProspectDocuments.tsx', /anonClient\s*\.from\(/, 'legacy prospect document route reads or writes rows directly');
-requireMatch('src/pages/ProspectDocuments.tsx', /get_prospect_documents_by_token[\s\S]*uploadToSignedUrl[\s\S]*action: 'finalize'/, 'legacy prospect route is not token-bound and signed');
-forbidMatch('src/components/client/ComplementaryDocuments.tsx', /leadId|anonClient\s*\.from\(|getPublicUrl|\.upload\(/, 'complementary documents trust lead id or public storage');
-requireMatch('src/components/client/ComplementaryDocuments.tsx', /list-requests[\s\S]*uploadToSignedUrl[\s\S]*action: 'finalize'/, 'complementary request fulfillment is not server-authorized');
 requireMatch(clientDocumentUpload, /action === 'list-requests'[\s\S]*eq\('lead_id', lead\.id\)/, 'document requests can be listed across leads');
 requireMatch(clientDocumentUpload, /requestId[\s\S]*eq\('id', requestId\)\.eq\('lead_id', lead\.id\)/, 'document request fulfillment is not bound to its lead');
 const paymentLinkEmail = 'supabase/functions/send-payment-link-email/index.ts';
@@ -606,11 +604,6 @@ for (const [file, endpoint] of [
   ['src/backoffice/WhatsAppManager.tsx', 'send-whatsapp'],
 ]) {
   requireMatch(file, new RegExp(`withTimeout\\([\\s\\S]*${endpoint}[\\s\\S]*45_000`), `${endpoint} manual send can spin forever`);
-}
-for (const file of [
-  'src/components/client/ComplementaryDocuments.tsx',
-]) {
-  requireMatch(file, /withTimeout\([\s\S]*action: 'prepare'[\s\S]*20_000[\s\S]*withTimeout\([\s\S]*uploadToSignedUrl[\s\S]*60_000[\s\S]*withTimeout\([\s\S]*action: 'finalize'[\s\S]*20_000/, 'document upload stages can spin forever');
 }
 const idempotentDeliveryCaller = 'src/lib/invoke-idempotent-delivery.ts';
 requireMatch(idempotentDeliveryCaller, /function canonicalize[\s\S]*\.sort\(/, 'shared frontend delivery caller lacks canonical signatures');

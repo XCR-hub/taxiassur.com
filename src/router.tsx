@@ -7,7 +7,6 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const EspaceClient = lazy(() => import('./pages/EspaceClient'));
 const ClientAccessByToken = lazy(() => import('./pages/ClientAccessByToken'));
 const EspaceProspect = lazy(() => import('./pages/EspaceProspect'));
-const ProspectDocuments = lazy(() => import('./pages/ProspectDocuments'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Blog = lazy(() => import('./pages/Blog'));
 const Post = lazy(() => import('./pages/Post'));
@@ -212,7 +211,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/prospect/documents',
-    element: <ProspectDocuments />,
+    element: <EspaceProspect />,
   },
   {
     path: '/espace-prospect/paiement-success',
