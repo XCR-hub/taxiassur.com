@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "@/lib/toast";
 import { withTimeout } from "@/lib/promise-timeout";
 import { SecureDocumentLink } from "./SecureDocumentLink";
+import { nativeAdminCall, nativeAdminUploadContractDocument } from "@/lib/native-admin-data";
 
 interface ContractSignatureManagerProps {
   leadId: string;
@@ -81,6 +82,20 @@ export const ContractSignatureManager: React.FC<ContractSignatureManagerProps> =
 
     const loadSignatureData = async () => {
       try {
+        const native = await nativeAdminCall<{ lead?: SignatureData }>(`/v1/admin/leads/${encodeURIComponent(leadId)}`);
+        const data = native.lead || null;
+        setSignatureData(data);
+        if (data) {
+          setForm({
+            signature_method: data.signature_method,
+            signature_date: data.signature_date || "",
+            signature_proof_url: data.signature_proof_url || "",
+            signature_status: data.signature_status || "",
+            signature_notes: data.signature_notes || "",
+          });
+        }
+        return;
+        {
         const { data, error } = await supabase
           .from("crm_leads")
           .select(`
@@ -110,6 +125,7 @@ export const ContractSignatureManager: React.FC<ContractSignatureManagerProps> =
             signature_status: data.signature_status || "",
             signature_notes: data.signature_notes || "",
           });
+        }
         }
       } catch (error) {
         console.error("Erreur chargement signature:", error);
@@ -200,46 +216,8 @@ export const ContractSignatureManager: React.FC<ContractSignatureManagerProps> =
         return;
       }
 
-      const updateField = type === "contract"
-        ? "contract_url"
-        : "special_conditions_url";
-      const previousPath = type === "contract"
-        ? signatureData?.contract_url
-        : signatureData?.special_conditions_url;
-      const filePath = leadId + "/contracts/" + type + "_" +
-        crypto.randomUUID() + ".pdf";
-
       try {
-        const { error: uploadError } = await withTimeout(
-          supabase.storage.from("contract-documents").upload(filePath, file, {
-            contentType: "application/pdf",
-            upsert: false,
-          }),
-          60_000,
-        );
-        if (uploadError) throw uploadError;
-
-        const { error: updateError } = await withTimeout(
-          supabase.from("crm_leads").update({ [updateField]: filePath }).eq(
-            "id",
-            leadId,
-          ),
-          20_000,
-        );
-        if (updateError) {
-          await supabase.storage.from("contract-documents").remove([filePath]);
-          throw updateError;
-        }
-
-        if (previousPath?.startsWith(leadId + "/contracts/")) {
-          const { error: cleanupError } = await withTimeout(
-            supabase.storage.from("contract-documents").remove([previousPath]),
-            20_000,
-          );
-          if (cleanupError) {
-            console.error("Erreur nettoyage ancien contrat:", cleanupError);
-          }
-        }
+        await nativeAdminUploadContractDocument(leadId, type, file);
 
         toast.success("Document uploadé avec succès");
         await loadSignatureData();
@@ -311,18 +289,18 @@ export const ContractSignatureManager: React.FC<ContractSignatureManagerProps> =
           <h4 className="font-semibold text-sm text-gray-900 mb-3">
             📄 Documents contractuels
           </h4>
-          <div className="grid grid-cols-2 gap-4">
+          <div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-2">
-                Contrat
+                Contrat / dispositions particulières
               </label>
-              {signatureData?.contract_url
+              {(signatureData?.contract_url || signatureData?.special_conditions_url)
                 ? (
                   <SecureDocumentLink
-                    filePath={signatureData.contract_url}
+                    filePath={signatureData.contract_url || signatureData.special_conditions_url || ""}
                     source="crm_lead_documents"
                     bucket="contract-documents"
-                    fileName="Contrat.pdf"
+                    fileName="Contrat-dispositions-particulieres.pdf"
                     showText
                     customText="Voir le contrat"
                     className="flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm"
@@ -345,7 +323,7 @@ export const ContractSignatureManager: React.FC<ContractSignatureManagerProps> =
                 )}
             </div>
 
-            <div>
+            <div className="hidden" aria-hidden="true">
               <label className="block text-xs font-medium text-gray-700 mb-2">
                 Dispositions particulières
               </label>

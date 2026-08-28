@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { X, Send, MessageCircle, User, Phone, Clock, CheckCircle } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { withTimeout } from '@/lib/promise-timeout';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { clearDeliveryRequestId, getDeliveryRequestId } from '@/lib/delivery-idempotency';
 import { toast } from '@/lib/toast';
 
@@ -91,21 +90,19 @@ const SMSSendModal: React.FC<SMSSendModalProps> = ({
     try {
       const deliverySignature = JSON.stringify({ leadId, to: leadPhone, content: message.trim(), tag: 'crm-manual' });
       const requestId = getDeliveryRequestId('sms', deliverySignature);
-      const { data, error } = await withTimeout(supabase.functions.invoke('send-sms-brevo', {
-        body: {
-          to: leadPhone,
+      const data = await nativeAdminCall<{ ok?: boolean; success?: boolean; error?: string }>(
+        `/v1/admin/leads/${encodeURIComponent(leadId)}/sms`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'send',
           content: message.trim(),
-          lead_id: leadId,
-          tag: 'crm-manual',
-          requestId,
+            request_id: requestId,
+          }),
         },
-      }), 45_000);
+      );
 
-      if (error) {
-        throw new Error(error.message || 'Erreur Edge Function');
-      }
-
-      if (data && !data.success) {
+      if (!data?.ok && !data?.success) {
         throw new Error(data.error || 'Echec envoi SMS');
       }
 

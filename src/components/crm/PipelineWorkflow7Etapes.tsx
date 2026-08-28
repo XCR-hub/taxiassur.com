@@ -9,6 +9,7 @@ import PaiementRIBStep from './PaiementRIBStep';
 import ContratSignatureStep from './ContratSignatureStep';
 import { CallDialog } from './CallDialog';
 import { toast } from '@/lib/toast';
+import { nativeAdminLead, nativeAdminUpdateLead } from '@/lib/native-admin-data';
 
 interface PipelineWorkflow7EtapesProps {
   leadId: string;
@@ -68,7 +69,8 @@ const PIPELINE_STEPS: StepInfo[] = [
 ];
 
 export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWorkflow7EtapesProps) {
-  const [currentStage, setCurrentStage] = useState<string>(leadData.pipeline_stage || 'nouveau_lead');
+  const initialStage = String(leadData.pipeline_stage || leadData.current_stage_key || 'nouveau_lead').toLowerCase();
+  const [currentStage, setCurrentStage] = useState<string>(['nouveau', 'new_lead', 'nouveau_lead'].includes(initialStage) ? 'nouveau_lead' : initialStage);
   const [loading, setLoading] = useState(false);
   const [showCallDialog, setShowCallDialog] = useState(false);
 
@@ -112,6 +114,15 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
   async function moveToStage(targetStage: string) {
     setLoading(true);
     try {
+      const native = await nativeAdminLead(leadId) as { lead?: { id?: string } };
+      if (!native.lead?.id) throw new Error('Lead introuvable');
+      await nativeAdminUpdateLead(leadId, {
+        pipeline_stage: targetStage,
+        updated_at: new Date().toISOString(),
+      });
+      setCurrentStage(targetStage);
+      return;
+
       // First, verify the lead exists
       const { data: existingLead, error: fetchError } = await supabase
         .from('crm_leads')

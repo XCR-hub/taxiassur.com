@@ -17,7 +17,7 @@ import LeadDeleteSecure from '@/components/crm/LeadDeleteSecure';
 import SMSSendModal from '@/components/crm/SMSSendModal';
 import SMSConversationPanel from '@/components/crm/SMSConversationPanel';
 import { NATIVE_ADMIN_TOKEN_KEY } from '@/lib/native-admin-auth';
-import { nativeAdminLead, nativeAdminUpdateLead } from '@/lib/native-admin-data';
+import { nativeAdminCall, nativeAdminLead, nativeAdminUpdateLead } from '@/lib/native-admin-data';
 
 interface Lead {
   id: string;
@@ -198,6 +198,33 @@ const CRMLeadDetail: React.FC = () => {
     if (!leadId) return;
 
     try {
+      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
+        const response = await nativeAdminCall<{ summary?: {
+          documents?: Array<{ status?: string; document_type?: string }>;
+          total_documents?: number;
+          validated_documents?: number;
+          pending_documents?: number;
+          missing_documents?: number;
+          documents_complete?: boolean;
+          quotes?: unknown[];
+          contracts?: unknown[];
+          total_events?: number;
+          notes_count?: number;
+        } }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/summary`);
+        const summary = response.summary || {};
+        setStats({
+          documentsComplete: summary.documents_complete === true,
+          documentsMissing: Number(summary.missing_documents || 0),
+          basketCount: Number(summary.pending_documents || 0),
+          quotesCount: summary.quotes?.length || 0,
+          hasContract: (summary.contracts?.length || 0) > 0,
+          unreadMessages: 0,
+          totalInteractions: Number(summary.total_events || 0),
+          notesCount: Number(summary.notes_count || 0),
+        });
+        return;
+      }
+
       // Documents
       const { data: documents } = await supabase
         .from('crm_lead_documents')
@@ -288,7 +315,7 @@ const CRMLeadDetail: React.FC = () => {
   useRealtimeDocuments({
     leadId,
     onDocumentChange: handleDocumentChange,
-    enabled: !!leadId
+    enabled: false
   });
 
   useEffect(() => {

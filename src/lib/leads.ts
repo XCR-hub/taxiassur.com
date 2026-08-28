@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { supabase } from './supabase';
 import { logger } from '@/lib/logger';
+import { PLATFORM_BASE_URL } from '@/lib/platform-api';
 import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
 
 export const LeadStatusSchema = z.enum(['nouveau', 'contacté', 'devis envoyé', 'client', 'perdu']);
@@ -421,6 +422,27 @@ export async function createLead(input: CreateLeadInput, forceNew: boolean = fal
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedInput.email)) {
       return { success: false, error: 'Adresse email invalide.' };
     }
+
+    const nativeResponse = await fetch(`${PLATFORM_BASE_URL}/v1/public/leads`, {
+      method: 'POST',
+      credentials: 'omit',
+      cache: 'no-store',
+      signal: AbortSignal.timeout(20_000),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...normalizedInput, force_new: forceNew }),
+    });
+    const nativePayload = await nativeResponse.json().catch(() => ({}));
+    if (!nativeResponse.ok || nativePayload?.ok !== true || !nativePayload?.lead_id) {
+      logger.warn('Native lead endpoint rejected request:', nativeResponse.status, nativePayload?.error);
+      return { success: false, error: 'Impossible de crÃ©er le lead. Veuillez rÃ©essayer ou nous appeler au 01 80 85 57 86.' };
+    }
+    return {
+      success: true,
+      leadId: String(nativePayload.lead_id),
+      accessToken: typeof nativePayload.access_token === 'string' && nativePayload.access_token
+        ? nativePayload.access_token
+        : undefined,
+    };
 
     const nameParts = normalizedInput.name.split(/\s+/);
     const firstName = nameParts[0] || 'Client';

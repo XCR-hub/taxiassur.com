@@ -221,7 +221,12 @@ const requiredChecks = [
   {
     label: 'Turnstile frontend helper calls server verification',
     file: 'src/lib/turnstile.ts',
-    patterns: ['verify-turnstile', 'getTurnstileSiteKey', 'readPublicEnv', 'ENV_CONFIG'],
+    patterns: ['/v1/public/turnstile/verify', 'PLATFORM_BASE_URL', 'getTurnstileSiteKey', 'readPublicEnv', 'ENV_CONFIG'],
+  },
+  {
+    label: 'native platform verifies Turnstile with Cloudflare',
+    file: 'server/taxiassur-platform-api.mjs',
+    patterns: ['/v1/public/turnstile/verify', 'challenges.cloudflare.com/turnstile/v0/siteverify', 'turnstileSecret'],
   },
   {
     label: 'public runtime config enables Turnstile in production',

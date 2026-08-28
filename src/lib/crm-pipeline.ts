@@ -232,7 +232,16 @@ export const pipelineService = {
       if (filters?.assignedTo) rows = rows.filter((lead: any) => lead.assigned_to === filters.assignedTo);
       if (filters?.source) rows = rows.filter((lead: any) => lead.source === filters.source);
       if (filters?.search) { const needle=filters.search.toLowerCase(); rows=rows.filter((lead:any)=>[lead.first_name,lead.last_name,lead.email,lead.phone].some(value=>String(value||'').toLowerCase().includes(needle))); }
-      return rows.map((lead:any)=>({...lead,full_name:`${lead.first_name||''} ${lead.last_name||''}`.trim()||lead.email,vehicle_type:lead.vehicle_type||lead.metadata?.vehicle_type||null})) as CRMLead[];
+      return rows.map((lead:any)=>{
+        const rawStatus=String(lead.status||'').toUpperCase();
+        const stage=String(lead.current_stage_key||lead.pipeline_stage||'').toLowerCase();
+        const status=PIPELINE_STATUSES[rawStatus]
+          ? rawStatus
+          : ['nouveau','nouveau_lead','new_lead'].includes(stage)||['TAXI','VTC','AUTRE'].includes(rawStatus)
+            ? 'NOUVEAU_LEAD'
+            : rawStatus;
+        return {...lead,status,full_name:`${lead.first_name||''} ${lead.last_name||''}`.trim()||lead.email,vehicle_type:lead.vehicle_type||lead.metadata?.vehicle_type||null};
+      }) as CRMLead[];
     }
     let query = supabase
       .from('crm_leads')

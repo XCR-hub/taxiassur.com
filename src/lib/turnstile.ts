@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { PLATFORM_BASE_URL } from './platform-api';
 
 type RuntimeEnv = Record<string, string | undefined>;
 
@@ -34,10 +34,18 @@ export async function verifyTurnstileToken(token: string, action = 'lead_form'):
   if (!isTurnstileEnabled()) return true;
   if (!token) return false;
 
-  const { data, error } = await supabase.functions.invoke('verify-turnstile', {
-    body: { token, action },
-  });
-
-  if (error) return false;
-  return Boolean(data?.success);
+  try {
+    const response = await fetch(`${PLATFORM_BASE_URL}/v1/public/turnstile/verify`, {
+      method: 'POST',
+      credentials: 'omit',
+      cache: 'no-store',
+      signal: AbortSignal.timeout(15_000),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, action }),
+    });
+    const data = await response.json().catch(() => ({}));
+    return response.ok && data?.success === true;
+  } catch {
+    return false;
+  }
 }

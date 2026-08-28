@@ -5,6 +5,7 @@ import { Mail, MessageSquare, Phone, Send, CheckCircle2, AlertCircle, Loader2, F
 import DocumentValidationComplete from './DocumentValidationComplete';
 import { toast } from '@/lib/toast';
 import { getRequiredDocuments } from '@/lib/document-requirements';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 interface CollecteDocumentsStepProps {
   leadId: string;
@@ -79,6 +80,11 @@ export default function CollecteDocumentsStep({
 
   async function loadLeadName() {
     try {
+      const native = await nativeAdminCall<{ lead?: { first_name?: string; full_name?: string; email?: string } }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/document-collection`);
+      const nativeLead = native.lead;
+      setActualFirstName(nativeLead?.first_name || nativeLead?.full_name?.split(' ')[0] || nativeLead?.email?.split('@')[0] || 'Madame, Monsieur');
+      return;
+
       const { data, error } = await supabase
         .from('crm_leads')
         .select('first_name, last_name, full_name, email')
@@ -108,6 +114,10 @@ export default function CollecteDocumentsStep({
 
   async function loadTemplates() {
     try {
+      const native = await nativeAdminCall<{ templates?: CommunicationTemplate[] }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/document-collection`);
+      setTemplates(native.templates || []);
+      return;
+
       const { data, error } = await supabase
         .from('crm_communication_templates')
         .select('*')
@@ -124,6 +134,40 @@ export default function CollecteDocumentsStep({
 
   async function loadDocumentStats() {
     try {
+      {
+      const native = await nativeAdminCall<{ documents?: Array<{ document_type?: string; status?: string; custom_label?: string }> }>(`/v1/admin/documents?lead_id=${encodeURIComponent(leadId)}&scope=all`);
+      const nativeDocuments = native.documents || [];
+      const documentLabels: Record<string, string> = {};
+      requiredDocs.forEach(d => { documentLabels[d.type] = d.label; });
+      const documentsList: DocumentInfo[] = nativeDocuments.map(d => ({
+        type: d.document_type || 'custom',
+        label: d.custom_label || documentLabels[d.document_type || ''] || d.document_type || 'Document',
+        status: d.status || 'pending',
+      }));
+      setDocuments(documentsList);
+      const categoryStatus = new Map<string, Set<string>>();
+      documentsList.forEach(d => {
+        const key = d.type === 'custom' ? `custom_${d.label}` : d.type;
+        if (!categoryStatus.has(key)) categoryStatus.set(key, new Set());
+        categoryStatus.get(key)!.add(d.status);
+      });
+      let categoriesValidated = 0;
+      let categoriesPending = 0;
+      requiredDocs.forEach(reqDoc => {
+        const statuses = categoryStatus.get(reqDoc.type);
+        if (statuses?.has('validated') || statuses?.has('verified')) categoriesValidated++;
+        else if (statuses?.size) categoriesPending++;
+      });
+      setStats({
+        categoriesValidated,
+        categoriesPending,
+        categoriesMissing: requiredDocs.length - categoriesValidated - categoriesPending,
+        totalRequired: requiredDocs.length,
+        pendingDocsCount: documentsList.filter(d => d.status === 'pending').length,
+      });
+      return;
+      }
+
       const { data, error } = await supabase
         .from('crm_lead_documents')
         .select('document_type, status, custom_label')
@@ -178,6 +222,10 @@ export default function CollecteDocumentsStep({
 
   async function loadCustomDocuments() {
     try {
+      const native = await nativeAdminCall<{ documents?: Array<{ document_type?: string; custom_label?: string }> }>(`/v1/admin/documents?lead_id=${encodeURIComponent(leadId)}&scope=all`);
+      setCustomDocuments((native.documents || []).filter(d => d.document_type === 'custom' && d.custom_label).map(d => String(d.custom_label)));
+      return;
+
       const { data, error } = await supabase
         .from('crm_lead_documents')
         .select('custom_label')

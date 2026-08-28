@@ -4,6 +4,7 @@ import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 import { SecureDocumentLink } from './SecureDocumentLink';
 import { Upload, CheckCircle2, X, Loader2, Ligature as FileSignature, AlertCircle, PartyPopper, Send } from 'lucide-react';
 import { toast } from '@/lib/toast';
+import { nativeAdminCall, nativeAdminUploadContractDocument } from '@/lib/native-admin-data';
 
 interface ContratSignatureStepProps {
   leadId: string;
@@ -49,6 +50,9 @@ export default function ContratSignatureStep({ leadId }: ContratSignatureStepPro
 
   async function loadDocuments() {
     try {
+      const native = await nativeAdminCall<{ documents?: ContractDocument[] }>(`/v1/admin/documents?lead_id=${encodeURIComponent(leadId)}&scope=all`);
+      setDocuments((native.documents || []).filter(document => REQUIRED_DOCS.some(required => required.type === document.document_type)));
+      return;
       const { data, error } = await supabase
         .from('lead_contract_documents')
         .select('*')
@@ -88,6 +92,11 @@ export default function ContratSignatureStep({ leadId }: ContratSignatureStepPro
     setUploading(docType);
 
     try {
+      if (file.type !== 'application/pdf') throw new Error('Le document doit etre au format PDF');
+      await nativeAdminUploadContractDocument(leadId, docType, file);
+      toast.success('Document uploadé avec succès !');
+      await loadDocuments();
+      return;
       const safeName = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.-]+/g, '_').replace(/_+/g, '_');
       const fileName = `${leadId}/${docType}/${Date.now()}_${safeName}`;
       const { data: uploadData, error: uploadError } = await supabase

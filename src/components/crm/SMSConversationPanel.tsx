@@ -3,8 +3,7 @@ import {
   MessageSquare, Send, Loader2, Bot, User, Clock,
   Sparkles, RefreshCw, Phone, ChevronDown, Zap, AlertCircle
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { withTimeout } from '@/lib/promise-timeout';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { clearDeliveryRequestId, getDeliveryRequestId } from '@/lib/delivery-idempotency';
 
 interface SMSMessage {
@@ -54,49 +53,16 @@ const SMSConversationPanel: React.FC<Props> = ({ leadId, leadPhone, leadFirstNam
   async function loadConversation() {
     setLoading(true);
     try {
-      const { data: convData } = await supabase
-        .from('sms_conversations')
-        .select('*')
-        .eq('lead_id', leadId)
-        .eq('status', 'active')
-        .order('last_message_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (convData) {
-        setConversation(convData);
-        await loadMessages(convData.id);
-
-        if (convData.unread_count > 0) {
-          await supabase
-            .from('sms_conversations')
-            .update({ unread_count: 0 })
-            .eq('id', convData.id);
-        }
-      } else {
-        const { data: msgData } = await supabase
-          .from('sms_messages')
-          .select('*')
-          .eq('lead_id', leadId)
-          .order('created_at', { ascending: true });
-
-        setMessages(msgData || []);
-      }
+      const data = await nativeAdminCall<{ conversation?: SMSConversation | null; messages?: SMSMessage[] }>(
+        `/v1/admin/leads/${encodeURIComponent(leadId)}/sms`,
+      );
+      setConversation(data.conversation || null);
+      setMessages(data.messages || []);
     } catch (err) {
       console.error('Error loading SMS conversation:', err);
     } finally {
       setLoading(false);
     }
-  }
-
-  async function loadMessages(conversationId: string) {
-    const { data } = await supabase
-      .from('sms_messages')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
-
-    setMessages(data || []);
   }
 
   async function handleSend() {
@@ -106,43 +72,20 @@ const SMSConversationPanel: React.FC<Props> = ({ leadId, leadPhone, leadFirstNam
     try {
       const deliverySignature = JSON.stringify({ leadId, to: leadPhone, content: newMessage.trim(), tag: 'crm-manual' });
       const requestId = getDeliveryRequestId('sms', deliverySignature);
-      const { data, error } = await withTimeout(supabase.functions.invoke('send-sms-brevo', {
-        body: {
-          to: leadPhone,
+      const data = await nativeAdminCall<{ ok?: boolean; message?: SMSMessage; conversation?: SMSConversation; error?: string }>(
+        `/v1/admin/leads/${encodeURIComponent(leadId)}/sms`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'send',
           content: newMessage.trim(),
-          lead_id: leadId,
-          tag: 'crm-manual',
-          requestId,
+            request_id: requestId,
+          }),
         },
-      }), 45_000);
+      );
 
-      if (error || !data?.success) {
-        throw new Error(error?.message || data?.error || 'Echec envoi');
-      }
-
-      // Get or create conversation and add message locally
-      let convId = conversation?.id;
-      if (!convId) {
-        const { data: newConvId } = await supabase.rpc('get_or_create_sms_conversation', {
-          p_phone_number: leadPhone,
-          p_lead_id: leadId,
-        });
-        convId = newConvId;
-      }
-
-      if (convId) {
-        await supabase.from('sms_messages').insert({
-          conversation_id: convId,
-          lead_id: leadId,
-          direction: 'outbound',
-          from_number: '+33744410598',
-          to_number: leadPhone,
-          content: newMessage.trim(),
-          status: 'sent',
-          provider_message_id: data.messageId,
-          is_automated: false,
-          delivered_at: new Date().toISOString(),
-        });
+      if (!data?.ok) {
+        throw new Error(data?.error || 'Echec envoi');
       }
 
       clearDeliveryRequestId('sms', deliverySignature);
@@ -173,12 +116,13 @@ const SMSConversationPanel: React.FC<Props> = ({ leadId, leadPhone, leadFirstNam
         `${m.direction === 'inbound' ? 'Client' : 'Nous'}: ${m.content}`
       ).join('\n');
 
-      const { data, error } = await supabase.functions.invoke('generate-inbox-response', {
-        body: {
-          context: `Conversation SMS avec ${leadFirstName}. Notre societe: TaxiAssur (courtier assurance taxi). Genere une reponse SMS courte (max 160 chars), professionnelle et engageante.`,
-          message: context || `Genere un SMS de suivi pour ${leadFirstName} concernant son assurance taxi.`,
-          max_length: 160,
-        },
+      const data = await nativeAdminCall<{ response?: string }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/sms`, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'suggest',
+          messages: messages.slice(-5),
+          context,
+        }),
       });
 
       if (data?.response) {
