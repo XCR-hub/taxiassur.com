@@ -28,7 +28,14 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
       window.location.reload();
     } catch (err) {
       logger.error('Erreur de connexion:', err);
-      setError(err instanceof Error ? err.message : 'Erreur de connexion');
+      const message = err instanceof Error ? err.message : 'Erreur de connexion';
+      setError(message === 'rate_limited'
+        ? 'Trop de tentatives de connexion. Patientez une minute puis réessayez.'
+        : message === 'invalid_credentials'
+          ? 'Adresse email ou mot de passe incorrect.'
+          : message === 'platform_temporarily_unavailable'
+            ? 'Le service de connexion est momentanément indisponible. Réessayez dans quelques secondes.'
+            : message);
     } finally {
       setLoading(false);
     }

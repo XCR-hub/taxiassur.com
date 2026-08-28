@@ -7,7 +7,15 @@ export async function onRequest({ request, params }) {
   const target = new URL(suffix, UPSTREAM);
   target.search = incoming.search;
   const headers = new Headers(request.headers);
+  // Cloudflare supplies this header at the edge. Preserve that trusted value so
+  // the upstream rate limiter does not put every Pages request in one bucket.
+  const clientIp = headers.get('cf-connecting-ip');
   for (const name of ['cookie', 'host', 'origin', 'referer', 'cf-connecting-ip', 'cf-ray']) headers.delete(name);
+  if (clientIp) {
+    headers.set('cf-connecting-ip', clientIp);
+    headers.set('x-forwarded-for', clientIp);
+    headers.set('x-real-ip', clientIp);
+  }
   try {
     const upstream = await fetch(target, { method: request.method, headers, body: ['GET', 'HEAD'].includes(request.method) ? undefined : request.body, redirect: 'manual' });
     const responseHeaders = new Headers(upstream.headers);

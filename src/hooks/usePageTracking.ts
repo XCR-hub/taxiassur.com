@@ -20,6 +20,7 @@ function sanitizedReferrer(): string | null {
 export const usePageTracking = () => {
   const startTimeRef = useRef<number>(Date.now());
   const sessionIdRef = useRef<string>('');
+  const eventIdRef = useRef<string>('');
 
   useEffect(() => {
     if (!hasAnalyticsConsent() || isPrivateApplicationPath()) return;
@@ -38,32 +39,44 @@ export const usePageTracking = () => {
 
     let intervalId: ReturnType<typeof setInterval> | undefined;
     let isMounted = true;
+    let updateDuration: (() => Promise<void>) | undefined;
 
     const runTracking = async () => {
       if (!isMounted || !hasAnalyticsConsent()) return;
       try {
-        const { supabase } = await import('@/lib/supabase');
-
-        await supabase.from('page_analytics').insert({
-          page_url: pageUrl,
-          session_id: sessionId,
-          user_agent: behavioralAllowed ? navigator.userAgent : 'analytics_consent_no_behavioral_profile',
-          referrer: sanitizedReferrer(),
-          viewport_width: window.innerWidth,
-          viewport_height: window.innerHeight,
+        const response = await fetch('/api/platform/v1/public/analytics', {
+          method: 'POST',
+          cache: 'no-store',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            page_url: pageUrl,
+            session_id: sessionId,
+            user_agent: behavioralAllowed ? navigator.userAgent : 'analytics_consent_no_behavioral_profile',
+            referrer: sanitizedReferrer(),
+            viewport_width: window.innerWidth,
+            viewport_height: window.innerHeight,
+          }),
         });
+        if (!response.ok) return;
+        const result = await response.json().catch(() => ({}));
+        eventIdRef.current = String(result.event_id || '');
 
-        const updateDuration = async () => {
+        updateDuration = async () => {
           const duration = Math.floor((Date.now() - startTimeRef.current) / 1000);
-          if (duration > 5 && isMounted && hasAnalyticsConsent()) {
+          if (duration > 5 && eventIdRef.current && hasAnalyticsConsent()) {
             try {
-              await supabase
-                .from('page_analytics')
-                .update({ duration_seconds: duration })
-                .eq('session_id', sessionIdRef.current)
-                .eq('page_url', pageUrl)
-                .order('created_at', { ascending: false })
-                .limit(1);
+              await fetch('/api/platform/v1/public/analytics', {
+                method: 'POST',
+                cache: 'no-store',
+                keepalive: true,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  page_url: pageUrl,
+                  session_id: sessionIdRef.current,
+                  event_id: eventIdRef.current,
+                  duration_seconds: duration,
+                }),
+              });
             } catch {
               // Analytics must never block the page.
             }
@@ -83,6 +96,7 @@ export const usePageTracking = () => {
       isMounted = false;
       clearTimeout(timerId);
       if (intervalId) clearInterval(intervalId);
+      if (updateDuration) window.removeEventListener('beforeunload', updateDuration);
     };
   }, []);
 
