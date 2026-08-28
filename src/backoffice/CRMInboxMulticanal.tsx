@@ -8,10 +8,14 @@ import {
   CheckSquare, Square, AtSign,
   Phone, MapPin, Loader2, EyeOff
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 import { SecureDocumentLink } from '@/components/crm/SecureDocumentLink';
-import { internalFunctionHeaders } from '@/lib/internal-function-auth';
+import {
+  nativeAdminDashboard,
+  nativeAdminInbox,
+  nativeAdminInboxAction,
+  nativeAdminInboxSync,
+  nativeAdminInboxWorkflow,
+} from '@/lib/native-admin-data';
 
 interface EmailMessage {
   id: string;
@@ -201,52 +205,23 @@ const CRMInboxMulticanal: React.FC = () => {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const loadStats = async () => {
-    try {
-      const [total, unread, leads, starred, archived, mails] = await Promise.all([
-        supabase.from('email_messages').select('*', { count: 'exact', head: true }).or('email_status.is.null,email_status.eq.active'),
-        supabase.from('email_messages').select('*', { count: 'exact', head: true }).eq('is_read', false).or('email_status.is.null,email_status.eq.active'),
-        supabase.from('email_messages').select('*', { count: 'exact', head: true }).not('lead_id', 'is', null).or('email_status.is.null,email_status.eq.active'),
-        supabase.from('email_messages').select('*', { count: 'exact', head: true }).eq('is_starred', true).or('email_status.is.null,email_status.eq.active'),
-        supabase.from('email_messages').select('*', { count: 'exact', head: true }).eq('email_status', 'archived'),
-        supabase.from('email_messages').select('*', { count: 'exact', head: true }).eq('classification', 'non_lead').or('email_status.is.null,email_status.eq.active'),
-      ]);
-      setStats({ total: total.count || 0, unread: unread.count || 0, leads: leads.count || 0, starred: starred.count || 0, archived: archived.count || 0, mails: mails.count || 0 });
-    } catch (err) { console.error(err); }
-  };
-
   const loadMessages = async () => {
     setLoading(true);
     try {
-      let query = supabase.from('email_messages').select('*').order('received_at', { ascending: false }).limit(500);
-      if (filter === 'archived') {
-        query = query.eq('email_status', 'archived');
-      } else {
-        query = query.or('email_status.is.null,email_status.eq.active');
-        if (filter === 'unread') query = query.eq('is_read', false);
-        else if (filter === 'starred') query = query.eq('is_starred', true);
-        else if (filter === 'leads') query = query.not('lead_id', 'is', null);
-        else if (filter === 'mails') query = query.eq('classification', 'non_lead');
-      }
-      if (searchQuery) query = query.or(`subject.ilike.%${searchQuery}%,from_email.ilike.%${searchQuery}%,body_text.ilike.%${searchQuery}%`);
-      const { data, error } = await query;
-      if (error) throw error;
-      setMessages(data || []);
-    } catch (err) { console.error(err); } finally { setLoading(false); }
+      const result = await nativeAdminInbox(filter, searchQuery) as { messages?: EmailMessage[]; stats?: typeof stats };
+      setMessages(result.messages || []);
+      if (result.stats) setStats(result.stats);
+    } catch (err) { console.error(err); showToast('Impossible de charger la boite de reception', 'error'); } finally { setLoading(false); }
   };
 
   const syncEmails = async () => {
     setSyncing(true);
     showToast('Synchronisation en cours...', 'info');
     try {
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-all-emails-complete`, {
-        method: 'POST',
-        headers: { ...(await internalFunctionHeaders()), 'Content-Type': 'application/json' },
-      });
-      const result = await res.json();
+      const result = await nativeAdminInboxSync() as { success?: boolean; stats?: { emails_retrieved?: number } };
       if (result.success) {
         showToast(`${result.stats?.emails_retrieved || 0} emails synchronisés`, 'success');
-        await loadMessages(); await loadStats();
+        await loadMessages();
       } else showToast('Erreur de synchronisation', 'error');
     } catch { showToast('Erreur réseau', 'error'); } finally { setSyncing(false); }
   };
@@ -255,44 +230,41 @@ const CRMInboxMulticanal: React.FC = () => {
     setSyncing(true);
     showToast('Création automatique des leads...', 'info');
     try {
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-create-leads-from-emails`, {
-        method: 'POST',
-        headers: { ...(await internalFunctionHeaders()), 'Content-Type': 'application/json' },
-      });
-      const result = await res.json();
+      const result = await nativeAdminInboxWorkflow('auto_create_leads') as { success?: boolean; summary?: { leads_created?: number; emails_linked?: number } };
       if (result.success) {
         showToast(`${result.summary?.leads_created || 0} leads créés, ${result.summary?.emails_linked || 0} liés`, 'success');
-        await loadMessages(); await loadStats();
+        await loadMessages();
       } else showToast('Erreur création automatique', 'error');
     } catch { showToast('Erreur réseau', 'error'); } finally { setSyncing(false); }
   };
 
   const markAsRead = async (emailId: string) => {
-    await supabase.from('email_messages').update({ is_read: true }).eq('id', emailId);
+    await nativeAdminInboxAction('mark_read', [emailId]);
     setMessages(prev => prev.map(e => e.id === emailId ? { ...e, is_read: true } : e));
-    await loadStats();
+    setStats(prev => ({ ...prev, unread: Math.max(0, prev.unread - 1) }));
   };
 
   const markAllRead = async () => {
     setMarkingAllRead(true);
     try {
-      await supabase.from('email_messages').update({ is_read: true }).eq('is_read', false).or('email_status.is.null,email_status.eq.active');
-      await loadMessages(); await loadStats();
+      const ids = messages.filter(message => !message.is_read).map(message => message.id);
+      if (ids.length > 0) await nativeAdminInboxAction('mark_all_read', ids);
+      await loadMessages();
       showToast('Tous les emails marqués comme lus', 'success');
     } catch { showToast('Erreur', 'error'); } finally { setMarkingAllRead(false); }
   };
 
   const toggleStar = async (emailId: string, current: boolean) => {
-    await supabase.from('email_messages').update({ is_starred: !current }).eq('id', emailId);
+    await nativeAdminInboxAction('star', [emailId], { value: !current });
     setMessages(prev => prev.map(e => e.id === emailId ? { ...e, is_starred: !current } : e));
-    await loadStats();
+    await loadMessages();
     showToast(!current ? 'Ajouté aux favoris' : 'Retiré des favoris', 'info');
   };
 
   const archiveEmail = async (emailId: string) => {
     try {
-      await supabase.rpc('archive_email', { p_email_id: emailId });
-      await loadMessages(); await loadStats();
+      await nativeAdminInboxAction('archive', [emailId]);
+      await loadMessages();
       if (selectedMessage?.id === emailId) setSelectedMessage(null);
       showToast('Email archivé', 'success');
     } catch { showToast('Erreur archivage', 'error'); }
@@ -301,8 +273,8 @@ const CRMInboxMulticanal: React.FC = () => {
   const deleteEmail = async (emailId: string) => {
     if (!confirm('Mettre cet email à la corbeille ?')) return;
     try {
-      await supabase.rpc('delete_email', { p_email_id: emailId });
-      await loadMessages(); await loadStats();
+      await nativeAdminInboxAction('delete', [emailId]);
+      await loadMessages();
       if (selectedMessage?.id === emailId) setSelectedMessage(null);
       showToast('Email supprimé', 'success');
     } catch { showToast('Erreur suppression', 'error'); }
@@ -310,44 +282,30 @@ const CRMInboxMulticanal: React.FC = () => {
 
   const classifyAsNonLead = async (emailId: string) => {
     try {
-      await supabase.from('email_messages').update({ classification: 'non_lead', confidence_score: 1.0, is_read: true }).eq('id', emailId);
+      await nativeAdminInboxAction('classify_non_lead', [emailId]);
       setMessages(prev => prev.map(e => e.id === emailId ? { ...e, classification: 'non_lead', is_read: true } : e));
-      await loadStats();
+      await loadMessages();
       showToast('Classé dans "Mails"', 'info');
       setSelectedMessage(null);
     } catch { showToast('Erreur classification', 'error'); }
   };
 
-  const linkEmailHistoryToLead = async (leadId: string, senderEmail: string) => {
-    const { data: allSenderEmails } = await supabase.from('email_messages').select('*').eq('from_email', senderEmail).order('received_at', { ascending: true });
-    if (!allSenderEmails?.length) return { linkedCount: 0, interactionsCreated: 0 };
-    await Promise.all(allSenderEmails.map(e => supabase.from('email_messages').update({ lead_id: leadId }).eq('id', e.id)));
-    const interactions = allSenderEmails.map(e => ({
-      lead_id: leadId, type: 'email' as const, direction: e.direction as 'inbound' | 'outbound',
-      subject: e.subject, content: e.body_text?.substring(0, 5000) || '',
-      created_at: e.received_at, metadata: { email_id: e.id, from: e.from_email, to: e.to_emails },
-    }));
-    const { data: existing } = await supabase.from('crm_interactions').select('metadata').eq('lead_id', leadId);
-    const existingIds = new Set(existing?.map((i: { metadata?: { email_id?: string } }) => i.metadata?.email_id).filter(Boolean) || []);
-    const newOnes = interactions.filter(i => !existingIds.has(i.metadata.email_id));
-    if (newOnes.length > 0) await supabase.from('crm_interactions').insert(newOnes);
-    return { linkedCount: allSenderEmails.length, interactionsCreated: newOnes.length };
-  };
-
   const createLeadFromEmail = async (email: EmailMessage) => {
     if (!extractedInfo) return;
     try {
-      const nameParts = (extractedInfo.name || email.from_name || '').split(' ');
-      const { data: newLead, error } = await supabase.from('crm_leads').insert({
-        first_name: nameParts[0] || '', last_name: nameParts.slice(1).join(' ') || '',
-        email: extractedInfo.email || email.from_email, phone: extractedInfo.phone || null,
-        status: 'NOUVEAU_LEAD', source: 'email',
+      const result = await nativeAdminInboxWorkflow('create_lead', {
+        email_id: email.id,
+        email: extractedInfo.email || email.from_email,
+        name: extractedInfo.name || email.from_name || '',
+        phone: extractedInfo.phone || '',
+        city: extractedInfo.city || '',
         notes: `Lead créé depuis l'email: ${email.subject}\n\n${email.body_text?.substring(0, 500)}`,
-      }).select().single();
-      if (error) throw error;
-      const { linkedCount, interactionsCreated } = await linkEmailHistoryToLead(newLead.id, email.from_email);
-      setFoundLeadId(newLead.id);
-      await loadMessages(); await loadStats();
+      }) as { lead?: { id?: string }; linkedCount?: number; interactionsCreated?: number };
+      if (!result.lead?.id) throw new Error('lead_creation_failed');
+      const linkedCount = result.linkedCount || 0;
+      const interactionsCreated = result.interactionsCreated || 0;
+      setFoundLeadId(result.lead.id);
+      await loadMessages();
       showToast(`Lead créé ! ${linkedCount} emails liés, ${interactionsCreated} interactions`, 'success');
     } catch { showToast('Erreur création lead', 'error'); }
   };
@@ -356,16 +314,19 @@ const CRMInboxMulticanal: React.FC = () => {
     if (!query || query.length < 3) { setSearchResults([]); return; }
     setSearchingLeads(true);
     try {
-      const { data } = await supabase.from('crm_leads').select('id, first_name, last_name, email, phone, city, status')
-        .or(`email.ilike.%${query}%,first_name.ilike.%${query}%,last_name.ilike.%${query}%,phone.ilike.%${query}%`).limit(10);
-      setSearchResults(data || []);
+      const result = await nativeAdminDashboard() as { leads?: LeadSearchResult[] };
+      const needle = query.trim().toLowerCase();
+      setSearchResults((result.leads || []).filter(lead =>
+        [lead.email, lead.first_name, lead.last_name, lead.phone]
+          .some(value => String(value || '').toLowerCase().includes(needle))
+      ).slice(0, 10));
     } catch { setSearchResults([]); } finally { setSearchingLeads(false); }
   };
 
   const assignEmailToLead = async (leadId: string, emailId: string) => {
     try {
-      await supabase.from('email_messages').update({ lead_id: leadId, auto_matched: false }).eq('id', emailId);
-      await loadMessages(); await loadStats();
+      await nativeAdminInboxAction('assign', [emailId], { lead_id: leadId });
+      await loadMessages();
       setShowAssignModal(false); setSelectedMessage(null);
       showToast('Email assigné au lead !', 'success');
     } catch { showToast('Erreur assignation', 'error'); }
@@ -375,14 +336,11 @@ const CRMInboxMulticanal: React.FC = () => {
     if (!selectedMessage || !replyContent.trim()) { showToast('Veuillez saisir un message', 'error'); return; }
     setReplySending(true);
     try {
-      const { data: sendResult, error: sendError } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
-        body: {
-          to: selectedMessage.from_email,
-          subject: `Re: ${selectedMessage.subject}`,
-          content: `<p>${replyContent.replace(/\n/g, '<br>')}</p><hr><blockquote>${selectedMessage.body_html || selectedMessage.body_text}</blockquote>`,
-        },
-      });
-      if (sendError || !sendResult?.success) throw sendError || new Error("Envoi refusé");
+      const sendResult = await nativeAdminInboxWorkflow('reply', {
+        email_id: selectedMessage.id,
+        content: replyContent,
+      }) as { queued?: boolean };
+      if (!sendResult.queued) throw new Error('Envoi refusé');
       await loadMessages();
       setShowReplyModal(false); setReplyContent('');
       showToast('Réponse envoyée !', 'success');
@@ -410,17 +368,21 @@ const CRMInboxMulticanal: React.FC = () => {
   };
 
   const bulkArchive = async () => {
-    for (const id of selectedIds) await supabase.rpc('archive_email', { p_email_id: id });
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+    await nativeAdminInboxAction('archive', ids);
     setSelectedIds(new Set());
-    await loadMessages(); await loadStats();
-    showToast(`${selectedIds.size} emails archivés`, 'success');
+    await loadMessages();
+    showToast(`${ids.length} emails archivés`, 'success');
   };
 
   const bulkMarkRead = async () => {
-    await supabase.from('email_messages').update({ is_read: true }).in('id', [...selectedIds]);
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+    await nativeAdminInboxAction('mark_read', ids);
     setMessages(prev => prev.map(e => selectedIds.has(e.id) ? { ...e, is_read: true } : e));
     setSelectedIds(new Set());
-    await loadStats();
+    await loadMessages();
     showToast('Emails marqués comme lus', 'success');
   };
 
@@ -428,12 +390,11 @@ const CRMInboxMulticanal: React.FC = () => {
     if (!confirm(`Supprimer ${selectedIds.size} email(s) ?`)) return;
     try {
       const count = selectedIds.size;
-      for (const id of selectedIds) {
-        await supabase.rpc('delete_email', { p_email_id: id });
-      }
+      if (count === 0) return;
+      await nativeAdminInboxAction('delete', [...selectedIds]);
       if (selectedMessage && selectedIds.has(selectedMessage.id)) setSelectedMessage(null);
       setSelectedIds(new Set());
-      await loadMessages(); await loadStats();
+      await loadMessages();
       showToast(`${count} email(s) supprimé(s)`, 'success');
     } catch { showToast('Erreur suppression', 'error'); }
   };
@@ -447,23 +408,25 @@ const CRMInboxMulticanal: React.FC = () => {
       if (!info) return;
       setExtractedInfo(info);
       try {
-        if (info.email) {
-          const { data } = await supabase.from('crm_leads').select('id').eq('email', info.email).limit(1).maybeSingle();
-          if (data) { setFoundLeadId(data.id); return; }
-        }
-        if (info.phone) {
-          const clean = info.phone.replace(/\s/g, '');
-          const { data } = await supabase.from('crm_leads').select('id').or(`phone.eq.${clean},phone.eq.${clean.replace(/^0/, '+33')}`).limit(1).maybeSingle();
-          if (data) { setFoundLeadId(data.id); return; }
-        }
+        const result = await nativeAdminDashboard() as { leads?: LeadSearchResult[] };
+        const leads = result.leads || [];
+        const email = info.email?.trim().toLowerCase();
+        const phone = info.phone?.replace(/\D/g, '');
+        const frenchPhone = phone?.replace(/^0/, '33');
+        const lead = leads.find(candidate => {
+          if (email && candidate.email?.trim().toLowerCase() === email) return true;
+          const candidatePhone = candidate.phone?.replace(/\D/g, '');
+          return Boolean(phone && candidatePhone && (candidatePhone === phone || candidatePhone === frenchPhone));
+        });
+        if (lead) setFoundLeadId(lead.id);
       } catch (err) { console.error(err); }
     };
     findLead();
   }, [selectedMessage]);
 
   useEffect(() => {
-    loadMessages(); loadStats();
-    const interval = setInterval(() => { loadMessages(); loadStats(); }, 30000);
+    loadMessages();
+    const interval = setInterval(loadMessages, 30000);
     return () => clearInterval(interval);
   }, [filter, searchQuery]);
 
