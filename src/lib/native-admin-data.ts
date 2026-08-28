@@ -20,3 +20,5 @@ export const nativeAdminIntelligentInbox=(folderId='')=>call(`/v1/admin/inbox/in
 export const nativeAdminIntelligentInboxAction=(action:string,payload:Record<string,unknown>={})=>call('/v1/admin/inbox/intelligent',{method:'POST',body:JSON.stringify({action,...payload})});
 export const nativeAdminQuoteQueue=()=>call('/v1/admin/quote-queue');
 export const nativeAdminQuoteQueueAction=(id:string,action:'claim'|'start')=>call(`/v1/admin/quote-queue/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({action})});
+export const nativeAdminClaims=(status='')=>call(`/v1/admin/claims${status?`?status=${encodeURIComponent(status)}`:''}`);
+export const nativeAdminUpdateClaim=(id:string,updates:Record<string,unknown>)=>call(`/v1/admin/claims/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(updates)});

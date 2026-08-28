@@ -6,7 +6,7 @@ import {
   Plus, Save, Loader, Eye, EyeOff, FileText, Building2,
   RefreshCw, ChevronRight, type LucideIcon
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminClaims, nativeAdminUpdateClaim } from '@/lib/native-admin-data';
 
 interface ClaimEvent {
   id: string;
@@ -145,13 +145,19 @@ export default function ClaimsManager() {
   const loadClaims = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_all_claims_for_admin', {
-        p_status: filterStatus || null,
-        p_limit: 100,
-        p_offset: 0,
-      });
-      if (error) throw error;
-      if (data?.success) setClaims(data.claims || []);
+      const data = await nativeAdminClaims(filterStatus) as { claims?: Array<Claim & {
+        client_first_name?: string;
+        client_last_name?: string;
+        client_email?: string;
+        client_phone?: string;
+      }> };
+      setClaims((data.claims || []).map((claim) => ({
+        ...claim,
+        lead_first_name: claim.lead_first_name || claim.client_first_name || null,
+        lead_last_name: claim.lead_last_name || claim.client_last_name || null,
+        lead_email: claim.lead_email || claim.client_email || null,
+        lead_phone: claim.lead_phone || claim.client_phone || null,
+      })));
     } catch (err) {
       console.error('Error loading claims:', err);
     } finally {
@@ -201,36 +207,13 @@ export default function ClaimsManager() {
 
     setSaving(claimId);
     try {
-      const { error } = await supabase.rpc('update_claim_tracking', {
-        p_claim_id:                 claimId,
-        p_claim_status:             form.claim_status || null,
-        p_client_visible_status:    form.client_visible_status || null,
-        p_client_visible_notes:     form.client_visible_notes || null,
-        p_expert_name:              form.expert_name || null,
-        p_expert_company:           form.expert_company || null,
-        p_expert_phone:             form.expert_phone || null,
-        p_expert_email:             form.expert_email || null,
-        p_expert_mission_date:      form.expert_mission_date || null,
-        p_expert_appointment_date:  form.expert_appointment_date ? form.expert_appointment_date + 'T00:00:00Z' : null,
-        p_expertise_garage_name:    form.expertise_garage_name || null,
-        p_expertise_garage_address: form.expertise_garage_address || null,
-        p_expertise_garage_phone:   form.expertise_garage_phone || null,
-        p_expertise_date:           form.expertise_date || null,
-        p_repair_garage_name:       form.repair_garage_name || null,
-        p_repair_garage_address:    form.repair_garage_address || null,
-        p_repair_garage_phone:      form.repair_garage_phone || null,
-        p_repair_start_date:        form.repair_start_date || null,
-        p_repair_end_date:          form.repair_end_date || null,
-        p_indemnisation_amount:     form.indemnisation_amount !== '' ? parseFloat(form.indemnisation_amount) : null,
-        p_indemnisation_date:       form.indemnisation_date || null,
-        p_indemnisation_paid_at:    form.indemnisation_paid_at ? form.indemnisation_paid_at + 'T00:00:00Z' : null,
-        p_internal_notes:           form.internal_notes || null,
-        p_add_event_title:          evt?.title || null,
-        p_add_event_description:    evt?.description || null,
-        p_add_event_type:           evt?.type || null,
-        p_event_visible_to_client:  evt?.visible ?? true,
+      await nativeAdminUpdateClaim(claimId, {
+        ...form,
+        expert_appointment_date: form.expert_appointment_date ? form.expert_appointment_date + 'T00:00:00Z' : null,
+        indemnisation_amount: form.indemnisation_amount !== '' ? parseFloat(form.indemnisation_amount) : null,
+        indemnisation_paid_at: form.indemnisation_paid_at ? form.indemnisation_paid_at + 'T00:00:00Z' : null,
+        event: evt?.title ? evt : undefined,
       });
-      if (error) throw error;
 
       setNewEvent(prev => ({ ...prev, [claimId]: { title: '', description: '', type: 'status_update', visible: true } }));
       await loadClaims();
