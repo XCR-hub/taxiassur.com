@@ -82,9 +82,6 @@ const AssuranceTaxiVauxLePenil = lazy(() => import('./pages/AssuranceTaxiVauxLeP
 const AssuranceTaxiSollyAzar = lazy(() => import('./pages/AssuranceTaxiSollyAzar'));
 
 const AuthCallbackLinkedin = lazy(() => import('./pages/AuthCallbackLinkedin'));
-const AuthCallbackTwitter = lazy(() => import('./pages/AuthCallbackTwitter'));
-const AuthCallbackYoutube = lazy(() => import('./pages/AuthCallbackYoutube'));
-const AuthCallbackPinterest = lazy(() => import('./pages/AuthCallbackPinterest'));
 const SetPassword = lazy(() => import('./pages/SetPassword'));
 
 const ClientDashboard = lazy(() => import('./pages/client/ClientDashboard'));
@@ -527,18 +524,6 @@ export const router = createBrowserRouter([
   {
     path: '/auth/callback/linkedin',
     element: <AuthCallbackLinkedin />,
-  },
-  {
-    path: '/auth/callback/twitter',
-    element: <AuthCallbackTwitter />,
-  },
-  {
-    path: '/auth/callback/youtube',
-    element: <AuthCallbackYoutube />,
-  },
-  {
-    path: '/auth/callback/pinterest',
-    element: <AuthCallbackPinterest />,
   },
   {
     path: '/auth/set-password',

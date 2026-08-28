@@ -567,9 +567,7 @@ requireMatch('supabase/functions/auto-seo-notifier/index.ts', /isInternalRequest
 requireMatch('src/lib/feeds.ts', /internalFunctionHeaders/, 'feed regeneration does not require a staff session');
 forbidMatch('src/lib/feeds.ts', /getSupabaseAnonKey|VITE_SUPABASE_ANON_KEY/, 'feed regeneration falls back to the public anon key');
 requireMatch('scripts/deploy-critical-supabase-security.ps1', /'auto-seo-notifier'/, 'automatic SEO notifier is missing from controlled deployment');
-requireMatch('src/components/SocialOAuthButton.tsx', /oauth_state_[\s\S]*oauth_pkce_twitter[\s\S]*code_challenge_method/, 'Twitter OAuth authorization lacks state or PKCE');
-requireMatch('src/pages/AuthCallbackTwitter.tsx', /returnedState[\s\S]*expectedState[\s\S]*internalFunctionHeaders[\s\S]*code_verifier/, 'Twitter OAuth callback lacks state verification, PKCE verifier, or staff authentication');
-forbidMatch('src/pages/AuthCallbackTwitter.tsx', /VITE_SUPABASE_ANON_KEY|access_token|refresh_token|social_networks/, 'Twitter OAuth callback exposes or persists tokens in the browser');
+forbidMatch('src/router.tsx', /AuthCallback(?:Twitter|Youtube|Pinterest)|\/auth\/callback\/(?:twitter|youtube|pinterest)/i, 'retired Supabase social OAuth callback is still publicly routable');
 requireMatch('supabase/functions/twitter-oauth-exchange/index.ts', /isInternalRequest[\s\S]*TWITTER_CLIENT_SECRET[\s\S]*code_verifier[\s\S]*users\/me[\s\S]*social_networks/, 'Twitter OAuth exchange lacks internal auth, server secret, PKCE, identity lookup, or server-side token persistence');
 requireMatch('scripts/deploy-critical-supabase-security.ps1', /'TWITTER_CLIENT_ID'[\s\S]*'TWITTER_CLIENT_SECRET'[\s\S]*'TWITTER_REDIRECT_URI'[\s\S]*'twitter-oauth-exchange'/, 'Twitter OAuth deployment lacks required secrets or function');
 const safeOutreachMigration = 'supabase/migrations/20260810023000_create_safe_outreach_delivery_pipeline.sql';
