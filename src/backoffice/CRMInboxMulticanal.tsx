@@ -430,6 +430,21 @@ const CRMInboxMulticanal: React.FC = () => {
     return () => clearInterval(interval);
   }, [filter, searchQuery]);
 
+  useEffect(() => {
+    let active = true;
+    const synchronize = async () => {
+      try {
+        await nativeAdminInboxSync();
+        if (active) await loadMessages();
+      } catch (error) {
+        console.error('[crm-inbox-auto-sync]', error);
+      }
+    };
+    void synchronize();
+    const interval = window.setInterval(synchronize, 5 * 60 * 1000);
+    return () => { active = false; window.clearInterval(interval); };
+  }, []);
+
   const handleDragStart = (e: React.DragEvent, emailId: string) => {
     setDraggedEmail(emailId);
     e.dataTransfer.effectAllowed = 'move';
