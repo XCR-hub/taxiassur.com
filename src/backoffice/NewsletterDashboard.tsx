@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { internalFunctionHeaders } from '@/lib/internal-function-auth';
-import { supabase } from '../lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { Send, Users, Mail, Eye, MousePointer, Download, BarChart3, CheckCircle, Clock, Plus, Search, RefreshCw, TrendingUp, Filter, ChevronRight, X, AlertTriangle, FileText, Zap, ArrowUp, Inbox, Sparkles, CreditCard as Edit3, Radio } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -140,46 +139,10 @@ export default function NewsletterDashboard() {
   // ── Data loading ──
   const loadData = useCallback(async () => {
     try {
-      const [campaignsRes, allSubsRes, activeSubsRes] = await Promise.all([
-        supabase.from('newsletter_campaigns').select('*').order('created_at', { ascending: false }).limit(30),
-        (() => {
-          let q = supabase.from('newsletter_subscribers').select('*').order('subscribed_at', { ascending: false }).limit(100);
-          if (filterStatus !== 'all') q = q.eq('status', filterStatus);
-          return q;
-        })(),
-        supabase.from('newsletter_subscribers').select('id, subscribed_at').eq('status', 'active'),
-      ]);
-
-      if (campaignsRes.data) setCampaigns(campaignsRes.data);
-
-      if (allSubsRes.data) {
-        const filtered = searchQuery
-          ? allSubsRes.data.filter(s =>
-              s.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              (s.first_name || '').toLowerCase().includes(searchQuery.toLowerCase())
-            )
-          : allSubsRes.data;
-        setSubscribers(filtered);
-      }
-
-      const sentCampaigns = campaignsRes.data?.filter(c => c.status === 'sent') || [];
-      const totalOpens  = sentCampaigns.reduce((sum, c) => sum + (c.total_opened || 0), 0);
-      const totalClicks = sentCampaigns.reduce((sum, c) => sum + (c.total_clicked || 0), 0);
-      const totalSent   = sentCampaigns.reduce((sum, c) => sum + (c.total_sent  || 0), 0);
-
-      const now = new Date();
-      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-      const newThisMonth = activeSubsRes.data?.filter(s => s.subscribed_at >= firstOfMonth).length || 0;
-
-      setStats({
-        activeSubscribers: activeSubsRes.data?.length || 0,
-        totalCampaigns:    campaignsRes.data?.length || 0,
-        sentCampaigns:     sentCampaigns.length,
-        avgOpenRate:  totalSent > 0   ? (totalOpens / totalSent) * 100   : 0,
-        avgClickRate: totalOpens > 0  ? (totalClicks / totalOpens) * 100 : 0,
-        totalSent,
-        newThisMonth,
-      });
+      const data = await nativeAdminCall<{ campaigns?: Campaign[]; subscribers?: Subscriber[]; stats?: typeof stats }>(`/v1/admin/newsletter-dashboard?status=${encodeURIComponent(filterStatus)}&search=${encodeURIComponent(searchQuery)}`);
+      setCampaigns(data.campaigns || []);
+      setSubscribers(data.subscribers || []);
+      if (data.stats) setStats(data.stats);
     } catch {
       addToast('error', 'Erreur lors du chargement des données');
     } finally {
@@ -197,12 +160,8 @@ export default function NewsletterDashboard() {
   async function createAutoCampaign() {
     setCreating(true);
     try {
-      const { data: articles } = await supabase
-        .from('blog_posts')
-        .select('id, title, excerpt, slug, category, featured_image')
-        .eq('published', true)
-        .order('created_at', { ascending: false })
-        .limit(5);
+      const dashboard = await nativeAdminCall<{ articles?: any[] }>('/v1/admin/newsletter-dashboard?status=active');
+      const articles = dashboard.articles || [];
 
       if (!articles || articles.length === 0) {
         addToast('error', 'Aucun article récent trouvé');
@@ -211,15 +170,14 @@ export default function NewsletterDashboard() {
 
       const htmlContent = buildEmailHtml(articles, compose.subject || `Newsletter TaxiAssur – ${new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`);
 
-      const { error } = await supabase.from('newsletter_campaigns').insert({
+      await nativeAdminCall('/v1/admin/newsletter-dashboard', { method: 'POST', body: JSON.stringify({ action: 'create',
         name:         compose.name || `Newsletter – ${new Date().toLocaleDateString('fr-FR')}`,
         subject:      compose.subject || `Nouveaux articles TaxiAssur – ${new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`,
         content_html: htmlContent,
         status:       'draft',
         scheduled_at: new Date().toISOString(),
-      });
+      }) });
 
-      if (error) throw error;
       addToast('success', `Campagne créée avec ${articles.length} articles`);
       setShowCompose(false);
       setCompose({ name: '', subject: '', mode: 'auto', customHtml: '' });
@@ -238,14 +196,13 @@ export default function NewsletterDashboard() {
     }
     setCreating(true);
     try {
-      const { error } = await supabase.from('newsletter_campaigns').insert({
+      await nativeAdminCall('/v1/admin/newsletter-dashboard', { method: 'POST', body: JSON.stringify({ action: 'create',
         name:         compose.name,
         subject:      compose.subject,
         content_html: compose.customHtml,
         status:       'draft',
         scheduled_at: new Date().toISOString(),
-      });
-      if (error) throw error;
+      }) });
       addToast('success', 'Campagne créée en brouillon');
       setShowCompose(false);
       setCompose({ name: '', subject: '', mode: 'auto', customHtml: '' });
@@ -271,15 +228,13 @@ export default function NewsletterDashboard() {
     closeConfirm();
     setSending(campaignId);
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-newsletter-campaign`,
+      const result = await nativeAdminCall<{ success?: boolean; sent_count?: number; error?: string }>(
+        '/v1/admin/newsletter-dashboard',
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: (await internalFunctionHeaders()).Authorization },
-          body: JSON.stringify({ campaign_id: campaignId }),
-        }
+          body: JSON.stringify({ action: 'send', campaign_id: campaignId }),
+        },
       );
-      const result = await res.json();
       if (result.success) {
         addToast('success', `Campagne envoyée à ${result.sent_count} abonnés`);
         loadData();
@@ -296,8 +251,10 @@ export default function NewsletterDashboard() {
   // ── Export ──
   async function exportSubscribers() {
     try {
-      const { data } = await supabase.from('newsletter_subscribers').select('*').eq('status', 'active');
-      if (!data) return;
+      const response = await nativeAdminCall<{ subscribers?: Subscriber[] }>(
+        '/v1/admin/newsletter-dashboard?status=active',
+      );
+      const data = response.subscribers || [];
       const csv = [
         'Email,Prénom,Score,Ouvertures,Clics,Date inscription',
         ...data.map(s => [
