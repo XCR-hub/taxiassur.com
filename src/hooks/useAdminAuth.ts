@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { logger } from '@/lib/logger';
-import { nativeAdminLogout, nativeAdminSession } from '@/lib/native-admin-auth';
+import { NATIVE_ADMIN_TOKEN_KEY, nativeAdminLogout, nativeAdminSession } from '@/lib/native-admin-auth';
 
 interface AdminUser {
   id: string;
@@ -27,19 +27,25 @@ interface AdminAuthState {
 let globalAuthState: AdminAuthState | null = null;
 
 function clearLocalAuth() {
+  localStorage.removeItem(NATIVE_ADMIN_TOKEN_KEY);
   localStorage.removeItem('taxiassur_user');
   localStorage.removeItem('taxiassur_permissions');
   localStorage.removeItem('taxiassur-auth');
   localStorage.removeItem('taxiassur-admin-session');
 }
 
+function cachedAuthState(): AdminAuthState {
+  if (!localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) return { user: null, permissions: [], loading: true, isAuthenticated: false };
+  try {
+    const user = JSON.parse(localStorage.getItem('taxiassur_user') || 'null') as AdminUser | null;
+    const permissions = JSON.parse(localStorage.getItem('taxiassur_permissions') || '[]') as Permission[];
+    if (user?.id && user.email) return { user, permissions: Array.isArray(permissions) ? permissions : [], loading: true, isAuthenticated: true };
+  } catch { /* invalid cache is handled by the live session check */ }
+  return { user: null, permissions: [], loading: true, isAuthenticated: false };
+}
+
 export function useAdminAuth() {
-  const [state, setState] = useState<AdminAuthState>(() => globalAuthState || {
-    user: null,
-    permissions: [],
-    loading: true,
-    isAuthenticated: false,
-  });
+  const [state, setState] = useState<AdminAuthState>(() => globalAuthState || cachedAuthState());
 
   const updateState = useCallback((next: AdminAuthState) => {
     globalAuthState = next;
@@ -62,14 +68,20 @@ export function useAdminAuth() {
         localStorage.setItem('taxiassur_permissions', JSON.stringify(permissions));
         updateState({ user, permissions, loading: false, isAuthenticated: true });
       })
-      .catch(() => {
+      .catch((error: Error & { status?: number }) => {
         if (!mounted) return;
-        clearLocalAuth();
-        updateState({ user: null, permissions: [], loading: false, isAuthenticated: false });
+        const rejected = error.status === 401 || error.message === 'invalid_session';
+        if (rejected || !state.user) {
+          clearLocalAuth();
+          updateState({ user: null, permissions: [], loading: false, isAuthenticated: false });
+          return;
+        }
+        logger.warn('Validation de session temporairement indisponible; session locale conservée.', error);
+        updateState({ ...state, loading: false, isAuthenticated: true });
       });
 
     return () => { mounted = false; };
-  }, [updateState]);
+  }, [state, updateState]);
 
   const signOut = useCallback(async () => {
     try {

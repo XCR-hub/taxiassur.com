@@ -529,7 +529,7 @@ async function adminLogin(req, res, origin, requestId) {
   }
   const token = createSession(user, config.sessionSecret, { ttlSeconds: 8 * 60 * 60 });
   await runPsql(`UPDATE taxiassur.auth_users SET failed_login_count=0, locked_until=NULL, last_login_at=now(), updated_at=now() WHERE id=${quoteLiteral(user.id)}::uuid;`);
-  return json(res, origin, 200, { ok: true, access_token: token, expires_in: 28800, user: publicAdmin(user), permissions: await adminPermissions(user.id) }, requestId);
+  return json(res, origin, 200, { ok: true, access_token: token, expires_in: 86400, user: publicAdmin(user), permissions: await adminPermissions(user.id) }, requestId);
 }
 async function adminSession(req, res, origin, requestId) {
   const session = await verifiedAdminSession(req);
@@ -1257,8 +1257,10 @@ async function verifiedAdminSession(req) {
   const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
   const session = token ? verifySession(token, config.sessionSecret) : null;
   if (!session) return null;
+  const current = parseJsonLine(await runPsql(`SELECT json_build_object('id',id,'email',email,'name',full_name,'role',role,'is_active',is_active)::text FROM taxiassur.auth_users WHERE id=${quoteLiteral(session.sub)}::uuid LIMIT 1;`));
+  if (!current?.is_active) return null;
   const revoked = String(await runPsql(`SELECT EXISTS(SELECT 1 FROM taxiassur.revoked_sessions WHERE session_id=${quoteLiteral(session.jti)} AND expires_at > now());`)).trim() === 't';
-  return revoked ? null : session;
+  return revoked ? null : { ...session, email: current.email, name: current.name, role: current.role };
 }
 function publicAdmin(user) { return { id: user.sub || user.id, email: user.email, full_name: user.name || user.full_name || user.email, role: user.role, is_active: true }; }
 async function adminPermissions(userId) {

@@ -1,8 +1,9 @@
-const BASE = (
-  import.meta.env.VITE_NATIVE_PLATFORM_URL ||
-  import.meta.env.VITE_PLATFORM_API_URL ||
-  'https://postgres-read-api.taxiassur.com/platform'
-).replace(/\/$/, '');
+const runtimeEnv = typeof window !== 'undefined'
+  ? (window as Window & { ENV_CONFIG?: Record<string, string> }).ENV_CONFIG
+  : undefined;
+const BASE = (runtimeEnv?.VITE_NATIVE_PLATFORM_URL || runtimeEnv?.VITE_PLATFORM_API_URL ||
+  import.meta.env.VITE_NATIVE_PLATFORM_URL || import.meta.env.VITE_PLATFORM_API_URL ||
+  '/api/platform').replace(/\/$/, '');
 export const NATIVE_ADMIN_TOKEN_KEY = 'taxiassur-native-admin-token';
 
 async function request(path: string, init: RequestInit = {}) {
@@ -19,7 +20,11 @@ async function request(path: string, init: RequestInit = {}) {
     },
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(String(data.error || 'native_auth_error'));
+  if (!response.ok) {
+    const error = new Error(String(data.error || 'native_auth_error')) as Error & { status?: number };
+    error.status = response.status;
+    throw error;
+  }
   return data;
 }
 

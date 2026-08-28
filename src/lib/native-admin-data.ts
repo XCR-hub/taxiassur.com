@@ -1,6 +1,7 @@
 import { NATIVE_ADMIN_TOKEN_KEY } from './native-admin-auth';
-const BASE=(import.meta.env.VITE_NATIVE_PLATFORM_URL||import.meta.env.VITE_PLATFORM_API_URL||'https://postgres-read-api.taxiassur.com/platform').replace(/\/$/,'');
-export async function nativeAdminCall<T=any>(path:string,init:RequestInit={}):Promise<T>{const token=localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY);if(!token)throw new Error('native_session_required');const response=await fetch(`${BASE}${path}`,{...init,signal:init.signal||AbortSignal.timeout(45_000),cache:'no-store',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`,...init.headers}});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'native_data_error');return data as T;}
+const runtimeEnv=typeof window!=='undefined'?(window as Window&{ENV_CONFIG?:Record<string,string>}).ENV_CONFIG:undefined;
+const BASE=(runtimeEnv?.VITE_NATIVE_PLATFORM_URL||runtimeEnv?.VITE_PLATFORM_API_URL||import.meta.env.VITE_NATIVE_PLATFORM_URL||import.meta.env.VITE_PLATFORM_API_URL||'/api/platform').replace(/\/$/,'');
+export async function nativeAdminCall<T=any>(path:string,init:RequestInit={}):Promise<T>{const token=localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY);if(!token)throw new Error('native_session_required');const response=await fetch(`${BASE}${path}`,{...init,signal:init.signal||AbortSignal.timeout(45_000),cache:'no-store',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`,...init.headers}});const data=await response.json().catch(()=>({}));if(!response.ok){const error=new Error(data.error||'native_data_error') as Error&{status?:number};error.status=response.status;throw error;}return data as T;}
 const call=nativeAdminCall;
 export const nativeAdminDashboard=()=>call('/v1/admin/dashboard');
 export const nativeAdminLead=(id:string)=>call(`/v1/admin/leads/${encodeURIComponent(id)}`);

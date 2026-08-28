@@ -1,7 +1,7 @@
 import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 
 const SESSION_VERSION = 1;
-const DEFAULT_TTL_SECONDS = 8 * 60 * 60;
+const DEFAULT_TTL_SECONDS = 24 * 60 * 60;
 
 export function hashPassword(password, options = {}) {
   assertPassword(password);
