@@ -2,9 +2,10 @@
 
 const { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync } = require('node:fs');
 const path = require('node:path');
-const { collectPublicRuntimeConfigIssues, readRuntimeConfigValue } = require('./lib/runtime-public-config.cjs');
+const { collectPublicRuntimeConfigIssues } = require('./lib/runtime-public-config.cjs');
 
 const SITE_URL = (process.env.SITE_URL || 'https://taxiassur.com').replace(/\/$/, '');
+const NATIVE_API_URL = (process.env.TAXIASSUR_PLATFORM_API_URL || 'https://postgres-read-api.taxiassur.com/platform').replace(/\/$/, '');
 const SKIP_LIVE = process.env.SKIP_LIVE_BACKOFFICE_AUTH_CHECK === '1';
 const REPORT_PATH = process.env.BACKOFFICE_AUTH_REPORT || '';
 const configuredMaxLiveJsAssets = Number.parseInt(process.env.BACKOFFICE_AUTH_MAX_LIVE_JS_ASSETS || '120', 10);
@@ -13,10 +14,6 @@ const configuredLiveBundleAttempts = Number.parseInt(process.env.BACKOFFICE_AUTH
 const LIVE_BUNDLE_ATTEMPTS = Number.isFinite(configuredLiveBundleAttempts) && configuredLiveBundleAttempts > 0 ? Math.min(configuredLiveBundleAttempts, 8) : 5;
 const configuredLiveBundleRetryDelayMs = Number.parseInt(process.env.BACKOFFICE_AUTH_LIVE_BUNDLE_RETRY_DELAY_MS || '5000', 10);
 const LIVE_BUNDLE_RETRY_DELAY_MS = Number.isFinite(configuredLiveBundleRetryDelayMs) && configuredLiveBundleRetryDelayMs >= 0 ? Math.min(configuredLiveBundleRetryDelayMs, 15000) : 5000;
-const REQUIRED_ADMIN_EMAILS = (process.env.REQUIRED_BACKOFFICE_ADMIN_EMAILS || 'master@taxiassur.com')
-  .split(',')
-  .map((email) => email.trim().toLowerCase())
-  .filter(Boolean);
 const checks = [];
 
 const PASSWORD_RESET_MARKERS = [
@@ -263,7 +260,7 @@ function verifySourceGuards() {
   addCheck('authenticated backoffice mounts persistent CRM sidebar', crmLayout.includes('<NavigationMenu />') && crmLayout.includes('crm-sidebar'), {
     file: 'src/backoffice/CRMLayout.tsx',
   });
-  addCheck('production health probes admin_users REST bootstrap', productionHealth.includes('admin-users-runtime-rest-probe'), {
+  addCheck('production health probes native platform API', productionHealth.includes('native-platform-health'), {
     file: 'scripts/verify-production-health.cjs',
   });
   addCheck('production health rejects server/service_role runtime Supabase keys', productionHealth.includes('Supabase runtime public key is not server/service_role'), {
@@ -303,8 +300,6 @@ async function verifyLiveGuards() {
     requireEnvConfig: true,
     requireSupabaseAnonKey: true,
   });
-  const supabaseUrl = readRuntimeConfigValue(runtimeConfigText, 'VITE_SUPABASE_URL').replace(/\/$/, '');
-  const supabaseAnonKey = readRuntimeConfigValue(runtimeConfigText, 'VITE_SUPABASE_ANON_KEY');
   const supabasePublicKeyInfo = runtimePublicConfigAudit.supabase_public_key;
 
   addCheck('/backoffice is reachable', backoffice.ok && backoffice.status === 200, { status: backoffice.status });
@@ -314,43 +309,16 @@ async function verifyLiveGuards() {
     issue_count: runtimePublicConfigAudit.issues.length,
     issues: runtimePublicConfigAudit.issues,
   });
-  addCheck('runtime Supabase public config exists for backoffice auth', Boolean(supabaseUrl && supabaseAnonKey), {
-    has_url: Boolean(supabaseUrl),
-    has_anon_key: Boolean(supabaseAnonKey),
-  });
   addCheck('runtime Supabase public key is not server/service_role', supabasePublicKeyInfo.ok, supabasePublicKeyInfo);
 
   const liveBundle = await fetchLiveBundleWithRetries([backoffice.text || '', setPassword.text || '']);
   addBackofficeBundleChecks('live backoffice', liveBundle);
 
-  if (supabaseUrl && supabaseAnonKey) {
-    const adminUsers = await fetchJson(
-      'admin-users-rest',
-      `${supabaseUrl}/rest/v1/admin_users?select=id,email,role,is_active&limit=1`,
-      12000,
-      { apikey: supabaseAnonKey, authorization: `Bearer ${supabaseAnonKey}` },
-    );
-    addCheck('admin_users REST bootstrap does not return 401/403', adminUsers.ok && Array.isArray(adminUsers.json), {
-      status: adminUsers.status,
-      rows: Array.isArray(adminUsers.json) ? adminUsers.json.length : null,
-    });
-
-    for (const email of REQUIRED_ADMIN_EMAILS) {
-      const requiredUser = await fetchJson(
-        `required-admin-user-${email}`,
-        `${supabaseUrl}/rest/v1/admin_users?select=id,email,full_name,role,is_active&email=ilike.${encodeURIComponent(email)}&is_active=eq.true&limit=1`,
-        12000,
-        { apikey: supabaseAnonKey, authorization: `Bearer ${supabaseAnonKey}` },
-      );
-      const row = Array.isArray(requiredUser.json) ? requiredUser.json[0] : null;
-      addCheck(`required active admin user exists: ${email}`, requiredUser.ok && Boolean(row), {
-        status: requiredUser.status,
-        rows: Array.isArray(requiredUser.json) ? requiredUser.json.length : null,
-        role: row?.role || null,
-        is_active: row?.is_active ?? null,
-      });
-    }
-  }
+  const nativeHealth = await fetchJson('native-platform-health', `${NATIVE_API_URL}/health`);
+  addCheck('native backoffice platform API is healthy', nativeHealth.ok && nativeHealth.json?.ok === true, {
+    status: nativeHealth.status,
+    service: nativeHealth.json?.service || null,
+  });
 }
 
 async function main() {

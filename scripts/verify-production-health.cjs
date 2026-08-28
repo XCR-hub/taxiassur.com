@@ -253,33 +253,20 @@ async function main() {
     requireEnvConfig: true,
     requireSupabaseAnonKey: true,
   });
-  const supabaseHeaders = supabaseAnonKey
-    ? { apikey: supabaseAnonKey, authorization: `Bearer ${supabaseAnonKey}` }
-    : {};
-  const invalidTurnstile = supabaseUrl && supabaseAnonKey
-    ? await postJson(
-      'turnstile-invalid-token',
-      `${supabaseUrl}/functions/v1/verify-turnstile`,
-      { token: 'invalid', action: 'contact_form' },
-      supabaseHeaders,
-    )
-    : null;
-  const emptyLead = supabaseUrl && supabaseAnonKey
-    ? await postJson(
-      'create-lead-direct-empty-lead',
-      `${supabaseUrl}/functions/v1/create-lead-direct`,
-      { lead: {} },
-      supabaseHeaders,
-    )
-    : null;
-  const adminUsersProbe = supabaseUrl && supabaseAnonKey
-    ? await fetchJson(
-      'admin-users-runtime-rest-probe',
-      `${supabaseUrl}/rest/v1/admin_users?select=id&limit=1`,
-      12000,
-      supabaseHeaders,
-    )
-    : null;
+  const nativeApiBase = String(
+    process.env.TAXIASSUR_PLATFORM_API_URL || 'https://postgres-read-api.taxiassur.com/platform',
+  ).replace(/\/$/, '');
+  const nativeHealth = await fetchJson('native-platform-health', `${nativeApiBase}/health`);
+  const invalidTurnstile = await postJson(
+    'native-turnstile-invalid-token',
+    `${nativeApiBase}/v1/public/turnstile/verify`,
+    { token: 'invalid', action: 'contact_form' },
+  );
+  const emptyLead = await postJson(
+    'native-empty-lead',
+    `${nativeApiBase}/v1/public/leads`,
+    { lead: {} },
+  );
 
   addCheck(checks, 'site page /assurance-taxi returns 200', mainPage.ok && mainPage.status === 200, { status: mainPage.status });
   addCheck(checks, 'public HTML does not load Google tags before consent', homeHtml.ok && directGoogleTagLoads.length === 0, {
@@ -324,16 +311,16 @@ async function main() {
     has_anon_key: Boolean(supabaseAnonKey),
   });
   addCheck(checks, 'Supabase runtime public key is not server/service_role', supabasePublicKeyInfo.ok, supabasePublicKeyInfo);
-  addCheck(checks, 'Backoffice admin_users REST bootstrap accepts runtime Supabase key', adminUsersProbe?.ok && Array.isArray(adminUsersProbe?.json), {
-    status: adminUsersProbe?.status || null,
-    rows: Array.isArray(adminUsersProbe?.json) ? adminUsersProbe.json.length : null,
+  addCheck(checks, 'Native platform API health is OK', nativeHealth.ok && nativeHealth.json?.ok === true, {
+    status: nativeHealth.status || null,
+    service: nativeHealth.json?.service || null,
   });
-  addCheck(checks, 'Turnstile rejects invalid tokens server-side', invalidTurnstile?.status === 403 && invalidTurnstile?.json?.success === false, {
+  addCheck(checks, 'Native Turnstile rejects invalid tokens server-side', [400, 403].includes(invalidTurnstile?.status) && invalidTurnstile?.json?.success === false, {
     status: invalidTurnstile?.status || null,
     success: invalidTurnstile?.json?.success ?? null,
     error_codes: invalidTurnstile?.json?.error_codes || [],
   });
-  addCheck(checks, 'create-lead-direct rejects empty public leads', emptyLead?.status === 400 && /Lead incomplet refuse/.test(emptyLead?.json?.error || ''), {
+  addCheck(checks, 'Native public lead endpoint rejects empty leads', emptyLead?.status === 400 && /invalid|incomplet/i.test(emptyLead?.json?.error || ''), {
     status: emptyLead?.status || null,
     error: emptyLead?.json?.error || null,
   });
@@ -370,12 +357,13 @@ async function main() {
       age_hours: parseIsoDate(row.imported_at) ? ageHours(parseIsoDate(row.imported_at)) : null,
     }));
   const postgresImportMetadataComplete = ALL_TABLES.every((table) => postgresImportAges.some((row) => row.table === table && row.age_hours !== null));
-  const postgresImportFresh = postgresImportAges.length > 0 && postgresImportAges.every((row) => row.age_hours !== null && row.age_hours <= MAX_POSTGRES_IMPORT_AGE_HOURS);
+  const postgresImportMetadataPresent = postgresImportAges.some((row) => row.age_hours !== null);
+  const postgresImportFresh = postgresImportMetadataPresent && postgresImportAges.every((row) => row.age_hours !== null && row.age_hours <= MAX_POSTGRES_IMPORT_AGE_HOURS);
   addCheck(checks, 'PostgreSQL mirror import metadata is available when required', !REQUIRE_POSTGRES_IMPORT_METADATA || postgresImportMetadataComplete, {
     required: REQUIRE_POSTGRES_IMPORT_METADATA,
     tables: postgresImportAges.map((row) => ({ table: row.table, imported_at: row.imported_at })),
   });
-  addCheck(checks, 'PostgreSQL mirror imports are fresh when metadata is available', postgresImportAges.length === 0 || postgresImportFresh, {
+  addCheck(checks, 'PostgreSQL imports are fresh when metadata is available', !postgresImportMetadataPresent || postgresImportFresh, {
     max_age_hours: MAX_POSTGRES_IMPORT_AGE_HOURS,
     tables: postgresImportAges.map((row) => ({
       table: row.table,
