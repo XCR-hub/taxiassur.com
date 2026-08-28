@@ -79,7 +79,6 @@ const AssuranceTaxiPerpignan = lazy(() => import('./pages/AssuranceTaxiPerpignan
 const AssuranceTaxiVauxLePenil = lazy(() => import('./pages/AssuranceTaxiVauxLePenil'));
 const AssuranceTaxiSollyAzar = lazy(() => import('./pages/AssuranceTaxiSollyAzar'));
 
-const AuthCallbackLinkedin = lazy(() => import('./pages/AuthCallbackLinkedin'));
 const SetPassword = lazy(() => import('./pages/SetPassword'));
 
 const ClientDashboard = lazy(() => import('./pages/client/ClientDashboard'));
@@ -521,7 +520,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/auth/callback/linkedin',
-    element: <AuthCallbackLinkedin />,
+    element: <Navigate to="/backoffice/social-media" replace />,
   },
   {
     path: '/auth/set-password',

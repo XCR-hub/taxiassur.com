@@ -11,7 +11,6 @@ import {
   type LucideIcon
 } from 'lucide-react';
 import TestAutomationButton from './TestAutomationButton';
-import { LinkedInOAuthButton } from '@/components/LinkedInOAuthButton';
 import SocialNetworkConfigModal from './SocialNetworkConfigModal';
 
 interface SocialNetwork {
@@ -534,12 +533,6 @@ export default function SocialMediaManager() {
                           <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                         </label>
                       </div>
-
-                      {networkDef.id === 'linkedin' && (
-                        <div className="pt-3 border-t border-slate-600" onClick={(e) => e.stopPropagation()}>
-                          <LinkedInOAuthButton />
-                        </div>
-                      )}
 
                       {dbNetwork.account_name && (
                         <div className="pt-2 border-t border-slate-600">
