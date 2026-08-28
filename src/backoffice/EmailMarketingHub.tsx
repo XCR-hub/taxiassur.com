@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import {
   Mail, Send, Eye, MousePointer, MessageSquare, Users,
   TrendingUp, ArrowRight, Sparkles, Beaker, Bell, BarChart3,
@@ -90,79 +90,32 @@ export default function EmailMarketingHub() {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [
-        queueTotalRes, queueSentRes, uniqueRecipRes, sent7dRes, sent30dRes,
-        inboxTotalRes, inboxUnreadRes, inboxLinkedRes, inboxAttachRes,
-        sendsRes, opensRes, clicksRes, repliesRes,
-        subsRes, tplRes, testsRes,
-        campaignsRes, recentRes
-      ] = await Promise.all([
-        supabase.from('email_queue').select('*', { count: 'exact', head: true }),
-        supabase.from('email_queue').select('*', { count: 'exact', head: true }).eq('status', 'sent'),
-        supabase.rpc('get_unique_email_recipients_count').catch(() => ({ data: null })),
-        supabase.from('email_queue').select('*', { count: 'exact', head: true }).eq('status', 'sent').gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString()),
-        supabase.from('email_queue').select('*', { count: 'exact', head: true }).eq('status', 'sent').gte('created_at', new Date(Date.now() - 30 * 86400000).toISOString()),
-        supabase.from('email_messages').select('*', { count: 'exact', head: true }),
-        supabase.from('email_messages').select('*', { count: 'exact', head: true }).or('is_read.eq.false,is_read.is.null'),
-        supabase.from('email_messages').select('lead_id', { count: 'exact', head: true }).not('lead_id', 'is', null),
-        supabase.from('email_messages').select('*', { count: 'exact', head: true }).not('attachments', 'is', null).neq('attachments', '[]'),
-        supabase.from('email_sends').select('*', { count: 'exact', head: true }),
-        supabase.from('email_opens').select('*', { count: 'exact', head: true }),
-        supabase.from('email_clicks').select('*', { count: 'exact', head: true }),
-        supabase.from('email_replies').select('*', { count: 'exact', head: true }),
-        supabase.from('newsletter_subscribers').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-        supabase.from('email_templates_smart').select('*', { count: 'exact', head: true }).eq('is_active', true),
-        supabase.from('email_ab_tests').select('*', { count: 'exact', head: true }).eq('status', 'running'),
-        supabase.from('newsletter_campaigns').select('id,name,subject,status,total_sent,total_opened,total_clicked,created_at').order('created_at', { ascending: false }).limit(5),
-        supabase.from('email_queue').select('id,to_email,to_name,subject,email_type,status,sent_at,created_at').order('created_at', { ascending: false }).limit(15),
-      ]);
-
-      setQueueTotal(queueTotalRes.count || 0);
-      setQueueSent(queueSentRes.count || 0);
-      setSentLast7d(sent7dRes.count || 0);
-      setSentLast30d(sent30dRes.count || 0);
-
-      setInboxTotal(inboxTotalRes.count || 0);
-      setInboxUnread(inboxUnreadRes.count || 0);
-      setInboxLinkedLeads(inboxLinkedRes.count || 0);
-      setInboxWithAttachments(inboxAttachRes.count || 0);
-
-      setTrackingSends(sendsRes.count || 0);
-      setTrackingOpens(opensRes.count || 0);
-      setTrackingClicks(clicksRes.count || 0);
-      setTrackingReplies(repliesRes.count || 0);
-
-      setActiveSubscribers(subsRes.count || 0);
-      setActiveTemplates(tplRes.count || 0);
-      setActiveTests(testsRes.count || 0);
-
-      setCampaigns((campaignsRes.data || []) as Campaign[]);
-      setRecentEmails((recentRes.data || []) as RecentEmail[]);
-
-      if (typeof uniqueRecipRes.data === 'number') {
-        setUniqueRecipients(uniqueRecipRes.data);
-      } else {
-        const { count } = await supabase.from('email_queue').select('to_email', { count: 'exact', head: true }).eq('status', 'sent');
-        setUniqueRecipients(count || 0);
-      }
-
-      const { data: typeData } = await supabase.rpc('get_email_queue_stats_by_type').catch(() => ({ data: null }));
-      if (typeData) {
-        setEmailTypes(typeData);
-      } else {
-        const grouped: Record<string, EmailTypeStats> = {};
-        (recentRes.data || []).forEach((e: any) => {
-          if (!grouped[e.email_type]) {
-            grouped[e.email_type] = { email_type: e.email_type, total: 0, sent: 0, pending: 0, failed: 0, last_sent_at: null };
-          }
-          grouped[e.email_type].total++;
-          if (e.status === 'sent') grouped[e.email_type].sent++;
-          if (e.sent_at && (!grouped[e.email_type].last_sent_at || e.sent_at > grouped[e.email_type].last_sent_at)) {
-            grouped[e.email_type].last_sent_at = e.sent_at;
-          }
-        });
-        setEmailTypes(Object.values(grouped));
-      }
+      const data = await nativeAdminCall<{
+        metrics?: Record<string, number>;
+        email_types?: EmailTypeStats[];
+        campaigns?: Campaign[];
+        recent_emails?: RecentEmail[];
+      }>('/v1/admin/email-marketing-dashboard');
+      const metrics = data.metrics || {};
+      setQueueTotal(metrics.queue_total || 0);
+      setQueueSent(metrics.queue_sent || 0);
+      setUniqueRecipients(metrics.unique_recipients || 0);
+      setSentLast7d(metrics.sent_7d || 0);
+      setSentLast30d(metrics.sent_30d || 0);
+      setInboxTotal(metrics.inbox_total || 0);
+      setInboxUnread(metrics.inbox_unread || 0);
+      setInboxLinkedLeads(metrics.inbox_linked || 0);
+      setInboxWithAttachments(metrics.inbox_attachments || 0);
+      setTrackingSends(metrics.tracking_sends || 0);
+      setTrackingOpens(metrics.tracking_opens || 0);
+      setTrackingClicks(metrics.tracking_clicks || 0);
+      setTrackingReplies(metrics.tracking_replies || 0);
+      setActiveSubscribers(metrics.active_subscribers || 0);
+      setActiveTemplates(metrics.active_templates || 0);
+      setActiveTests(metrics.active_tests || 0);
+      setEmailTypes(data.email_types || []);
+      setCampaigns(data.campaigns || []);
+      setRecentEmails(data.recent_emails || []);
     } catch (e) {
       console.error('EmailMarketingHub load error:', e);
     } finally {
