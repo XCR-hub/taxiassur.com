@@ -174,6 +174,9 @@ function verifyAutonomousSitemapGeneration() {
   addCheck('PostgreSQL read API uses stable secondary ordering', serverReadApiSource.includes('stableKey') && serverReadApiSource.includes("data ->> 'slug'") && serverReadApiSource.includes("data ->> 'id'"), {
     file: serverReadApiPath,
   });
+  addCheck('PostgreSQL compatibility proxy handles CORS before upstream routing', serverReadApiSource.indexOf("req.method === 'OPTIONS'") < serverReadApiSource.indexOf('proxySupabaseRequest(req, res, url, origin)') && serverReadApiSource.includes('proxyCorsHeaders(upstreamResponse.headers, origin)') && serverReadApiSource.includes('X-Client-Info,Prefer,Range'), {
+    file: serverReadApiPath,
+  });
   addCheck('sitemap generator paginates public content rows', generatorSource.includes('PUBLIC_LIST_MAX_PAGES') && generatorSource.includes("url.searchParams.set('offset'") && generatorSource.includes('fetchPublicRowsFromSource') && generatorSource.includes('added === 0'), {
     file: generatorPath,
   });

@@ -93,12 +93,19 @@ const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
 
+    if (req.method === 'OPTIONS') {
+      if (!isOriginAllowed(origin)) {
+        return sendJson(res, origin, 403, { ok: false, error: 'origin_not_allowed' });
+      }
+      return sendCors(res, origin, 204, '');
+    }
+
     if (/^\/aviation\/(rest|auth|storage|functions|realtime)\/v1(?:\/|$)/.test(url.pathname)) {
-      return proxyAviationSupabaseRequest(req, res, url);
+      return proxyAviationSupabaseRequest(req, res, url, origin);
     }
 
     if (/^\/(rest|auth|storage|functions|realtime)\/v1(?:\/|$)/.test(url.pathname)) {
-      return proxySupabaseRequest(req, res, url);
+      return proxySupabaseRequest(req, res, url, origin);
     }
 
     if (url.pathname === '/platform/health' || url.pathname.startsWith('/platform/v1/')) {
@@ -106,10 +113,6 @@ const server = createServer(async (req, res) => {
         return sendJson(res, origin, 403, { ok: false, error: 'origin_not_allowed' });
       }
       return proxyPlatformRequest(req, res, url);
-    }
-
-    if (req.method === 'OPTIONS') {
-      return sendCors(res, origin, 204, '');
     }
 
     if (url.pathname === '/health' && req.method === 'GET') {
@@ -171,13 +174,13 @@ const server = createServer(async (req, res) => {
   }
 });
 
-function proxyAviationSupabaseRequest(req, res, url) {
+function proxyAviationSupabaseRequest(req, res, url, origin) {
   const upstreamPath = url.pathname.replace(/^\/aviation/, '') + url.search;
   const headers = { ...req.headers, host: '127.0.0.1:8831' };
   delete headers['cf-connecting-ip'];
   delete headers['cf-ray'];
   const upstream = httpRequest({ hostname: '127.0.0.1', port: 8831, path: upstreamPath, method: req.method, headers }, (upstreamResponse) => {
-    res.writeHead(upstreamResponse.statusCode || 502, upstreamResponse.headers);
+    res.writeHead(upstreamResponse.statusCode || 502, proxyCorsHeaders(upstreamResponse.headers, origin));
     upstreamResponse.pipe(res);
   });
   upstream.setTimeout(70000, () => upstream.destroy(new Error('aviation_supabase_api_timeout')));
@@ -188,12 +191,12 @@ function proxyAviationSupabaseRequest(req, res, url) {
   req.pipe(upstream);
 }
 
-function proxySupabaseRequest(req, res, url) {
+function proxySupabaseRequest(req, res, url, origin) {
   const headers = { ...req.headers, host: '127.0.0.1:8811' };
   delete headers['cf-connecting-ip'];
   delete headers['cf-ray'];
   const upstream = httpRequest({ hostname: '127.0.0.1', port: 8811, path: url.pathname + url.search, method: req.method, headers }, (upstreamResponse) => {
-    res.writeHead(upstreamResponse.statusCode || 502, upstreamResponse.headers);
+    res.writeHead(upstreamResponse.statusCode || 502, proxyCorsHeaders(upstreamResponse.headers, origin));
     upstreamResponse.pipe(res);
   });
   upstream.setTimeout(70000, () => upstream.destroy(new Error('supabase_api_timeout')));
@@ -541,9 +544,21 @@ function corsHeaders(origin) {
   if (origin && config.allowedOrigins.has(origin)) {
     headers['Access-Control-Allow-Origin'] = origin;
     headers.Vary = 'Origin';
-    headers['Access-Control-Allow-Methods'] = 'GET,OPTIONS';
-    headers['Access-Control-Allow-Headers'] = 'Authorization,Content-Type,X-API-Key';
+    headers['Access-Control-Allow-Methods'] = 'GET,POST,PATCH,PUT,DELETE,OPTIONS';
+    headers['Access-Control-Allow-Headers'] = 'Authorization,Content-Type,X-API-Key,apikey,X-Client-Info,Prefer,Range';
+    headers['Access-Control-Expose-Headers'] = 'Content-Range,Range,X-Request-Id';
     headers['Access-Control-Max-Age'] = '600';
+  }
+  return headers;
+}
+
+function proxyCorsHeaders(upstreamHeaders, origin) {
+  const headers = { ...upstreamHeaders };
+  if (origin && config.allowedOrigins.has(origin)) {
+    headers['access-control-allow-origin'] = origin;
+    headers['access-control-allow-credentials'] = 'true';
+    headers['access-control-expose-headers'] = 'Content-Range,Range,X-Request-Id';
+    headers.vary = headers.vary ? `${headers.vary}, Origin` : 'Origin';
   }
   return headers;
 }
