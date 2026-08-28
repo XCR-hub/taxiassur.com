@@ -418,7 +418,7 @@ export default function SaisieDevisStep({
 
     try {
       // Extract file path from public URL
-      // URL format: https://xxx.supabase.co/storage/v1/object/public/contract-documents/path/to/file.pdf
+      // Native storage URLs are served by the authenticated TaxiAssur platform API.
       const urlParts = fileUrl.split('/contract-documents/');
       const filePath = urlParts.length > 1 ? urlParts[1] : '';
 

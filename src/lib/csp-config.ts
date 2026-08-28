@@ -42,7 +42,6 @@ export const cspConfig: CSPDirectives = {
   ],
   'connect-src': [
     "'self'",
-    process.env.VITE_SUPABASE_URL || '',
     'https://api.cloudflare.com',
   ],
   'media-src': ["'self'"],

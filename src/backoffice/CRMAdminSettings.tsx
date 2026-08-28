@@ -1302,7 +1302,7 @@ const CRMAdminSettings: React.FC = () => {
                         ...integrationSettings,
                         supabase: { ...integrationSettings.supabase, url: e.target.value }
                       })}
-                      placeholder="https://xxx.supabase.co"
+                      placeholder="https://taxiassur.com/api/platform"
                       className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>

@@ -1,17 +1,17 @@
 import { json } from '../postgres-public/_shared.js';
 
-const SUPABASE_URL = 'https://drohhxrkoequjphvabvq.supabase.co';
 const INTERNAL_DOMAINS = new Set(['taxiassur.com', 'taxiassur.fr', 'xcr.fr']);
 
 async function authenticatedUser(request, env) {
   const authorization = request.headers.get('authorization') || '';
-  const anonKey = env.TAXIASSUR_SUPABASE_ANON_KEY || env.VITE_SUPABASE_ANON_KEY || '';
-  if (!authorization.toLowerCase().startsWith('bearer ') || !anonKey) return null;
-  const response = await fetch(`${env.TAXIASSUR_SUPABASE_URL || SUPABASE_URL}/auth/v1/user`, {
-    headers: { authorization, apikey: anonKey },
+  if (!authorization.toLowerCase().startsWith('bearer ')) return null;
+  const platformUrl = String(env.TAXIASSUR_PLATFORM_API_URL || 'https://postgres-read-api.taxiassur.com/platform').replace(/\/$/, '');
+  const response = await fetch(`${platformUrl}/v1/auth/session`, {
+    headers: { authorization, origin: 'https://taxiassur.com' },
   });
   if (!response.ok) return null;
-  const user = await response.json().catch(() => null);
+  const session = await response.json().catch(() => null);
+  const user = session?.user;
   const domain = String(user?.email || '').toLowerCase().split('@')[1];
   return user?.id && INTERNAL_DOMAINS.has(domain) ? user : null;
 }

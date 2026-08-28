@@ -244,6 +244,7 @@ if (!existsSync(seoContentMapPath)) {
   }
 }
 const forbiddenDistSignatures = [
+  'supabase.co',
   'VITE_SUPABASE_SERVICE_ROLE_KEY',
   'VITE_ADMIN_PASSWORD',
   'VITE_SMTP_PASSWORD',
