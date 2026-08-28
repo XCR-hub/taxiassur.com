@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { Shield, Plus, Trash2, AlertCircle, CheckCircle, X, Search, Filter } from 'lucide-react';
 import { toast } from '@/lib/toast';
 
@@ -43,26 +43,12 @@ export default function EmailBlacklistManager() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Charger la liste noire
-      const { data: blacklistData } = await supabase
-        .from('email_blacklist')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (blacklistData) {
-        setBlacklist(blacklistData);
-      }
-
-      // Charger les logs de suppression
-      const { data: logsData } = await supabase
-        .from('lead_deletion_log')
-        .select('*')
-        .order('deleted_at', { ascending: false })
-        .limit(100);
-
-      if (logsData) {
-        setDeletionLogs(logsData);
-      }
+      const data = await nativeAdminCall<{
+        blacklist?: BlacklistEntry[];
+        deletion_logs?: DeletionLog[];
+      }>('/v1/admin/email-blacklist');
+      setBlacklist(data.blacklist || []);
+      setDeletionLogs(data.deletion_logs || []);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -77,32 +63,29 @@ export default function EmailBlacklistManager() {
     }
 
     try {
-      const { error } = await supabase
-        .from('email_blacklist')
-        .insert([newPattern]);
-
-      if (error) throw error;
+      await nativeAdminCall('/v1/admin/email-blacklist', {
+        method: 'POST',
+        body: JSON.stringify(newPattern),
+      });
 
       toast.success('Pattern ajouté à la liste noire ✓');
       setShowAddModal(false);
       setNewPattern({ email_pattern: '', pattern_type: 'domain', reason: '' });
       loadData();
     } catch (error) {
-      toast.error(`Erreur : ${error.message}`);
+      toast.error(`Erreur : ${error instanceof Error ? error.message : 'opération impossible'}`);
     }
   };
 
   const toggleActive = async (id: string, currentState: boolean) => {
     try {
-      const { error } = await supabase
-        .from('email_blacklist')
-        .update({ is_active: !currentState })
-        .eq('id', id);
-
-      if (error) throw error;
+      await nativeAdminCall(`/v1/admin/email-blacklist/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ is_active: !currentState }),
+      });
       loadData();
     } catch (error) {
-      toast.error(`Erreur : ${error.message}`);
+      toast.error(`Erreur : ${error instanceof Error ? error.message : 'opération impossible'}`);
     }
   };
 
@@ -110,15 +93,12 @@ export default function EmailBlacklistManager() {
     if (!confirm('Supprimer ce pattern de la liste noire ?')) return;
 
     try {
-      const { error } = await supabase
-        .from('email_blacklist')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      await nativeAdminCall(`/v1/admin/email-blacklist/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
       loadData();
     } catch (error) {
-      toast.error(`Erreur : ${error.message}`);
+      toast.error(`Erreur : ${error instanceof Error ? error.message : 'opération impossible'}`);
     }
   };
 
