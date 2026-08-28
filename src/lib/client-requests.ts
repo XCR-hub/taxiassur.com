@@ -1,8 +1,8 @@
-import { supabase } from './supabase';
 import {
   loadClientConsentState,
   type ClientConsentState,
 } from './client-consent';
+import { createClientPlatformRequest, loadClientPlatformSession } from './client-platform-api';
 
 export type ClientPortalRequestType =
   | 'address_change'
@@ -88,12 +88,7 @@ export function buildConsentSnapshot(
 }
 
 export async function loadClientPortalRequests(accessToken: string): Promise<ClientPortalRequest[]> {
-  const { data, error } = await supabase.rpc('get_client_portal_requests_by_token', {
-    p_token: accessToken,
-  });
-
-  if (error) throw error;
-  if (!data?.success) return [];
+  const data = await loadClientPlatformSession(accessToken);
   return (data.requests || []) as ClientPortalRequest[];
 }
 
@@ -103,20 +98,14 @@ export async function createClientPortalRequest(
   const consents = await loadClientConsentState(input.accessToken);
   const consentSnapshot = buildConsentSnapshot(consents, input.source || 'client_portal');
 
-  const { data, error } = await supabase.rpc('create_client_portal_request_by_token', {
-    p_token: input.accessToken,
-    p_request_type: input.requestType,
-    p_title: input.title.trim(),
-    p_description: input.description?.trim() || null,
-    p_new_data: input.newData || {},
-    p_consent_snapshot: consentSnapshot,
-    p_priority: input.priority || 'normal',
+  const data = await createClientPlatformRequest(input.accessToken, {
+    request_type: input.requestType,
+    title: input.title.trim(),
+    description: input.description?.trim() || null,
+    new_data: input.newData || {},
+    consent_snapshot: consentSnapshot,
+    priority: input.priority || 'normal',
   });
-
-  if (error) throw error;
-  if (!data?.success) {
-    throw new Error('Demande client refusee par le serveur.');
-  }
 
   return {
     requestId: String(data.request_id),

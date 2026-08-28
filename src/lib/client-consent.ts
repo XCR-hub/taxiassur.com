@@ -1,5 +1,5 @@
-import { supabase } from './supabase';
 import { hasBehavioralPersonalizationConsent, setBehavioralPersonalizationConsent } from './privacy-consent';
+import { loadClientPlatformConsents, updateClientPlatformConsent } from './client-platform-api';
 
 export type ClientConsentKey =
   | 'marketing_email'
@@ -39,11 +39,10 @@ export function setLocalBehavioralPersonalizationConsent(allowed: boolean): void
 }
 
 export async function loadClientConsentState(accessToken: string): Promise<ClientConsentState> {
-  const { data, error } = await supabase.rpc('get_client_consents_by_token', {
-    p_token: accessToken,
-  });
-
-  if (error || !data) {
+  let data: Record<string, boolean>;
+  try {
+    data = (await loadClientPlatformConsents(accessToken)).consents;
+  } catch {
     return { ...DEFAULT_CLIENT_CONSENTS };
   }
 
@@ -63,20 +62,17 @@ export async function recordClientConsent(
   source = 'client_portal_preferences',
   proof: Record<string, unknown> = {}
 ): Promise<void> {
-  const { error } = await supabase.rpc('record_client_consent_by_token', {
-    p_token: accessToken,
-    p_consent_key: key,
-    p_consent_value: value,
-    p_source: source,
-    p_proof: {
+  await updateClientPlatformConsent(accessToken, {
+    key,
+    value,
+    source,
+    proof: {
       ...proof,
       page: typeof window !== 'undefined' ? window.location.pathname : 'unknown',
       user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
       recorded_at: new Date().toISOString(),
     },
   });
-
-  if (error) throw error;
 
   if (key === 'behavioral_personalization') {
     setLocalBehavioralPersonalizationConsent(value);
@@ -102,12 +98,10 @@ export async function revokeAllClientMarketingConsents(
   accessToken: string,
   reason = 'client_request'
 ): Promise<void> {
-  const { error } = await supabase.rpc('revoke_client_consents_by_token', {
-    p_token: accessToken,
-    p_source: 'client_portal_revocation',
-    p_reason: reason,
+  await updateClientPlatformConsent(accessToken, {
+    revoke_all: true,
+    source: 'client_portal_revocation',
+    proof: { reason },
   });
-
-  if (error) throw error;
   setLocalBehavioralPersonalizationConsent(false);
 }

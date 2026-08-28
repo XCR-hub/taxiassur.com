@@ -4,9 +4,9 @@ import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
 import { getClientAccessToken } from '@/lib/client-access';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { createClientPortalRequest } from '@/lib/client-requests';
+import { loadClientPlatformSession } from '@/lib/client-platform-api';
 
 export default function ClientProfil() {
   const [searchParams] = useSearchParams();
@@ -63,11 +63,9 @@ export default function ClientProfil() {
   const loadUserData = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .rpc('get_client_portal_data_by_token', { p_token: accessToken });
-
-      if (error) throw error;
-      if (data?.success) {
+      const session = await loadClientPlatformSession(accessToken);
+      const data = { ...session.lead, ...session.user };
+      if (session.ok) {
         setUserData(data);
         setAddressForm({
           street: data.address || '',

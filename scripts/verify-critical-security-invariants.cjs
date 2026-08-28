@@ -325,7 +325,7 @@ requireMatch(clientClaimMigration, /ACCIDENT_RESPONSABLE[\s\S]*ASSISTANCE[\s\S]*
 requireMatch(clientClaimMigration, /incident_location[\s\S]*REVOKE ALL[\s\S]*FROM PUBLIC[\s\S]*GRANT EXECUTE/, 'claim location is not persisted or RPC grants are unsafe');
 requireMatch('src/lib/secure-document-url.ts', /sign-document-url/, 'frontend secure URL helper bypasses the signer');
 forbidMatch('src/components/crm/SecureDocumentLink.tsx', /createSignedUrl|getPublicUrl|signedUrl\)/, 'back-office document link bypasses the server signer or logs its URL');
-requireMatch('src/pages/client/ClientDocuments.tsx', /(?:view|download)SecureDocument[\s\S]*accessToken/, 'client documents are opened without token-bound signing');
+requireMatch('src/pages/client/ClientDocuments.tsx', /openClientPlatformDocument\(accessToken[\s\S]*doc\.download_path/, 'client documents are opened without token-bound authorization');
 requireMatch('supabase/functions/sign-document-url/index.ts', /lead_company_quotes[\s\S]*quote_file_url, quote_pdf_url, rc_pro_addon_file_url/, 'quote signer does not verify prospect ownership');
 requireMatch('src/components/client/ClientQuotesViewer.tsx', /openProspectQuote[\s\S]*downloadProspectCompanyDocument/, 'prospect quotes do not use token-bound platform downloads');
 requireMatch('server/taxiassur-platform-api.mjs', /downloadProspectQuote[\s\S]*leadByToken[\s\S]*lead_company_quotes[\s\S]*contract-documents/, 'platform quote download does not verify prospect ownership');
@@ -382,7 +382,7 @@ forbidMatch('src/pages/EspaceProspect.tsx', /upload_prospect_document_by_token|\
 requireMatch('src/pages/EspaceProspect.tsx', /uploadProspectPlatformDocument[\s\S]*downloadProspectPlatformDocument/, 'prospect page does not use token-bound platform upload/download');
 requireMatch('server/taxiassur-platform-api.mjs', /uploadProspectDocument[\s\S]*leadByToken[\s\S]*scanFile[\s\S]*insertFileObject/, 'platform prospect upload loses token authorization or antivirus scanning');
 forbidMatch('src/pages/client/ClientDocuments.tsx', /supabase\.from\(['"]prospect_documents|\.getPublicUrl\(filePath\)/, 'client page writes document metadata directly');
-requireMatch('src/pages/client/ClientDocuments.tsx', /uploadToSignedUrl[\s\S]*action: 'finalize'/, 'client page does not use prepare/upload/finalize flow');
+requireMatch('src/pages/client/ClientDocuments.tsx', /uploadClientPlatformDocument\(accessToken, file\)/, 'client page does not use the native antivirus upload flow');
 forbidMatch('src/pages/client/ClientDashboard.tsx', /\.from\(/, 'dashboard queries client tables directly instead of token-bound RPCs');
 requireMatch('src/pages/client/ClientDashboard.tsx', /loadClientPlatformSession\(accessToken\)[\s\S]*data\.documents[\s\S]*data\.quotes[\s\S]*data\.notifications/, 'dashboard activity is not loaded through a token-bound platform session');
 requireMatch(portalTokenMigration, /get_client_quotes_by_token[\s\S]*client_email_for_access_token/, 'client quotes wrapper does not require an active portal');
@@ -511,7 +511,7 @@ requireMatch(pipelineAutomation, /Notification queue insert failed[\s\S]*Interac
 requireMatch(pipelineAutomation, /\^\[0-9a-f\]\{64\}\$[\s\S]*Lead access token missing/, 'pipeline automation falls back to a lead UUID as a public access token');
 forbidMatch(pipelineAutomation, /lead\.access_token \|\| lead\.id/, 'pipeline automation exposes predictable lead identifiers as portal tokens');
 forbidMatch('supabase/functions/autonomous-ai-engine/index.ts', /success: false, error: error\.message/, 'autonomous AI endpoint leaks internal exception messages');for (const caller of ['src/backoffice/CRMInboxMulticanal.tsx', 'src/backoffice/CRMPipelineKanban.tsx', 'src/backoffice/EmailAccountSettings.tsx']) {
-  requireMatch(caller, /internalFunctionHeaders/, 'backoffice e-mail synchronization does not require a staff session');
+requireMatch(caller, /internalFunctionHeaders|nativeAdminInbox|nativeAdminPipeline/, 'backoffice e-mail synchronization does not require a staff session');
   forbidMatch(caller, /VITE_SUPABASE_ANON_KEY/, 'backoffice e-mail synchronization falls back to the public anon key');
 }
 requireMatch('src/lib/internal-function-auth.ts', /auth\.getSession\(\)[\s\S]*Session interne expirée[\s\S]*Bearer \$\{accessToken\}/, 'frontend internal-function helper accepts a missing session');
@@ -599,7 +599,6 @@ for (const [file, endpoint] of [
 }
 for (const file of [
   'src/components/client/ComplementaryDocuments.tsx',
-  'src/pages/client/ClientDocuments.tsx',
 ]) {
   requireMatch(file, /withTimeout\([\s\S]*action: 'prepare'[\s\S]*20_000[\s\S]*withTimeout\([\s\S]*uploadToSignedUrl[\s\S]*60_000[\s\S]*withTimeout\([\s\S]*action: 'finalize'[\s\S]*20_000/, 'document upload stages can spin forever');
 }
@@ -654,6 +653,7 @@ for (const file of [...directDeliveryAllowlist].filter((file) => ![
 ].includes(file))) {
   requireMatch(file, /getDeliveryRequestId[\s\S]*requestId[\s\S]*withTimeout[\s\S]*45_000[\s\S]*clearDeliveryRequestId/, 'allowlisted direct delivery lacks stable request ID, timeout, or success cleanup');
 }
+requireMatch('src/lib/client-platform-api.ts', /uploadClientPlatformDocument[\s\S]*60_000/, 'native client document upload can spin forever');
 for (const file of ['src/components/crm/SMSSendModal.tsx', 'src/components/crm/SMSConversationPanel.tsx']) {
   requireMatch(file, /getDeliveryRequestId[\s\S]*request_id: requestId[\s\S]*clearDeliveryRequestId/, 'native SMS delivery lacks stable request ID or success cleanup');
 }

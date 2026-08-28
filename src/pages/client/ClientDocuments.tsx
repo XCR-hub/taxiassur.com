@@ -8,22 +8,20 @@ import {
 } from 'lucide-react';
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
-import { supabase } from '@/lib/supabase';
-import { downloadSecureDocument, viewSecureDocument } from '@/lib/secure-document-url';
 import { logger } from '@/lib/logger';
 import { getClientAccessToken } from '@/lib/client-access';
-import { withTimeout } from '@/lib/promise-timeout';
+import { loadClientPlatformSession, openClientPlatformDocument, uploadClientPlatformDocument } from '@/lib/client-platform-api';
 
 interface Document {
   id: string;
   name: string;
   document_type: string;
   category: string;
-  file_url: string;
   file_size: number | null;
   mime_type: string | null;
   status: string;
   source: string;
+  download_path?: string;
   uploaded_at: string;
   validated: boolean;
 }
@@ -84,7 +82,6 @@ function StatusBadge({ status, validated }: { status: string; validated: boolean
     </span>
   );
 }
-
 const TAB_META: Record<Tab, { label: string; icon: LucideIcon; color: string; emptyMsg: string; emptyHint: string }> = {
   contract: {
     label: 'Mon contrat',
@@ -133,12 +130,8 @@ export default function ClientDocuments() {
   const loadDocuments = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .rpc('get_client_documents_by_token', { p_token: accessToken });
-      if (error) throw error;
-      if (data?.success) {
-        setDocuments(data.documents || []);
-      }
+      const data = await loadClientPlatformSession(accessToken);
+      setDocuments(data.documents as unknown as Document[]);
     } catch (err) {
       logger.error('Error loading documents:', err);
     } finally {
@@ -147,36 +140,18 @@ export default function ClientDocuments() {
   };
 
   const handleView = async (doc: Document) => {
-    if (!doc.file_url || !accessToken) return;
+    if (!doc.download_path || !accessToken) return;
     try {
-      const bucket = documentBucket(doc);
-      if (!bucket) return void window.open(doc.file_url, '_blank', 'noopener,noreferrer');
-      await viewSecureDocument({ path: doc.file_url, bucket, accessToken, fileName: doc.name });
+      await openClientPlatformDocument(accessToken, doc.download_path, doc.name);
     } catch (error: unknown) {
       setUploadError(error instanceof Error ? error.message : "Impossible d'ouvrir le document");
     }
   };
 
   const handleDownload = async (doc: Document) => {
-    if (!doc.file_url || !accessToken) return;
+    if (!doc.download_path || !accessToken) return;
     try {
-      const bucket = documentBucket(doc);
-      if (bucket) {
-        await downloadSecureDocument({ path: doc.file_url, bucket, accessToken, fileName: doc.name });
-        return;
-      }
-      const signedUrl = doc.file_url;
-      const response = await fetch(signedUrl);
-      if (!response.ok) throw new Error(`Téléchargement impossible (HTTP ${response.status})`);
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = doc.name || 'document';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
+      await openClientPlatformDocument(accessToken, doc.download_path, doc.name, true);
     } catch (error: unknown) {
       setUploadError(error instanceof Error ? error.message : 'Téléchargement impossible');
     }
@@ -196,35 +171,17 @@ export default function ClientDocuments() {
     setUploadError(null);
     setUploadSuccess(false);
     setUploadProgress(10);
-    let preparedPath = '';
     try {
-      const request = { accessToken, fileName: file.name, fileSize: file.size, mimeType: file.type };
-      const { data: prepared, error: prepareError } = await withTimeout(supabase.functions.invoke('upload-client-document', {
-        body: { action: 'prepare', ...request },
-      }), 20_000);
-      if (prepareError || !prepared?.success || !prepared.path || !prepared.uploadToken) {
-        throw prepareError || new Error('Préparation du dépôt impossible');
-      }
-      preparedPath = String(prepared.path);
       setUploadProgress(35);
-      const { error: uploadError } = await withTimeout(supabase.storage
-        .from('prospect-documents')
-        .uploadToSignedUrl(preparedPath, String(prepared.uploadToken), file, { contentType: file.type }), 60_000);
-      if (uploadError) throw uploadError;
+      await uploadClientPlatformDocument(accessToken, file);
       setUploadProgress(75);
-      const { data: finalized, error: finalizeError } = await withTimeout(supabase.functions.invoke('upload-client-document', {
-        body: { action: 'finalize', path: preparedPath, ...request },
-      }), 20_000);
-      if (finalizeError || !finalized?.success) {
-        throw finalizeError || new Error('Finalisation du dépôt impossible');
-      }
       setUploadProgress(100);
       setUploadSuccess(true);
       setActiveTab('mine');
       setTimeout(() => { setUploadSuccess(false); setUploadProgress(0); setShowUpload(false); }, 3000);
       await loadDocuments();
     } catch (err) {
-      logger.error('Secure client document upload failed', { pathCreated: Boolean(preparedPath) });
+      logger.error('Secure client document upload failed');
       setUploadError(err instanceof Error ? err.message : "Erreur lors de l'envoi du fichier");
       setUploadProgress(0);
     } finally {
@@ -496,7 +453,7 @@ export default function ClientDocuments() {
                           </div>
                         </div>
 
-                        {doc.file_url && (
+                        {doc.download_path && (
                           <div className="flex items-center gap-1.5 flex-shrink-0 opacity-0 group-hover:opacity-100 sm:opacity-100 transition-opacity">
                             <button
                               onClick={() => handleView(doc)}
@@ -542,10 +499,4 @@ export default function ClientDocuments() {
       </ClientLayout>
     </>
   );
-}
-
-function documentBucket(doc: Document): 'prospect-documents' | 'crm-documents' | null {
-  if (doc.category === 'company_document') return null;
-  if (doc.category === 'crm_upload' || doc.file_url.includes('/crm-documents/')) return 'crm-documents';
-  return 'prospect-documents';
 }

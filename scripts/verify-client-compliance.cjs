@@ -42,8 +42,8 @@ const requiredChecks = [
     patterns: [
       'buildConsentSnapshot',
       'loadClientConsentState',
-      'create_client_portal_request',
-      'get_client_portal_requests',
+      'createClientPlatformRequest',
+      'loadClientPlatformSession',
       'partner_cross_sell',
     ],
   },
@@ -73,8 +73,8 @@ const requiredChecks = [
     label: 'client consent helper records and revokes consent',
     file: 'src/lib/client-consent.ts',
     patterns: [
-      'record_client_consent_by_token',
-      'revoke_client_consents_by_token',
+      'updateClientPlatformConsent',
+      'revoke_all: true',
       'BEHAVIORAL_CONSENT_STORAGE_KEY',
       'setLocalBehavioralPersonalizationConsent(false)',
     ],

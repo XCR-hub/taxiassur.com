@@ -17,13 +17,13 @@ export interface ClientPlatformSession {
   subscription: Record<string, unknown> | null;
 }
 
-async function clientRequest(path: string, token: string, init: RequestInit = {}) {
+async function clientRequest(path: string, token: string, init: RequestInit = {}, timeoutMs = 20_000) {
   const response = await fetch(`${PLATFORM_BASE_URL}${path}`, {
     ...init,
     headers: { 'X-Client-Token': token, ...init.headers },
     credentials: 'omit',
     cache: 'no-store',
-    signal: init.signal || AbortSignal.timeout(20_000),
+    signal: init.signal || AbortSignal.timeout(timeoutMs),
   });
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));
@@ -64,4 +64,60 @@ export async function createClientPlatformClaim(token: string, claim: Record<str
     body: JSON.stringify(claim),
   });
   return response.json();
+}
+
+export async function createClientPlatformRequest(token: string, request: Record<string, unknown>) {
+  const response = await clientRequest('/v1/client/requests', token, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  return response.json();
+}
+
+export async function loadClientPlatformConsents(token: string) {
+  const response = await clientRequest('/v1/client/consents', token);
+  return response.json() as Promise<{ ok: true; consents: Record<string, boolean> }>;
+}
+
+export async function updateClientPlatformConsent(token: string, update: Record<string, unknown>) {
+  const response = await clientRequest('/v1/client/consents', token, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(update),
+  });
+  return response.json();
+}
+
+export async function uploadClientPlatformDocument(token: string, file: File, documentType = 'autre') {
+  const response = await clientRequest('/v1/prospect/documents', token, {
+    method: 'POST',
+    headers: {
+      'Content-Type': file.type,
+      'X-Document-Type': documentType,
+      'X-File-Name': encodeURIComponent(file.name),
+    },
+    body: file,
+  }, 60_000);
+  return response.json();
+}
+
+export async function openClientPlatformDocument(token: string, downloadPath: string, fileName: string, download = false) {
+  if (!/^\/v1\/prospect\/(documents|final-documents)\/[0-9a-f-]{36}\/download$/i.test(downloadPath)) {
+    throw new Error('invalid_document_path');
+  }
+  const response = await clientRequest(downloadPath, token);
+  const url = URL.createObjectURL(await response.blob());
+  if (!download) {
+    window.open(url, '_blank', 'noopener,noreferrer');
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    return;
+  }
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = fileName || 'document';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
 }
