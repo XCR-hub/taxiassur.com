@@ -13,10 +13,10 @@ import {
 } from 'lucide-react';
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
-import { supabase } from '@/lib/supabase';
 import { normalizeEmail } from '@/lib/client-consent';
 import { getClientAccessToken } from '@/lib/client-access';
 import { referralSystem } from '@/lib/referral-system';
+import { createClientPlatformReferral, loadClientPlatformSession } from '@/lib/client-platform-api';
 
 interface ReferralRow {
   id: string;
@@ -60,11 +60,7 @@ export default function ClientParrainage() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: loadError } = await supabase.rpc('get_client_referrals_by_token', {
-        p_token: accessToken,
-      });
-      if (loadError) throw loadError;
-      if (!data?.success) throw new Error('Accès client invalide');
+      const data = await loadClientPlatformSession(accessToken);
       setReferralCode(String(data.referral_code || ''));
       setReferrals((data.referrals || []) as ReferralRow[]);
     } catch {
@@ -98,13 +94,7 @@ export default function ClientParrainage() {
     setMessage(null);
 
     try {
-      const { data, error: insertError } = await supabase.rpc('create_client_referral_by_token', {
-        p_token: accessToken,
-        p_referred_email: normalizedReferredEmail,
-        p_permission_confirmed: hasPermission,
-      });
-      if (insertError) throw insertError;
-      if (!data?.success) throw new Error(data?.error || 'Parrainage refusé');
+      await createClientPlatformReferral(accessToken, normalizedReferredEmail, hasPermission);
 
       setMessage('Parrainage enregistre. Le filleul sera traite uniquement dans ce cadre.');
       setReferredEmail('');

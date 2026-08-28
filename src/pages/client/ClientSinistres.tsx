@@ -26,10 +26,9 @@ import {
 } from "lucide-react";
 import ClientLayout from "../../components/client/ClientLayout";
 import SEOHead from "../../components/SEOHead";
-import { supabase } from "@/lib/supabase";
 import { logger } from "@/lib/logger";
 import { getClientAccessToken } from "@/lib/client-access";
-import { withTimeout } from "@/lib/promise-timeout";
+import { createClientPlatformClaim, loadClientPlatformSession } from "@/lib/client-platform-api";
 
 interface InsuranceCompanyLink {
   label: string;
@@ -311,29 +310,11 @@ export default function ClientSinistres() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [{ data, error }, { data: companyData, error: companyError }] =
-        await withTimeout(
-          Promise.all([
-            supabase.rpc("get_client_claims_by_token", {
-              p_token: accessToken,
-            }),
-            supabase.rpc("get_client_insurance_company_by_token", {
-              p_token: accessToken,
-            }),
-          ]),
-          20_000,
-        );
-      if (error) throw error;
-      if (companyError) throw companyError;
-      if (!data?.success) {
-        throw new Error(data?.error || "Accès sinistres indisponible");
-      }
-      if (data?.success) {
-        setLeadId(data.lead_id || null);
-        setClaims((data.claims || []) as Claim[]);
-      }
-      if (companyData?.success && companyData.company) {
-        const c = companyData.company;
+      const data = await loadClientPlatformSession(accessToken);
+      setLeadId(String(data.lead.id || "") || null);
+      setClaims(data.claims as Claim[]);
+      if (data.insurance_company) {
+        const c = data.insurance_company;
         setCompany({
           id: c.id,
           name: c.name,
@@ -360,27 +341,19 @@ export default function ClientSinistres() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const { data, error } = await withTimeout(
-        supabase.rpc("insert_client_claim_by_token_v2", {
-          p_token: accessToken,
-          p_incident_type: form.incident_type,
-          p_incident_date: form.incident_date,
-          p_incident_description: form.description,
-          p_incident_location: form.location || null,
-          p_third_party_involved: form.third_party_involved,
-          p_third_party_info: form.third_party_involved
+      await createClientPlatformClaim(accessToken, {
+          incident_type: form.incident_type,
+          incident_date: form.incident_date,
+          description: form.description,
+          location: form.location || null,
+          third_party_involved: form.third_party_involved,
+          third_party_info: form.third_party_involved
             ? form.third_party_info
             : null,
-          p_police_report_number: form.police_report
+          police_report_number: form.police_report
             ? form.police_report_number
             : null,
-        }),
-        20_000,
-      );
-      if (error) throw error;
-      if (data && !data.success) {
-        throw new Error(data.error || "Erreur lors de la déclaration");
-      }
+        });
       setSubmitSuccess(true);
       setShowForm(false);
       setForm({

@@ -3,9 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FileText, Shield, CreditCard, Bell, TrendingUp, Calendar, CheckCircle, Clock, AlertCircle, ChevronRight, Package, Phone, Mail, ClipboardList } from 'lucide-react';
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
-import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { getClientAccessToken } from '@/lib/client-access';
+import { loadClientPlatformSession } from '@/lib/client-platform-api';
 
 interface UserData {
   success: boolean;
@@ -68,97 +68,38 @@ export default function ClientDashboard() {
 
   const loadUserData = async () => {
     try {
-      const { data, error } = await supabase
-        .rpc('get_client_portal_data_by_token', { p_token: accessToken });
+      const data = await loadClientPlatformSession(accessToken);
+      setUserData({ ...data.user, access_token: data.lead?.access_token } as unknown as UserData);
+      setSinistresCount(data.claims.filter((claim) => claim.claim_status !== 'closed' && claim.claim_status !== 'rejected').length);
+      setOpenRequestsCount(data.requests.filter((request) => request.status === 'pending' || request.status === 'in_progress').length);
 
-      if (error) throw error;
-
-      if (data?.success) {
-        setUserData(data as UserData);
-        if (data.lead_id) {
-          loadRecentActivity();
-          loadSinistresCount();
-          loadOpenRequestsCount();
-        }
-      }
+      const activities: RecentActivity[] = [];
+      data.documents.forEach((doc) => activities.push({
+        id: String(doc.id),
+        label: doc.status === 'verified'
+          ? `Document vérifié : ${String(doc.name || doc.file_name || '')}`
+          : `Document reçu : ${String(doc.name || doc.file_name || '')}`,
+        date: String(doc.uploaded_at || doc.created_at || ''),
+        type: 'document',
+      }));
+      data.quotes.forEach((quote) => activities.push({
+        id: String(quote.id),
+        label: quote.status === 'validated' ? 'Devis validé' : 'Nouveau devis disponible',
+        date: String(quote.created_at || ''),
+        type: 'quote',
+      }));
+      data.notifications.forEach((notification) => activities.push({
+        id: String(notification.id),
+        label: String(notification.title || 'Nouvelle notification'),
+        date: String(notification.created_at || ''),
+        type: 'notification',
+      }));
+      activities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setRecentActivity(activities.slice(0, 5));
     } catch (error) {
       logger.error('Error loading user data:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadSinistresCount = async () => {
-    try {
-      const { data } = await supabase
-        .rpc('get_client_claims_by_token', { p_token: accessToken });
-      if (data?.success) {
-        const active = (data.claims || []).filter((c: { claim_status?: string }) => c.claim_status !== 'closed' && c.claim_status !== 'rejected');
-        setSinistresCount(active.length);
-      }
-    } catch {
-      setSinistresCount(0);
-    }
-  };
-
-  const loadOpenRequestsCount = async () => {
-    try {
-      const { data, error } = await supabase.rpc('get_client_portal_requests_by_token', {
-        p_token: accessToken,
-      });
-      if (error || !data?.success) throw error || new Error('Accès client invalide');
-      const open = (data.requests || []).filter((request: { status?: string }) =>
-        request.status === 'pending' || request.status === 'in_progress'
-      );
-      setOpenRequestsCount(open.length);
-    } catch {
-      setOpenRequestsCount(0);
-    }
-  };
-
-  const loadRecentActivity = async () => {
-    try {
-      const [docsRes, quotesRes, notifsRes] = await Promise.all([
-        supabase.rpc('get_client_documents_by_token', { p_token: accessToken }),
-        supabase.rpc('get_client_quotes_by_token', { p_token: accessToken }),
-        supabase.rpc('get_client_notifications_by_token', { p_token: accessToken }),
-      ]);
-
-      const activities: RecentActivity[] = [];
-
-      ((docsRes.data?.documents || []) as Array<{ id: string; status?: string; file_name?: string; uploaded_at?: string }>).forEach((doc) => {
-        activities.push({
-          id: doc.id,
-          label: doc.status === 'verified'
-            ? `Document vérifié : ${doc.file_name}`
-            : `Document reçu : ${doc.file_name}`,
-          date: doc.uploaded_at,
-          type: 'document',
-        });
-      });
-
-      ((quotesRes.data?.quotes || []) as Array<{ id: string; status?: string; created_at?: string }>).forEach((q) => {
-        activities.push({
-          id: q.id,
-          label: q.status === 'validated' ? 'Devis validé' : 'Nouveau devis disponible',
-          date: q.created_at,
-          type: 'quote',
-        });
-      });
-
-      ((notifsRes.data?.notifications || []) as Array<{ id: string; title?: string; created_at?: string }>).forEach((n) => {
-        activities.push({
-          id: n.id,
-          label: n.title || 'Nouvelle notification',
-          date: n.created_at,
-          type: 'notification',
-        });
-      });
-
-      activities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      setRecentActivity(activities.slice(0, 5));
-    } catch (err) {
-      logger.error('Error loading activity:', err);
     }
   };
 

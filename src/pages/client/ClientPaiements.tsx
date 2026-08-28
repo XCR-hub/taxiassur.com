@@ -7,8 +7,8 @@ import {
 } from 'lucide-react';
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
-import { supabase } from '@/lib/supabase';
 import { getClientAccessToken } from '@/lib/client-access';
+import { loadClientPlatformSession } from '@/lib/client-platform-api';
 
 interface Payment {
   id: string;
@@ -86,11 +86,7 @@ export default function ClientPaiements() {
 
   const loadData = async () => {
     try {
-      const { data, error: loadError } = await supabase.rpc('get_client_payments_by_token', {
-        p_token: accessToken,
-      });
-      if (loadError) throw loadError;
-      if (!data?.success) throw new Error('Accès client invalide');
+      const data = await loadClientPlatformSession(accessToken);
       setLeadData(data.lead as LeadData);
       setPayments((data.payments || []) as Payment[]);
     } catch (err) {

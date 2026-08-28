@@ -156,7 +156,7 @@ requireMatch(claimNotificationTriggerMigration, /to_jsonb\(OLD\)[\s\S]*client_vi
 requireMatch(claimNotificationTriggerMigration, /jsonb_build_object\('type', v_kind, 'claim_id', NEW\.id\)/, 'claim trigger sends caller-controlled PII to the notifier');
 requireMatch(claimNotificationTriggerMigration, /EXCEPTION WHEN OTHERS[\s\S]*RETURN NEW/, 'notification transport can roll back claim persistence');
 requireMatch(claimNotificationTriggerMigration, /REVOKE ALL ON FUNCTION public\.enqueue_secure_claim_notification\(\) FROM PUBLIC, anon, authenticated/, 'claim notification trigger helper remains web-executable');
-requireMatch('src/pages/client/ClientSinistres.tsx', /insert_client_claim_by_token[\s\S]*if \(error\) throw error[\s\S]*!data\.success/, 'client claim form bypasses token ownership or masks persistence errors');
+requireMatch('src/pages/client/ClientSinistres.tsx', /createClientPlatformClaim\(accessToken/, 'client claim form bypasses token ownership or masks persistence errors');
 requireMatch(leadMagnetConfirmation, /lead_magnet_downloads[\s\S]*tenMinutesAgo/, 'lead magnet email is not bound to a recent stored request');
 requireMatch(leadMagnetConfirmation, /const guides = \{[\s\S]*guide-complet[\s\S]*checklist-documents/, 'lead magnet accepts attacker-controlled templates or links');
 requireMatch(leadMagnetConfirmation, /lead_magnet_delivery_events[\s\S]*23505[\s\S]*status !== "failed"/, 'lead magnet lacks daily deduplication or safe retries');
@@ -318,8 +318,8 @@ forbidMatch('src/components/client/index.ts', /ClientDocumentsViewer/, 'legacy l
 forbidMatch('src/components/client/index.ts', /ClientClaimsManager/, 'legacy lead-id claim manager remains exported');
 const clientClaimsPage = 'src/pages/client/ClientSinistres.tsx';
 const clientClaimMigration = 'supabase/migrations/20260810050000_harden_client_claim_creation.sql';
-requireMatch(clientClaimsPage, /insert_client_claim_by_token_v2[\s\S]*p_incident_location:\s*form\.location[\s\S]*20_000/, 'client claim creation loses location or can spin forever');
-requireMatch(clientClaimsPage, /get_client_claims_by_token[\s\S]*get_client_insurance_company_by_token[\s\S]*20_000/, 'client claim loading can spin forever');
+requireMatch(clientClaimsPage, /createClientPlatformClaim\(accessToken[\s\S]*location:\s*form\.location/, 'client claim creation loses location or can spin forever');
+requireMatch(clientClaimsPage, /loadClientPlatformSession\(accessToken\)/, 'client claim loading can spin forever');
 requireMatch(clientClaimMigration, /client_email_for_access_token[\s\S]*client_portal_users[\s\S]*is_active = true/, 'claim creation is not bound to an active token portal');
 requireMatch(clientClaimMigration, /ACCIDENT_RESPONSABLE[\s\S]*ASSISTANCE[\s\S]*length\(btrim\(coalesce\(p_incident_location/, 'claim type or location validation is missing');
 requireMatch(clientClaimMigration, /incident_location[\s\S]*REVOKE ALL[\s\S]*FROM PUBLIC[\s\S]*GRANT EXECUTE/, 'claim location is not persisted or RPC grants are unsafe');
@@ -384,7 +384,7 @@ requireMatch('server/taxiassur-platform-api.mjs', /uploadProspectDocument[\s\S]*
 forbidMatch('src/pages/client/ClientDocuments.tsx', /supabase\.from\(['"]prospect_documents|\.getPublicUrl\(filePath\)/, 'client page writes document metadata directly');
 requireMatch('src/pages/client/ClientDocuments.tsx', /uploadToSignedUrl[\s\S]*action: 'finalize'/, 'client page does not use prepare/upload/finalize flow');
 forbidMatch('src/pages/client/ClientDashboard.tsx', /\.from\(/, 'dashboard queries client tables directly instead of token-bound RPCs');
-requireMatch('src/pages/client/ClientDashboard.tsx', /get_client_documents_by_token[\s\S]*get_client_quotes_by_token[\s\S]*get_client_notifications_by_token/, 'dashboard activity is not loaded through token-bound RPCs');
+requireMatch('src/pages/client/ClientDashboard.tsx', /loadClientPlatformSession\(accessToken\)[\s\S]*data\.documents[\s\S]*data\.quotes[\s\S]*data\.notifications/, 'dashboard activity is not loaded through a token-bound platform session');
 requireMatch(portalTokenMigration, /get_client_quotes_by_token[\s\S]*client_email_for_access_token/, 'client quotes wrapper does not require an active portal');
 forbidMatch('src/router.tsx', /element:\s*<ClientInsuranceSpace/, 'legacy insurance route is still executable');
 requireMatch('src/router.tsx', /path:\s*['"]\/espace-client\/assurances['"][\s\S]*Navigate to=['"]\/client\/dashboard['"]/, 'legacy insurance URL is not redirected to the token portal');

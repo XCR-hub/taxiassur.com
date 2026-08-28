@@ -6,9 +6,9 @@ import {
 } from 'lucide-react';
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
-import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { getClientAccessToken } from '@/lib/client-access';
+import { loadClientPlatformSession, markClientPlatformNotifications } from '@/lib/client-platform-api';
 
 interface Notification {
   id: string;
@@ -67,11 +67,7 @@ export default function ClientNotifications() {
   const loadNotifications = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_client_notifications_by_token', {
-        p_token: accessToken,
-      });
-      if (error) throw error;
-      if (!data?.success) throw new Error('Accès client invalide');
+      const data = await loadClientPlatformSession(accessToken);
       setNotifications((data.notifications || []) as Notification[]);
     } catch (err) {
       logger.error('Error loading notifications:', err);
@@ -87,8 +83,7 @@ export default function ClientNotifications() {
       const unread = notifications.filter(n => !n.read_at).map(n => n.id);
       if (unread.length === 0) return;
 
-      const { data, error } = await supabase.rpc('mark_client_notifications_read_by_token', { p_token: accessToken });
-      if (error || !data?.success) throw error || new Error('Accès client invalide');
+      await markClientPlatformNotifications(accessToken);
 
       setNotifications(prev => prev.map(n => ({
         ...n,
@@ -103,11 +98,7 @@ export default function ClientNotifications() {
 
   const markRead = async (id: string) => {
     try {
-      const { data, error } = await supabase.rpc('mark_client_notification_read_by_token', {
-        p_token: accessToken,
-        p_notification_id: id,
-      });
-      if (error || !data?.success) throw error || new Error('Notification inaccessible');
+      await markClientPlatformNotifications(accessToken, id);
 
       setNotifications(prev => prev.map(n =>
         n.id === id ? { ...n, read_at: new Date().toISOString() } : n

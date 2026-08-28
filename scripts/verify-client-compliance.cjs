@@ -95,9 +95,8 @@ const requiredChecks = [
     label: 'client referral page requires permission and caps reward',
     file: 'src/pages/client/ClientParrainage.tsx',
     patterns: [
-      'create_client_referral_by_token',
-      'p_permission_confirmed: hasPermission',
-      "p_token: accessToken",
+      'createClientPlatformReferral',
+      'accessToken, normalizedReferredEmail, hasPermission',
       'Vous devez confirmer',
     ],
   },

@@ -3,8 +3,8 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, FileText, Shield, CreditCard, Bell, User, LogOut, Menu, X, Home, Gift, ShieldCheck, ClipboardList
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { clearClientAccess, getClientAccessToken } from '@/lib/client-access';
+import { loadClientPlatformSession } from '@/lib/client-platform-api';
 
 interface ClientLayoutProps {
   children: React.ReactNode;
@@ -25,13 +25,7 @@ export default function ClientLayout({ children, email }: ClientLayoutProps) {
 
   const loadUnreadCount = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_client_notifications_by_token', {
-        p_token: accessToken,
-      });
-      if (error || !data?.success) {
-        setUnreadCount(0);
-        return;
-      }
+      const data = await loadClientPlatformSession(accessToken);
       const unread = (data.notifications || []).filter((item: { read_at?: string | null }) => !item.read_at);
       setUnreadCount(unread.length);
     } catch {
