@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { Bell, BellOff, Mail, Smartphone, Star, Eye, MousePointer, MessageCircle, TrendingDown } from 'lucide-react';
 
 interface NotificationConfig {
@@ -21,82 +21,32 @@ export default function NotificationsManager() {
   }, []);
 
   const initUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      setCurrentUserId(user.id);
-      await loadConfigs(user.id);
+    try {
+      await loadConfigs();
+      setCurrentUserId('native-session');
+    } catch (error) {
+      console.error('Erreur chargement notifications:', error);
+      setCurrentUserId(null);
     }
     setLoading(false);
   };
 
-  const loadConfigs = async (userId: string) => {
-    const { data } = await supabase
-      .from('email_notifications_config')
-      .select('*')
-      .eq('user_id', userId);
-
-    if (data && data.length > 0) {
-      setConfigs(data);
-    } else {
-      await createDefaultConfigs(userId);
-    }
-  };
-
-  const createDefaultConfigs = async (userId: string) => {
-    const defaultConfigs = [
-      {
-        user_id: userId,
-        notification_type: 'vip_open',
-        enabled: true,
-        conditions: { min_score: 70 },
-        channels: ['email']
-      },
-      {
-        user_id: userId,
-        notification_type: 'first_open',
-        enabled: true,
-        conditions: {},
-        channels: ['email']
-      },
-      {
-        user_id: userId,
-        notification_type: 'click',
-        enabled: false,
-        conditions: {},
-        channels: ['email']
-      },
-      {
-        user_id: userId,
-        notification_type: 'reply',
-        enabled: true,
-        conditions: {},
-        channels: ['email']
-      },
-      {
-        user_id: userId,
-        notification_type: 'engagement_drop',
-        enabled: false,
-        conditions: { threshold: 30 },
-        channels: ['email']
-      }
-    ];
-
-    const { data } = await supabase
-      .from('email_notifications_config')
-      .insert(defaultConfigs)
-      .select();
-
-    if (data) setConfigs(data);
+  const loadConfigs = async () => {
+    const data = await nativeAdminCall<{ configs?: NotificationConfig[] }>(
+      '/v1/admin/notification-configs',
+    );
+    setConfigs(data.configs || []);
   };
 
   const toggleNotification = async (configId: string, currentState: boolean) => {
-    const { error } = await supabase
-      .from('email_notifications_config')
-      .update({ enabled: !currentState })
-      .eq('id', configId);
-
-    if (!error && currentUserId) {
-      await loadConfigs(currentUserId);
+    try {
+      await nativeAdminCall(`/v1/admin/notification-configs/${encodeURIComponent(configId)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ enabled: !currentState }),
+      });
+      await loadConfigs();
+    } catch (error) {
+      console.error('Erreur mise à jour notification:', error);
     }
   };
 
@@ -322,7 +272,7 @@ export default function NotificationsManager() {
           </div>
           <div className="text-center p-4 bg-purple-50 rounded-lg">
             <div className="text-3xl font-bold text-purple-600">
-              {Math.round(configs.filter(c => c.enabled).length / configs.length * 100)}%
+              {configs.length ? Math.round(configs.filter(c => c.enabled).length / configs.length * 100) : 0}%
             </div>
             <div className="text-sm text-gray-600 mt-1">Taux activation</div>
           </div>
