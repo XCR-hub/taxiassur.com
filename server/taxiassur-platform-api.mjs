@@ -302,7 +302,37 @@ async function hydrateStoredIntegrations(){
 
 hydrateStoredIntegrations().finally(()=>server.listen(config.port, config.host, () => console.log(`[taxiassur-platform-api] listening on http://${config.host}:${config.port}`)));
 
-async function adminQuoteQueue(req,res,origin,requestId){const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);const [items,leads]=await Promise.all([recordsAll('ready_for_quote_queue'),recordsAll('crm_leads')]);const active=leads.filter(x=>x&&!x.deleted_at&&x.is_archived!==true),leadMap=new Map(active.filter(x=>x.id).map(x=>[String(x.id),x]));const queue=items.filter(x=>x&&x.id&&x.lead_id).map(x=>({...x,priority_score:Number(x.priority_score)||0,estimated_value:Number(x.estimated_value)||0,added_at:x.added_at||x.created_at||new Date(0).toISOString(),status:String(x.status||'waiting').toLowerCase(),recommended_companies:Array.isArray(x.recommended_companies)?x.recommended_companies:[],dossier_summary:x.dossier_summary&&typeof x.dossier_summary==='object'?x.dossier_summary:{},lead:leadMap.get(String(x.lead_id))||null})).sort((a,b)=>b.priority_score-a.priority_score||Date.parse(String(a.added_at))-Date.parse(String(b.added_at))).slice(0,100);const stageCounts={};for(const x of active){const k=String(x.current_stage_key||x.pipeline_stage||'unknown').toLowerCase();stageCounts[k]=(stageCounts[k]||0)+1;}const approaching=active.filter(x=>x.documents_complete!==true&&['collecte_documents','documents_required','documents_partial'].includes(String(x.current_stage_key||'').toLowerCase())).sort((a,b)=>(Date.parse(String(a.created_at||''))||0)-(Date.parse(String(b.created_at||''))||0)).slice(0,8);const quotePending=(stageCounts.quote_pending||0)+(stageCounts.quote_sent||0)+(stageCounts.devis||0),docs=(stageCounts.collecte_documents||0)+(stageCounts.documents_required||0)+(stageCounts.documents_partial||0);return json(res,origin,200,{ok:true,queue,current_user_id:session.sub,stats:{total_leads:active.length,ready_for_quote:stageCounts.ready_for_quote||0,quote_pending:quotePending,documents_collecting:docs,avg_time_to_quote_hours:0},stage_counts:stageCounts,approaching_leads:approaching},requestId);}
+async function adminQuoteQueue(req,res,origin,requestId){
+  const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
+  const payload=parseJsonLine(await runPsql(`
+    WITH active AS (
+      SELECT record_id,data,lower(COALESCE(data->>'current_stage_key',data->>'pipeline_stage','unknown')) stage
+      FROM taxiassur.records
+      WHERE collection='crm_leads' AND COALESCE(data->>'deleted_at','')='' AND COALESCE((data->>'is_archived')::boolean,false)=false
+    ), queue_rows AS (
+      SELECT q.data||jsonb_build_object(
+        'priority_score',CASE WHEN q.data->>'priority_score'~'^-?[0-9]+(\\.[0-9]+)?$' THEN (q.data->>'priority_score')::numeric ELSE 0 END,
+        'estimated_value',CASE WHEN q.data->>'estimated_value'~'^-?[0-9]+(\\.[0-9]+)?$' THEN (q.data->>'estimated_value')::numeric ELSE 0 END,
+        'added_at',COALESCE(q.data->>'added_at',q.data->>'created_at','1970-01-01T00:00:00.000Z'),
+        'status',lower(COALESCE(q.data->>'status','waiting')),
+        'lead',a.data
+      ) item
+      FROM taxiassur.records q LEFT JOIN active a ON a.record_id=q.data->>'lead_id'
+      WHERE q.collection='ready_for_quote_queue' AND COALESCE(q.data->>'id','')<>'' AND COALESCE(q.data->>'lead_id','')<>''
+      ORDER BY CASE WHEN q.data->>'priority_score'~'^-?[0-9]+(\\.[0-9]+)?$' THEN (q.data->>'priority_score')::numeric ELSE 0 END DESC,COALESCE(q.data->>'added_at',q.data->>'created_at','') ASC
+      LIMIT 100
+    ), stage_rows AS (SELECT stage,count(*) count FROM active GROUP BY stage), approaching AS (
+      SELECT data FROM active WHERE COALESCE((data->>'documents_complete')::boolean,false)=false AND stage IN('collecte_documents','documents_required','documents_partial') ORDER BY COALESCE(data->>'created_at','') ASC LIMIT 8
+    ) SELECT jsonb_build_object(
+      'queue',COALESCE((SELECT jsonb_agg(item) FROM queue_rows),'[]'::jsonb),
+      'total_leads',(SELECT count(*) FROM active),
+      'stage_counts',COALESCE((SELECT jsonb_object_agg(stage,count) FROM stage_rows),'{}'::jsonb),
+      'approaching_leads',COALESCE((SELECT jsonb_agg(data) FROM approaching),'[]'::jsonb)
+    )::text;
+  `))||{};
+  const stageCounts=payload.stage_counts||{},quotePending=Number(stageCounts.quote_pending||0)+Number(stageCounts.quote_sent||0)+Number(stageCounts.devis||0),docs=Number(stageCounts.collecte_documents||0)+Number(stageCounts.documents_required||0)+Number(stageCounts.documents_partial||0);
+  return json(res,origin,200,{ok:true,queue:payload.queue||[],current_user_id:session.sub,stats:{total_leads:Number(payload.total_leads||0),ready_for_quote:Number(stageCounts.ready_for_quote||0),quote_pending:quotePending,documents_collecting:docs,avg_time_to_quote_hours:0},stage_counts:stageCounts,approaching_leads:payload.approaching_leads||[]},requestId);
+}
 async function adminQuoteQueuePatch(req,res,origin,requestId,id){const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);const body=await readJsonBody(req),action=String(body.action||'');const item=(await recordsAll('ready_for_quote_queue')).find(x=>String(x.id)===id);if(!item)return json(res,origin,404,{ok:false,error:'not_found'},requestId);const now=new Date().toISOString();if(action==='claim'){const updates={claimed_by:session.sub,claimed_at:now,status:'claimed'};await runPsql(`UPDATE taxiassur.records SET data=data||${quoteLiteral(JSON.stringify(updates))}::jsonb,updated_at=now(),revision=revision+1 WHERE collection='ready_for_quote_queue' AND record_id=${quoteLiteral(id)};`);return json(res,origin,200,{ok:true},requestId);}if(action==='start'){const updates={status:'in_progress',started_by:session.sub,started_at:now};await runPsql(`BEGIN;UPDATE taxiassur.records SET data=data||${quoteLiteral(JSON.stringify(updates))}::jsonb,updated_at=now(),revision=revision+1 WHERE collection='ready_for_quote_queue' AND record_id=${quoteLiteral(id)};UPDATE taxiassur.records SET data=data||${quoteLiteral(JSON.stringify({current_stage_key:'quote_pending',updated_at:now}))}::jsonb,updated_at=now(),revision=revision+1 WHERE collection='crm_leads' AND record_id=${quoteLiteral(String(item.lead_id))};COMMIT;`);return json(res,origin,200,{ok:true},requestId);}return json(res,origin,400,{ok:false,error:'invalid_action'},requestId);}
 async function adminQuotesList(req,res,origin,requestId){
   const session=await verifiedAdminSession(req);
