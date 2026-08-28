@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { Sparkles, Plus, CreditCard as Edit2, Trash2, Send, TrendingUp } from 'lucide-react';
 import { toast } from '@/lib/toast';
 
@@ -35,13 +35,8 @@ export default function SmartTemplatesManager() {
   }, []);
 
   const loadTemplates = async () => {
-    const { data, error } = await supabase
-      .from('email_templates_smart')
-      .select('*')
-      .order('engagement_level', { ascending: true })
-      .order('success_rate', { ascending: false });
-
-    if (data) setTemplates(data);
+    const data = await nativeAdminCall<{ templates?: SmartTemplate[] }>('/v1/admin/smart-templates');
+    setTemplates(data.templates || []);
     setLoading(false);
   };
 
@@ -49,10 +44,8 @@ export default function SmartTemplatesManager() {
     e.preventDefault();
 
     if (editingTemplate) {
-      const { error } = await supabase
-        .from('email_templates_smart')
-        .update(formData)
-        .eq('id', editingTemplate.id);
+      const error = null;
+      await nativeAdminCall('/v1/admin/smart-templates', { method: 'PATCH', body: JSON.stringify({ id: editingTemplate.id, ...formData }) });
 
       if (!error) {
         toast.info('Template mis à jour !');
@@ -60,9 +53,8 @@ export default function SmartTemplatesManager() {
         loadTemplates();
       }
     } else {
-      const { error } = await supabase
-        .from('email_templates_smart')
-        .insert([formData]);
+      const error = null;
+      await nativeAdminCall('/v1/admin/smart-templates', { method: 'POST', body: JSON.stringify(formData) });
 
       if (!error) {
         toast.success('Template créé !');
@@ -99,10 +91,8 @@ export default function SmartTemplatesManager() {
   const handleDelete = async (id: string) => {
     if (!confirm('Supprimer ce template ?')) return;
 
-    const { error } = await supabase
-      .from('email_templates_smart')
-      .delete()
-      .eq('id', id);
+    const error = null;
+    await nativeAdminCall('/v1/admin/smart-templates', { method: 'DELETE', body: JSON.stringify({ id }) });
 
     if (!error) {
       toast.success('Template supprimé !');
@@ -111,10 +101,8 @@ export default function SmartTemplatesManager() {
   };
 
   const toggleActive = async (template: SmartTemplate) => {
-    const { error } = await supabase
-      .from('email_templates_smart')
-      .update({ is_active: !template.is_active })
-      .eq('id', template.id);
+    const error = null;
+    await nativeAdminCall('/v1/admin/smart-templates', { method: 'PATCH', body: JSON.stringify({ action: 'toggle', id: template.id, is_active: !template.is_active }) });
 
     if (!error) loadTemplates();
   };
