@@ -75,8 +75,8 @@ const server = createServer(async (req, res) => {
   try {
     if (req.method === 'OPTIONS') return await send(res, origin, 204, '', {}, requestId);
     if (!originAllowed(origin)) return await json(res, origin, 403, { ok: false, error: 'origin_not_allowed' }, requestId);
-    if (!takeRateSlot(clientIp(req))) return await json(res, origin, 429, { ok: false, error: 'rate_limited' }, requestId);
     const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+    if (!takeRateSlot(`${clientIp(req)}:${rateLimitScope(url.pathname)}`)) return await json(res, origin, 429, { ok: false, error: 'rate_limited' }, requestId);
     if (req.method === 'GET' && url.pathname === '/health') {
       return await json(res, origin, 200, { ok: true, service: 'taxiassur-platform-api', storage: 'local', database: config.dbName, password_reset_mail: Boolean(config.smtpHost && config.smtpUser && config.smtpPassword), checked_at: new Date().toISOString() }, requestId);
     }
@@ -2061,6 +2061,7 @@ function storageObjectPath(value, bucket) { const raw=String(value||'').trim(); 
 function safeUnlink(file) { try { unlinkSync(file); } catch {} }
 function originAllowed(origin) { return !origin || config.allowedOrigins.has(origin); }
 function clientIp(req) { return String(req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim(); }
+function rateLimitScope(pathname) { if (pathname.startsWith('/v1/auth/')) return 'auth'; if (pathname === '/v1/public/analytics' || pathname === '/v1/public/page-views') return 'analytics'; if (pathname.startsWith('/v1/public/')) return 'public'; return 'application'; }
 function takeRateSlot(ip) { const now = Date.now(); const value = rateBuckets.get(ip) || { start: now, count: 0 }; if (now - value.start > 60000) { value.start = now; value.count = 0; } value.count += 1; rateBuckets.set(ip, value); return value.count <= 120; }
 function positiveInt(value, fallback, max) { const number = Number(value); return Number.isInteger(number) && number > 0 && number <= max ? number : fallback; }
 function publicError(statusCode, publicCode) { const error = new Error(publicCode); error.statusCode = statusCode; error.publicCode = publicCode; return error; }
