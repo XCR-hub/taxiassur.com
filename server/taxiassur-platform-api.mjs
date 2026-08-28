@@ -402,7 +402,11 @@ async function adminCapabilities(req,res,origin,requestId){
 async function adminLeadQuotesWorkspace(req,res,origin,requestId,leadId){
   const session=await verifiedAdminSession(req);
   if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
-  const lead=parseJsonLine(await runPsql(`SELECT data::text FROM taxiassur.records WHERE collection='crm_leads' AND record_id=${quoteLiteral(leadId)} LIMIT 1;`));
+  const lead=parseJsonLine(await runPsql(`SELECT data::text FROM (
+    SELECT data,0 priority FROM taxiassur.records WHERE collection='crm_leads' AND record_id=${quoteLiteral(leadId)}
+    UNION ALL
+    SELECT data,1 priority FROM supabase_rest.crm_leads WHERE data->>'id'=${quoteLiteral(leadId)}
+  ) lead_sources ORDER BY priority LIMIT 1;`));
   if(!lead)return json(res,origin,404,{ok:false,error:'not_found'},requestId);
   const [allCompanies,reasons,companyDocuments]=await Promise.all([recordsAll('insurance_companies'),recordsAll('company_quote_refusal_reasons'),recordsAll('company_documents')]);
   const companies=allCompanies.filter(function(row){return row.is_mandatory===true&&row.is_active!==false;}).sort(function(a,b){return Number(a.priority_order||999)-Number(b.priority_order||999);});
@@ -619,7 +623,15 @@ async function resetAdminPassword(req, res, origin, requestId) {
 async function adminDashboard(req, res, origin, requestId) {
   if (!await verifiedAdminSession(req)) return json(res, origin, 401, { ok: false, error: 'invalid_session' }, requestId);
   const sql = `SELECT json_build_object(
-    'leads',COALESCE((SELECT jsonb_agg(data ORDER BY COALESCE(data->>'created_at','') DESC) FROM (SELECT data FROM taxiassur.records WHERE collection='crm_leads' ORDER BY COALESCE(data->>'created_at','') DESC LIMIT 2000) q),'[]'::jsonb),
+    'leads',COALESCE((SELECT jsonb_agg(data ORDER BY COALESCE(data->>'created_at','') DESC) FROM (
+      SELECT data FROM taxiassur.records WHERE collection='crm_leads'
+      UNION ALL
+      SELECT mirror.data FROM supabase_rest.crm_leads mirror
+      WHERE NOT EXISTS (
+        SELECT 1 FROM taxiassur.records native
+        WHERE native.collection='crm_leads' AND native.record_id=mirror.data->>'id'
+      )
+    ) q),'[]'::jsonb),
     'ai_decisions',COALESCE((SELECT jsonb_agg(data ORDER BY COALESCE(data->>'created_at','') DESC) FROM (SELECT data FROM taxiassur.records WHERE collection='ai_decisions' ORDER BY COALESCE(data->>'created_at','') DESC LIMIT 5) q),'[]'::jsonb),
     'unread_messages',(SELECT count(*) FROM taxiassur.records WHERE collection='email_messages' AND COALESCE(data->>'is_read','false')='false'),
     'critical_alerts',(SELECT count(*) FROM taxiassur.records WHERE collection='crm_retention_alerts' AND data->>'alert_type'='churn_risk'),
@@ -636,7 +648,11 @@ async function adminDashboard(req, res, origin, requestId) {
       'total_blog_posts',(SELECT count(*) FROM taxiassur.records WHERE collection='blog_posts'),
       'total_news',(SELECT count(*) FROM taxiassur.records WHERE collection='news_articles'),
       'total_faqs',(SELECT count(*) FROM taxiassur.records WHERE collection='faqs'),
-      'total_leads',(SELECT count(*) FROM taxiassur.records WHERE collection='crm_leads'),
+      'total_leads',(SELECT count(*) FROM (
+        SELECT record_id FROM taxiassur.records WHERE collection='crm_leads'
+        UNION
+        SELECT data->>'id' FROM supabase_rest.crm_leads
+      ) all_leads),
       'new_leads_today',(SELECT count(*) FROM taxiassur.records WHERE collection='crm_leads' AND COALESCE(data->>'created_at','1970-01-01')::timestamptz>=date_trunc('day',now())),
       'new_leads_week',(SELECT count(*) FROM taxiassur.records WHERE collection='crm_leads' AND COALESCE(data->>'created_at','1970-01-01')::timestamptz>=now()-interval '7 days'),
       'leads_by_status',COALESCE((SELECT jsonb_object_agg(status,total) FROM (SELECT COALESCE(NULLIF(data->>'status',''),'inconnu') status,count(*) total FROM taxiassur.records WHERE collection='crm_leads' GROUP BY 1) s),'{}'::jsonb),
@@ -1122,7 +1138,11 @@ async function adminLeadAccessEmail(req,res,origin,requestId,leadId){
   const id=randomUUID(),now=new Date().toISOString(),link=`https://taxiassur.com/espace-prospect/${encodeURIComponent(lead.access_token)}?tab=documents`;const mail={id,recipient:String(lead.email).trim().toLowerCase(),subject:'Accès à votre espace TaxiAssur',body:`Bonjour ${lead.first_name||''},\n\nVotre espace sécurisé TaxiAssur est accessible ici :\n${link}\n\nVous pouvez y déposer vos pièces, consulter vos devis et suivre votre dossier.`,status:'pending',attempts:0,next_attempt_at:now,created_at:now};await runPsql(`BEGIN;INSERT INTO taxiassur.records(collection,record_id,data,origin)VALUES('native_email_outbox',${quoteLiteral(id)},${quoteLiteral(JSON.stringify(mail))}::jsonb,'local');INSERT INTO taxiassur.audit_events(actor_type,actor_id,action,target_type,target_id,request_id)VALUES('admin',${quoteLiteral(session.sub)},'prospect_access_email_queued','crm_lead',${quoteLiteral(leadId)},${quoteLiteral(requestId)}::uuid);COMMIT;`);return json(res,origin,200,{ok:true,email_queued:true},requestId);
 }async function adminLeadGet(req, res, origin, requestId, leadId) {
   if (!await verifiedAdminSession(req)) return json(res, origin, 401, { ok: false, error: 'invalid_session' }, requestId);
-  const lead=parseJsonLine(await runPsql(`SELECT data::text FROM taxiassur.records WHERE collection='crm_leads' AND record_id=${quoteLiteral(leadId)} LIMIT 1;`));
+  const lead=parseJsonLine(await runPsql(`SELECT data::text FROM (
+    SELECT data,0 priority FROM taxiassur.records WHERE collection='crm_leads' AND record_id=${quoteLiteral(leadId)}
+    UNION ALL
+    SELECT data,1 priority FROM supabase_rest.crm_leads WHERE data->>'id'=${quoteLiteral(leadId)}
+  ) lead_sources ORDER BY priority LIMIT 1;`));
   return lead ? json(res, origin, 200, { ok:true, lead }, requestId) : json(res, origin, 404, { ok:false, error:'not_found' }, requestId);
 }
 async function adminLeadDelete(req,res,origin,requestId,leadId){

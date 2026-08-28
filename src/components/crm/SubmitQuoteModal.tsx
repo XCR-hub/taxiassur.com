@@ -741,7 +741,7 @@ export function SubmitQuoteModal({
       title={`Soumettre un devis - ${company.name}`}
       size="lg"
     >
-      <div className="space-y-5">
+      <div className="lead-form space-y-5">
         <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-400/40">
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-blue-300 flex-shrink-0 mt-0.5" />
@@ -860,8 +860,8 @@ export function SubmitQuoteModal({
               Prix annuel (€) *
             </label>
             <input
-              type="number"
-              step="0.01"
+              type="text"
+              inputMode="decimal"
               value={formData.quote_amount}
               onChange={(e) => {
                 const annual = e.target.value;
@@ -883,8 +883,8 @@ export function SubmitQuoteModal({
               Prix mensuel (€)
             </label>
             <input
-              type="number"
-              step="0.01"
+              type="text"
+              inputMode="decimal"
               value={formData.monthly_price}
               onChange={(e) =>
                 setFormData({ ...formData, monthly_price: e.target.value })}
@@ -1250,9 +1250,8 @@ export function SubmitQuoteModal({
             Frais d'adhésion (€)
           </label>
           <input
-            type="number"
-            step="0.01"
-            min="0"
+            type="text"
+            inputMode="decimal"
             value={formData.enrollment_fee}
             onChange={(e) =>
               setFormData({ ...formData, enrollment_fee: e.target.value })}

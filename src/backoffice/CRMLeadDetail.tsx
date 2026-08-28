@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail, Phone, AlertCircle, Copy, CheckCircle, User, Building2, MapPin, Car, FileText, Calculator, ClipboardCheck, MessageSquare, Star, StickyNote, Pencil, Save, X, MessageCircle, Send } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { useRealtimeDocuments } from '@/hooks/useRealtimeDocuments';
 import { useDocumentToast, DocumentToastContainer } from '@/components/crm/DocumentToast';
@@ -459,34 +458,15 @@ const CRMLeadDetail: React.FC = () => {
 
       console.log('📧 Sending prospect access email to:', lead.email);
 
-      const { data, error } = await supabase.functions.invoke('send-email-universal', {
-        body: {
-          to: lead.email,
-          toName: `${firstName} ${lastName}`.trim(),
-          subject: 'Accès à votre espace prospect TaxiAssur',
-          html: emailHtml,
-          from: 'team@taxiassur.com',
-          fromName: 'TaxiAssur',
-          lead_id: leadId,
-          trackOpens: false,  // Désactiver le tracking pour éviter les erreurs
-          trackClicks: false  // Désactiver le tracking pour éviter les erreurs
-        }
-      });
+      const data = await nativeAdminCall<{ ok: boolean; email_queued?: boolean }>(
+        `/v1/admin/leads/${encodeURIComponent(leadId)}/access-email`,
+        { method: 'POST', body: '{}' },
+      );
 
-      console.log('Email send response:', { data, error });
+      console.log('Email queue response:', data);
 
-      if (error) {
-        console.error('❌ Edge Function error:', error);
-        showToast(`Erreur envoi email: ${error.message || 'Erreur Edge Function'}. Verifiez les secrets SMTP IONOS dans Supabase.`, 'error', 8000);
-        throw new Error(error.message || 'Erreur Edge Function');
-      }
-
-      if (data && !data.success) {
-        console.error('❌ Email sending failed:', data);
-        const failedDetails = data.failed?.[0];
-        const errorMsg = failedDetails?.error || data.error || 'Echec de l\'envoi email';
-        showToast(`Erreur envoi email: ${errorMsg}`, 'error', 8000);
-        throw new Error(errorMsg);
+      if (!data.ok || !data.email_queued) {
+        throw new Error('La mise en file de l\'email a échoué');
       }
 
       console.log('✅ Email sent successfully!');

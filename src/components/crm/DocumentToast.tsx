@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { FileText, CheckCircle, X } from 'lucide-react';
+import { FileText, CheckCircle, AlertCircle, X } from 'lucide-react';
 
 interface Toast {
   id: string;
   message: string;
-  type: 'success' | 'info' | 'warning';
+  type: 'success' | 'info' | 'warning' | 'error';
 }
 
 export function useDocumentToast() {
@@ -43,24 +43,27 @@ export function DocumentToastContainer({ toasts, onRemove }: DocumentToastContai
           key={toast.id}
           className={`
             flex items-center gap-3 p-4 rounded-lg shadow-lg border-2 animate-slide-in-right
-            ${toast.type === 'success' ? 'bg-green-50 border-green-200' : ''}
-            ${toast.type === 'info' ? 'bg-blue-50 border-blue-200' : ''}
-            ${toast.type === 'warning' ? 'bg-yellow-50 border-yellow-200' : ''}
+            ${toast.type === 'success' ? 'bg-emerald-700 border-emerald-400 text-white' : ''}
+            ${toast.type === 'info' ? 'bg-blue-700 border-blue-400 text-white' : ''}
+            ${toast.type === 'warning' ? 'bg-amber-500 border-amber-200 text-gray-950' : ''}
+            ${toast.type === 'error' ? 'bg-red-700 border-red-400 text-white' : ''}
           `}
         >
           {toast.type === 'success' ? (
-            <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+            <CheckCircle className="h-5 w-5 text-white flex-shrink-0" />
+          ) : toast.type === 'error' ? (
+            <AlertCircle className="h-5 w-5 text-white flex-shrink-0" />
           ) : (
-            <FileText className="h-5 w-5 text-blue-600 flex-shrink-0" />
+            <FileText className="h-5 w-5 flex-shrink-0" />
           )}
 
-          <p className="text-sm font-medium text-gray-900 flex-1">
+          <p className="text-sm font-semibold text-current flex-1">
             {toast.message}
           </p>
 
           <button
             onClick={() => onRemove(toast.id)}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-current opacity-80 hover:opacity-100 transition-opacity"
           >
             <X className="h-4 w-4" />
           </button>

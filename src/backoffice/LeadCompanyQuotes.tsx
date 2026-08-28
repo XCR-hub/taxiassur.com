@@ -894,8 +894,8 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
                 Prix annuel (€) *
               </label>
               <input
-                type="number"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
                 value={quoteFormData.quote_amount}
                 onChange={(e) => {
                   const annual = e.target.value;
@@ -908,7 +908,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
                       : quoteFormData.monthly_price,
                   });
                 }}
-                className="w-full bg-gray-700/80 border border-gray-500 rounded-lg px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all"
+                className="w-full bg-gray-700/80 border border-gray-500 rounded-lg px-4 py-2.5 !text-white caret-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all"
                 placeholder="1250.00"
               />
             </div>
@@ -917,15 +917,15 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
                 Prix mensuel (€)
               </label>
               <input
-                type="number"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
                 value={quoteFormData.monthly_price}
                 onChange={(e) =>
                   setQuoteFormData({
                     ...quoteFormData,
                     monthly_price: e.target.value,
                   })}
-                className="w-full bg-gray-700/80 border border-gray-500 rounded-lg px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all"
+                className="w-full bg-gray-700/80 border border-gray-500 rounded-lg px-4 py-2.5 !text-white caret-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all"
                 placeholder="Auto-calculé"
               />
               <p className="text-gray-300 text-xs mt-1.5">
