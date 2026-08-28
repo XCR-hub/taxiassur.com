@@ -35,7 +35,7 @@ const CRMLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut, isAuthenticated, loading } = useAdminAuth();
-  const { count: pendingDocsCount } = usePendingDocumentsCount();
+  const { count: pendingDocsCount } = usePendingDocumentsCount(isAuthenticated && !loading);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [hackerMode, setHackerMode] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;

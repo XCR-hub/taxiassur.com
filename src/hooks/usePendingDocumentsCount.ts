@@ -24,11 +24,15 @@ function isSuspect(fileName: string, mimeType: string | null, fileSize: number |
   return false;
 }
 
-export function usePendingDocumentsCount() {
+export function usePendingDocumentsCount(enabled = true) {
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
     const fetchCount = async () => {
       try {
         const result = await nativeAdminCall<{ documents?: Array<{ file_name?: string; file_size?: number | null; mime_type?: string | null }> }>(
@@ -55,7 +59,7 @@ export function usePendingDocumentsCount() {
       clearInterval(interval);
       window.removeEventListener('focus', fetchCount);
     };
-  }, []);
+  }, [enabled]);
 
   return { count, loading };
 }
