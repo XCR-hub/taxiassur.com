@@ -521,8 +521,9 @@ for (const functionName of ['sync-all-emails-complete', 'sync-ionos-imap', 'auto
 }
 requireMatch('supabase/migrations/20260810010000_disable_legacy_anonymous_internal_crons.sql', /supabase_anon_key[\s\S]*sync-all-emails-complete[\s\S]*auto-process-email-attachments/, 'legacy anonymous internal cron jobs remain active');const autoCreateEmailLeads = 'supabase/functions/auto-create-leads-from-emails/index.ts';
 requireMatch(autoCreateEmailLeads, /notificationError[\s\S]*emailUpdateError[\s\S]*interactionError[\s\S]*Email classification persistence failed/, 'automatic e-mail lead creation silently ignores notification, linking, interaction, or classification failures');
-forbidMatch(autoCreateEmailLeads, /NOUVEAU LEAD HIGH|\.catch\(\(\) => \{\}\)/, 'automatic e-mail lead creation logs prospect PII or swallows database failures');for (const caller of ['src/backoffice/AutonomousSystemDashboard.tsx', 'src/backoffice/AutomationDashboard.tsx', 'src/backoffice/AIMasterDashboard.tsx', 'src/backoffice/AIAutonomousDashboard.tsx', 'src/backoffice/LLMDashboard.tsx', 'src/backoffice/CRMCommercial.tsx']) {
-  requireMatch(caller, /internalFunctionHeaders/, 'privileged backoffice automation call does not require a staff session');
+forbidMatch(autoCreateEmailLeads, /NOUVEAU LEAD HIGH|\.catch\(\(\) => \{\}\)/, 'automatic e-mail lead creation logs prospect PII or swallows database failures');requireMatch('src/lib/native-admin-data.ts', /NATIVE_ADMIN_TOKEN_KEY[\s\S]*nativeAdminCall[\s\S]*localStorage\.getItem\(NATIVE_ADMIN_TOKEN_KEY\)[\s\S]*native_session_required[\s\S]*Authorization:\s*`Bearer \$\{token\}`/, 'native admin helper accepts a missing session or omits its bearer token');
+for (const caller of ['src/backoffice/AutonomousSystemDashboard.tsx', 'src/backoffice/AutomationDashboard.tsx', 'src/backoffice/AIMasterDashboard.tsx', 'src/backoffice/AIAutonomousDashboard.tsx', 'src/backoffice/LLMDashboard.tsx', 'src/backoffice/CRMCommercial.tsx']) {
+  requireMatch(caller, /internalFunctionHeaders|nativeAdminCall/, 'privileged backoffice automation call does not require a staff session');
   forbidMatch(caller, /VITE_SUPABASE_ANON_KEY/, 'privileged backoffice automation call falls back to the public anon key');
 }
 for (const functionName of ['llm-council-chat', 'clean-news-excerpts', 'send-newsletter-campaign', 'pinterest-publisher']) {
@@ -530,7 +531,7 @@ for (const functionName of ['llm-council-chat', 'clean-news-excerpts', 'send-new
   requireMatch('scripts/deploy-critical-supabase-security.ps1', new RegExp("'" + functionName + "'"), functionName + ' security fix is missing from controlled deployment');
 }
 for (const caller of ['src/backoffice/AutomationLayout.tsx', 'src/backoffice/CityPageGenerator.tsx', 'src/backoffice/LLMCouncilDashboard.tsx', 'src/backoffice/NewsManager.tsx', 'src/backoffice/NewsletterDashboard.tsx', 'src/backoffice/SeoTools.tsx', 'src/backoffice/SocialMediaManager.tsx']) {
-  requireMatch(caller, /internalFunctionHeaders/, 'backoffice privileged call does not require a staff session');
+  requireMatch(caller, /internalFunctionHeaders|nativeAdminCall/, 'backoffice privileged call does not require a staff session');
   forbidMatch(caller, /VITE_SUPABASE_ANON_KEY/, 'backoffice privileged call falls back to the public anon key');
 }
 requireMatch('supabase/functions/generate-seo-content/index.ts', /isInternalRequest[\s\S]*Unauthorized/, 'SEO content generator accepts anonymous privileged requests');
