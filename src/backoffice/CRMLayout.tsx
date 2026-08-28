@@ -72,7 +72,7 @@ const CRMLayout: React.FC = () => {
   }
 
   if (!isAuthenticated) {
-    return <AdminLogin onSuccess={() => window.location.reload()} />;
+    return <AdminLogin onSuccess={() => undefined} />;
   }
 
   const handleLogout = async () => {

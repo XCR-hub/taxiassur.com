@@ -5,6 +5,7 @@ const BASE = (runtimeEnv?.VITE_NATIVE_PLATFORM_URL || runtimeEnv?.VITE_PLATFORM_
   import.meta.env.VITE_NATIVE_PLATFORM_URL || import.meta.env.VITE_PLATFORM_API_URL ||
   '/api/platform').replace(/\/$/, '');
 export const NATIVE_ADMIN_TOKEN_KEY = 'taxiassur-native-admin-token';
+export const NATIVE_ADMIN_AUTHENTICATED_EVENT = 'taxiassur-admin-authenticated';
 
 async function request(path: string, init: RequestInit = {}) {
   const token = localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY);
@@ -33,6 +34,7 @@ export async function nativeAdminLogin(email: string, password: string) {
   localStorage.setItem(NATIVE_ADMIN_TOKEN_KEY, data.access_token);
   localStorage.setItem('taxiassur_user', JSON.stringify({ ...data.user, cachedAt: Date.now() }));
   localStorage.setItem('taxiassur_permissions', JSON.stringify(data.permissions || []));
+  window.dispatchEvent(new CustomEvent(NATIVE_ADMIN_AUTHENTICATED_EVENT, { detail: data }));
   return data;
 }
 

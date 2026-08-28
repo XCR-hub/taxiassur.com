@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { logger } from '@/lib/logger';
-import { NATIVE_ADMIN_TOKEN_KEY, nativeAdminLogout, nativeAdminSession } from '@/lib/native-admin-auth';
+import {
+  NATIVE_ADMIN_AUTHENTICATED_EVENT,
+  NATIVE_ADMIN_TOKEN_KEY,
+  nativeAdminLogout,
+  nativeAdminSession,
+} from '@/lib/native-admin-auth';
 
 interface AdminUser {
   id: string;
@@ -51,6 +56,18 @@ export function useAdminAuth() {
     globalAuthState = next;
     setState(next);
   }, []);
+
+  useEffect(() => {
+    const acceptLogin = (event: Event) => {
+      const data = (event as CustomEvent<{ user?: AdminUser; permissions?: Permission[] }>).detail;
+      if (!data?.user) return;
+      const user = { ...data.user, cachedAt: Date.now() } as AdminUser;
+      const permissions = Array.isArray(data.permissions) ? data.permissions : [];
+      updateState({ user, permissions, loading: false, isAuthenticated: true });
+    };
+    window.addEventListener(NATIVE_ADMIN_AUTHENTICATED_EVENT, acceptLogin);
+    return () => window.removeEventListener(NATIVE_ADMIN_AUTHENTICATED_EVENT, acceptLogin);
+  }, [updateState]);
 
   useEffect(() => {
     let mounted = true;

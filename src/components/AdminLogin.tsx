@@ -25,7 +25,6 @@ export default function AdminLogin({ onSuccess }: AdminLoginProps) {
       await nativeAdminLogin(email.trim().toLowerCase(), password);
       localStorage.setItem('taxiassur-admin-permanent', 'true');
       onSuccess();
-      window.location.reload();
     } catch (err) {
       logger.error('Erreur de connexion:', err);
       const message = err instanceof Error ? err.message : 'Erreur de connexion';
