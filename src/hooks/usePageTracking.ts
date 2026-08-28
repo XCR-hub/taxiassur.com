@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { hasAnalyticsConsent, hasBehavioralPersonalizationConsent } from '@/lib/privacy-consent';
+import { hasAnalyticsConsent, hasBehavioralPersonalizationConsent, isPrivateApplicationPath } from '@/lib/privacy-consent';
 
 const DEFER_MS = 3000;
 
@@ -22,7 +22,7 @@ export const usePageTracking = () => {
   const sessionIdRef = useRef<string>('');
 
   useEffect(() => {
-    if (!hasAnalyticsConsent()) return;
+    if (!hasAnalyticsConsent() || isPrivateApplicationPath()) return;
 
     let sessionId = sessionStorage.getItem('session_id');
     if (!sessionId) {

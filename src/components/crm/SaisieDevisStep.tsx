@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { nativeAdminCall, nativeAdminLead } from '@/lib/native-admin-data';
 import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 import { Upload, CheckCircle2, X, FileText, Send, Loader2, Building2, AlertCircle, Plus, CheckCheck, Mail } from 'lucide-react';
 import { toast } from '@/lib/toast';
@@ -73,14 +74,15 @@ export default function SaisieDevisStep({
 
   useEffect(() => {
     async function fetchLeadInfo() {
-      const { data } = await supabase
-        .from('crm_leads')
-        .select('first_name, last_name, phone')
-        .eq('id', leadId)
-        .maybeSingle();
-      if (data) {
-        setLeadFullName([data.first_name, data.last_name].filter(Boolean).join(' '));
-        setLeadPhone(data.phone || undefined);
+      try {
+        const response = await nativeAdminLead(leadId) as { lead?: { first_name?: string; last_name?: string; phone?: string } };
+        const lead = response.lead;
+        if (lead) {
+          setLeadFullName([lead.first_name, lead.last_name].filter(Boolean).join(' '));
+          setLeadPhone(lead.phone || undefined);
+        }
+      } catch (error) {
+        console.error('Error loading lead information:', error);
       }
     }
     fetchLeadInfo();
@@ -98,15 +100,10 @@ export default function SaisieDevisStep({
 
   async function loadCompanies() {
     try {
-      const { data, error } = await supabase
-        .from('insurance_companies')
-        .select('*')
-        .or('is_mandatory.eq.true,code.eq.SWISSLIFE_RCPRO')
-        .eq('is_active', true)
-        .order('priority_order');
-
-      if (error) throw error;
-      setCompanies(data || []);
+      const response = await nativeAdminCall<{ companies?: InsuranceCompany[] }>('/v1/admin/insurance-companies');
+      setCompanies((response.companies || [])
+        .filter(company => company.is_mandatory || company.code === 'SWISSLIFE_RCPRO')
+        .sort((a: any, b: any) => Number(a.priority_order || 0) - Number(b.priority_order || 0)));
     } catch (error) {
       console.error('Error loading companies:', error);
     } finally {
@@ -116,14 +113,8 @@ export default function SaisieDevisStep({
 
   async function loadQuotes() {
     try {
-      const { data, error } = await supabase
-        .from('lead_company_quotes')
-        .select('*')
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      const rows = (data || []).map((q: any) => {
+      const response = await nativeAdminCall<{ quotes?: Array<Quote & { lead_id?: string }> }>('/v1/admin/quotes');
+      const rows = (response.quotes || []).filter(q => String(q.lead_id) === String(leadId)).map((q: any) => {
         const url = (q.quote_pdf_url && String(q.quote_pdf_url).trim())
           || (q.quote_file_url && String(q.quote_file_url).trim())
           || '';

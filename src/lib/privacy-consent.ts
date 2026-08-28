@@ -32,6 +32,10 @@ function isBrowser(): boolean {
   return typeof window !== 'undefined' && typeof localStorage !== 'undefined';
 }
 
+export function isPrivateApplicationPath(pathname = isBrowser() ? window.location.pathname : ''): boolean {
+  return /^\/(?:backoffice|admin|auth|espace-client|espace-prospect|client)(?:\/|$)/i.test(pathname);
+}
+
 function readStoredConsent(): PrivacyConsentState | null {
   if (!isBrowser()) return null;
 
@@ -174,7 +178,7 @@ function applyGoogleConsentMode(state = readStoredConsent()): void {
 }
 
 export function loadConsentedThirdPartyTags(): void {
-  if (!isBrowser()) return;
+  if (!isBrowser() || isPrivateApplicationPath()) return;
 
   const state = readStoredConsent();
   if (!state || (!state.analytics && !state.marketing)) return;
