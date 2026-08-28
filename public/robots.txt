@@ -23,8 +23,6 @@ Disallow: /paiement-success
 Disallow: /paiement-error
 Disallow: /paiement-libre
 Disallow: /paiement/
-Disallow: /down-payment
-Disallow: /test-notifications
 
 # Duplicate legacy city paths: canonical pages use /assurance-taxi-*
 Disallow: /ville/

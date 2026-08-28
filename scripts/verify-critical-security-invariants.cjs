@@ -467,12 +467,12 @@ forbidMatch(inboundSmsWebhook, /SMS INBOUND[^\n]*payload\.text/, 'inbound SMS we
 requireMatch('scripts/scan-secrets.cjs', /Payment-provider private key file[\s\S]*config[\s\S]*\\\.key/, 'secret scanner does not reject tracked payment-provider key files');
 requireMatch('.gitignore', /supabase\/functions\/\*\*\/config\/\*\.key/, 'payment-provider key files are not ignored');
 requireMatch('supabase/functions/cic-payment-webhook/index.ts', /Retired insecure demonstration endpoint[\s\S]*status: 410/, 'legacy CIC demonstration webhook can still confirm payments');
-forbidMatch('src/pages/DownPaymentPage.tsx', /cic-payment-webhook|status:\s*'paid'|CIC-\$\{Date\.now/, 'public down-payment page still simulates a successful card payment');
+forbidMatch('src/router.tsx', /DownPaymentPage|path:\s*['"]\/down-payment['"]/, 'retired Supabase down-payment demonstration page is still routable');
+forbidMatch('src/router.tsx', /TestNotifications|path:\s*['"]\/test-notifications['"]/, 'public Supabase notification diagnostic page is still routable');
 requireMatch('supabase/migrations/20260809234500_restrict_down_payment_confirmation.sql', /REVOKE ALL[\s\S]*FROM anon[\s\S]*FROM authenticated[\s\S]*TO service_role/, 'payment confirmation RPC remains callable by public users');
 requireMatch('scripts/deploy-critical-supabase-security.ps1', /'cic-payment-webhook'[\s\S]*'monetico-webhook'/, 'retired CIC webhook is missing from the controlled security deployment');
 requireMatch('supabase/functions/send-payment-link-monetico/index.ts', /AbortSignal\.timeout\(30_000\)[\s\S]*emailResponse\.ok \|\| relayResult\?\.success !== true/, 'Monetico payment email relay lacks timeout or strict success acknowledgement');
 requireMatch('supabase/functions/cic-payment-webhook/index.ts', /Retired insecure demonstration endpoint[\s\S]*status: 410/, 'legacy CIC demonstration webhook can still confirm payments');
-forbidMatch('src/pages/DownPaymentPage.tsx', /cic-payment-webhook|status:\s*'paid'|CIC-\$\{Date\.now/, 'public down-payment page still simulates a successful card payment');
 requireMatch('supabase/migrations/20260809234500_restrict_down_payment_confirmation.sql', /REVOKE ALL[\s\S]*FROM anon[\s\S]*FROM authenticated[\s\S]*TO service_role/, 'payment confirmation RPC remains callable by public users');
 
 requireMatch('supabase/functions/send-payment-link-monetico/index.ts', /sentError[\s\S]*audit non enregistré[\s\S]*notificationError[\s\S]*JSON\.stringify\(\{ success: true \}\)/, 'Monetico payment email audit can silently fail or response leaks payment data');
