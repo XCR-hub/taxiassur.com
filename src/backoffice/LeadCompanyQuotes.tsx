@@ -20,6 +20,8 @@ import { Modal, ModalFooter } from "../components/Modal";
 import { Badge } from "../components/Badge";
 import { Progress } from "../components/Progress";
 import { SecureDocumentLink } from "../components/crm/SecureDocumentLink";
+import { nativeAdminCall } from "../lib/native-admin-data";
+import { NATIVE_ADMIN_TOKEN_KEY } from "../lib/native-admin-auth";
 
 interface Lead {
   id: string;
@@ -27,6 +29,7 @@ interface Lead {
   email: string;
   phone: string;
   city: string;
+  access_token?: string | null;
 }
 
 interface InsuranceCompany {
@@ -73,6 +76,7 @@ interface RefusalReason {
 
 interface CompanyDocument {
   id: string;
+  company_id?: string;
   document_name: string;
   is_mandatory?: boolean;
 }
@@ -81,6 +85,7 @@ interface Props {
 }
 
 export default function LeadCompanyQuotes({ leadId }: Props) {
+  const usesNativeAdmin = Boolean(localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY));
   const [lead, setLead] = useState<Lead | null>(null);
   const [quotes, setQuotes] = useState<CompanyQuote[]>([]);
   const [documents, setDocuments] = useState<CompanyDocument[]>([]);
@@ -123,6 +128,32 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
 
   const loadData = async () => {
     try {
+      if (usesNativeAdmin) {
+        const result = await nativeAdminCall<{
+          workspace: {
+            lead: Record<string, any>;
+            quotes: CompanyQuote[];
+            refusal_reasons: RefusalReason[];
+            company_documents: CompanyDocument[];
+            all_mandatory_processed: boolean;
+          };
+        }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/quotes-workspace`);
+        const workspace = result.workspace;
+        const nativeLead = workspace.lead;
+        setLead({
+          id: String(nativeLead.id),
+          name: `${nativeLead.first_name || ""} ${nativeLead.last_name || ""}`.trim() || String(nativeLead.email || ""),
+          email: String(nativeLead.email || ""),
+          phone: String(nativeLead.phone || ""),
+          city: String(nativeLead.city || ""),
+          access_token: nativeLead.access_token || null,
+        });
+        setQuotes(workspace.quotes || []);
+        setRefusalReasons(workspace.refusal_reasons || []);
+        setDocuments(workspace.company_documents || []);
+        setAllMandatoryProcessed(Boolean(workspace.all_mandatory_processed));
+        return;
+      }
       const [leadRes, quotesRes, companiesRes] = await Promise.all([
         supabase.from("crm_leads").select("*").eq("id", leadId).maybeSingle(),
         supabase
@@ -210,6 +241,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
   };
 
   const loadRefusalReasons = async () => {
+    if (usesNativeAdmin) return;
     try {
       const { data, error } = await supabase
         .from("company_quote_refusal_reasons")
@@ -225,6 +257,10 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
   };
 
   const loadCompanyDocuments = async (companyId: string) => {
+    if (usesNativeAdmin) {
+      setDocuments((current) => current.filter((document) => !document.company_id || document.company_id === companyId));
+      return;
+    }
     try {
       const { data, error } = await supabase
         .from("company_documents")
@@ -296,17 +332,13 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
 
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
       const annualPrice = parseFloat(quoteFormData.quote_amount) || null;
       const monthlyPriceParsed = parseFloat(quoteFormData.monthly_price);
       const monthlyPrice = !isNaN(monthlyPriceParsed) && monthlyPriceParsed > 0
         ? monthlyPriceParsed
         : (annualPrice ? Math.round((annualPrice / 12) * 100) / 100 : null);
 
-      const { error } = await supabase
-        .from("lead_company_quotes")
-        .update({
+      const updates = {
           status: "quote_submitted",
           quote_amount: annualPrice,
           monthly_price: monthlyPrice,
@@ -319,12 +351,18 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
             quoteFormData.includes_depannage_remorquage,
           coverage_details: quoteFormData.coverage_details || null,
           notes: quoteFormData.notes,
-          submitted_by: user?.id,
           submitted_at: new Date().toISOString(),
-        })
-        .eq("id", selectedQuote.id);
-
-      if (error) throw error;
+        };
+      if (usesNativeAdmin) {
+        await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/quotes/${encodeURIComponent(selectedQuote.id)}`, {
+          method: "PATCH",
+          body: JSON.stringify(updates),
+        });
+      } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        const { error } = await supabase.from("lead_company_quotes").update({ ...updates, submitted_by: user?.id }).eq("id", selectedQuote.id);
+        if (error) throw error;
+      }
 
       await loadData();
       setIsQuoteModalOpen(false);
@@ -345,8 +383,6 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
 
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
       const selectedReason = refusalReasons.find((r) =>
         r.code === refusalFormData.refusal_reason_code
       );
@@ -356,19 +392,23 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
         }`
         : refusalFormData.notes;
 
-      const { error } = await supabase
-        .from("lead_company_quotes")
-        .update({
+      const updates = {
           status: "refused",
           refusal_reason: fullRefusalReason,
           refusal_screenshot_url: refusalFormData.refusal_screenshot_url,
           notes: refusalFormData.notes,
-          submitted_by: user?.id,
           submitted_at: new Date().toISOString(),
-        })
-        .eq("id", selectedQuote.id);
-
-      if (error) throw error;
+        };
+      if (usesNativeAdmin) {
+        await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/quotes/${encodeURIComponent(selectedQuote.id)}`, {
+          method: "PATCH",
+          body: JSON.stringify(updates),
+        });
+      } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        const { error } = await supabase.from("lead_company_quotes").update({ ...updates, submitted_by: user?.id }).eq("id", selectedQuote.id);
+        if (error) throw error;
+      }
 
       await loadData();
       setIsRefusalModalOpen(false);
@@ -447,6 +487,14 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
 
     setSendingEmail(true);
     try {
+      if (usesNativeAdmin) {
+        await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/access-email`, {
+          method: "POST",
+          body: "{}",
+        });
+        toast.success("Email d'accès espace prospect mis en file d'envoi");
+        return;
+      }
       const { error } = await supabase.functions.invoke(
         "send-email-universal",
         {
