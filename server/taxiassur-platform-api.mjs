@@ -1308,7 +1308,8 @@ async function adminOutreachPrepare(req,res,origin,requestId){
   return json(res,origin,201,{ok:true,campaign_id:campaignId,prepared_count:prepared.length,email_sent:false},requestId);
 }
 async function verifiedAdminSession(req) {
-  if (req.method === 'POST' && new URL(req.url, 'http://127.0.0.1').pathname === '/v1/admin/inbox/sync' && internalAuthorized(req)) {
+  const internalPath = new URL(req.url, 'http://127.0.0.1').pathname;
+  if (((req.method === 'POST' && internalPath === '/v1/admin/inbox/sync') || (req.method === 'GET' && internalPath === '/v1/admin/inbox')) && internalAuthorized(req)) {
     return { sub: 'system', email: 'system@taxiassur.local', name: 'Synchronisation interne', role: 'master' };
   }
   const token = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
