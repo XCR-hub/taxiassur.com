@@ -38,6 +38,29 @@ export interface PublicPaymentFormData {
   fields: Record<string, string>;
 }
 
+export interface PublicInsuranceCompany {
+  description: string | null;
+  target_profile: string[];
+  product_features: Array<Record<string, unknown>>;
+  formulas: Array<Record<string, unknown>>;
+  broker_advantages: Array<Record<string, unknown>>;
+}
+
+export async function loadPublicInsuranceCompany(code: string): Promise<PublicInsuranceCompany | null> {
+  const response = await fetch(
+    `${PLATFORM_BASE_URL}/v1/public/insurance-company?code=${encodeURIComponent(code)}`,
+    {
+      credentials: 'omit',
+      cache: 'no-store',
+      signal: AbortSignal.timeout(20_000),
+    },
+  );
+  if (response.status === 404) return null;
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(platformError(payload?.error, response.status));
+  return payload?.company as PublicInsuranceCompany || null;
+}
+
 async function publicPlatformRequest(path: string, body: Record<string, string>) {
   const response = await fetch(`${PLATFORM_BASE_URL}${path}`, {
     method: 'POST',

@@ -6,7 +6,7 @@ import StickyCTA from '../components/StickyCTA';
 import Seo from '../components/Seo';
 import JsonLd from '../components/JsonLd';
 import AITaxiBackground from '../components/AITaxiBackground';
-import { supabase } from '../lib/supabase';
+import { loadPublicInsuranceCompany } from '../lib/platform-api';
 import { Shield, CheckCircle, TrendingUp, Briefcase, Users, Car, Clock, Ligature as FileSignature, CreditCard, Award, Zap, AlertCircle } from 'lucide-react';
 
 interface ProductFeature {
@@ -42,14 +42,17 @@ const AssuranceTaxiSollyAzar: React.FC = () => {
   const [data, setData] = useState<SollyAzarData | null>(null);
 
   useEffect(() => {
-    supabase
-      .from('insurance_companies')
-      .select('description, target_profile, product_features, formulas, broker_advantages')
-      .eq('code', 'SOLLY_AZAR')
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) setData(data as SollyAzarData);
+    let active = true;
+    loadPublicInsuranceCompany('SOLLY_AZAR')
+      .then((company) => {
+        if (active && company) setData(company as SollyAzarData);
+      })
+      .catch(() => {
+        // The page keeps its static content when the optional dynamic data is unavailable.
       });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const breadcrumbs = [
