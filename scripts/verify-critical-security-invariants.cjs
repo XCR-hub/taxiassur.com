@@ -59,6 +59,9 @@ requireMatch(paymentAccessTokenMigration, /gen_random_bytes\(32\)[\s\S]*get_paym
 requireMatch(createPayment, /paymentAccessToken:\s*payment\.payment_access_token/, 'payment creation does not return the independent access token to the authorized creator');
 requireMatch(paymentForm, /payment_access_token !== accessToken[\s\S]*leadAccessToken !== accessToken/, 'payment form is not bound to either payment or lead ownership');
 forbidMatch('src/pages/PaiementLibre.tsx', /get_payment_by_reference|JSON\.stringify\(\{ reference: payment\.reference \}\)/, 'public payment page uses a reference without its access token');
+forbidMatch('src/pages/PaiementLibre.tsx', /supabase|VITE_SUPABASE|get_payment_by_access|get-monetico-payment-form/i, 'public payment page still depends on Supabase');
+requireMatch('src/pages/PaiementLibre.tsx', /lookupPublicPlatformPayment[\s\S]*createPublicPlatformPaymentForm/, 'public payment page is not connected to the native XCR payment API');
+requireMatch('src/lib/platform-api.ts', /\/v1\/public\/payments\/lookup[\s\S]*\/v1\/public\/payments\/form/, 'native XCR payment helpers are incomplete');
 requireMatch('src/backoffice/FreeInvoicing.tsx', /paymentAccessToken[\s\S]*encodeURIComponent/, 'free invoice links omit their payment access token');
 requireMatch('src/components/crm/DownPaymentManager.tsx', /paymentPath[\s\S]*paymentAccessToken/, 'down-payment links omit their payment access token');
 forbidMatch(webhook, /sanitizedWebhookData = \{ \.\.\.webhookData \}/, 'webhook persists unnecessary card or client network fields');

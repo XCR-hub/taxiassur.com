@@ -18,6 +18,52 @@ export interface ProspectPlatformSession {
   company_documents: Array<Record<string, unknown>>;
 }
 
+export interface PublicPaymentRecord {
+  id: string;
+  reference: string;
+  amount: number;
+  currency: string;
+  status: string;
+  customer_name: string | null;
+  customer_email: string | null;
+  customer_phone: string | null;
+  description: string | null;
+  lead_id: string | null;
+  created_at: string;
+  paid_at: string | null;
+}
+
+export interface PublicPaymentFormData {
+  action: string;
+  fields: Record<string, string>;
+}
+
+async function publicPlatformRequest(path: string, body: Record<string, string>) {
+  const response = await fetch(`${PLATFORM_BASE_URL}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    credentials: 'omit',
+    cache: 'no-store',
+    signal: AbortSignal.timeout(20_000),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(platformError(payload?.error, response.status));
+  return payload;
+}
+
+export async function lookupPublicPlatformPayment(reference: string, accessToken: string): Promise<PublicPaymentRecord> {
+  const payload = await publicPlatformRequest('/v1/public/payments/lookup', { reference, accessToken });
+  if (!payload?.payment) throw new Error('Paiement introuvable');
+  return payload.payment as PublicPaymentRecord;
+}
+
+export async function createPublicPlatformPaymentForm(reference: string, accessToken: string): Promise<PublicPaymentFormData> {
+  const payload = await publicPlatformRequest('/v1/public/payments/form', { reference, accessToken });
+  if (!payload?.success || !payload?.formData) throw new Error('Formulaire de paiement indisponible');
+  return payload.formData as PublicPaymentFormData;
+}
+
 async function platformRequest(path: string, token: string, init: RequestInit = {}, timeoutMs = 20_000) {
   const response = await fetch(`${PLATFORM_BASE_URL}${path}`, {
     ...init,

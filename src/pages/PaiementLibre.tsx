@@ -4,28 +4,13 @@ import {
   CreditCard, Check, X, AlertCircle, Lock,
   Shield, Loader2, Phone, Euro, FileText, User, Clock
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import {
+  createPublicPlatformPaymentForm,
+  lookupPublicPlatformPayment,
+  type PublicPaymentFormData,
+  type PublicPaymentRecord,
+} from '@/lib/platform-api';
 import SEOHead from '@/components/SEOHead';
-
-interface PaymentRecord {
-  id: string;
-  reference: string;
-  amount: number;
-  currency: string;
-  status: string;
-  customer_name: string | null;
-  customer_email: string | null;
-  customer_phone: string | null;
-  description: string | null;
-  lead_id: string | null;
-  created_at: string;
-  paid_at: string | null;
-}
-
-interface MoneticoFormData {
-  action: string;
-  fields: Record<string, string>;
-}
 
 const PaiementLibre: React.FC = () => {
   const { reference } = useParams<{ reference: string }>();
@@ -35,10 +20,10 @@ const PaiementLibre: React.FC = () => {
   const formRef = useRef<HTMLFormElement>(null);
 
   const [loading, setLoading] = useState(true);
-  const [payment, setPayment] = useState<PaymentRecord | null>(null);
+  const [payment, setPayment] = useState<PublicPaymentRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
-  const [formData, setFormData] = useState<MoneticoFormData | null>(null);
+  const [formData, setFormData] = useState<PublicPaymentFormData | null>(null);
 
   useEffect(() => {
     if (reference && /^[0-9a-f]{64}$/.test(accessToken)) {
@@ -57,19 +42,7 @@ const PaiementLibre: React.FC = () => {
 
   const loadPayment = async (ref: string) => {
     try {
-      const { data, error: dbError } = await supabase
-        .rpc('get_payment_by_access', { p_reference: ref, p_access_token: accessToken });
-
-      if (dbError) throw dbError;
-
-      const row = Array.isArray(data) ? data[0] : data;
-
-      if (!row) {
-        setError('Lien de paiement introuvable. Vérifiez l\'URL ou contactez-nous.');
-        return;
-      }
-
-      setPayment(row as PaymentRecord);
+      setPayment(await lookupPublicPlatformPayment(ref, accessToken));
     } catch (err: unknown) {
       console.error('Payment lookup failure', err instanceof Error ? err.name : 'unknown');
       setError('Erreur lors du chargement. Veuillez réessayer.');
@@ -84,30 +57,7 @@ const PaiementLibre: React.FC = () => {
     setError(null);
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-monetico-payment-form`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ reference: payment.reference, accessToken }),
-        }
-      );
-
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(errText || `Erreur HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (!data.success || !data.formData) {
-        throw new Error(data.error || 'Impossible de générer le formulaire de paiement');
-      }
-
-      setFormData(data.formData);
+      setFormData(await createPublicPlatformPaymentForm(payment.reference, accessToken));
     } catch (err: unknown) {
       console.error('Payment form failure', err instanceof Error ? err.name : 'unknown');
       setError('Une erreur est survenue. Veuillez réessayer ou contacter le support.');
