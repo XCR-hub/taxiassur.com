@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Calendar, Clock, Zap, Play, Pause, RefreshCw, Hash, CheckCircle, AlertCircle, FileText, HelpCircle, Star, ChevronDown, X, Sparkles, BarChart3, TrendingUp, Eye, CreditCard as Edit2, ToggleLeft, ToggleRight } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { logger } from '@/lib/logger';
 
 /* ── Types ──────────────────────────────────────────────────────── */
@@ -112,36 +112,18 @@ export default function AutomationScheduler() {
   }, []);
 
   const loadSchedules = async () => {
-    const { data } = await supabase.from('content_schedule').select('*').order('content_type');
-    setSchedules(data || []);
+    const data = await nativeAdminCall<{ schedules?: ScheduleConfig[] }>('/v1/admin/content-scheduler');
+    setSchedules(data.schedules || []);
   };
 
   const loadStats = async () => {
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-    const [blog, faq] = await Promise.all([
-      supabase.from('blog_posts').select('id,published,created_at'),
-      supabase.from('faq').select('id,published,created_at'),
-    ]);
-    const all = [...(blog.data || []), ...(faq.data || [])];
-    setStats({
-      total:     all.length,
-      published: all.filter(c => c.published).length,
-      draft:     all.filter(c => !c.published).length,
-      lastWeek:  all.filter(c => new Date(c.created_at) > oneWeekAgo).length,
-    });
+    const data = await nativeAdminCall<{ stats?: typeof stats }>('/v1/admin/content-scheduler');
+    if (data.stats) setStats(data.stats);
   };
 
   const loadRecent = async () => {
-    const [bd, fd] = await Promise.all([
-      supabase.from('blog_posts').select('id,title,published,created_at').order('created_at', { ascending: false }).limit(5),
-      supabase.from('faq').select('id,question,published,created_at').order('created_at', { ascending: false }).limit(5),
-    ]);
-    const merged: RecentContent[] = [
-      ...(bd.data || []).map(b => ({ ...b, title: b.title, type: 'blog' })),
-      ...(fd.data || []).map(f => ({ ...f, title: f.question, type: 'faq' })),
-    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 12);
-    setRecentContent(merged);
+    const data = await nativeAdminCall<{ recent?: RecentContent[] }>('/v1/admin/content-scheduler');
+    setRecentContent(data.recent || []);
   };
 
   useEffect(() => { loadAll(); }, [loadAll]);
@@ -150,8 +132,10 @@ export default function AutomationScheduler() {
   const patch = async (id: string, updates: Partial<ScheduleConfig>) => {
     setSaving(id);
     try {
-      const { error } = await supabase.from('content_schedule').update(updates).eq('id', id);
-      if (error) throw error;
+      await nativeAdminCall('/v1/admin/content-scheduler', {
+        method: 'PATCH',
+        body: JSON.stringify({ id, ...updates }),
+      });
       await loadSchedules();
     } catch (err) {
       logger.error('patch schedule', err);
@@ -164,10 +148,10 @@ export default function AutomationScheduler() {
   const handleGenerateNow = async (schedule: ScheduleConfig) => {
     setGenerating(schedule.id);
     try {
-      const { error } = await supabase.functions.invoke('generate-seo-content', {
-        body: { content_type: schedule.content_type, auto_publish: schedule.auto_publish, keywords: schedule.keywords },
+      await nativeAdminCall('/v1/admin/content-scheduler/generate', {
+        method: 'POST',
+        body: JSON.stringify({ schedule_id: schedule.id, content_type: schedule.content_type, auto_publish: schedule.auto_publish, keywords: schedule.keywords }),
       });
-      if (error) throw error;
       showToast(`Contenu "${TYPE_META[schedule.content_type]?.label}" généré !`);
       await loadAll();
     } catch (err) {

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { logger } from '@/lib/logger';
 import {
   Zap, Activity, Clock, TrendingUp,
@@ -11,7 +10,7 @@ import {
   Cpu, Server, GitBranch, Rocket,
   type LucideIcon
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 interface CronJob {
   jobname: string;
@@ -165,50 +164,56 @@ const AutomationDashboard: React.FC = () => {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [cronData, rulesData, pipelineData, tasksData, historyData, roiD] = await Promise.all([
-        supabase.from('cron_jobs_config').select('*').order('job_name'),
-        supabase.from('crm_automation_rules').select('*').order('priority', { ascending: false }),
-        supabase.from('pipeline_stages').select('*').order('stage_order'),
-        supabase.from('ai_autonomous_tasks').select('*').order('scheduled_at', { ascending: false }).limit(100),
-        supabase.from('crm_automation_history').select('*').order('executed_at', { ascending: false }).limit(100),
-        supabase.from('automation_roi_tracking').select('*').order('roi_percent', { ascending: false }),
-      ]);
+      const data = await nativeAdminCall<{
+        crons?: Array<{ job_name?: string; name?: string; schedule?: string; is_active?: boolean; is_enabled?: boolean }>;
+        rules?: AutomationRule[];
+        pipeline?: PipelineStage[];
+        tasks?: AutomationTask[];
+        history?: AutomationHistory[];
+        roi?: ROIData[];
+      }>('/v1/admin/automation-dashboard');
+      const crons = data.crons || [];
+      const rulesData = data.rules || [];
+      const pipelineData = data.pipeline || [];
+      const tasksData = data.tasks || [];
+      const historyData = data.history || [];
+      const roi = data.roi || [];
 
-      if (cronData.data) {
-        const jobs: CronJob[] = cronData.data.map(j => ({
-          jobname: j.job_name,
+      if (crons.length || data.crons) {
+        const jobs: CronJob[] = crons.map(j => ({
+          jobname: j.job_name || j.name || 'automation',
           schedule: j.schedule || '* * * * *',
-          active: j.is_active !== false,
-          category: categorizeJob(j.job_name)
+          active: (j.is_active ?? j.is_enabled) !== false,
+          category: categorizeJob(j.job_name || j.name || '')
         }));
         setCronJobs(jobs);
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const todayCompleted = tasksData.data?.filter(
+        const todayCompleted = tasksData.filter(
           t => t.status === 'completed' && new Date(t.executed_at) >= today
         ).length || 0;
-        const successCount = historyData.data?.filter(h => h.status === 'success').length || 0;
-        const totalExec = historyData.data?.length || 0;
+        const successCount = historyData.filter(h => h.status === 'success').length;
+        const totalExec = historyData.length;
 
         setStats({
-          total_cron_jobs: cronData.data.length,
-          active_cron_jobs: cronData.data.filter(c => c.is_active !== false).length,
-          total_rules: rulesData.data?.length || 0,
-          active_rules: rulesData.data?.filter(r => r.is_active).length || 0,
-          pending_tasks: tasksData.data?.filter(t => t.status === 'pending').length || 0,
+          total_cron_jobs: crons.length,
+          active_cron_jobs: crons.filter(c => (c.is_active ?? c.is_enabled) !== false).length,
+          total_rules: rulesData.length,
+          active_rules: rulesData.filter(r => r.is_active).length,
+          pending_tasks: tasksData.filter(t => t.status === 'pending').length,
           completed_today: todayCompleted,
           success_rate: totalExec > 0 ? (successCount / totalExec) * 100 : 100,
-          pipeline_stages: pipelineData.data?.length || 0,
-          automated_stages: pipelineData.data?.filter(p => p.is_automated && !p.requires_human).length || 0
+          pipeline_stages: pipelineData.length,
+          automated_stages: pipelineData.filter(p => p.is_automated && !p.requires_human).length
         });
       }
 
-      if (rulesData.data) setRules(rulesData.data);
-      if (pipelineData.data) setPipelineStages(pipelineData.data);
-      if (tasksData.data) setTasks(tasksData.data);
-      if (historyData.data) setHistory(historyData.data);
-      if (roiD.data) setRoiData(roiD.data);
+      setRules(rulesData);
+      setPipelineStages(pipelineData);
+      setTasks(tasksData);
+      setHistory(historyData);
+      setRoiData(roi);
 
       setLastRefresh(new Date());
     } catch (error) {
@@ -275,27 +280,20 @@ const AutomationDashboard: React.FC = () => {
   };
 
   const toggleRule = async (ruleId: string, currentStatus: boolean) => {
-    await supabase
-      .from('crm_automation_rules')
-      .update({ is_active: !currentStatus })
-      .eq('id', ruleId);
+    await nativeAdminCall('/v1/admin/automation-dashboard', {
+      method: 'PATCH',
+      body: JSON.stringify({ action: 'toggle_rule', id: ruleId, is_active: !currentStatus }),
+    });
     loadData();
   };
 
   const executeFunction = async (functionName: string) => {
     setIsExecuting(functionName);
     try {
-      await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${functionName}`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': (await internalFunctionHeaders()).Authorization,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({})
-        }
-      );
+      await nativeAdminCall('/v1/admin/automation-dashboard', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'diagnostic', name: functionName }),
+      });
       loadData();
     } catch (error) {
       logger.error('Error executing function:', error);
