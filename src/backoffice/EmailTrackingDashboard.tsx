@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { Mail, MousePointerClick, Eye, Reply, TrendingUp, Clock, CheckCircle } from 'lucide-react';
 import { toast } from '@/lib/toast';
 
@@ -52,41 +52,18 @@ export default function EmailTrackingDashboard() {
 
   async function loadData() {
     try {
-      const { data: emailSends, error: sendsError } = await supabase
-        .from('email_sends')
-        .select('*')
-        .order('sent_at', { ascending: false })
-        .limit(100);
-
-      if (sendsError) throw sendsError;
-
-      const { data: emailOpens, error: opensError } = await supabase
-        .from('email_opens')
-        .select('email_send_id');
-
-      if (opensError) throw opensError;
-
-      const { data: emailClicks, error: clicksError } = await supabase
-        .from('email_clicks')
-        .select('email_send_id');
-
-      if (clicksError) throw clicksError;
-
-      const { data: emailReplies, error: repliesError } = await supabase
-        .from('email_replies')
-        .select(`
-          *,
-          leads (name)
-        `)
-        .order('replied_at', { ascending: false })
-        .limit(10);
-
-      if (repliesError) throw repliesError;
-
-      const totalSent = emailSends?.length || 0;
-      const uniqueOpens = new Set(emailOpens?.map(o => o.email_send_id)).size;
-      const uniqueClicks = new Set(emailClicks?.map(c => c.email_send_id)).size;
-      const totalReplied = emailReplies?.length || 0;
+      const data = await nativeAdminCall<{
+        total_sent?: number;
+        total_opened?: number;
+        total_clicked?: number;
+        total_replied?: number;
+        recent_emails?: EmailSend[];
+        recent_replies?: EmailReply[];
+      }>('/v1/admin/email-tracking');
+      const totalSent = Number(data.total_sent || 0);
+      const uniqueOpens = Number(data.total_opened || 0);
+      const uniqueClicks = Number(data.total_clicked || 0);
+      const totalReplied = Number(data.total_replied || 0);
 
       setStats({
         total_sent: totalSent,
@@ -98,17 +75,8 @@ export default function EmailTrackingDashboard() {
         reply_rate: totalSent > 0 ? (totalReplied / totalSent) * 100 : 0,
       });
 
-      const { data: statsView } = await supabase
-        .from('email_stats')
-        .select('*')
-        .order('sent_at', { ascending: false })
-        .limit(20);
-
-      setRecentEmails(statsView || []);
-      setRecentReplies(emailReplies?.map(r => ({
-        ...r,
-        lead_name: (r as any).leads?.name
-      })) || []);
+      setRecentEmails(data.recent_emails || []);
+      setRecentReplies(data.recent_replies || []);
 
       setLoading(false);
     } catch (error) {
@@ -120,13 +88,11 @@ export default function EmailTrackingDashboard() {
   async function fetchEmailReplies() {
     setFetchingReplies(true);
     try {
-      const { data, error } = await supabase.functions.invoke('fetch-email-replies', {
-        method: 'POST'
-      });
-
-      if (error) throw error;
-
-      toast.info(`${data.message}`);
+      const data = await nativeAdminCall<{ stats?: { emails_imported?: number } }>(
+        '/v1/admin/email-tracking',
+        { method: 'POST' },
+      );
+      toast.info(`${data.stats?.emails_imported || 0} email(s) synchronisé(s)`);
       await loadData();
     } catch (error) {
       console.error('Erreur récupération réponses:', error);
