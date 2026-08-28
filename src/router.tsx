@@ -3,7 +3,6 @@ import { lazy } from 'react';
 import RouteErrorFallback from './components/RouteErrorFallback';
 import NotFound from './pages/NotFound';
 import Home from './pages/Home';
-const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const EspaceClient = lazy(() => import('./pages/EspaceClient'));
 const ClientAccessByToken = lazy(() => import('./pages/ClientAccessByToken'));
 const EspaceProspect = lazy(() => import('./pages/EspaceProspect'));
@@ -187,7 +186,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/old-admin',
-    element: <AdminDashboard />,
+    element: <Navigate to="/backoffice" replace />,
   },
   {
     path: '/espace-client',

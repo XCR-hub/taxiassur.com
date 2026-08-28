@@ -267,6 +267,8 @@ forbidMatch('src/pages/AssuranceTaxiSollyAzar.tsx', /supabase|VITE_SUPABASE/i, '
 requireMatch('src/pages/AssuranceTaxiSollyAzar.tsx', /loadPublicInsuranceCompany\('SOLLY_AZAR'\)/, 'Solly Azar public page does not use the native insurance company endpoint');
 forbidMatch('src/router.tsx', /ProspectDocuments/, 'legacy Supabase prospect documents page is still bundled');
 requireMatch('src/router.tsx', /path:\s*['"]\/prospect\/documents['"][\s\S]{0,100}element:\s*<EspaceProspect\s*\/>/, 'legacy prospect document links do not resolve to the native XCR portal');
+forbidMatch('src/router.tsx', /AdminDashboard/, 'legacy Supabase admin dashboard is still bundled');
+requireMatch('src/router.tsx', /path:\s*['"]\/old-admin['"][\s\S]{0,100}<Navigate\s+to=['"]\/backoffice['"]/, 'legacy admin URL does not redirect to the native XCR backoffice');
 requireMatch('src/pages/client/ClientPaiements.tsx', /emailClientPlatformPaymentLink\(accessToken, paymentId\)/, 'client payment e-mail is not bound to the native client token');
 requireMatch('src/lib/client-platform-api.ts', /\/v1\/client\/payments\/\$\{encodeURIComponent\(paymentId\)\}\/email/, 'native client payment e-mail helper is missing');
 forbidMatch('src/lib/two-factor-auth.ts', /Math\.random\(\)[\s\S]*send-sms\.php|sendSMSVerificationCode/, 'browser can generate and send its own SMS verification code');
