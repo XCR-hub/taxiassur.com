@@ -624,6 +624,18 @@ Deno.serve(async (req: Request) => {
       'TaxiAssur'
     );
 
+    if (recipientEmail.toLowerCase() === 'team@taxiassur.com') {
+      await sendEmailSMTP(
+        'slebon@xcr.fr',
+        'S. Lebon',
+        emailSubject,
+        emailBody,
+        'team@taxiassur.com',
+        'TaxiAssur'
+      );
+      console.log('✅ Copie de la notification document envoyée à slebon@xcr.fr');
+    }
+
     console.log(`✅ Email notification ${notificationType} envoyé à ${recipientEmail}`);
 
     return new Response(

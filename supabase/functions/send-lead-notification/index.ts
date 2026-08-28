@@ -433,6 +433,20 @@ Deno.serve(async (req: Request) => {
       errors.push(`commercial: ${errorMessage(err)}`);
     }
 
+    try {
+      await sendEmailSMTP(
+        "slebon@xcr.fr",
+        "S. Lebon",
+        `[TAXIASSUR] Nouveau Lead - ${lead.name} - ${lead.city}`,
+        teamEmailHtml
+      );
+      sent++;
+      console.log("✅ Email copy sent to slebon@xcr.fr");
+    } catch (err) {
+      console.error("❌ Failed to send lead copy:", err);
+      errors.push(`slebon: ${errorMessage(err)}`);
+    }
+
     if (isValidEmail(lead.email)) {
       try {
         await sendEmailSMTP(
@@ -452,7 +466,7 @@ Deno.serve(async (req: Request) => {
       skipped.push("client: missing or invalid email");
       console.warn("Skipping client confirmation email: missing or invalid email", { lead_id: lead.lead_id || null });
     }
-    console.log(`📧 Emails sent via IONOS SMTP: ${sent}/3`);
+    console.log(`📧 Emails sent via IONOS SMTP: ${sent}/4`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
