@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { QrCode, Download, Copy, CheckCircle, Users, Link as LinkIcon, RefreshCw, Eye, Printer, FileImage, Sparkles, BarChart3, TrendingUp } from 'lucide-react';
 import Card from '../components/Card';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { logger } from '@/lib/logger';
 
 interface Ambassador {
@@ -43,21 +43,19 @@ const QRCodeGenerator: React.FC = () => {
   const [generatingBatch, setGeneratingBatch] = useState(false);
 
   useEffect(() => {
-    loadAmbassadors();
-    loadStats();
+    loadData();
   }, []);
 
-  const loadAmbassadors = async () => {
+  const loadData = async () => {
     try {
-      const { data, error } = await supabase
-        .from('ambassadors')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setAmbassadors(data || []);
+      const data = await nativeAdminCall<{
+        ambassadors?: Ambassador[];
+        usage?: Array<{ ambassador_code: string; action: string; created_at: string }>;
+      }>('/v1/admin/qr-codes');
+      setAmbassadors(data.ambassadors || []);
+      updateStats(data.usage || []);
     } catch (error) {
-      logger.error('Failed to load ambassadors:', error);
+      logger.error('Failed to load QR dashboard:', error);
     } finally {
       setLoading(false);
     }
@@ -65,31 +63,26 @@ const QRCodeGenerator: React.FC = () => {
 
   const loadStats = async () => {
     try {
-      const { data } = await supabase
-        .from('qr_code_usage')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      if (data) {
-        const codeCounts: Record<string, number> = {};
-        data.forEach(d => {
-          codeCounts[d.ambassador_code] = (codeCounts[d.ambassador_code] || 0) + 1;
-        });
-
-        const mostPopular = Object.entries(codeCounts)
-          .sort((a, b) => b[1] - a[1])[0]?.[0] || '-';
-
-        setStats({
-          total_generated: data.length,
-          total_scans: data.filter(d => d.action === 'scan').length,
-          most_popular_code: mostPopular,
-          last_generated: data[0]?.created_at || null
-        });
-      }
+      const data = await nativeAdminCall<{
+        usage?: Array<{ ambassador_code: string; action: string; created_at: string }>;
+      }>('/v1/admin/qr-codes');
+      updateStats(data.usage || []);
     } catch (error) {
       logger.error('Error loading stats:', error);
     }
+  };
+
+  const updateStats = (usage: Array<{ ambassador_code: string; action: string; created_at: string }>) => {
+    const codeCounts: Record<string, number> = {};
+    usage.forEach(item => {
+      codeCounts[item.ambassador_code] = (codeCounts[item.ambassador_code] || 0) + 1;
+    });
+    setStats({
+      total_generated: usage.length,
+      total_scans: usage.filter(item => item.action === 'scan').length,
+      most_popular_code: Object.entries(codeCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || '-',
+      last_generated: usage[0]?.created_at || null,
+    });
   };
 
   const generateQRCode = (ambassadorCode: string, template: QRTemplate = 'basic') => {
@@ -107,10 +100,9 @@ const QRCodeGenerator: React.FC = () => {
 
   const trackQRGeneration = async (code: string, template: string) => {
     try {
-      await supabase.from('qr_code_usage').insert({
-        ambassador_code: code,
-        action: 'generate',
-        template: template
+      await nativeAdminCall('/v1/admin/qr-codes/usage', {
+        method: 'POST',
+        body: JSON.stringify({ ambassador_code: code, template }),
       });
       await loadStats();
     } catch (error) {
@@ -292,7 +284,7 @@ const QRCodeGenerator: React.FC = () => {
             </div>
             <div className="flex items-center space-x-3">
               <button
-                onClick={() => { loadAmbassadors(); loadStats(); }}
+                onClick={loadData}
                 className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors flex items-center space-x-2"
               >
                 <RefreshCw size={18} />
