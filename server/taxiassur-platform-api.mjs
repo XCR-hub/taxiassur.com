@@ -2060,7 +2060,7 @@ function safeLegacyStoragePath(bucket, relative) { const root = path.resolve(con
 function storageObjectPath(value, bucket) { const raw=String(value||'').trim(); if(!raw)return ''; try{const parsed=new URL(raw); const marker=`/${bucket}/`; const index=parsed.pathname.indexOf(marker); return index>=0?decodeURIComponent(parsed.pathname.slice(index+marker.length)):'';}catch{ return raw.replace(new RegExp(`^/?${bucket}/`),'').replace(/^\/+/, ''); } }
 function safeUnlink(file) { try { unlinkSync(file); } catch {} }
 function originAllowed(origin) { return !origin || config.allowedOrigins.has(origin); }
-function clientIp(req) { return String(req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim(); }
+function clientIp(req) { return String(req.headers['x-forwarded-for'] || req.headers['cf-connecting-ip'] || req.socket.remoteAddress || '').split(',')[0].trim(); }
 function rateLimitScope(pathname) { if (pathname.startsWith('/v1/auth/')) return 'auth'; if (pathname === '/v1/public/analytics' || pathname === '/v1/public/page-views') return 'analytics'; if (pathname.startsWith('/v1/public/')) return 'public'; return 'application'; }
 function takeRateSlot(ip) { const now = Date.now(); const value = rateBuckets.get(ip) || { start: now, count: 0 }; if (now - value.start > 60000) { value.start = now; value.count = 0; } value.count += 1; rateBuckets.set(ip, value); return value.count <= 120; }
 function positiveInt(value, fallback, max) { const number = Number(value); return Number.isInteger(number) && number > 0 && number <= max ? number : fallback; }
