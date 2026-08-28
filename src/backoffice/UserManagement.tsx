@@ -6,9 +6,8 @@ import {
   Activity, Zap, BarChart2, Globe, Settings2, Share2, TrendingUp, Database,
   Building2, MessageSquare, Brain
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
-import { supabaseRestFetch, supabaseRestJson } from '@/lib/supabase-rest';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 interface AdminUser {
   id: string;
@@ -137,54 +136,18 @@ const UserManagement: React.FC = () => {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   };
 
-  async function restGet<T = any>(table: string, query = ''): Promise<T> {
-    return supabaseRestJson<T>('/rest/v1/' + table + '?' + query);
-  }
-
-  async function restPost<T = any>(table: string, body: any): Promise<T> {
-    return supabaseRestJson<T>('/rest/v1/' + table, {
-      method: 'POST',
-      headers: { Prefer: 'return=representation' },
-      body: JSON.stringify(body),
-    }, { retryWithAnonOnAuthError: false });
-  }
-
-  async function restPatch<T = any>(table: string, query: string, body: any): Promise<T> {
-    return supabaseRestJson<T>('/rest/v1/' + table + '?' + query, {
-      method: 'PATCH',
-      headers: { Prefer: 'return=representation' },
-      body: JSON.stringify(body),
-    }, { retryWithAnonOnAuthError: false });
-  }
-
-  async function restDelete(table: string, query: string): Promise<void> {
-    const res = await supabaseRestFetch('/rest/v1/' + table + '?' + query, {
-      method: 'DELETE',
-    }, { retryWithAnonOnAuthError: false });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-  }
-
-  const fetchUsersDirect = async (): Promise<AdminUser[]> => {
-    return restGet('admin_users', 'select=*&order=created_at.desc');
-  };
-
-  const fetchPermissionsDirect = async (userIds: string[]): Promise<UserPermission[]> => {
-    const ids = userIds.map(id => `"${id}"`).join(',');
-    try { return await restGet('user_permissions', `select=*&user_id=in.(${ids})`); } catch { return []; }
-  };
-
   const loadUsers = async () => {
     try {
       setLoading(true);
 
-      const usersData = await fetchUsersDirect();
+      const response = await nativeAdminCall<{ users?: Array<AdminUser & { permissions?: UserPermission[]; last_login_at?: string }> }>('/v1/admin/users');
+      const usersData = (response.users || []).map(user => ({ ...user, last_login: user.last_login_at || user.last_login }));
       setUsers(usersData || []);
 
       const permissionsMap: { [userId: string]: UserPermission[] } = {};
       if (usersData && usersData.length > 0) {
-        const allPerms = await fetchPermissionsDirect(usersData.map(u => u.id));
         for (const user of usersData) {
-          permissionsMap[user.id] = allPerms.filter(p => p.user_id === user.id);
+          permissionsMap[user.id] = user.permissions || [];
         }
       }
 
@@ -226,16 +189,15 @@ const UserManagement: React.FC = () => {
     if (!selectedUser) return;
     try {
       setSavingPerms(true);
-      await restDelete('user_permissions', `user_id=eq.${selectedUser.id}`);
       const toInsert = Object.entries(userPermissions)
         .filter(([, perms]) => perms.view || perms.edit || perms.delete)
         .map(([permType, perms]) => ({
           user_id: selectedUser.id, permission_type: permType,
           can_view: perms.view, can_edit: perms.edit, can_delete: perms.delete
         }));
-      if (toInsert.length > 0) {
-        await restPost('user_permissions', toInsert);
-      }
+      await nativeAdminCall(`/v1/admin/users/${encodeURIComponent(selectedUser.id)}/permissions`, {
+        method: 'PUT', body: JSON.stringify({ permissions: toInsert }),
+      });
       showToast('success', 'Permissions enregistrees');
       await loadUsers();
     } catch (err) {
@@ -246,7 +208,9 @@ const UserManagement: React.FC = () => {
 
   const handleToggleActive = async (userId: string, current: boolean) => {
     try {
-      await restPatch('admin_users', `id=eq.${userId}`, { is_active: !current });
+      await nativeAdminCall(`/v1/admin/users/${encodeURIComponent(userId)}`, {
+        method: 'PATCH', body: JSON.stringify({ is_active: !current }),
+      });
       showToast('success', current ? 'Utilisateur desactive' : 'Utilisateur active');
       await loadUsers();
     } catch {
@@ -254,21 +218,10 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const invokeEdgeFunction = async (name: string, body: any): Promise<any> => {
-    return supabaseRestJson<any>('/functions/v1/' + name, {
-      method: 'POST',
-      body: JSON.stringify(body)
-    }, { retryWithAnonOnAuthError: false });
-  };
-
   const handleResendInvite = async (user: AdminUser) => {
     try {
       setSending(true);
-      const data = await invokeEdgeFunction('invite-admin-user', {
-        email: user.email, full_name: user.full_name, role: user.role, permissions: [], force_resend: true
-      });
-      if (!data?.success) { showToast('error', data?.error || 'Erreur'); return; }
-      if (!data.email_sent && data.action_link) { setManualLinkData({ email: user.email, link: data.action_link }); return; }
+      await nativeAdminCall(`/v1/admin/users/${encodeURIComponent(user.id)}/invite`, { method: 'POST', body: '{}' });
       showToast('success', `Invitation renvoyee a ${user.email}`);
     } catch (err) {
       showToast('error', "Erreur lors du renvoi");
@@ -278,11 +231,7 @@ const UserManagement: React.FC = () => {
   const handleResetPassword = async (user: AdminUser) => {
     try {
       setSending(true);
-      const res = await supabaseRestFetch('/auth/v1/recover', {
-        method: 'POST',
-        body: JSON.stringify({ email: user.email })
-      }, { useAnonOnly: true });
-      if (!res.ok) { showToast('error', 'Erreur envoi email'); return; }
+      await nativeAdminCall(`/v1/admin/users/${encodeURIComponent(user.id)}/password-reset`, { method: 'POST', body: '{}' });
       showToast('success', `Email de reinitialisation envoye`);
     } catch (err) {
       showToast('error', "Erreur lors de la reinitialisation");
@@ -293,10 +242,7 @@ const UserManagement: React.FC = () => {
     if (!selectedUser) return;
     try {
       setDeleting(true);
-      const data = await invokeEdgeFunction('invite-admin-user', {
-        action: 'delete', user_id: selectedUser.id, email: selectedUser.email
-      });
-      if (!data?.success) { showToast('error', data?.error || 'Erreur suppression'); return; }
+      await nativeAdminCall(`/v1/admin/users/${encodeURIComponent(selectedUser.id)}`, { method: 'DELETE' });
       showToast('success', `${selectedUser.full_name} supprime`);
       setShowDeleteModal(false);
       setSelectedUser(null);
@@ -313,10 +259,9 @@ const UserManagement: React.FC = () => {
       const perms = Object.entries(newUserPermissions)
         .filter(([, p]) => p.view || p.edit || p.delete)
         .map(([type, p]) => ({ type, view: p.view, edit: p.edit, delete: p.delete }));
-      const data = await invokeEdgeFunction('invite-admin-user', {
-        email: newUser.email, full_name: newUser.full_name, role: newUser.role, permissions: perms
+      await nativeAdminCall('/v1/admin/users', {
+        method: 'POST', body: JSON.stringify({ email: newUser.email, full_name: newUser.full_name, role: newUser.role, permissions: perms.map(p => ({ permission_type: p.type, can_view: p.view, can_edit: p.edit, can_delete: p.delete })) }),
       });
-      if (!data?.success) { showToast('error', data?.error || 'Erreur inconnue'); return; }
       showToast('success', `Invitation envoyee a ${newUser.email}`);
       setShowAddModal(false);
       setNewUser({ email: '', full_name: '', role: 'collaborator' });
@@ -331,7 +276,9 @@ const UserManagement: React.FC = () => {
     if (!selectedUser || !editNameValue.trim()) return;
     try {
       setSavingName(true);
-      await restPatch('admin_users', `id=eq.${selectedUser.id}`, { full_name: editNameValue.trim() });
+      await nativeAdminCall(`/v1/admin/users/${encodeURIComponent(selectedUser.id)}`, {
+        method: 'PATCH', body: JSON.stringify({ full_name: editNameValue.trim() }),
+      });
       showToast('success', 'Nom mis a jour');
       setEditingName(false);
       await loadUsers();
