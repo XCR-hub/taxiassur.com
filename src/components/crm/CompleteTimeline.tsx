@@ -8,6 +8,8 @@ import {
   PhoneIncoming, PhoneOutgoing, Inbox
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { NATIVE_ADMIN_TOKEN_KEY } from '@/lib/native-admin-auth';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { getSecureDocumentUrl } from '@/lib/secure-document-url';
 import { DocumentViewer } from './index';
 
@@ -183,13 +185,35 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({ leadId, lead
         if (siblings?.length) allLeadIds = [...new Set([leadId, ...siblings.map((l: { id: string }) => l.id)])];
       }
 
-      const [emailsRes, interactionsRes, documentsRes, aiRes, notifRes] = await Promise.all([
-        supabase.from('email_messages').select('*, attachments').in('lead_id', allLeadIds).order('created_at', { ascending: false }),
-        supabase.from('crm_interactions').select('*').in('lead_id', allLeadIds).order('created_at', { ascending: false }),
-        supabase.from('crm_lead_documents').select('*').in('lead_id', allLeadIds).order('uploaded_at', { ascending: false }),
-        supabase.from('crm_ai_decisions').select('*').in('lead_id', allLeadIds).order('created_at', { ascending: false }),
-        supabase.from('crm_event_notifications').select('*').in('lead_id', allLeadIds).order('created_at', { ascending: false }),
-      ]);
+      let emailsRes: { data: unknown[] };
+      let interactionsRes: { data: unknown[] };
+      let documentsRes: { data: unknown[] };
+      let aiRes: { data: unknown[] };
+      let notifRes: { data: unknown[] };
+
+      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
+        const response = await nativeAdminCall<{ summary?: {
+          emails?: unknown[];
+          interactions?: unknown[];
+          documents?: unknown[];
+          ai_decisions?: unknown[];
+          notifications?: unknown[];
+        } }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/summary`);
+        const summary = response.summary || {};
+        emailsRes = { data: summary.emails || [] };
+        interactionsRes = { data: summary.interactions || [] };
+        documentsRes = { data: summary.documents || [] };
+        aiRes = { data: summary.ai_decisions || [] };
+        notifRes = { data: summary.notifications || [] };
+      } else {
+        [emailsRes, interactionsRes, documentsRes, aiRes, notifRes] = await Promise.all([
+          supabase.from('email_messages').select('*, attachments').in('lead_id', allLeadIds).order('created_at', { ascending: false }),
+          supabase.from('crm_interactions').select('*').in('lead_id', allLeadIds).order('created_at', { ascending: false }),
+          supabase.from('crm_lead_documents').select('*').in('lead_id', allLeadIds).order('uploaded_at', { ascending: false }),
+          supabase.from('crm_ai_decisions').select('*').in('lead_id', allLeadIds).order('created_at', { ascending: false }),
+          supabase.from('crm_event_notifications').select('*').in('lead_id', allLeadIds).order('created_at', { ascending: false }),
+        ]);
+      }
 
       type EmailRow = { id: string; direction?: string; received_at?: string; created_at?: string; subject?: string; body_text?: string; body_html?: string; from_email?: string; to_emails?: string[] | string; status?: string; attachments?: Array<{ filename?: string; name?: string; contentType?: string; content_type?: string; size?: number; file_size?: number; url?: string; path?: string; storage_path?: string; proposed_doc_type?: string }> };
       (emailsRes.data as EmailRow[] || []).forEach((email) => {

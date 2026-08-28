@@ -1129,7 +1129,7 @@ async function adminUserPasswordReset(req,res,origin,requestId,id){const s=await
 async function adminLeadSummary(req,res,origin,requestId,leadId){
   if(!await verifiedAdminSession(req))return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
   const collections=['crm_lead_documents','prospect_documents','lead_company_quotes','lead_contracts','email_messages','crm_interactions','crm_ai_decisions','crm_ai_suggestions','crm_event_notifications','monetico_payments','insurance_claims','client_portal_requests'];
-  const rows={};for(const collection of collections)rows[collection]=await recordsWhere(collection,'lead_id',leadId);
+  const rows={};for(const collection of collections)rows[collection]=await recordsWhereWithMirror(collection,'lead_id',leadId);
   const documents=[...rows.crm_lead_documents,...rows.prospect_documents];const validatedTypes=new Set(documents.filter(d=>d.status==='validated'||d.status==='verified').map(d=>d.document_type));
   return json(res,origin,200,{ok:true,summary:{documents,total_documents:documents.length,validated_documents:documents.filter(d=>d.status==='validated'||d.status==='verified').length,pending_documents:documents.filter(d=>d.status==='pending').length,missing_documents:Math.max(0,9-validatedTypes.size),documents_complete:validatedTypes.size>=9,quotes:rows.lead_company_quotes,contracts:rows.lead_contracts,emails:rows.email_messages,interactions:rows.crm_interactions,ai_decisions:rows.crm_ai_decisions,ai_suggestions:rows.crm_ai_suggestions,notifications:rows.crm_event_notifications,payments:rows.monetico_payments,claims:rows.insurance_claims,requests:rows.client_portal_requests,total_events:rows.email_messages.length+rows.crm_interactions.length+documents.length+rows.crm_ai_decisions.length+rows.crm_event_notifications.length,notes_count:rows.crm_interactions.filter(x=>x.channel==='note'||x.type==='note').length}},requestId);
 }
@@ -2051,6 +2051,21 @@ async function leadByToken(token) {
 
 async function recordsWhere(collection, field, value) {
   const sql = `SELECT COALESCE(jsonb_agg(data ORDER BY COALESCE(data ->> 'updated_at', data ->> 'created_at', '') DESC), '[]'::jsonb)::text FROM taxiassur.records WHERE collection = ${quoteLiteral(collection)} AND data ->> ${quoteLiteral(field)} = ${quoteLiteral(value)};`;
+  return parseJsonLine(await runPsql(sql)) || [];
+}
+
+async function recordsWhereWithMirror(collection, field, value) {
+  if (!/^[a-z0-9_]+$/.test(collection) || !/^[a-z0-9_]+$/.test(field)) throw new Error('invalid_collection');
+  const sql = `SELECT COALESCE(jsonb_agg(data ORDER BY COALESCE(data->>'updated_at',data->>'created_at',data->>'uploaded_at','') DESC),'[]'::jsonb)::text FROM (
+    SELECT data FROM taxiassur.records WHERE collection=${quoteLiteral(collection)} AND data->>${quoteLiteral(field)}=${quoteLiteral(value)}
+    UNION ALL
+    SELECT mirror.data FROM supabase_rest.${collection} mirror
+    WHERE mirror.data->>${quoteLiteral(field)}=${quoteLiteral(value)}
+      AND NOT EXISTS (
+        SELECT 1 FROM taxiassur.records native
+        WHERE native.collection=${quoteLiteral(collection)} AND native.record_id=mirror.data->>'id'
+      )
+  ) combined;`;
   return parseJsonLine(await runPsql(sql)) || [];
 }
 
