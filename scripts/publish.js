@@ -1,15 +1,12 @@
 #!/usr/bin/env node
 
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { tmpdir } from "node:os";
 
 const __filename = fileURLToPath(import.meta.url);
 const rootDir = dirname(dirname(__filename));
 
-const projectRef = process.env.SUPABASE_PROJECT_REF || "drohhxrkoequjphvabvq";
 const boltWebhook =
   process.env.BOLT_REBUILD_WEBHOOK_URL ||
   "https://api.bolt.new/v1/deploy/github-mcmcpmfr";
@@ -19,39 +16,6 @@ const netlifyBuildHook =
   "";
 const netlifySiteId = process.env.NETLIFY_SITE_ID || "9719283a-c221-4e19-8a78-72e75e0f7393";
 
-const supabaseFunctions = [
-  "send-email-ionos",
-  "send-email",
-  "team-email-handler",
-  "send-lead-notification",
-  "process-lead-queue",
-  "send-client-access",
-  "process-client-access-outbox",
-  "process-insurer-dossier-sends",
-  "upload-client-document",
-  "sign-document-url",
-  "trend-analyzer-proxy",
-  "send-document-notification",
-  "send-email-universal",
-  "send-crm-email",
-  "send-payment-link-email",
-  "send-quote-email",
-  "send-newsletter-universal",
-  "track-email-open",
-  "track-email-click",
-  "geolocate-email-interaction",
-  "fetch-email-replies",
-  "sync-ionos-imap",
-  "sync-ionos-imap-v2",
-  "sync-ionos-imap-documents",
-  "notify-claim",
-  "send-lead-magnet-confirmation",
-];
-
-const publicSupabaseFunctionsNoJwt = new Set([
-  "track-email-open",
-  "track-email-click",
-]);
 const args = process.argv.slice(2);
 const flags = new Set(args.filter((arg) => arg.startsWith("--")));
 const commitMessage = args.find((arg) => !arg.startsWith("--")) || process.env.PUBLISH_COMMIT_MESSAGE || "";
@@ -61,7 +25,6 @@ const withBolt = flags.has("--with-bolt") || process.env.PUBLISH_WITH_BOLT === "
 const skipBolt = flags.has("--skip-bolt") || !withBolt;
 const withNetlify = flags.has("--netlify") || process.env.PUBLISH_WITH_NETLIFY === "1";
 const skipNetlify = flags.has("--skip-netlify") || !withNetlify;
-const skipSupabase = flags.has("--skip-supabase");
 const withCloudflare = flags.has("--cloudflare") || process.env.PUBLISH_WITH_CLOUDFLARE === "1";
 const withVercel = flags.has("--vercel") || process.env.PUBLISH_WITH_VERCEL === "1";
 const skipVercel = flags.has("--skip-vercel") || !withVercel;
@@ -146,110 +109,6 @@ function publishGit() {
   }
 
   git(["push", "origin", "main"]);
-}
-
-function hasSupabaseAuth() {
-  return Boolean(process.env.SUPABASE_ACCESS_TOKEN);
-}
-
-function writeSupabaseEnvFile() {
-  const smtpPass = process.env.SMTP_PASS || process.env.HMAIL_SMTP_PASS || "";
-  const imapPass = process.env.IMAP_PASS || process.env.HMAIL_IMAP_PASS || smtpPass;
-
-  if (!smtpPass && !imapPass) return null;
-
-  const lines = [
-    "SMTP_HOST=mail.xcr.fr",
-    "SMTP_PORT=587",
-    "SMTP_SECURITY=starttls",
-    "SMTP_USER=tcerda@xcr.fr",
-    smtpPass ? `SMTP_PASS=${smtpPass}` : "",
-    "FROM_EMAIL=tcerda@xcr.fr",
-    "REPLY_TO_EMAIL=team@taxiassur.com",
-    "IMAP_HOST=mail.xcr.fr",
-    "IMAP_PORT=993",
-    "IMAP_USER=tcerda@xcr.fr",
-    imapPass ? `IMAP_PASS=${imapPass}` : "",
-    "IONOS_SMTP_HOST=mail.xcr.fr",
-    "IONOS_SMTP_PORT=587",
-    "IONOS_SMTP_SECURITY=starttls",
-    "IONOS_SMTP_USER=tcerda@xcr.fr",
-    "IONOS_EMAIL_USER=tcerda@xcr.fr",
-    smtpPass ? `IONOS_EMAIL_PASSWORD=${smtpPass}` : "",
-    smtpPass ? `IONOS_SMTP_PASSWORD=${smtpPass}` : "",
-    "IONOS_IMAP_HOST=mail.xcr.fr",
-    "IONOS_IMAP_PORT=993",
-    "IONOS_IMAP_USER=tcerda@xcr.fr",
-    imapPass ? `IONOS_IMAP_PASSWORD=${imapPass}` : "",
-    withBolt ? `BOLT_REBUILD_WEBHOOK_URL=${boltWebhook}` : "",
-  ].filter(Boolean);
-
-  const dir = join(tmpdir(), "taxiassur-publish");
-  mkdirSync(dir, { recursive: true });
-  const file = join(dir, `supabase-secrets-${Date.now()}.env`);
-  writeFileSync(file, `${lines.join("\n")}\n`, { mode: 0o600 });
-  return file;
-}
-
-function publishSupabase() {
-  if (skipSupabase) {
-    log("\n== Supabase skipped ==");
-    return;
-  }
-
-  log("\n== Supabase ==");
-  if (!hasSupabaseAuth()) {
-    log("Skipped: SUPABASE_ACCESS_TOKEN is not set.");
-    log("Set it first, then rerun: npm run publish -- --skip-git --skip-bolt");
-    return;
-  }
-
-  const envFile = writeSupabaseEnvFile();
-  try {
-    if (envFile) {
-      run(npmCmd(), [
-        "exec",
-        "supabase",
-        "--",
-        "secrets",
-        "set",
-        "--project-ref",
-        projectRef,
-        "--env-file",
-        envFile,
-      ]);
-      log("Supabase hMail secrets updated.");
-    } else {
-      log("SMTP_PASS/IMAP_PASS not set: secrets were not changed.");
-    }
-
-    for (const fn of supabaseFunctions) {
-      const deployArgs = [
-        "exec",
-        "supabase",
-        "--",
-        "functions",
-        "deploy",
-        fn,
-        "--project-ref",
-        projectRef,
-      ];
-
-      if (publicSupabaseFunctionsNoJwt.has(fn)) {
-        deployArgs.push("--no-verify-jwt");
-      }
-
-      run(npmCmd(), deployArgs);
-    }
-  } finally {
-    if (envFile && existsSync(envFile)) {
-      try {
-        unlinkSync(envFile);
-      } catch {
-        log(`Warning: temporary secret file not removed: ${envFile}`);
-      }
-    }
-  }
 }
 
 async function triggerBolt() {
@@ -371,15 +230,12 @@ async function verifyPublicSite() {
 
 async function main() {
   log("TaxiAssur publish");
-  log(`Project ref: ${projectRef}`);
-
   buildAndVerify();
   publishGit();
   announceCloudflarePrimary();
   await triggerNetlify();
   publishVercel();
   await triggerBolt();
-  publishSupabase();
   await verifyPublicSite();
 
   log("\nPublish command finished.");

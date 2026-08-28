@@ -26,9 +26,7 @@ jobs:
     env:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      PUBLIC_BACKUP_DIR: cloudflare/d1/generated/supabase-public-cache
+      PUBLIC_BACKUP_DIR: cloudflare/d1/generated/native-public-cache
       PUBLIC_IMPORT_SQL: cloudflare/d1/generated/public-cache.sql
     steps:
       - name: Checkout
@@ -50,7 +48,7 @@ jobs:
         shell: bash
         run: |
           missing=0
-          for name in CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_API_TOKEN SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY; do
+          for name in CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_API_TOKEN; do
             if [ -z "${!name}" ]; then
               echo "Missing ${name}."
               missing=1
@@ -62,7 +60,7 @@ jobs:
           fi
           echo "Required secrets are present."
 
-      - name: Export public Supabase cache
+      - name: Export public native PostgreSQL cache
         run: node scripts/d1-export-public-cache.cjs --out "$PUBLIC_BACKUP_DIR"
 
       - name: Build D1 import SQL

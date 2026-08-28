@@ -132,11 +132,6 @@ const requiredChecks = [
     ],
   },
   {
-    label: 'client access outbox worker is published with Supabase functions',
-    file: 'scripts/publish.js',
-    patterns: ['send-client-access', 'process-client-access-outbox'],
-  },
-  {
     label: 'database migration creates client request center and portal access outbox',
     file: 'supabase/migrations/20260802163000_client_portal_request_center.sql',
     patterns: [
@@ -386,26 +381,6 @@ const requiredChecks = [
       'CLIENT_ACCESS_OUTBOX_MAX_ATTEMPTS',
       'supabase_server_key_present',
       'run-client-access-outbox.ps1',
-    ],
-  },
-  {
-    label: 'consent-gated email tracking functions are published',
-    file: 'scripts/publish.js',
-    patterns: [
-      'send-crm-email',
-      'track-email-open',
-      'track-email-click',
-      'geolocate-email-interaction',
-    ],
-  },
-  {
-    label: 'public email tracking endpoints stay public but write-gated',
-    file: 'scripts/publish.js',
-    patterns: [
-      'publicSupabaseFunctionsNoJwt',
-      'track-email-open',
-      'track-email-click',
-      '--no-verify-jwt',
     ],
   },
   {

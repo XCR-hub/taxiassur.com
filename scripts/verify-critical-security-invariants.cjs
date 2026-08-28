@@ -30,7 +30,7 @@ const prospectDocumentUploader = 'supabase/functions/upload-client-document/inde
 const publishScript = 'scripts/publish.js';
 requireMatch(prospectDocumentSigner, /tokenPattern[\s\S]*crm_leads[\s\S]*lead_id[\s\S]*createSignedUrl/, 'prospect document signing is not token-bound to document ownership');
 requireMatch(prospectDocumentUploader, /createSignedUploadUrl[\s\S]*actualSize !== declaredSize[\s\S]*actualMime !== mimeType/, 'client uploads are not signed or verified after storage');
-requireMatch(publishScript, /"upload-client-document"[\s\S]*"sign-document-url"/, 'prospect upload or download functions are missing from the publication set');
+forbidMatch(publishScript, /SUPABASE_(?:ACCESS_TOKEN|PROJECT_REF)|functions["']?,\s*["']deploy|publishSupabase/, 'publication can still authenticate to or deploy Supabase');
 requireMatch('supabase/migrations/20260815003000_restore_prospect_document_downloads.sql', /prospect_documents[\s\S]*p_token ~ '\^\[0-9A-Fa-f\]\{64\}\$'[\s\S]*lead\.access_token = p_token/, 'legacy prospect document listing is not bound to a strong access token');
 for (const file of [createPayment, paymentEmail, sms, whatsapp]) {
   requireMatch(file, /admin\.auth\.getUser\(token\)/, 'missing server-side user-token validation');
