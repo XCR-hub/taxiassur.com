@@ -5,7 +5,8 @@ export async function nativeAdminCall<T=any>(path:string,init:RequestInit={}):Pr
 const call=nativeAdminCall;
 export const nativeAdminDashboard=()=>call('/v1/admin/dashboard');
 export const nativeAdminLead=(id:string)=>call(`/v1/admin/leads/${encodeURIComponent(id)}`);
-export const nativeAdminUpdateLead=(id:string,updates:Record<string,string|null>)=>call(`/v1/admin/leads/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(updates)});
+export const nativeAdminUpdateLead=(id:string,updates:Record<string,unknown>)=>call(`/v1/admin/leads/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(updates)});
+export const nativeAdminPipelineNotifications=()=>call('/v1/admin/pipeline/notifications');
 export const nativeAdminDocuments=(status='')=>call(`/v1/admin/documents${status?`?status=${encodeURIComponent(status)}`:''}`);
 export const nativeAdminUpdateDocument=(id:string,updates:Record<string,string>)=>call(`/v1/admin/documents/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(updates)});
 export async function nativeAdminDownloadDocument(id:string,fileName:string){const token=localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY);const response=await fetch(`${BASE}/v1/admin/documents/${encodeURIComponent(id)}/download`,{headers:{Authorization:`Bearer ${token}`}});if(!response.ok)throw new Error('document_unavailable');const url=URL.createObjectURL(await response.blob());const a=document.createElement('a');a.href=url;a.download=fileName||'document';a.click();URL.revokeObjectURL(url);}

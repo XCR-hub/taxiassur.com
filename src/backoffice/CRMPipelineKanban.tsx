@@ -1,13 +1,15 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, RefreshCw, AlertCircle, TrendingUp, Clock, FileText, Building2, Euro, PenTool, AlertTriangle, Mail, Phone, FileCheck, Users, User } from 'lucide-react';
-import { pipelineService, PIPELINE_STATUSES, PipelineStatus, CRMLead, AdminUser } from '@/lib/crm-pipeline';
+import { pipelineService, PIPELINE_STATUSES, PipelineStatus, CRMLead, AdminUser, normalizePipelineStatus } from '@/lib/crm-pipeline';
 import { PipelineCard } from '@/components/crm/PipelineCard';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import RealtimeNotifications from '@/components/crm/RealtimeNotifications';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { internalFunctionHeaders } from '@/lib/internal-function-auth';
+import { NATIVE_ADMIN_TOKEN_KEY } from '@/lib/native-admin-auth';
+import { nativeAdminPipelineNotifications } from '@/lib/native-admin-data';
 
 interface ColumnNotifications {
   newEmails: number;
@@ -157,6 +159,7 @@ const CRMPipelineKanban: React.FC = () => {
   const autoRefreshInterval = useRef<NodeJS.Timeout | null>(null);
   const realtimeChannel = useRef<any>(null);
   const previousLeadCount = useRef<number>(0);
+  const moveInProgressRef = useRef(false);
 
   const adminUsersMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -181,6 +184,24 @@ const CRMPipelineKanban: React.FC = () => {
   const loadColumnNotifications = useCallback(async () => {
     try {
       const notifications: Record<PipelineStatus, ColumnNotifications> = {} as any;
+
+      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
+        const result = await nativeAdminPipelineNotifications() as { notifications?: Record<string, ColumnNotifications> };
+        for (const [rawStatus, counts] of Object.entries(result.notifications || {})) {
+          const status = normalizePipelineStatus({ status: rawStatus });
+          const current = notifications[status] || { newEmails: 0, newDocuments: 0, missedCalls: 0, newSMS: 0, pendingSignatures: 0, paymentDue: 0 };
+          notifications[status] = {
+            newEmails: current.newEmails + (counts.newEmails || 0),
+            newDocuments: current.newDocuments + (counts.newDocuments || 0),
+            missedCalls: current.missedCalls + (counts.missedCalls || 0),
+            newSMS: current.newSMS + (counts.newSMS || 0),
+            pendingSignatures: current.pendingSignatures + (counts.pendingSignatures || 0),
+            paymentDue: current.paymentDue + (counts.paymentDue || 0),
+          };
+        }
+        setColumnNotifications(notifications);
+        return;
+      }
 
       for (const status of Object.keys(kanbanData) as PipelineStatus[]) {
         const leadIds = kanbanData[status]?.map(l => l.id) || [];
@@ -258,6 +279,7 @@ const CRMPipelineKanban: React.FC = () => {
 
   // Load kanban data
   const loadKanbanData = useCallback(async (showLoader = true) => {
+    if (!showLoader && moveInProgressRef.current) return;
     if (showLoader) setLoading(true);
     setError(null);
 
@@ -500,6 +522,7 @@ const CRMPipelineKanban: React.FC = () => {
     }
 
     const updatedLead = { ...draggedLead, status: targetStatus };
+    moveInProgressRef.current = true;
 
     // Optimistic update with smooth transition
     setKanbanData(prev => {
@@ -530,12 +553,13 @@ const CRMPipelineKanban: React.FC = () => {
       console.error('Failed to update lead:', result.message);
       setError('Erreur lors de la mise à jour. Restauration...');
       // Rollback on error
+      moveInProgressRef.current = false;
       await loadKanbanData(false);
       return;
     }
 
-    // Refresh to get server state
-    setTimeout(() => loadKanbanData(false), 1000);
+    moveInProgressRef.current = false;
+    await loadKanbanData(false);
   }, [draggedLead, loadKanbanData]);
 
   const filteredKanbanData = useMemo(() => {

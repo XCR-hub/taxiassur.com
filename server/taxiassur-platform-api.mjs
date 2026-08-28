@@ -949,7 +949,7 @@ async function adminPipelineNotifications(req,res,origin,requestId){
   if(!await verifiedAdminSession(req))return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
   const since=Date.now()-86400000;
   const [leads,emails,documents,interactions,contracts]=await Promise.all([recordsAll('crm_leads'),recordsAll('email_messages'),recordsAll('crm_lead_documents'),recordsAll('crm_interactions'),recordsAll('lead_contracts')]);
-  const leadStatus=new Map(leads.map(lead=>[String(lead.id),String(lead.status||lead.pipeline_stage||'NOUVEAU_LEAD')])),notifications={};
+  const leadStatus=new Map(leads.map(lead=>[String(lead.id),String(lead.current_stage_key||lead.pipeline_stage||lead.status||'NOUVEAU_LEAD')])),notifications={};
   const ensure=(status)=>notifications[status]||(notifications[status]={newEmails:0,newDocuments:0,missedCalls:0,newSMS:0,pendingSignatures:0,paymentDue:0});
   const recent=(row,key)=>{const value=Date.parse(String(row[key]||row.created_at||''));return Number.isFinite(value)&&value>=since;};
   for(const lead of leads)ensure(leadStatus.get(String(lead.id)));

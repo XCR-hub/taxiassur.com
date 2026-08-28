@@ -200,6 +200,41 @@ export interface CRMLead {
   first_request_at?: string;
 }
 
+const PIPELINE_STATUS_ALIASES: Record<string, PipelineStatus> = {
+  nouveau: 'NOUVEAU_LEAD', nouveau_lead: 'NOUVEAU_LEAD', new: 'NOUVEAU_LEAD', new_lead: 'NOUVEAU_LEAD',
+  contact_attempted: 'NOUVEAU_LEAD', contact_confirmed: 'NOUVEAU_LEAD', taxi: 'NOUVEAU_LEAD', vtc: 'NOUVEAU_LEAD', autre: 'NOUVEAU_LEAD',
+  collecte_documents: 'COLLECTE_DOCUMENTS', document_collection: 'COLLECTE_DOCUMENTS', documents_required: 'COLLECTE_DOCUMENTS',
+  documents_received: 'COLLECTE_DOCUMENTS', documents_partial: 'COLLECTE_DOCUMENTS',
+  devis: 'DEVIS', saisie_devis: 'DEVIS', ready_for_quote: 'DEVIS', quote_pending: 'DEVIS', quote_sent: 'DEVIS',
+  decision_client: 'DECISION_CLIENT', validation_devis_prospect: 'DECISION_CLIENT', signature_devis: 'DECISION_CLIENT',
+  paiement: 'PAIEMENT', paiement_rib: 'PAIEMENT', payment_pending: 'PAIEMENT', quote_accepted: 'PAIEMENT',
+  contrat_signature: 'CONTRAT_SIGNATURE', contract_pending: 'CONTRAT_SIGNATURE', signature_pending: 'CONTRAT_SIGNATURE',
+  client_actif: 'CLIENT_ACTIF', active_client: 'CLIENT_ACTIF', signed: 'CLIENT_ACTIF',
+  relance: 'RELANCE', relance_active: 'RELANCE', no_response: 'RELANCE',
+  perdu: 'PERDU', lost: 'PERDU', client_lost: 'PERDU',
+  recontact_programme: 'RECONTACT_PROGRAMME', lost_recontact_scheduled: 'RECONTACT_PROGRAMME',
+};
+
+const PIPELINE_STAGE_KEYS: Record<PipelineStatus, string> = {
+  NOUVEAU_LEAD: 'nouveau_lead', COLLECTE_DOCUMENTS: 'collecte_documents', DEVIS: 'saisie_devis',
+  DECISION_CLIENT: 'validation_devis_prospect', PAIEMENT: 'paiement_rib', CONTRAT_SIGNATURE: 'contrat_signature',
+  CLIENT_ACTIF: 'active_client', RELANCE: 'relance', PERDU: 'perdu', RECONTACT_PROGRAMME: 'recontact_programme',
+  CROSS_SELLING: 'cross_selling', RISK_CHURN: 'risk_churn', SINISTRE: 'sinistre',
+  ATTESTATION_REQUEST: 'attestation_request', SUPPORT_ASSISTANCE: 'support_assistance',
+};
+
+export function normalizePipelineStatus(lead: Record<string, unknown>): PipelineStatus {
+  const candidates = [lead.current_stage_key, lead.pipeline_stage, lead.status];
+  for (const value of candidates) {
+    const key = String(value || '').trim().toLowerCase();
+    if (!key) continue;
+    if (PIPELINE_STATUS_ALIASES[key]) return PIPELINE_STATUS_ALIASES[key];
+    const upper = key.toUpperCase();
+    if (PIPELINE_STATUSES[upper]) return upper as PipelineStatus;
+  }
+  return 'NOUVEAU_LEAD';
+}
+
 export interface AdminUser {
   id: string;
   email: string;
@@ -233,13 +268,7 @@ export const pipelineService = {
       if (filters?.source) rows = rows.filter((lead: any) => lead.source === filters.source);
       if (filters?.search) { const needle=filters.search.toLowerCase(); rows=rows.filter((lead:any)=>[lead.first_name,lead.last_name,lead.email,lead.phone].some(value=>String(value||'').toLowerCase().includes(needle))); }
       return rows.map((lead:any)=>{
-        const rawStatus=String(lead.status||'').toUpperCase();
-        const stage=String(lead.current_stage_key||lead.pipeline_stage||'').toLowerCase();
-        const status=PIPELINE_STATUSES[rawStatus]
-          ? rawStatus
-          : ['nouveau','nouveau_lead','new_lead'].includes(stage)||['TAXI','VTC','AUTRE'].includes(rawStatus)
-            ? 'NOUVEAU_LEAD'
-            : rawStatus;
+        const status=normalizePipelineStatus(lead);
         return {...lead,status,full_name:`${lead.first_name||''} ${lead.last_name||''}`.trim()||lead.email,vehicle_type:lead.vehicle_type||lead.metadata?.vehicle_type||null};
       }) as CRMLead[];
     }
@@ -306,6 +335,8 @@ export const pipelineService = {
     try {
       const updateData: Record<string, unknown> = {
         status: newStatus,
+        pipeline_stage: PIPELINE_STAGE_KEYS[newStatus] || newStatus.toLowerCase(),
+        current_stage_key: PIPELINE_STAGE_KEYS[newStatus] || newStatus.toLowerCase(),
         updated_at: new Date().toISOString()
       };
 
@@ -315,7 +346,7 @@ export const pipelineService = {
       }
 
       if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
-        const result=await nativeAdminUpdateLead(leadId,updateData as Record<string,string|null>);
+        const result=await nativeAdminUpdateLead(leadId,updateData);
         return {success:true,message:`Statut mis à jour vers ${PIPELINE_STATUSES[newStatus].label}`,actionsQueued:0,details:{lead:result.lead}};
       }
 
