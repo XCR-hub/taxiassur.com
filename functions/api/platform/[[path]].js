@@ -12,7 +12,10 @@ export async function onRequest({ request, params }) {
   const clientIp = headers.get('cf-connecting-ip');
   for (const name of ['cookie', 'host', 'origin', 'referer', 'cf-connecting-ip', 'cf-ray']) headers.delete(name);
   if (clientIp) {
-    headers.set('cf-connecting-ip', clientIp);
+    // Authentication must not share its quota with the many data requests made
+    // by an authenticated backoffice screen.
+    const rateLimitScope = suffix.startsWith('v1/auth/') ? 'auth' : 'api';
+    headers.set('cf-connecting-ip', `${clientIp}:${rateLimitScope}`);
     headers.set('x-forwarded-for', clientIp);
     headers.set('x-real-ip', clientIp);
   }
