@@ -1,4 +1,4 @@
-const DEFAULT_API_URL = 'https://postgres-read-api.taxiassur.com';
+const DEFAULT_API_URL = 'https://postgres-read-api.taxiassur.com/platform';
 
 export const ALLOWED_TABLES = new Set(['blog_posts', 'city_pages', 'faq_entries', 'news_articles']);
 export const SORT_FIELDS = new Set(['published_at', 'updated_at', 'created_at', 'title']);
@@ -21,17 +21,14 @@ export function positiveInt(value, fallback, max) {
 }
 
 export function config(env) {
-  const token =
-    env.TAXIASSUR_POSTGRES_READ_API_TOKEN ||
-    env.POSTGRES_READ_API_TOKEN ||
-    '';
   const baseUrl = String(
+    env.TAXIASSUR_NATIVE_PLATFORM_URL ||
+    env.NATIVE_PLATFORM_URL ||
     env.TAXIASSUR_POSTGRES_READ_API_URL ||
-    env.POSTGRES_READ_API_URL ||
     DEFAULT_API_URL,
-  ).replace(/\/$/, '');
+  ).replace(/\/$/, '').replace(/\/platform$/, '') + '/platform';
 
-  return { token, baseUrl };
+  return { baseUrl };
 }
 
 export function publicRow(table, item) {
@@ -74,15 +71,13 @@ export function normalizedStatus(item) {
 }
 
 export async function postgresFetch(env, pathname, params = {}) {
-  const { token, baseUrl } = config(env);
-  if (!token) {
-    const error = new Error('missing_postgres_read_api_token');
-    error.statusCode = 503;
-    throw error;
-  }
-
-  const url = new URL(`${baseUrl}${pathname}`);
-  Object.entries(params).forEach(([key, value]) => {
+  const { baseUrl } = config(env);
+  const table = String(params.table || '');
+  const nativePath = pathname === '/api/health' || pathname === '/api/tables'
+    ? '/v1/public/content'
+    : `/v1/public/content/${encodeURIComponent(table)}`;
+  const url = new URL(`${baseUrl}${nativePath}`);
+  Object.entries(params).filter(([key]) => key !== 'table' && key !== 'sort' && key !== 'direction' && key !== 'status').forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== '') {
       url.searchParams.set(key, String(value));
     }
@@ -100,10 +95,7 @@ export async function postgresFetch(env, pathname, params = {}) {
 
   try {
     const response = await fetch(url, {
-      headers: {
-        accept: 'application/json',
-        authorization: `Bearer ${token}`,
-      },
+      headers: { accept: 'application/json' },
       signal: controller.signal,
     });
 
@@ -114,6 +106,9 @@ export async function postgresFetch(env, pathname, params = {}) {
       throw error;
     }
 
+    if (pathname === '/api/item') return { item: data.items?.[0] || null };
+    if (pathname === '/api/health') return { ok: true, ...data.counts };
+    if (pathname === '/api/tables') return { ok: true, tables: Object.entries(data.counts || {}).map(([source_table, rows]) => ({ source_table, rows })) };
     return data;
   } finally {
     clearTimeout(timer);

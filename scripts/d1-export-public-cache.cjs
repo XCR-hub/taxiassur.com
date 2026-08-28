@@ -44,9 +44,9 @@ function parseArgs(argv) {
   return args;
 }
 
-function normalizeRestUrl(value) {
+function normalizeNativeContentUrl(value) {
   const trimmed = value.replace(/\/+$/, '');
-  return trimmed.endsWith('/rest/v1') ? trimmed : `${trimmed}/rest/v1`;
+  return trimmed.endsWith('/v1/public/content') ? trimmed : `${trimmed}/v1/public/content`;
 }
 
 function timestampForPath(date = new Date()) {
@@ -59,7 +59,7 @@ function timestampForPath(date = new Date()) {
 
 function resolveOutputRoot(input) {
   if (input) return path.resolve(input);
-  return path.resolve(DEFAULT_BACKUP_BASE, `supabase-rest-public-${timestampForPath()}`);
+  return path.resolve(DEFAULT_BACKUP_BASE, `native-public-${timestampForPath()}`);
 }
 
 async function writeJsonlRows(stream, rows) {
@@ -70,7 +70,7 @@ async function writeJsonlRows(stream, rows) {
   }
 }
 
-async function exportTable({ restUrl, serviceRoleKey, outputRoot, table, pageSize }) {
+async function exportTable({ contentUrl, outputRoot, table, pageSize }) {
   const filePath = path.join(outputRoot, 'tables', `${table}.jsonl`);
   const stream = fs.createWriteStream(filePath, { encoding: 'utf8' });
   let offset = 0;
@@ -78,23 +78,18 @@ async function exportTable({ restUrl, serviceRoleKey, outputRoot, table, pageSiz
 
   try {
     while (true) {
-      const url = `${restUrl}/${encodeURIComponent(table)}?select=*&limit=${pageSize}&offset=${offset}`;
-      const response = await fetch(url, {
-        headers: {
-          apikey: serviceRoleKey,
-          Authorization: `Bearer ${serviceRoleKey}`,
-          Accept: 'application/json',
-        },
-      });
+      const url = `${contentUrl}/${encodeURIComponent(table)}?limit=${pageSize}&offset=${offset}`;
+      const response = await fetch(url, { headers: { Accept: 'application/json' } });
 
       if (!response.ok) {
         const body = await response.text();
-        throw new Error(`${table}: Supabase REST ${response.status} ${body.slice(0, 500)}`);
+        throw new Error(`${table}: native content API ${response.status} ${body.slice(0, 500)}`);
       }
 
-      const rows = await response.json();
-      if (!Array.isArray(rows)) {
-        throw new Error(`${table}: Supabase REST did not return an array.`);
+      const payload = await response.json();
+      const rows = payload?.items;
+      if (!payload?.ok || !Array.isArray(rows)) {
+        throw new Error(`${table}: native content API did not return an items array.`);
       }
 
       await writeJsonlRows(stream, rows);
@@ -117,21 +112,19 @@ async function exportTable({ restUrl, serviceRoleKey, outputRoot, table, pageSiz
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const rawUrl = args.url || process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const serviceRoleKey = args.key || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVER_KEY;
+  const rawUrl = args.url || process.env.TAXIASSUR_NATIVE_PLATFORM_URL || 'https://postgres-read-api.taxiassur.com/platform';
   const pageSize = Number(args['page-size'] || PAGE_SIZE);
   const tables = String(args.tables || PUBLIC_CACHE_TABLES.join(','))
     .split(',')
     .map((table) => table.trim())
     .filter(Boolean);
 
-  if (!rawUrl) throw new Error('Missing SUPABASE_URL or VITE_SUPABASE_URL.');
-  if (!serviceRoleKey) throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SERVER_KEY.');
+  if (!rawUrl) throw new Error('Missing TAXIASSUR_NATIVE_PLATFORM_URL.');
   if (!Number.isInteger(pageSize) || pageSize <= 0 || pageSize > 1000) {
     throw new Error('--page-size must be an integer between 1 and 1000.');
   }
 
-  const restUrl = normalizeRestUrl(rawUrl);
+  const contentUrl = normalizeNativeContentUrl(rawUrl);
   const outputRoot = resolveOutputRoot(args.out || process.env.TAXIASSUR_D1_PUBLIC_BACKUP_DIR);
   const tablesDir = path.join(outputRoot, 'tables');
 
@@ -141,12 +134,13 @@ async function main() {
   const results = [];
   for (const table of tables) {
     console.log(`Export ${table}`);
-    results.push(await exportTable({ restUrl, serviceRoleKey, outputRoot, table, pageSize }));
+    results.push(await exportTable({ contentUrl, outputRoot, table, pageSize }));
   }
 
   const manifest = {
     created_at: new Date().toISOString(),
-    source: restUrl,
+    source: contentUrl,
+    source_type: 'taxiassur-native-postgresql',
     backup_root: outputRoot,
     tables: results,
     totals: {

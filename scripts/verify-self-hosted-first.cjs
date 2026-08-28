@@ -189,7 +189,7 @@ function verifyPublicCacheHealthMetadata() {
   addCheck('D1 health exposes cache metadata and freshness', d1HealthSource.includes('public_cache_metadata') && d1HealthSource.includes('freshness') && d1HealthSource.includes('generated_at'), {
     file: d1HealthPath,
   });
-  addCheck('PostgreSQL public health exposes mirror import metadata', postgresHealthSource.includes('/api/tables') && postgresHealthSource.includes('table_details'), {
+  addCheck('PostgreSQL public health exposes native collection metadata', postgresHealthSource.includes("postgresFetch(env, '/api/health')") && postgresHealthSource.includes('table_details') && postgresHealthSource.includes('taxiassur-native-postgresql'), {
     file: postgresHealthPath,
   });
   addCheck('production verifier can require public cache freshness metadata', productionHealthSource.includes('REQUIRE_D1_CACHE_METADATA') && productionHealthSource.includes('REQUIRE_POSTGRES_IMPORT_METADATA'), {

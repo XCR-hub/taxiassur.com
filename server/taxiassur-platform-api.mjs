@@ -90,6 +90,8 @@ const server = createServer(async (req, res) => {
     if (req.method === 'POST' && url.pathname === '/v1/public/conversions') return await publicConversion(req, res, origin, requestId);
     if (req.method === 'POST' && url.pathname === '/v1/public/chat') return await publicChat(req, res, origin, requestId);
     if (req.method === 'GET' && url.pathname === '/v1/public/insurance-company') return await publicInsuranceCompany(res, origin, requestId, url);
+    const publicContentMatch = url.pathname.match(/^\/v1\/public\/content(?:\/([a-z0-9_]+))?$/i);
+    if (req.method === 'GET' && publicContentMatch) return await publicNativeContent(res, origin, requestId, url, publicContentMatch[1] || '');
     if (req.method === 'POST' && url.pathname === '/v1/public/turnstile/verify') return await publicTurnstileVerify(req, res, origin, requestId);
     if (req.method === 'POST' && url.pathname === '/v1/public/payments/lookup') return await publicPaymentLookup(req, res, origin, requestId);
     if (req.method === 'POST' && url.pathname === '/v1/public/payments/form') return await publicPaymentForm(req, res, origin, requestId);
@@ -1291,6 +1293,69 @@ async function publicInsuranceCompany(res,origin,requestId,url){
   if(!/^[A-Z0-9_-]{2,40}$/.test(code))return json(res,origin,400,{ok:false,error:'invalid_code'},requestId);
   const company=parseJsonLine(await runPsql(`SELECT jsonb_build_object('description',data->'description','target_profile',COALESCE(data->'target_profile','[]'::jsonb),'product_features',COALESCE(data->'product_features','[]'::jsonb),'formulas',COALESCE(data->'formulas','[]'::jsonb),'broker_advantages',COALESCE(data->'broker_advantages','[]'::jsonb))::text FROM taxiassur.records WHERE collection='insurance_companies' AND upper(data->>'code')=${quoteLiteral(code)} LIMIT 1;`));
   return company?json(res,origin,200,{ok:true,company},requestId):json(res,origin,404,{ok:false,error:'not_found'},requestId);
+}
+
+const publicNativeCollections = new Map([
+  ['blog_posts', ['blog_posts']],
+  ['city_pages', ['city_pages']],
+  ['faq_entries', ['faq_entries', 'faqs']],
+  ['news_articles', ['news_articles']],
+  ['gsc_pages', ['gsc_pages']],
+  ['gsc_queries', ['gsc_queries']],
+]);
+
+async function publicNativeContent(res, origin, requestId, url, requestedTable) {
+  if (!requestedTable) {
+    const counts = {};
+    for (const [publicName, collections] of publicNativeCollections) {
+      const rows = deduplicatePublicRows((await Promise.all(collections.map(recordsAll))).flat());
+      counts[publicName] = publicContentRows(publicName, rows).length;
+    }
+    return json(res, origin, 200, { ok: true, storage: 'local', counts, checked_at: new Date().toISOString() }, requestId);
+  }
+  const collections = publicNativeCollections.get(requestedTable);
+  if (!collections) return json(res, origin, 404, { ok: false, error: 'unknown_public_collection' }, requestId);
+  const limit = positiveInt(url.searchParams.get('limit'), 100, 1000);
+  const offset = Math.max(0, Math.min(1000000, Number.parseInt(url.searchParams.get('offset') || '0', 10) || 0));
+  let rows = publicContentRows(requestedTable, deduplicatePublicRows((await Promise.all(collections.map(recordsAll))).flat()));
+  const slug = String(url.searchParams.get('slug') || '');
+  const id = String(url.searchParams.get('id') || '');
+  const category = String(url.searchParams.get('category') || '');
+  if (slug) rows = rows.filter((row) => String(row.slug || '') === slug);
+  if (id) rows = rows.filter((row) => String(row.id || row.source_id || '') === id);
+  if (category) rows = rows.filter((row) => String(row.category || '') === category);
+  const items = rows.slice(offset, offset + limit);
+  return json(res, origin, 200, {
+    ok: true,
+    storage: 'local',
+    table: requestedTable,
+    items,
+    total: rows.length,
+    limit,
+    offset,
+    next_offset: offset + items.length < rows.length ? offset + items.length : null,
+  }, requestId);
+}
+
+function deduplicatePublicRows(rows) {
+  const unique = new Map();
+  for (const row of rows) {
+    const key = String(row.id || row.slug || row.url || row.question || JSON.stringify(row));
+    if (!unique.has(key)) unique.set(key, row);
+  }
+  return [...unique.values()];
+}
+
+function publicContentRows(table, rows) {
+  if (table === 'gsc_pages' || table === 'gsc_queries') return rows;
+  return rows.filter((row) => {
+    const status = String(row.status || '').toLowerCase();
+    if (status) return status === 'published';
+    if ('published' in row) return row.published === true || String(row.published).toLowerCase() === 'true';
+    if ('is_published' in row) return row.is_published === true || String(row.is_published).toLowerCase() === 'true';
+    if ('is_active' in row) return row.is_active === true || String(row.is_active).toLowerCase() === 'true';
+    return true;
+  });
 }
 async function publicNewsletter(req,res,origin,requestId){const body=await readJsonBody(req);const email=String(body.email||'').trim().toLowerCase();const firstName=String(body.first_name||'').trim().slice(0,100);if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||body.marketing_consent!==true)return json(res,origin,400,{ok:false,error:'invalid_subscription'},requestId);const existing=parseJsonLine(await runPsql(`SELECT data::text FROM taxiassur.records WHERE collection='newsletter_subscribers' AND lower(data->>'email')=${quoteLiteral(email)} LIMIT 1;`));const now=new Date().toISOString();if(existing){const updates={status:'active',marketing_consent:true,first_name:firstName||existing.first_name||null,resubscribed_at:now,unsubscribed_at:null};await runPsql(`UPDATE taxiassur.records SET data=data||${quoteLiteral(JSON.stringify(updates))}::jsonb,updated_at=now(),revision=revision+1 WHERE collection='newsletter_subscribers' AND record_id=${quoteLiteral(String(existing.id))};`);return json(res,origin,200,{ok:true,resubscribed:true},requestId);}const id=randomUUID();const row={id,email,first_name:firstName||null,source:String(body.source||'website').slice(0,80),status:'active',engagement_score:50,categories:['assurance-taxi','actualites'],marketing_consent:true,unsubscribe_token:randomBytes(32).toString('hex'),created_at:now};await runPsql(`INSERT INTO taxiassur.records(collection,record_id,data,origin) VALUES('newsletter_subscribers',${quoteLiteral(id)},${quoteLiteral(JSON.stringify(row))}::jsonb,'local');`);return json(res,origin,201,{ok:true},requestId);}
 

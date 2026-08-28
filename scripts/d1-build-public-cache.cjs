@@ -114,14 +114,14 @@ function findLatestBackupRoot(baseDir) {
 
   const candidates = fs
     .readdirSync(baseDir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && entry.name.startsWith('supabase-rest'))
+    .filter((entry) => entry.isDirectory() && entry.name.startsWith('native-public'))
     .map((entry) => path.join(baseDir, entry.name))
     .filter(hasTablesDir)
     .map((dir) => ({ dir, mtimeMs: fs.statSync(dir).mtimeMs }))
     .sort((a, b) => b.mtimeMs - a.mtimeMs);
 
   if (candidates.length === 0) {
-    throw new Error(`No supabase-rest backup with a tables directory found in: ${baseDir}`);
+    throw new Error(`No native-public snapshot with a tables directory found in: ${baseDir}`);
   }
 
   return candidates[0].dir;
@@ -280,7 +280,7 @@ async function importGscTable(stream, backupRoot, config) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const backupRoot = resolveBackupRoot(args.backup || process.env.TAXIASSUR_SUPABASE_BACKUP_DIR);
+  const backupRoot = resolveBackupRoot(args.backup || process.env.TAXIASSUR_NATIVE_PUBLIC_BACKUP_DIR);
   const outputPath = path.resolve(args.out || process.env.TAXIASSUR_D1_IMPORT_FILE || DEFAULT_OUTPUT);
   const generatedAt = new Date().toISOString();
 
