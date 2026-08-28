@@ -18,3 +18,5 @@ export const nativeAdminInboxSync=()=>call('/v1/admin/inbox/sync',{method:'POST'
 export const nativeAdminInboxWorkflow=(action:string,payload:Record<string,unknown>={})=>call('/v1/admin/inbox/workflow',{method:'POST',body:JSON.stringify({action,...payload})});
 export const nativeAdminIntelligentInbox=(folderId='')=>call(`/v1/admin/inbox/intelligent${folderId?`?folder_id=${encodeURIComponent(folderId)}`:''}`);
 export const nativeAdminIntelligentInboxAction=(action:string,payload:Record<string,unknown>={})=>call('/v1/admin/inbox/intelligent',{method:'POST',body:JSON.stringify({action,...payload})});
+export const nativeAdminQuoteQueue=()=>call('/v1/admin/quote-queue');
+export const nativeAdminQuoteQueueAction=(id:string,action:'claim'|'start')=>call(`/v1/admin/quote-queue/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({action})});

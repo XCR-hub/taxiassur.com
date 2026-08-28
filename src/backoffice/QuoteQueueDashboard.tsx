@@ -8,7 +8,7 @@ import {
   Search, BarChart3, Timer, Users,
   CircleDot, Folder, Shield, CalendarClock,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminQuoteQueue, nativeAdminQuoteQueueAction } from '@/lib/native-admin-data';
 
 interface QueueItem {
   id: string;
@@ -88,46 +88,20 @@ export default function QuoteQueueDashboard() {
     else setIsRefreshing(true);
 
     try {
-      const [queueResult, statsResult, userResult, stageResult, approachingResult] = await Promise.all([
-        supabase
-          .from('ready_for_quote_queue')
-          .select(`*, lead:crm_leads(
-            first_name, last_name, email, phone, city,
-            company_name, current_stage_key, ai_qualification_score,
-            immatriculation, created_at, source
-          )`)
-          .order('priority_score', { ascending: false })
-          .order('added_at', { ascending: true })
-          .limit(100),
-        supabase.rpc('get_pipeline_stats').maybeSingle(),
-        supabase.auth.getUser(),
-        supabase
-          .from('crm_leads')
-          .select('current_stage_key')
-          .is('deleted_at', null)
-          .eq('is_archived', false),
-        supabase
-          .from('crm_leads')
-          .select('id, first_name, last_name, email, phone, city, current_stage_key, created_at, ai_qualification_score, total_uploaded_files, pending_files, documents_complete')
-          .is('deleted_at', null)
-          .eq('is_archived', false)
-          .eq('documents_complete', false)
-          .in('current_stage_key', ['collecte_documents', 'documents_required', 'documents_partial'])
-          .order('created_at', { ascending: true })
-          .limit(8),
-      ]);
+      const result = await nativeAdminQuoteQueue() as {
+        queue?: QueueItem[];
+        stats?: PipelineStats;
+        current_user_id?: string;
+        stage_counts?: Record<string, number>;
+        approaching_leads?: ApproachingLead[];
+      };
 
-      setAllQueue(queueResult.data || []);
-      setStats(statsResult.data || null);
-      setCurrentUserId(userResult.data?.user?.id || null);
-      setApproachingLeads((approachingResult.data as ApproachingLead[]) || []);
+      setAllQueue(result.queue || []);
+      setStats(result.stats || null);
+      setCurrentUserId(result.current_user_id || null);
+      setApproachingLeads(result.approaching_leads || []);
 
-      const stageData = stageResult.data || [];
-      const counts: Record<string, number> = {};
-      stageData.forEach((row: { current_stage_key: string }) => {
-        const key = row.current_stage_key?.toLowerCase() || 'unknown';
-        counts[key] = (counts[key] || 0) + 1;
-      });
+      const counts = result.stage_counts || {};
 
       const stageMap: { key: string[]; label: string; color: string }[] = [
         { key: ['new_lead', 'nouveau_lead'], label: 'Nouveaux', color: '#3b82f6' },
@@ -156,11 +130,8 @@ export default function QuoteQueueDashboard() {
 
   useEffect(() => {
     loadData();
-    const channel = supabase
-      .channel('quote_queue_realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'ready_for_quote_queue' }, () => loadData(true))
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    const interval = window.setInterval(() => loadData(true), 60_000);
+    return () => window.clearInterval(interval);
   }, [loadData]);
 
   const queue = useMemo(() => {
@@ -191,12 +162,7 @@ export default function QuoteQueueDashboard() {
   const claimLead = async (queueId: string) => {
     if (!currentUserId) { toast.info('Vous devez etre connecte'); return; }
     try {
-      const { error } = await supabase.from('ready_for_quote_queue').update({
-        claimed_by: currentUserId,
-        claimed_at: new Date().toISOString(),
-        status: 'claimed',
-      }).eq('id', queueId);
-      if (error) throw error;
+      await nativeAdminQuoteQueueAction(queueId, 'claim');
       toast.success('Lead pris en charge');
       await loadData(true);
     } catch { toast.error('Erreur'); }
@@ -205,10 +171,7 @@ export default function QuoteQueueDashboard() {
   const startQuote = async (item: QueueItem) => {
     if (!item.lead_id) { toast.error('Lead ID manquant'); return; }
     try {
-      await Promise.all([
-        supabase.from('ready_for_quote_queue').update({ status: 'in_progress' }).eq('id', item.id),
-        supabase.from('crm_leads').update({ current_stage_key: 'quote_pending' }).eq('id', item.lead_id),
-      ]);
+      await nativeAdminQuoteQueueAction(item.id, 'start');
       navigate(`/backoffice/crm/lead/${item.lead_id}`);
     } catch { toast.error('Erreur'); }
   };
