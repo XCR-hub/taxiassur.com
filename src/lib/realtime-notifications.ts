@@ -223,6 +223,9 @@ export function useNotifications() {
     }
   }, []);
 
+  /* The legacy realtime endpoint is intentionally not initialized in the
+     native back office. This prevents an unavailable service from creating
+     a five-second retry loop in every open session.
   React.useEffect(() => {
     // Charger immédiatement
     loadNotifications();
@@ -251,41 +254,22 @@ export function useNotifications() {
       clearInterval(interval);
     };
   }, [loadNotifications]);
+  */
 
   return {
     notifications,
     unreadCount: notifications.filter((n) => !n.read).length,
     markAsRead: async (id: string) => {
-      await supabase
-        .from('crm_event_notifications')
-        .update({ is_read: true })
-        .eq('id', id);
-
-      await loadNotifications();
+      setNotifications((current) => current.map((item) => item.id === id ? { ...item, read: true } : item));
     },
     markAllAsRead: async () => {
-      await supabase
-        .from('crm_event_notifications')
-        .update({ is_read: true })
-        .eq('is_read', false);
-
-      await loadNotifications();
+      setNotifications((current) => current.map((item) => ({ ...item, read: true })));
     },
     dismissNotification: async (id: string) => {
-      await supabase
-        .from('crm_event_notifications')
-        .update({ dismissed: true })
-        .eq('id', id);
-
-      await loadNotifications();
+      setNotifications((current) => current.filter((item) => item.id !== id));
     },
     dismissAll: async () => {
-      await supabase
-        .from('crm_event_notifications')
-        .update({ dismissed: true })
-        .eq('dismissed', false);
-
-      await loadNotifications();
+      setNotifications([]);
     },
     clear: async () => {
       setNotifications([]);

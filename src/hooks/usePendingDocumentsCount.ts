@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 const SUSPECT_NAME_PATTERNS = [
   /logo/i, /icon/i, /favicon/i, /signature/i, /banner/i, /avatar/i,
@@ -31,20 +31,13 @@ export function usePendingDocumentsCount() {
   useEffect(() => {
     const fetchCount = async () => {
       try {
-        const { data, error } = await supabase
-          .from('prospect_documents')
-          .select('id, file_name, file_size, mime_type')
-          .eq('status', 'pending');
-
-        if (error) {
-          console.error('Erreur comptage documents:', error);
-          setCount(0);
-        } else {
-          const realDocs = (data || []).filter(
+        const result = await nativeAdminCall<{ documents?: Array<{ file_name?: string; file_size?: number | null; mime_type?: string | null }> }>(
+          '/v1/admin/documents?status=pending&scope=all',
+        );
+          const realDocs = (result.documents || []).filter(
             d => !isSuspect(d.file_name || '', d.mime_type, d.file_size)
           );
           setCount(realDocs.length);
-        }
       } catch (error) {
         console.error('Erreur comptage documents:', error);
         setCount(0);
@@ -55,26 +48,12 @@ export function usePendingDocumentsCount() {
 
     fetchCount();
 
-    const interval = setInterval(fetchCount, 30000);
-
-    const subscription = supabase
-      .channel('pending_documents_count')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'prospect_documents',
-        },
-        () => {
-          fetchCount();
-        }
-      )
-      .subscribe();
+    const interval = setInterval(fetchCount, 60000);
+    window.addEventListener('focus', fetchCount);
 
     return () => {
       clearInterval(interval);
-      subscription.unsubscribe();
+      window.removeEventListener('focus', fetchCount);
     };
   }, []);
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   ArrowRight,
@@ -88,23 +88,36 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
   const accentColor = STATUS_ACCENT[lead.status] || "#6b7280";
   const isDraggingRef = useRef(false);
   const mouseDownPos = useRef<{ x: number; y: number } | null>(null);
-  const [indicators, setIndicators] = useState<LeadIndicators>({
-    documentsValidated: 0,
+  const indicators = useMemo<LeadIndicators>(() => {
+    const nativeLead = lead as CRMLead & Record<string, unknown>;
+    const count = (key: string) => Number(nativeLead[key]) || 0;
+    const referenceDate = lead.first_request_at || lead.created_at;
+    const daysInPipeline = Math.max(0, Math.floor((Date.now() - new Date(referenceDate).getTime()) / 86_400_000));
+    const lastInteractionDays = nativeLead.last_interaction_at
+      ? Math.max(0, Math.floor((Date.now() - new Date(String(nativeLead.last_interaction_at)).getTime()) / 86_400_000))
+      : daysInPipeline;
+    return ({
+    documentsValidated: count("validated_documents_count") || count("total_uploaded_files"),
     documentsTotal: 9,
-    companiesQuoted: 0,
-    companiesRefused: 0,
+    companiesQuoted: count("quotes_count") || count("quote_count"),
+    companiesRefused: count("refused_quotes_count"),
     companiesTotal: 5,
-    hasSignature: false,
-    downPaymentStatus: "none",
-    downPaymentAmount: null,
-    daysInPipeline: 0,
-    needsRelance: false,
-    lastInteractionDays: 0,
-    pendingAutomations: 0,
-    lastAutomationResult: null,
-    automationCount: 0,
+    hasSignature: nativeLead.contract_signed === true || nativeLead.signature_status === "signed",
+    downPaymentStatus: nativeLead.down_payment_status === "paid" ? "paid" : nativeLead.down_payment_status === "pending" ? "pending" : "none",
+    downPaymentAmount: count("down_payment_amount") || null,
+    daysInPipeline,
+    needsRelance: lastInteractionDays >= 3 && !["CLIENT_ACTIF", "ACTIVE_CLIENT", "PERDU", "LOST"].includes(lead.status),
+    lastInteractionDays,
+    pendingAutomations: count("pending_automations"),
+    lastAutomationResult: nativeLead.last_automation_result === "success" || nativeLead.last_automation_result === "failed" ? nativeLead.last_automation_result : null,
+    automationCount: count("automation_count"),
   });
+  }, [lead]);
 
+  /* Legacy per-card Supabase reads are disabled: the historical compatibility
+     service is not part of the native production path. Pipeline indicators
+     remain conservative until the dashboard payload exposes their aggregates. */
+  /*
   useEffect(() => {
     const loadIndicators = async () => {
       try {
@@ -222,6 +235,7 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
 
     loadIndicators();
   }, [lead.id, lead.created_at, lead.status]);
+  */
 
   const handleDragStart = (e: React.DragEvent) => {
     isDraggingRef.current = true;

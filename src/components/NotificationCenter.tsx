@@ -1,15 +1,15 @@
 import { Bell, Check, X, ExternalLink, RefreshCw } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications, type Notification as CRMNotification } from '../lib/realtime-notifications';
-import { supabase } from '../lib/supabase';
 
 export function NotificationCenter() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const [debugInfo, setDebugInfo] = useState('Chargement...');
   const { notifications, unreadCount, markAsRead, markAllAsRead, dismissNotification, dismissAll } = useNotifications();
+  const debugInfo = `${notifications.length} notifications (${unreadCount} non lues)`;
 
+  /* Connexion test removed: it duplicated notification reads on every update.
   // Test de connexion au chargement
   useEffect(() => {
     const testConnection = async () => {
@@ -34,6 +34,7 @@ export function NotificationCenter() {
 
     testConnection();
   }, [notifications, unreadCount]);
+  */
 
   const handleManualRefresh = async () => {
     console.log('[NotificationCenter] Manual refresh triggered');
