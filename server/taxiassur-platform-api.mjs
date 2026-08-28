@@ -982,7 +982,7 @@ function imapSync(){return new Promise((resolve,reject)=>{const socket=tls.conne
 async function autoProcessInboxLeads(){
   const [messages,leads]=await Promise.all([recordsAll('email_messages'),recordsAll('crm_leads')]);
   const leadByEmail=new Map(leads.filter(row=>row.email&&!row.deleted_at).map(row=>[String(row.email).trim().toLowerCase(),row]));
-  const candidates=messages.filter(row=>row.direction!=='outbound'&&!row.lead_id&&row.email_status!=='deleted'&&row.classification!=='non_lead').sort((a,b)=>Date.parse(String(b.received_at||''))-Date.parse(String(a.received_at||''))).slice(0,500);
+  const candidates=messages.filter(row=>row.direction!=='outbound'&&!row.lead_id&&row.email_status!=='deleted'&&row.classification!=='non_lead').sort((a,b)=>Date.parse(String(b.received_at||''))-Date.parse(String(a.received_at||''))).slice(0,10);
   let created=0,linked=0,ignored=0;
   for(const source of candidates){
     const email=String(source.from_email||'').trim().toLowerCase(),text=`${source.subject||''} ${source.body_text||''}`;
