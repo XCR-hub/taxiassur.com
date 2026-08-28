@@ -194,8 +194,8 @@ for (const file of [
 ]) forbidMatch(file, /}, 45_000\);/, 'withTimeout duration is passed to the wrapped function instead of withTimeout');
 requireMatch('supabase/functions/send-sms-brevo/index.ts', /const successPayload = \{ success: true \}[\s\S]*JSON\.stringify\(successPayload\)/, 'SMS success response is not normalized');
 forbidMatch('supabase/functions/send-sms-brevo/index.ts', /success: true,[\s\S]{0,200}(?:messageId|creditUsed|smsCount|reference)/, 'SMS response leaks provider identifiers or credit data');
-requireMatch('src/components/crm/SMSSendModal.tsx', /if \(error\)[\s\S]*!data\.success[\s\S]*setSent\(true\)/, 'SMS modal reports success before checking the Edge response');
-requireMatch('src/components/crm/SMSConversationPanel.tsx', /error \|\| !data\?\.success[\s\S]*throw new Error/, 'SMS conversation records messages after failed delivery');
+requireMatch('src/components/crm/SMSSendModal.tsx', /if \(!data\?\.ok && !data\?\.success\)[\s\S]*throw new Error[\s\S]*setSent\(true\)/, 'SMS modal reports success before checking the native response');
+requireMatch('src/components/crm/SMSConversationPanel.tsx', /if \(!data\?\.ok\)[\s\S]*throw new Error[\s\S]*loadConversation/, 'SMS conversation refreshes messages after failed delivery');
 requireMatch(inviteAdmin, /getAdminActor/, 'admin mutations do not validate the actor');
 requireMatch(inviteAdmin, /userRole === 'master'[\s\S]*actor\.role/, 'admin can escalate another user to master');
 requireMatch(inviteAdmin, /actor\.userId === user_id/, 'admin can delete their own account');
@@ -351,9 +351,9 @@ requireMatch(pipelineCard, /withTimeout\([\s\S]*\.upload\([\s\S]*60_000[\s\S]*qu
 requireMatch(pipelineCard, /if \(insertError\)[\s\S]*remove\(\[filePath\]\)/, 'Kanban quote DB failure leaves an orphan upload');
 const contractSignatureManager = 'src/components/crm/ContractSignatureManager.tsx';
 forbidMatch(contractSignatureManager, /getPublicUrl|\.from\(["']documents["']\)[\s\S]*\.upload|href=\{signatureData\.(?:contract_url|special_conditions_url)\}/, 'contract manager exposes private contract documents');
-requireMatch(contractSignatureManager, /application\/pdf[\s\S]*10 \* 1024 \* 1024[\s\S]*crypto\.randomUUID\(\)/, 'contract upload validation or unpredictable naming is missing');
-requireMatch(contractSignatureManager, /withTimeout\([\s\S]*\.from\(["']contract-documents["']\)\.upload[\s\S]*60_000[\s\S]*update\(\{ \[updateField\]: filePath \}\)/, 'contract upload remains public or unbounded');
-requireMatch(contractSignatureManager, /if \(updateError\)[\s\S]*remove\(\[filePath\]\)[\s\S]*previousPath\?\.startsWith/, 'contract DB failure or replacement leaves orphan objects');
+requireMatch(contractSignatureManager, /application\/pdf[\s\S]*10 \* 1024 \* 1024[\s\S]*nativeAdminUploadContractDocument/, 'contract upload validation or native handoff is missing');
+requireMatch('src/lib/native-admin-data.ts', /nativeAdminUploadContractDocument[\s\S]*AbortSignal\.timeout\(60_000\)[\s\S]*Content-Type['"]?:['"]application\/pdf/, 'contract upload is not bounded or typed as PDF');
+requireMatch('server/taxiassur-platform-api.mjs', /uploadAdminContractDocument[\s\S]*randomUUID\(\)[\s\S]*scanFile\(temporaryPath\)[\s\S]*safeUnlink\(finalPath\)[\s\S]*previousPath\.startsWith/, 'native contract storage lacks unpredictable naming, scanning, or orphan cleanup');
 requireCount(contractSignatureManager, /<SecureDocumentLink/g, 2, 'contract and special conditions are not both opened through signing');
 requireMatch('src/lib/secure-document-url.ts', /withTimeout[\s\S]*20_000/, 'secure document signing can spin forever');
 for (const [quoteView, expectedLinks] of [
@@ -592,8 +592,6 @@ for (const file of ['src/pages/EspaceProspect.tsx', 'src/pages/ProspectDocuments
 }
 forbidMatch(portalTimeout, /timeoutMs = (?:2\d|[3-9]\d|\d{3,})_000/, 'portal timeout exceeds 20 seconds');
 for (const [file, endpoint] of [
-  ['src/components/crm/SMSSendModal.tsx', 'send-sms-brevo'],
-  ['src/components/crm/SMSConversationPanel.tsx', 'send-sms-brevo'],
   ['src/components/crm/EmailComposerModal.tsx', 'send-crm-email'],
   ['src/backoffice/WhatsAppManager.tsx', 'send-whatsapp'],
 ]) {
@@ -650,9 +648,17 @@ for (const file of sourceFiles('src')) {
     failures.push(`${file}: direct multichannel delivery bypasses the shared idempotent caller`);
   }
 }
-for (const file of directDeliveryAllowlist) {
+for (const file of [...directDeliveryAllowlist].filter((file) => ![
+  'src/components/crm/SMSSendModal.tsx',
+  'src/components/crm/SMSConversationPanel.tsx',
+].includes(file))) {
   requireMatch(file, /getDeliveryRequestId[\s\S]*requestId[\s\S]*withTimeout[\s\S]*45_000[\s\S]*clearDeliveryRequestId/, 'allowlisted direct delivery lacks stable request ID, timeout, or success cleanup');
 }
+for (const file of ['src/components/crm/SMSSendModal.tsx', 'src/components/crm/SMSConversationPanel.tsx']) {
+  requireMatch(file, /getDeliveryRequestId[\s\S]*request_id: requestId[\s\S]*clearDeliveryRequestId/, 'native SMS delivery lacks stable request ID or success cleanup');
+}
+requireMatch('src/lib/native-admin-data.ts', /nativeAdminCall[\s\S]*AbortSignal\.timeout\(45_000\)/, 'native admin calls can spin forever');
+requireMatch('server/taxiassur-platform-api.mjs', /adminLeadSms[\s\S]*request_id[\s\S]*AbortSignal\.timeout\(15_000\)/, 'native SMS delivery lacks idempotency or provider timeout');
 const criticalDeploy = 'scripts/deploy-critical-supabase-security.ps1';
 requireMatch(criticalDeploy, /ConfirmCriticalMigrationsApplied[\s\S]*20260810033000_add_monetico_creation_idempotency[\s\S]*20260810040000_create_communication_delivery_idempotency[\s\S]*20260810043000_harden_monetico_email_delivery_status[\s\S]*20260810050000_harden_client_claim_creation[\s\S]*Deployment aborted/, 'critical deployment does not fail closed before required migrations');
 requireMatch(criticalDeploy, /'BREVO_API_KEY'[\s\S]*'TWILIO_ACCOUNT_SID'[\s\S]*'MONETICO_MAC_KEY'/, 'critical deployment omits provider secret preflight');

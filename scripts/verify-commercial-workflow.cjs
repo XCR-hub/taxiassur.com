@@ -90,9 +90,14 @@ const requiredChecks = [
     ],
   },
   {
-    label: "publisher deploys insurer dossier worker",
-    file: "scripts/publish.js",
-    patterns: ["process-insurer-dossier-sends"],
+    label: "self-hosted installer deploys and schedules insurer dossier worker",
+    file: "scripts/install-server-insurer-dossier-sends.ps1",
+    patterns: [
+      "process-insurer-dossier-sends.cjs",
+      "TaxiAssurInsurerDossierSends",
+      "Register-ScheduledTask",
+      "SUPABASE_SERVICE_ROLE_KEY",
+    ],
   },
   {
     label: "CI runs commercial workflow guard",
