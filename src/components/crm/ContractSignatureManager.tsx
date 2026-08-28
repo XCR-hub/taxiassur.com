@@ -145,19 +145,17 @@ export const ContractSignatureManager: React.FC<ContractSignatureManagerProps> =
       setSaving(true);
 
       try {
-        const { data: adminUser } = await supabase.auth.getUser();
-
-        const { data, error } = await supabase.rpc("confirm_signature", {
-          p_lead_id: leadId,
-          p_signature_method: form.signature_method,
-          p_signature_date: form.signature_date,
-          p_signature_proof_url: form.signature_proof_url || null,
-          p_signature_status: form.signature_status || null,
-          p_signature_notes: form.signature_notes || null,
-          p_admin_user_id: adminUser?.user?.id || null,
+        await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            contract_signed: true,
+            signature_method: form.signature_method,
+            signature_date: form.signature_date,
+            signature_proof_url: form.signature_proof_url || null,
+            signature_status: form.signature_status || "signed",
+            signature_notes: form.signature_notes || null,
+          }),
         });
-
-        if (error) throw error;
 
         toast.success("✅ Signature confirmée avec succès");
         setEditing(false);
@@ -175,21 +173,12 @@ export const ContractSignatureManager: React.FC<ContractSignatureManagerProps> =
       if (!confirm("Annuler la confirmation de signature ?")) return;
 
       try {
-        const { error } = await supabase
-          .from("crm_leads")
-          .update({
+        await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}`, {
+          method: "PATCH",
+          body: JSON.stringify({
             contract_signed: false,
-            signature_method: null,
-            signature_date: null,
-            signature_proof_url: null,
-            signature_status: null,
-            signature_notes: null,
-            signature_verified_by: null,
-            signature_verified_at: null,
-          })
-          .eq("id", leadId);
-
-        if (error) throw error;
+          }),
+        });
 
         toast.success("✅ Signature annulée");
         await loadSignatureData();

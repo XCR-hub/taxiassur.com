@@ -87,30 +87,6 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
 
   const firstName = getFirstName();
 
-  useEffect(() => {
-    const channel = supabase
-      .channel(`lead-${leadId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'crm_leads',
-          filter: `id=eq.${leadId}`
-        },
-        (payload) => {
-          if (payload.new.pipeline_stage) {
-            setCurrentStage(payload.new.pipeline_stage);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [leadId]);
-
   async function moveToStage(targetStage: string) {
     setLoading(true);
     try {
