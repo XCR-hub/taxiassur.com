@@ -4,7 +4,7 @@ import {
   Mail, Calendar, TrendingUp, TrendingDown, RefreshCw, ChevronDown,
   CheckSquare, Square, MoreHorizontal, X, AlertTriangle,
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 interface Subscriber {
   id: string;
@@ -77,19 +77,13 @@ const EmailSubscribersManager: React.FC = () => {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [allRes, monthRes] = await Promise.all([
-        supabase.from('newsletter_subscribers').select('*').order('subscribed_at', { ascending: false }),
-        supabase.from('newsletter_subscribers')
-          .select('id, subscribed_at')
-          .eq('status', 'active')
-          .gte('subscribed_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
-      ]);
-
-      const all = allRes.data || [];
+      const response = await nativeAdminCall<{ subscribers?: Subscriber[] }>('/v1/admin/newsletter-subscribers');
+      const all = response.subscribers || [];
       const active = all.filter(s => s.status === 'active').length;
       const unsubscribed = all.filter(s => s.status === 'unsubscribed').length;
       const bounced = all.filter(s => s.status === 'bounced').length;
-      const newThisMonth = monthRes.data?.length || 0;
+      const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
+      const newThisMonth = all.filter(s => s.status === 'active' && Date.parse(s.subscribed_at) >= monthStart).length;
 
       const lastMonthStart = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString();
       const lastMonthEnd   = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
@@ -146,11 +140,7 @@ const EmailSubscribersManager: React.FC = () => {
       `Désabonner ${ids.length} abonné(s) ? Ils ne recevront plus les newsletters.`,
       async () => {
         try {
-          const { error } = await supabase
-            .from('newsletter_subscribers')
-            .update({ status: 'unsubscribed', unsubscribed_at: new Date().toISOString() })
-            .in('id', ids);
-          if (error) throw error;
+          await nativeAdminCall('/v1/admin/newsletter-subscribers', { method: 'PATCH', body: JSON.stringify({ ids, status: 'unsubscribed' }) });
           addToast('success', `${ids.length} abonné(s) désabonnés`);
           setSelected(new Set());
           await loadData();
@@ -168,8 +158,7 @@ const EmailSubscribersManager: React.FC = () => {
       `Supprimer ${ids.length} abonné(s) ? Cette action est irréversible.`,
       async () => {
         try {
-          const { error } = await supabase.from('newsletter_subscribers').delete().in('id', ids);
-          if (error) throw error;
+          await nativeAdminCall('/v1/admin/newsletter-subscribers', { method: 'DELETE', body: JSON.stringify({ ids }) });
           addToast('success', `${ids.length} abonné(s) supprimés`);
           setSelected(new Set());
           await loadData();
@@ -194,10 +183,7 @@ const EmailSubscribersManager: React.FC = () => {
 
   async function toggleOne(sub: Subscriber) {
     const newStatus = sub.status === 'active' ? 'unsubscribed' : 'active';
-    const update: Record<string, string> = { status: newStatus };
-    if (newStatus === 'unsubscribed') update.unsubscribed_at = new Date().toISOString();
-    const { error } = await supabase.from('newsletter_subscribers').update(update).eq('id', sub.id);
-    if (error) { addToast('error', 'Erreur de mise à jour'); return; }
+    await nativeAdminCall('/v1/admin/newsletter-subscribers', { method: 'PATCH', body: JSON.stringify({ ids: [sub.id], status: newStatus }) });
     addToast('success', newStatus === 'active' ? 'Abonné réactivé' : 'Abonné désabonné');
     await loadData();
   }
@@ -447,8 +433,7 @@ const EmailSubscribersManager: React.FC = () => {
                       </button>
                       <button
                         onClick={() => askConfirm('Supprimer cet abonné', `Supprimer ${sub.email} définitivement ?`, async () => {
-                          const { error } = await supabase.from('newsletter_subscribers').delete().eq('id', sub.id);
-                          if (error) { addToast('error', 'Erreur de suppression'); return; }
+                          await nativeAdminCall('/v1/admin/newsletter-subscribers', { method: 'DELETE', body: JSON.stringify({ ids: [sub.id] }) });
                           addToast('success', 'Abonné supprimé');
                           await loadData();
                         })}
