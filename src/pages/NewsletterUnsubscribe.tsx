@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useSearchParams } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { unsubscribePublicPlatformNewsletter } from '../lib/platform-api';
 import { CheckCircle, AlertCircle, Mail } from 'lucide-react';
 
 export default function NewsletterUnsubscribe() {
@@ -11,7 +11,7 @@ export default function NewsletterUnsubscribe() {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    if (!token) {
+    if (!token || !/^[0-9a-f]{64}$/i.test(token)) {
       setStatus('error');
       setMessage('Token de désabonnement manquant');
       return;
@@ -22,21 +22,8 @@ export default function NewsletterUnsubscribe() {
 
   async function unsubscribe() {
     try {
-      const { data, error } = await supabase.rpc('unsubscribe_newsletter', {
-        p_token: token,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      if (data?.success) {
-        setStatus('success');
-        setMessage(data.message || 'Vous avez été désabonné avec succès');
-      } else {
-        setStatus('error');
-        setMessage(data?.message || 'Token invalide ou déjà utilisé');
-      }
+      setMessage(await unsubscribePublicPlatformNewsletter(token));
+      setStatus('success');
     } catch (error) {
       console.error('Erreur:', error);
       setStatus('error');

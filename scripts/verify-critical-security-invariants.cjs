@@ -62,6 +62,9 @@ forbidMatch('src/pages/PaiementLibre.tsx', /get_payment_by_reference|JSON\.strin
 forbidMatch('src/pages/PaiementLibre.tsx', /supabase|VITE_SUPABASE|get_payment_by_access|get-monetico-payment-form/i, 'public payment page still depends on Supabase');
 requireMatch('src/pages/PaiementLibre.tsx', /lookupPublicPlatformPayment[\s\S]*createPublicPlatformPaymentForm/, 'public payment page is not connected to the native XCR payment API');
 requireMatch('src/lib/platform-api.ts', /\/v1\/public\/payments\/lookup[\s\S]*\/v1\/public\/payments\/form/, 'native XCR payment helpers are incomplete');
+forbidMatch('src/pages/NewsletterUnsubscribe.tsx', /supabase|unsubscribe_newsletter/i, 'newsletter unsubscribe page still depends on Supabase');
+requireMatch('src/pages/NewsletterUnsubscribe.tsx', /\^\[0-9a-f\]\{64\}\$[\s\S]*unsubscribePublicPlatformNewsletter/i, 'newsletter unsubscribe is not bound to a strong native XCR token');
+requireMatch('src/lib/platform-api.ts', /\/v1\/public\/newsletter\/unsubscribe/, 'native XCR newsletter unsubscribe helper is missing');
 requireMatch('src/backoffice/FreeInvoicing.tsx', /paymentAccessToken[\s\S]*encodeURIComponent/, 'free invoice links omit their payment access token');
 requireMatch('src/components/crm/DownPaymentManager.tsx', /paymentPath[\s\S]*paymentAccessToken/, 'down-payment links omit their payment access token');
 forbidMatch(webhook, /sanitizedWebhookData = \{ \.\.\.webhookData \}/, 'webhook persists unnecessary card or client network fields');

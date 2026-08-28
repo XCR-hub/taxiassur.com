@@ -64,6 +64,14 @@ export async function createPublicPlatformPaymentForm(reference: string, accessT
   return payload.formData as PublicPaymentFormData;
 }
 
+export async function unsubscribePublicPlatformNewsletter(token: string): Promise<string> {
+  const payload = await publicPlatformRequest('/v1/public/newsletter/unsubscribe', { token });
+  if (!payload?.success) throw new Error('Lien de désabonnement invalide');
+  return typeof payload.message === 'string'
+    ? payload.message
+    : 'Vous avez été désabonné avec succès';
+}
+
 async function platformRequest(path: string, token: string, init: RequestInit = {}, timeoutMs = 20_000) {
   const response = await fetch(`${PLATFORM_BASE_URL}${path}`, {
     ...init,
