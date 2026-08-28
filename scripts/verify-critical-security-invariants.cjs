@@ -262,6 +262,9 @@ for (const file of portalFiles) {
 }
 requireMatch('src/lib/client-access.ts', /\^\[0-9a-f\]\{64\}\$/i, 'client access token is not constrained to 256-bit hexadecimal');
 requireMatch('src/pages/ClientAccessByToken.tsx', /storeClientAccessToken\(tokenOrId\)/, 'validated client token is not stored securely for the session');
+forbidMatch('src/pages/client/ClientPaiements.tsx', /supabase|VITE_SUPABASE|send-payment-link-monetico/i, 'client payments page still sends links through Supabase');
+requireMatch('src/pages/client/ClientPaiements.tsx', /emailClientPlatformPaymentLink\(accessToken, paymentId\)/, 'client payment e-mail is not bound to the native client token');
+requireMatch('src/lib/client-platform-api.ts', /\/v1\/client\/payments\/\$\{encodeURIComponent\(paymentId\)\}\/email/, 'native client payment e-mail helper is missing');
 forbidMatch('src/lib/two-factor-auth.ts', /Math\.random\(\)[\s\S]*send-sms\.php|sendSMSVerificationCode/, 'browser can generate and send its own SMS verification code');
 forbidMatch('src/pages/EspaceClient.tsx', /\.from\(['"]client_portal_users['"]\)|\/client\/dashboard\?email/, 'public login still accepts an email without real authentication');
 for (const rpc of ['portal_data', 'claims', 'documents', 'insurance_company', 'portal_requests', 'consents', 'notifications', 'payments', 'referrals']) {

@@ -8,7 +8,7 @@ import {
 import ClientLayout from '../../components/client/ClientLayout';
 import SEOHead from '../../components/SEOHead';
 import { getClientAccessToken } from '@/lib/client-access';
-import { loadClientPlatformSession } from '@/lib/client-platform-api';
+import { emailClientPlatformPaymentLink, loadClientPlatformSession } from '@/lib/client-platform-api';
 
 interface Payment {
   id: string;
@@ -115,23 +115,12 @@ export default function ClientPaiements() {
     setError(null);
     setSentSuccess(null);
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-payment-link-monetico`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({ paymentId, accessToken }),
-        }
-      );
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Erreur envoi email');
+      await emailClientPlatformPaymentLink(accessToken, paymentId);
       setSentSuccess(paymentId);
       setTimeout(() => setSentSuccess(null), 5000);
     } catch (err) {
-      setError(err.message);
+      console.error('Payment link email failure', err instanceof Error ? err.name : 'unknown');
+      setError('Impossible d’envoyer le lien pour le moment. Veuillez réessayer.');
     } finally {
       setSendingEmail(null);
     }

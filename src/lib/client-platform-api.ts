@@ -130,3 +130,10 @@ export async function saveClientPlatformSubscription(token: string, subscription
   });
   return response.json();
 }
+
+export async function emailClientPlatformPaymentLink(token: string, paymentId: string) {
+  const response = await clientRequest(`/v1/client/payments/${encodeURIComponent(paymentId)}/email`, token, {
+    method: 'POST',
+  });
+  return response.json();
+}
