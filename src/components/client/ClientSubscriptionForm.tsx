@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { AlertCircle, Calendar, CheckCircle, CreditCard, Loader2, Upload } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
 import { toast } from '@/lib/toast';
+import { loadClientPlatformSession, saveClientPlatformSubscription, uploadClientPlatformDocument } from '@/lib/client-platform-api';
 
 interface Props { token: string; acceptedQuoteId: string; onSubmit?: () => void }
 interface SubscriptionData { iban?: string; bic?: string; account_holder_name?: string; desired_effect_date?: string; debit_date?: string | number; has_rib?: boolean }
-interface ApiData { success?: boolean; error?: string; subscription?: SubscriptionData | null; path?: string; uploadToken?: string }
 const types = ['application/pdf', 'image/jpeg', 'image/png'];
 
 export default function ClientSubscriptionForm({ token, acceptedQuoteId, onSubmit }: Props) {
@@ -18,14 +17,12 @@ export default function ClientSubscriptionForm({ token, acceptedQuoteId, onSubmi
 
   useEffect(() => {
     let active = true;
-    void supabase.functions.invoke<ApiData>('client-subscription', { body: { action: 'get', accessToken: token } }).then(({ data, error }) => {
+    void loadClientPlatformSession(token).then((data) => {
       if (!active) return;
-      if (error || !data?.success) toast.error(data?.error || 'Impossible de charger la souscription');
-      const value = data?.subscription || null;
+      const value = data.subscription as SubscriptionData | null;
       setExisting(value);
       if (value) setForm({ iban: formatIban(value.iban || ''), bic: value.bic || '', accountHolderName: value.account_holder_name || '', desiredEffectDate: value.desired_effect_date || '', debitDate: String(value.debit_date || '') });
-      setLoading(false);
-    });
+    }).catch(() => { if (active) setExisting(null) }).finally(() => { if (active) setLoading(false) });
     return () => { active = false };
   }, [token]);
 
@@ -50,16 +47,18 @@ export default function ClientSubscriptionForm({ token, acceptedQuoteId, onSubmi
   const submit = async (event: React.FormEvent) => {
     event.preventDefault(); if (!validate()) return; setSubmitting(true);
     try {
-      let ribPath: string | undefined;
       if (rib) {
-        const prepared = await supabase.functions.invoke<ApiData>('client-subscription', { body: { action: 'prepare-rib', accessToken: token, mimeType: rib.type, fileSize: rib.size } });
-        if (prepared.error || !prepared.data?.path || !prepared.data.uploadToken) throw new Error(prepared.data?.error || 'Préparation du RIB impossible');
-        ribPath = prepared.data.path;
-        const uploaded = await supabase.storage.from('documents').uploadToSignedUrl(ribPath, prepared.data.uploadToken, rib, { contentType: rib.type });
-        if (uploaded.error) throw uploaded.error;
+        await uploadClientPlatformDocument(token, rib, 'rib');
       }
-      const saved = await supabase.functions.invoke<ApiData>('client-subscription', { body: { action: 'submit', accessToken: token, acceptedQuoteId, iban: form.iban, bic: form.bic, accountHolderName: form.accountHolderName, desiredEffectDate: form.desiredEffectDate, debitDate: Number(form.debitDate), ribPath, mimeType: rib?.type, fileSize: rib?.size } });
-      if (saved.error || !saved.data?.success) throw new Error(saved.data?.error || "Erreur lors de l'enregistrement");
+      await saveClientPlatformSubscription(token, {
+        accepted_quote_id: acceptedQuoteId,
+        iban: form.iban,
+        bic: form.bic,
+        account_holder_name: form.accountHolderName,
+        desired_effect_date: form.desiredEffectDate,
+        debit_date: Number(form.debitDate),
+        has_rib: Boolean(rib || existing?.has_rib),
+      });
       toast.success('Informations enregistrées. Notre équipe va préparer votre contrat.'); onSubmit?.();
     } catch (error: unknown) { console.error('Souscription:', error); toast.error(error instanceof Error ? error.message : "Erreur lors de l'enregistrement"); }
     finally { setSubmitting(false) }

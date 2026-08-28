@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CreditCard, CheckCircle, Loader2, AlertCircle, ExternalLink, Lock } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { loadProspectPlatformSession } from '../../lib/platform-api';
 
 interface Props {
   token?: string;
@@ -28,17 +28,19 @@ export default function ClientPaymentButton({ token }: Props) {
         setPaymentInfo(null);
         return;
       }
-      const { data, error } = await supabase.rpc('get_client_down_payment_by_token', {
-        p_token: token,
-      });
-      if (error) throw error;
-      if (!data?.success) throw new Error('Accès prospect invalide');
+      const data = await loadProspectPlatformSession(token);
+      const payments = data.payments as Array<Record<string, unknown>>;
+      const payment = payments
+        .filter((item) => !['cancelled', 'refunded'].includes(String(item.status || '')))
+        .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')))[0];
       setPaymentInfo({
-        required: Boolean(data.required),
-        amount: data.amount == null ? null : Number(data.amount),
-        status: data.status || null,
-        payment_link: data.payment_link || null,
-        paid_at: data.paid_at || null,
+        required: Boolean(payment),
+        amount: payment?.amount == null ? null : Number(payment.amount),
+        status: normalizePaymentStatus(payment?.status),
+        payment_link: payment?.reference && payment?.payment_access_token
+          ? `${String(payment.reference)}?token=${encodeURIComponent(String(payment.payment_access_token))}`
+          : null,
+        paid_at: payment?.paid_at ? String(payment.paid_at) : null,
       });    } catch (error) {
       console.error('Erreur chargement paiement:', error);
     } finally {
@@ -202,4 +204,13 @@ export default function ClientPaymentButton({ token }: Props) {
       </div>
     </div>
   );
+}
+
+function normalizePaymentStatus(value: unknown): 'pending' | 'processing' | 'paid' | 'failed' | 'refunded' | null {
+  const status = String(value || '').toLowerCase();
+  if (status === 'success') return 'paid';
+  if (status === 'sent') return 'pending';
+  return ['pending', 'processing', 'paid', 'failed', 'refunded'].includes(status)
+    ? status as 'pending' | 'processing' | 'paid' | 'failed' | 'refunded'
+    : null;
 }

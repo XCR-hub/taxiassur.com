@@ -391,7 +391,7 @@ requireMatch('src/router.tsx', /path:\s*['"]\/espace-client\/assurances['"][\s\S
 forbidMatch('src/components/client/ClientQuotesViewer.tsx', /leadId|\.from\(/, 'prospect quotes bypass token-bound RPCs');
 requireMatch('src/components/client/ClientQuotesViewer.tsx', /loadProspectPlatformSession[\s\S]*session\.quotes[\s\S]*session\.company_documents/, 'prospect quotes and documents are not loaded through the token-bound platform session');
 forbidMatch('src/components/client/ClientPaymentButton.tsx', /\.from\(['"]lead_contracts|leadId/, 'prospect down-payment button trusts a lead identifier');
-requireMatch('src/components/client/ClientPaymentButton.tsx', /get_client_down_payment_by_token[\s\S]*p_token:\s*token/, 'prospect down-payment button is not token-bound');
+requireMatch('src/components/client/ClientPaymentButton.tsx', /loadProspectPlatformSession\(token\)[\s\S]*payment_access_token/, 'prospect down-payment button is not token-bound');
 requireMatch(portalTokenMigration, /get_client_down_payment_by_token[\s\S]*client_lead_id_for_access_token/, 'down-payment RPC does not derive lead ownership from the token');
 const clientSubscription = 'supabase/functions/client-subscription/index.ts';
 const clientSubscriptionForm = 'src/components/client/ClientSubscriptionForm.tsx';
@@ -400,7 +400,7 @@ requireMatch(clientSubscription, /company_id\.eq\.\$\{quoteId\}[\s\S]*status['"]
 requireMatch(clientSubscription, /createSignedUploadUrl[\s\S]*storedMime !== mimeType/, 'RIB upload is not signed or verified after storage');
 requireMatch(clientSubscription, /rib_file_path[\s\S]*remove\(\[existing\.rib_file_path\]\)/, 'private RIB replacement does not remove the previous object');
 forbidMatch(clientSubscriptionForm, /leadId|\.from\(['"]lead_subscription_details|\.getPublicUrl/, 'subscription form trusts a lead id or writes sensitive data directly');
-requireMatch(clientSubscriptionForm, /client-subscription[\s\S]*prepare-rib[\s\S]*uploadToSignedUrl/, 'subscription form does not use the secure signed RIB workflow');
+requireMatch(clientSubscriptionForm, /uploadClientPlatformDocument\(token, rib, 'rib'\)[\s\S]*saveClientPlatformSubscription\(token/, 'subscription form does not use the native antivirus RIB workflow');
 requireMatch('src/pages/EspaceProspect.tsx', /<ClientSubscriptionForm[\s\S]{0,120}token=\{token/, 'prospect subscription is not token-bound');
 forbidMatch('src/pages/ProspectDocuments.tsx', /anonClient\s*\.from\(/, 'legacy prospect document route reads or writes rows directly');
 requireMatch('src/pages/ProspectDocuments.tsx', /get_prospect_documents_by_token[\s\S]*uploadToSignedUrl[\s\S]*action: 'finalize'/, 'legacy prospect route is not token-bound and signed');

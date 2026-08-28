@@ -121,3 +121,12 @@ export async function openClientPlatformDocument(token: string, downloadPath: st
   anchor.remove();
   URL.revokeObjectURL(url);
 }
+
+export async function saveClientPlatformSubscription(token: string, subscription: Record<string, unknown>) {
+  const response = await clientRequest('/v1/client/subscription', token, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(subscription),
+  });
+  return response.json();
+}
