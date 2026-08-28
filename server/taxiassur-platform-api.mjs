@@ -302,9 +302,11 @@ async function hydrateStoredIntegrations(){
 
 hydrateStoredIntegrations().finally(()=>server.listen(config.port, config.host, () => console.log(`[taxiassur-platform-api] listening on http://${config.host}:${config.port}`)));
 
+let quoteQueueCache=null;
 async function adminQuoteQueue(req,res,origin,requestId){
   const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
-  const payload=parseJsonLine(await runPsql(`
+  let payload=quoteQueueCache&&Date.now()-quoteQueueCache.createdAt<15_000?quoteQueueCache.payload:null;
+  if(!payload)payload=parseJsonLine(await runPsql(`
     WITH active AS (
       SELECT record_id,data,lower(COALESCE(data->>'current_stage_key',data->>'pipeline_stage','unknown')) stage
       FROM taxiassur.records
@@ -330,10 +332,11 @@ async function adminQuoteQueue(req,res,origin,requestId){
       'approaching_leads',COALESCE((SELECT jsonb_agg(data) FROM approaching),'[]'::jsonb)
     )::text;
   `))||{};
+  if(!quoteQueueCache||quoteQueueCache.payload!==payload)quoteQueueCache={createdAt:Date.now(),payload};
   const stageCounts=payload.stage_counts||{},quotePending=Number(stageCounts.quote_pending||0)+Number(stageCounts.quote_sent||0)+Number(stageCounts.devis||0),docs=Number(stageCounts.collecte_documents||0)+Number(stageCounts.documents_required||0)+Number(stageCounts.documents_partial||0);
   return json(res,origin,200,{ok:true,queue:payload.queue||[],current_user_id:session.sub,stats:{total_leads:Number(payload.total_leads||0),ready_for_quote:Number(stageCounts.ready_for_quote||0),quote_pending:quotePending,documents_collecting:docs,avg_time_to_quote_hours:0},stage_counts:stageCounts,approaching_leads:payload.approaching_leads||[]},requestId);
 }
-async function adminQuoteQueuePatch(req,res,origin,requestId,id){const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);const body=await readJsonBody(req),action=String(body.action||'');const item=(await recordsAll('ready_for_quote_queue')).find(x=>String(x.id)===id);if(!item)return json(res,origin,404,{ok:false,error:'not_found'},requestId);const now=new Date().toISOString();if(action==='claim'){const updates={claimed_by:session.sub,claimed_at:now,status:'claimed'};await runPsql(`UPDATE taxiassur.records SET data=data||${quoteLiteral(JSON.stringify(updates))}::jsonb,updated_at=now(),revision=revision+1 WHERE collection='ready_for_quote_queue' AND record_id=${quoteLiteral(id)};`);return json(res,origin,200,{ok:true},requestId);}if(action==='start'){const updates={status:'in_progress',started_by:session.sub,started_at:now};await runPsql(`BEGIN;UPDATE taxiassur.records SET data=data||${quoteLiteral(JSON.stringify(updates))}::jsonb,updated_at=now(),revision=revision+1 WHERE collection='ready_for_quote_queue' AND record_id=${quoteLiteral(id)};UPDATE taxiassur.records SET data=data||${quoteLiteral(JSON.stringify({current_stage_key:'quote_pending',updated_at:now}))}::jsonb,updated_at=now(),revision=revision+1 WHERE collection='crm_leads' AND record_id=${quoteLiteral(String(item.lead_id))};COMMIT;`);return json(res,origin,200,{ok:true},requestId);}return json(res,origin,400,{ok:false,error:'invalid_action'},requestId);}
+async function adminQuoteQueuePatch(req,res,origin,requestId,id){const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);const body=await readJsonBody(req),action=String(body.action||'');const item=parseJsonLine(await runPsql(`SELECT data::text FROM taxiassur.records WHERE collection='ready_for_quote_queue' AND record_id=${quoteLiteral(id)} LIMIT 1;`));if(!item)return json(res,origin,404,{ok:false,error:'not_found'},requestId);const now=new Date().toISOString();if(action==='claim'){const updates={claimed_by:session.sub,claimed_at:now,status:'claimed'};await runPsql(`UPDATE taxiassur.records SET data=data||${quoteLiteral(JSON.stringify(updates))}::jsonb,updated_at=now(),revision=revision+1 WHERE collection='ready_for_quote_queue' AND record_id=${quoteLiteral(id)};`);quoteQueueCache=null;return json(res,origin,200,{ok:true},requestId);}if(action==='start'){const updates={status:'in_progress',started_by:session.sub,started_at:now};await runPsql(`BEGIN;UPDATE taxiassur.records SET data=data||${quoteLiteral(JSON.stringify(updates))}::jsonb,updated_at=now(),revision=revision+1 WHERE collection='ready_for_quote_queue' AND record_id=${quoteLiteral(id)};UPDATE taxiassur.records SET data=data||${quoteLiteral(JSON.stringify({current_stage_key:'quote_pending',updated_at:now}))}::jsonb,updated_at=now(),revision=revision+1 WHERE collection='crm_leads' AND record_id=${quoteLiteral(String(item.lead_id))};COMMIT;`);quoteQueueCache=null;return json(res,origin,200,{ok:true},requestId);}return json(res,origin,400,{ok:false,error:'invalid_action'},requestId);}
 async function adminQuotesList(req,res,origin,requestId){
   const session=await verifiedAdminSession(req);
   if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
