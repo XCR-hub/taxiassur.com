@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TrendingUp, Users, Target, MousePointer, Clock, BarChart3, PieChart, Activity, Home, RefreshCw, Download, Filter } from 'lucide-react';
 import Card from '../components/Card';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { logger } from '@/lib/logger';
 
 interface ConversionData {
@@ -39,120 +39,13 @@ const ConversionAnalytics: React.FC = () => {
         '90d': 90
       };
       const daysAgo = daysMap[timeRange] || 7;
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - daysAgo);
-
-      const { data: leads, error } = await supabase
-        .from('crm_leads')
-        .select('*')
-        .gte('created_at', cutoffDate.toISOString())
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        logger.error('Supabase error:', error);
-        setData({
-          funnelSteps: [],
-          topSources: [],
-          cityPerformance: [],
-          timeAnalysis: [],
-          deviceBreakdown: [],
-          formAnalytics: { averageTime: 0, dropoffPoints: [], completionRate: 0 }
-        });
-        return;
-      }
-
-      const leadsData = leads || [];
-      const totalLeads = leadsData.length;
-
-      // Calculate city performance from real data
-      const cityStats = leadsData.reduce((acc: Record<string, number>, lead: { city?: string }) => {
-        const city = lead.city || 'Inconnu';
-        if (!acc[city]) {
-          acc[city] = 0;
-        }
-        acc[city]++;
-        return acc;
-      }, {});
-
-      const cityPerformance = Object.entries(cityStats)
-        .map(([city, count]) => ({
-          city,
-          leads: count as number,
-          rate: totalLeads > 0 ? ((count as number / totalLeads) * 100) : 0
-        }))
-        .sort((a, b) => b.leads - a.leads)
-        .slice(0, 10);
-
-      // Calculate time analysis from real data
-      const hourStats = leadsData.reduce((acc: Record<number, number>, lead: { created_at?: string }) => {
-        if (lead.created_at) {
-          const hour = new Date(lead.created_at).getHours();
-          if (!acc[hour]) acc[hour] = 0;
-          acc[hour]++;
-        }
-        return acc;
-      }, {});
-
-      const timeAnalysis = Array.from({ length: 24 }, (_, i) => ({
-        hour: i,
-        conversions: hourStats[i] || 0
-      }));
-
-      const sourceStats = leadsData.reduce((acc: Record<string, { visitors: number; conversions: number }>, lead: { source?: string }) => {
-        const source = lead.source || 'website_form';
-        if (!acc[source]) {
-          acc[source] = { visitors: 0, conversions: 0 };
-        }
-        acc[source].conversions++;
-        acc[source].visitors = acc[source].conversions * 10;
-        return acc;
-      }, {});
-
-      const topSources = Object.entries(sourceStats)
-        .map(([source, stats]: [string, { visitors: number; conversions: number }]) => ({
-          source,
-          visitors: stats.visitors,
-          conversions: stats.conversions,
-          rate: stats.visitors > 0 ? ((stats.conversions / stats.visitors) * 100).toFixed(1) : 0
-        }))
-        .sort((a, b) => b.conversions - a.conversions);
-
-      const estimatedPageViews = totalLeads > 0 ? Math.max(totalLeads * 12, 100) : 100;
-      const phoneContacts = leadsData.filter(l => l.phone).length;
-      const avgFormTime = leadsData
-        .map(l => l.metadata?.formTime)
-        .filter(t => t)
-        .reduce((sum, t, _, arr) => sum + t / arr.length, 0) || 127;
-
-      const realData: ConversionData = {
-        funnelSteps: [
-          { step: 'Page View', visitors: estimatedPageViews, conversions: estimatedPageViews, rate: 100 },
-          { step: 'Form Start', visitors: Math.ceil(estimatedPageViews * 0.75), conversions: Math.ceil(estimatedPageViews * 0.75), rate: 75 },
-          { step: 'Form Complete', visitors: totalLeads, conversions: totalLeads, rate: totalLeads > 0 ? Number(((totalLeads / estimatedPageViews) * 100).toFixed(1)) : 0 },
-          { step: 'Phone Contact', visitors: phoneContacts, conversions: phoneContacts, rate: totalLeads > 0 ? Number(((phoneContacts / totalLeads) * 100).toFixed(1)) : 0 }
-        ],
-        topSources,
-        cityPerformance,
-        timeAnalysis,
-        deviceBreakdown: [
-          { device: 'Mobile', percentage: 68, conversions: Math.floor(totalLeads * 0.68) },
-          { device: 'Desktop', percentage: 28, conversions: Math.floor(totalLeads * 0.28) },
-          { device: 'Tablet', percentage: 4, conversions: Math.floor(totalLeads * 0.04) }
-        ],
-        formAnalytics: {
-          averageTime: Math.round(avgFormTime),
-          dropoffPoints: [
-            { field: 'name', dropoffRate: 5 },
-            { field: 'phone', dropoffRate: 12 },
-            { field: 'email', dropoffRate: 8 },
-            { field: 'city', dropoffRate: 15 },
-            { field: 'submit', dropoffRate: 25 }
-          ],
-          completionRate: totalLeads > 0 ? Number(((totalLeads / Math.ceil(estimatedPageViews * 0.75)) * 100).toFixed(1)) : 0
-        }
-      };
-
-      setData(realData);
+      const response = await nativeAdminCall<{ analytics?: ConversionData }>(
+        `/v1/admin/conversion-analytics?days=${daysAgo}`,
+      );
+      setData(response.analytics || {
+        funnelSteps: [], topSources: [], cityPerformance: [], timeAnalysis: [], deviceBreakdown: [],
+        formAnalytics: { averageTime: 0, dropoffPoints: [], completionRate: 0 },
+      });
     } catch (error) {
       logger.error('Failed to load conversion data:', error);
     } finally {
