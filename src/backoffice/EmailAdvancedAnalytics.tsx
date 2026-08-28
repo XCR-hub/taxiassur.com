@@ -4,7 +4,7 @@ import {
   RefreshCw, Calendar, Award, Eye, Users, ArrowUp, ArrowDown,
   Minus, Filter, ChevronDown, Activity, Target, Inbox,
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 /* ── Types ────────────────────────────────────────────────────── */
 interface KPI {
@@ -139,83 +139,38 @@ export default function EmailAdvancedAnalytics() {
   const [subSeries, setSubSeries]   = useState<SubSeries[]>([]);
   const [funnelData, setFunnelData] = useState({ sent: 0, opened: 0, clicked: 0, replied: 0 });
 
-  const since = useCallback(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - Number(period));
-    return d.toISOString();
-  }, [period]);
-
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const cutoff = since();
+      const data = await nativeAdminCall<{
+        campaigns?: CampaignRow[];
+        engaged?: EngagedLead[];
+        geo?: GeoStat[];
+        ab_tests?: ABTest[];
+        sub_series?: SubSeries[];
+        funnel?: { sent: number; opened: number; clicked: number; replied: number };
+        summary?: { active_subscribers: number; new_subscribers: number; total_sent: number; avg_open_rate: number; avg_click_rate: number; campaigns: number };
+      }>(`/v1/admin/email-advanced-analytics?days=${encodeURIComponent(period)}`);
 
       /* ── Campaigns ── */
-      const { data: cmpRaw } = await supabase
-        .from('newsletter_campaigns')
-        .select('id,name,status,subject,sent_count,open_count,click_count,sent_at')
-        .gte('created_at', cutoff)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      const cmpData: Campaign[] = cmpRaw || [];
-
-      const cmpRows: CampaignRow[] = cmpData.map(c => ({
-        id: c.id,
-        name: c.name,
-        status: c.status,
-        subject: c.subject,
-        sent_count: c.sent_count || 0,
-        open_rate: c.sent_count ? ((c.open_count || 0) / c.sent_count) * 100 : 0,
-        click_rate: c.sent_count ? ((c.click_count || 0) / c.sent_count) * 100 : 0,
-        sent_at: c.sent_at,
-      }));
+      const cmpRows = data.campaigns || [];
       setCampaigns(cmpRows);
 
       /* ── Funnel totals ── */
-      const totalSent    = cmpData.reduce((s, c) => s + (c.sent_count || 0), 0);
-      const totalOpened  = cmpData.reduce((s, c) => s + (c.open_count  || 0), 0);
-      const totalClicked = cmpData.reduce((s, c) => s + (c.click_count || 0), 0);
-      setFunnelData({ sent: totalSent, opened: totalOpened, clicked: totalClicked, replied: 0 });
+      const totalSent = data.funnel?.sent || 0;
+      setFunnelData(data.funnel || { sent: 0, opened: 0, clicked: 0, replied: 0 });
 
       /* ── Subscriber growth ── */
-      const { data: subRaw } = await supabase
-        .from('newsletter_subscribers')
-        .select('id, subscribed_at, status')
-        .gte('subscribed_at', cutoff)
-        .order('subscribed_at', { ascending: true });
-
-      const subData = subRaw || [];
-
-      const byMonth: Record<string, number> = {};
-      subData.filter(s => s.status === 'active').forEach(s => {
-        const key = new Date(s.subscribed_at).toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
-        byMonth[key] = (byMonth[key] || 0) + 1;
-      });
-      const series = Object.entries(byMonth).map(([month, count]) => ({ month, count }));
-      setSubSeries(series);
+      setSubSeries(data.sub_series || []);
 
       /* ── Subscriber KPIs ── */
-      const { data: allSubs } = await supabase
-        .from('newsletter_subscribers')
-        .select('id, status, subscribed_at');
-      const totalSubs   = allSubs?.length || 0;
-      const activeSubs  = allSubs?.filter(s => s.status === 'active').length || 0;
-      const newSubs     = subData.length;
+      const activeSubs = data.summary?.active_subscribers || 0;
+      const newSubs = data.summary?.new_subscribers || 0;
 
       /* ── Prev period for trends ── */
-      const prevCutoff = new Date();
-      prevCutoff.setDate(prevCutoff.getDate() - Number(period) * 2);
-      const { data: prevSubs } = await supabase
-        .from('newsletter_subscribers')
-        .select('id')
-        .gte('subscribed_at', prevCutoff.toISOString())
-        .lt('subscribed_at', cutoff);
-      const prevNew = prevSubs?.length || 0;
-      const subTrend = prevNew > 0 ? ((newSubs - prevNew) / prevNew) * 100 : null;
-
-      const avgOpen  = cmpRows.length ? cmpRows.reduce((s, c) => s + c.open_rate, 0)  / cmpRows.length : 0;
-      const avgClick = cmpRows.length ? cmpRows.reduce((s, c) => s + c.click_rate, 0) / cmpRows.length : 0;
+      const subTrend = null;
+      const avgOpen = data.summary?.avg_open_rate || 0;
+      const avgClick = data.summary?.avg_click_rate || 0;
 
       setKpis([
         { label: 'Abonnés actifs',     value: activeSubs,    icon: Users,         color: 'text-blue-600',   bg: 'bg-blue-50',   fmt: 'num'  },
@@ -223,76 +178,24 @@ export default function EmailAdvancedAnalytics() {
         { label: 'Emails envoyés',     value: totalSent,     icon: Send,          color: 'text-gray-600',   bg: 'bg-gray-50',   fmt: 'num'  },
         { label: 'Taux ouverture moy', value: avgOpen,       icon: Eye,           color: 'text-teal-600',   bg: 'bg-teal-50',   fmt: 'pct'  },
         { label: 'Taux de clic moy',   value: avgClick,      icon: MousePointer,  color: 'text-orange-500', bg: 'bg-orange-50', fmt: 'pct'  },
-        { label: 'Campagnes',          value: cmpData.length,icon: BarChart3,     color: 'text-rose-500',   bg: 'bg-rose-50',   fmt: 'num'  },
+        { label: 'Campagnes',          value: data.summary?.campaigns || cmpRows.length,icon: BarChart3, color: 'text-rose-500', bg: 'bg-rose-50', fmt: 'num' },
       ]);
 
       /* ── Engagement scores ── */
-      const { data: engRaw } = await supabase
-        .from('lead_engagement_scores')
-        .select('*, leads(name, email)')
-        .order('engagement_score', { ascending: false })
-        .limit(8);
-      setEngaged(engRaw || []);
+      setEngaged(data.engaged || []);
 
       /* ── Geo ── */
-      const { data: geoRaw } = await supabase
-        .from('email_geolocation')
-        .select('country_name')
-        .not('country_name', 'is', null)
-        .gte('created_at', cutoff);
-
-      if (geoRaw) {
-        const cnt: Record<string, number> = {};
-        geoRaw.forEach(g => { if (g.country_name) cnt[g.country_name] = (cnt[g.country_name] || 0) + 1; });
-        const total = Object.values(cnt).reduce((a, b) => a + b, 0);
-        setGeo(
-          Object.entries(cnt)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 6)
-            .map(([country_name, count]) => ({ country_name, count, pct: total ? (count / total) * 100 : 0 }))
-        );
-      }
+      setGeo(data.geo || []);
 
       /* ── A/B tests ── */
-      const { data: abRaw } = await supabase
-        .from('email_ab_tests')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(4);
-
-      if (abRaw) {
-        const results = await Promise.all(abRaw.map(async test => {
-          const { data: variants } = await supabase
-            .from('email_ab_variants')
-            .select('variant, email_send_id')
-            .eq('ab_test_id', test.id);
-
-          let aO = 0, bO = 0;
-          if (variants) {
-            for (const v of variants) {
-              const { count } = await supabase
-                .from('email_opens')
-                .select('*', { count: 'exact', head: true })
-                .eq('email_send_id', v.email_send_id);
-              if (v.variant === 'A') aO += count || 0;
-              else bO += count || 0;
-            }
-          }
-          return {
-            name: test.name, status: test.status,
-            variant_a_opens: aO, variant_b_opens: bO,
-            winner: test.status === 'completed' ? (aO >= bO ? 'A' : 'B') as 'A' | 'B' : null,
-          };
-        }));
-        setAbTests(results);
-      }
+      setAbTests(data.ab_tests || []);
 
     } catch (e) {
       console.error('Analytics error:', e);
     } finally {
       setLoading(false);
     }
-  }, [since]);
+  }, [period]);
 
   useEffect(() => { load(); }, [load]);
 
