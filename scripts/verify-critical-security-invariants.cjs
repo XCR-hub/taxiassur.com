@@ -590,7 +590,8 @@ for (const functionName of ['crm-ai-assistant','realtime-monitoring-engine','llm
 const portalTimeout = 'src/lib/promise-timeout.ts';
 requireMatch(portalTimeout, /timeoutMs = 15_000/, 'portal requests do not have a bounded default timeout');
 requireMatch(portalTimeout, /window\.clearTimeout\(timeout\)[\s\S]*window\.clearTimeout\(timeout\)/, 'portal timeout is not cleared on both resolve and reject');
-requireMatch('src/pages/ClientAccessByToken.tsx', /withTimeout\([\s\S]*get_or_create_client_portal_access/, 'client token verification can spin forever');
+forbidMatch('src/pages/ClientAccessByToken.tsx', /supabase|get_or_create_client_portal_access/i, 'client access-by-token page still depends on Supabase');
+requireMatch('src/pages/ClientAccessByToken.tsx', /loadClientPlatformSession\(tokenOrId\)[\s\S]*storeClientAccessToken\(tokenOrId\)/, 'client access token is stored before native portal validation');
 requireMatch('src/lib/platform-api.ts', /platformRequest[\s\S]*timeoutMs = 20_000[\s\S]*AbortSignal\.timeout\(timeoutMs\)/, 'prospect platform requests can spin forever');
 requireMatch('src/lib/document-upload-compat.ts', /withTimeout\([\s\S]*action: 'prepare'[\s\S]*20_000[\s\S]*documentType: 'autre'[\s\S]*withTimeout\([\s\S]*action: 'prepare'[\s\S]*20_000/, 'compatible document preparation lacks bounded primary or fallback requests');
 for (const file of ['src/pages/EspaceProspect.tsx', 'src/pages/ProspectDocuments.tsx']) {

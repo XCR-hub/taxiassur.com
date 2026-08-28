@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Shield, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { storeClientAccessToken } from '@/lib/client-access';
-import { withTimeout } from '@/lib/promise-timeout';
+import { loadClientPlatformSession } from '@/lib/client-platform-api';
 
 export default function ClientAccessByToken() {
   const { token } = useParams<{ token: string }>();
@@ -22,20 +21,7 @@ export default function ClientAccessByToken() {
     try {
       setMessage('Vérification de votre identité...');
 
-      const { data, error } = await withTimeout(
-        supabase.rpc('get_or_create_client_portal_access', { p_token: tokenOrId }),
-      );
-
-      if (error) {
-        logger.error('RPC error:', error);
-        throw new Error('Impossible de vérifier votre accès');
-      }
-
-      if (!data || !data.success) {
-        setStatus('error');
-        setMessage(data?.error || 'Accès non valide. Veuillez contacter notre service client.');
-        return;
-      }
+      await loadClientPlatformSession(tokenOrId);
 
       if (!storeClientAccessToken(tokenOrId)) {
         throw new Error('Lien d’accès invalide');
@@ -51,7 +37,7 @@ export default function ClientAccessByToken() {
     } catch (error) {
       logger.error('Error in verifyAndCreateAccess:', error);
       setStatus('error');
-      setMessage(error instanceof Error ? error.message : 'Une erreur est survenue');
+      setMessage('Accès non valide ou expiré. Veuillez contacter notre service client.');
     }
   };
 
