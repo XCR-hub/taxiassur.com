@@ -12,7 +12,16 @@ export async function nativeAdminLeads(search='',status=''){
   const rest:any[]=await Promise.all(Array.from({length:pages-1},(_,index)=>call(`/v1/admin/leads?${query}&page=${index+2}`)));
   return {...first,leads:[...(first.leads||[]),...rest.flatMap(page=>page.leads||[])]};
 }
-export const nativeAdminLead=(id:string)=>call(`/v1/admin/leads/${encodeURIComponent(id)}`);
+export async function nativeAdminLead(id:string){
+  const restored=id.match(/^restored-\d+-(.+)$/);
+  if(restored){
+    const lookup:any=await nativeAdminLeads(decodeURIComponent(restored[1]));
+    const lead=(lookup.leads||[]).find((row:any)=>String(row.email||row.phone||'').toLowerCase()===restored[1].toLowerCase())||(lookup.leads||[])[0];
+    if(!lead?.id)throw new Error('lead_not_found');
+    id=String(lead.id);
+  }
+  return call(`/v1/admin/leads/${encodeURIComponent(id)}`);
+}
 export const nativeAdminUpdateLead=(id:string,updates:Record<string,unknown>)=>call(`/v1/admin/leads/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(updates)});
 export const nativeAdminPipelineNotifications=()=>call('/v1/admin/pipeline/notifications');
 export const nativeAdminDocuments=(status='')=>call(`/v1/admin/documents${status?`?status=${encodeURIComponent(status)}`:''}`);
