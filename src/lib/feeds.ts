@@ -1,34 +1,15 @@
-import { getSupabaseUrl } from './env';
 import { logger } from '@/lib/logger';
-import { internalFunctionHeaders } from '@/lib/internal-function-auth';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 // Fonction pour déclencher la régénération des feeds via edge function
 export async function regenerateFeeds(): Promise<boolean> {
   try {
-    const supabaseUrl = getSupabaseUrl();
-    if (!supabaseUrl) {
-      logger.error('Supabase configuration missing');
-      return false;
-    }
-
-    // Appeler edge function auto-seo-notifier
-    const endpoint = `${supabaseUrl}/functions/v1/auto-seo-notifier`;
-
-    const response = await fetch(endpoint, {
+    const site = 'https://taxiassur.com';
+    const result = await nativeAdminCall<{ success: boolean }>('/v1/admin/indexnow', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': (await internalFunctionHeaders()).Authorization
-      }
+      body: JSON.stringify({ urls: [site, `${site}/sitemap.xml`, `${site}/feeds/rss.xml`] })
     });
-
-    if (response.ok) {
-      const result = await response.json();
-      logger.log('✅ SEO automatisé:', result);
-      return result.ok === true;
-    }
-
-    return false;
+    return result.success === true;
   } catch (error) {
     logger.error('Failed to regenerate feeds:', error);
     return false;

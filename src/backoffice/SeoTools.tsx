@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { useNavigate } from 'react-router-dom';
 import { Search, Globe, RefreshCw, TrendingUp, ExternalLink, CheckCircle, AlertCircle, Home, Settings, Clock } from 'lucide-react';
 import { pingSearchEngines } from '../lib/ping';
 import { regenerateFeeds } from '../lib/feeds';
 import { generateCityPages } from '../lib/ping';
 import Card from '../components/Card';
-import { supabase } from '@/lib/supabase';
 import TestAutomationButton from './TestAutomationButton';
 import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
@@ -143,32 +141,24 @@ const SeoTools: React.FC = () => {
     try {
       const siteUrl = import.meta.env.VITE_SITE_URL || 'https://taxiassur.com';
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/indexnow-ping`,
-        {
+      const result = await nativeAdminCall<{success:boolean;successful:number;engines_pinged:number;results:Record<string,unknown>[]}>(
+        '/v1/admin/indexnow', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': (await internalFunctionHeaders()).Authorization
-          },
           body: JSON.stringify({
             siteUrl: siteUrl,
             urls: [
               siteUrl,
-              `${siteUrl}/feeds/sitemap.xml`,
+              `${siteUrl}/sitemap.xml`,
               `${siteUrl}/feeds/rss.xml`
             ]
           })
         }
       );
-
-      const result = await response.json();
-
-      if (response.ok && result.success) {
+      if (result.success) {
         setPingResults(result.results || [{
           engine: 'IndexNow',
           success: true,
-          status: response.status
+          status: 200
         }]);
 
         toast.success(`IndexNow Ping Envoyé ! ${result.successful || 0}/${result.engines_pinged || 0} moteurs notifiés.`);
@@ -176,7 +166,7 @@ const SeoTools: React.FC = () => {
         setPingResults([{
           engine: 'IndexNow',
           success: false,
-          status: response.status,
+          status: 502,
           error: result.error || 'Erreur inconnue'
         }]);
 
@@ -199,31 +189,8 @@ const SeoTools: React.FC = () => {
   const handleOptimizeLeads = async () => {
     setIsWorking(true);
     try {
-      const response = await fetch('/api/serp-optimizer.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          keywords: [
-            'assurance taxi',
-            'assurance taxi pas cher',
-            'devis assurance taxi',
-            'rc pro taxi',
-            'assurance vtc'
-          ],
-          location: 'France'
-        })
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success(`Optimisation SERP terminée ! Opportunités: ${result.analyzed}`);
-        logger.log('SERP Optimization Results:', result);
-      } else {
-        toast.error(`Erreur: ${result.error}`);
-      }
+      const result = await nativeAdminCall<{metrics:{pending_pages:number;impressions_30d:number}}>('/v1/admin/seo');
+      toast.success(`Analyse SEO terminée : ${result.metrics.pending_pages} pages à travailler, ${result.metrics.impressions_30d} impressions sur 30 jours.`);
     } catch (error) {
       logger.error('SERP optimization error:', error);
       toast.error("Erreur lors de l'optimisation SERP");
