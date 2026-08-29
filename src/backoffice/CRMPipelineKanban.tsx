@@ -891,10 +891,11 @@ const CRMPipelineKanban: React.FC = () => {
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, status)}
                 className={cn(
-                  'w-[284px] flex-shrink-0 transition-all duration-300 flex flex-col rounded-xl overflow-hidden',
+                  'w-[284px] min-h-0 flex-shrink-0 transition-all duration-300 flex flex-col rounded-xl overflow-hidden',
                   isDropTarget ? 'scale-[1.012]' : ''
                 )}
                 style={{
+                  height: 'calc(100vh - 196px)',
                   maxHeight: 'calc(100vh - 196px)',
                   background: '#ffffff',
                   boxShadow: isDropTarget
@@ -1001,7 +1002,7 @@ const CRMPipelineKanban: React.FC = () => {
                 {/* Column scrollable cards area */}
                 <div
                   className={cn(
-                    'flex-1 overflow-y-auto p-2 space-y-2 transition-all duration-300',
+                    'flex-1 min-h-0 overflow-y-scroll overscroll-contain p-2 space-y-2 transition-all duration-300',
                     isDropTarget && 'bg-yellow-50'
                   )}
                   style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,0,0,0.12) transparent' }}
