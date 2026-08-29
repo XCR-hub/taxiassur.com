@@ -5,6 +5,7 @@ import {
   TrendingUp, Filter, Download, Send, Eye, ExternalLink,
   BarChart3, Target, Users, Zap, AlertCircle
 } from 'lucide-react';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 interface BacklinkOpportunity {
   id: string;
@@ -195,16 +196,14 @@ const BacklinkProspector: React.FC = () => {
     }
   ];
 
-  useEffect(() => {
-    // Charger depuis localStorage ou API
-    const saved = localStorage.getItem('backlink_opportunities');
-    if (saved) {
-      setOpportunities(JSON.parse(saved));
-    } else {
-      setOpportunities(initialOpportunities);
-      localStorage.setItem('backlink_opportunities', JSON.stringify(initialOpportunities));
-    }
-  }, []);
+  const loadOpportunities = async () => {
+    try {
+      const response = await nativeAdminCall<{opportunities:Array<Record<string,any>>}>('/v1/admin/backlinks/dashboard');
+      setOpportunities((response.opportunities || []).map(item => ({id:String(item.id),domain:String(item.domain||''),url:String(item.url||''),pageTitle:String(item.pageTitle||item.page_title||item.title||item.domain||''),pageAuthority:Number(item.pageAuthority||item.page_authority||0),domainAuthority:Number(item.domainAuthority||item.domain_authority||item.quality_score||0),anchorText:String(item.anchorText||item.anchor_text||''),linkingTo:String(item.linkingTo||item.linking_to||''),category:String(item.category||'Non classé'),status:(item.status==='new'?'pending':item.status) as BacklinkOpportunity['status'],contactEmail:String(item.contactEmail||item.contact_email||''),lastContacted:item.lastContacted||item.contacted_at,notes:item.notes,estimatedTraffic:Number(item.estimatedTraffic||item.estimated_traffic||0),relevanceScore:Number(item.relevanceScore||item.relevance_score||item.quality_score||0)})));
+    } catch { toast.error('Impossible de charger les opportunités backlinks.'); }
+  };
+
+  useEffect(() => { void loadOpportunities(); }, []);
 
   useEffect(() => {
     // Filtrer les opportunités
@@ -240,7 +239,7 @@ const BacklinkProspector: React.FC = () => {
     setStats({ total, contacted, accepted, avgDA: Math.round(avgDA), avgPA: Math.round(avgPA) });
   }, [opportunities]);
 
-  const updateOpportunityStatus = (id: string, status: BacklinkOpportunity['status'], notes?: string) => {
+  const updateOpportunityStatus = async (id: string, status: BacklinkOpportunity['status'], notes?: string) => {
     const updated = opportunities.map(opp => {
       if (opp.id === id) {
         return {
@@ -253,7 +252,8 @@ const BacklinkProspector: React.FC = () => {
       return opp;
     });
     setOpportunities(updated);
-    localStorage.setItem('backlink_opportunities', JSON.stringify(updated));
+    try { await nativeAdminCall('/v1/admin/backlinks',{method:'PATCH',body:JSON.stringify({action:'update_opportunity',id,status,notes})}); }
+    catch { toast.error('La mise à jour du statut a échoué.'); await loadOpportunities(); }
   };
 
   const generateEmail = (opp: BacklinkOpportunity): string => {
@@ -287,11 +287,9 @@ taxiassur.com
 
   const scanNewOpportunities = async () => {
     setIsScanning(true);
-    // Simulation d'un scan (en prod, appeler une API pour scraper)
-    setTimeout(() => {
-      toast.success('Scan terminé ! 3 nouvelles opportunités détectées.');
-      setIsScanning(false);
-    }, 3000);
+    await loadOpportunities();
+    toast.success('Opportunités actualisées depuis PostgreSQL.');
+    setIsScanning(false);
   };
 
   const exportToCSV = () => {
@@ -433,7 +431,7 @@ taxiassur.com
                 className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
               >
                 <Zap size={18} />
-                <span>{isScanning ? 'Scan...' : 'Scan Auto'}</span>
+                <span>{isScanning ? 'Actualisation...' : 'Actualiser'}</span>
               </button>
 
               <button
