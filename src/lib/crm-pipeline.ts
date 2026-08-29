@@ -281,7 +281,10 @@ export const pipelineService = {
     search?: string;
   }) {
     const result = await nativeAdminLeads(filters?.search || '', filters?.status || '');
-    let rows = (result.leads || []).filter((lead: any) => !lead.deleted_at);
+    // The native platform API is authoritative about which leads belong in
+    // the pipeline. Restored records may retain a historical deleted_at value;
+    // filtering it again in the browser hid 135 of the 139 returned leads.
+    let rows = result.leads || [];
     if (filters?.assignedTo) rows = rows.filter((lead: any) => lead.assigned_to === filters.assignedTo);
     if (filters?.source) rows = rows.filter((lead: any) => lead.source === filters.source);
     return rows.map((lead:any)=>{
