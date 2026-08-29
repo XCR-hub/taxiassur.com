@@ -4,6 +4,18 @@ import { HelmetProvider } from 'react-helmet-async';
 import App from './App.tsx';
 import './index.css';
 
+// The website does not require offline control. Remove any previously
+// installed PWA worker without reloading the page; stale workers were causing
+// repeated navigations on both the public site and the back-office.
+if ('serviceWorker' in navigator) {
+  void navigator.serviceWorker.getRegistrations()
+    .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+    .catch(() => {});
+}
+if ('caches' in window) {
+  void caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key)))).catch(() => {});
+}
+
 const CHUNK_RECOVERY_KEY = 'taxiassur_chunk_recovery';
 window.addEventListener('unhandledrejection', (event) => {
   const message = String(event.reason?.message || event.reason || '');

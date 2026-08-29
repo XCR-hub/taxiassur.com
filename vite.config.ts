@@ -27,8 +27,10 @@ export default defineConfig(({ mode }) => ({
     skipBrokenPublicFiles(),
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
-      injectRegister: 'script-defer',
+      // Emergency safe mode: the previous auto-updating worker could take
+      // control during navigation and reload every page repeatedly.
+      selfDestroying: true,
+      injectRegister: false,
       includeAssets: ['favicon.svg', 'logo.svg', 'logo-512x512.svg'],
       manifest: {
         name: 'TaxiAssur - Assurance Taxi Professionnelle',
