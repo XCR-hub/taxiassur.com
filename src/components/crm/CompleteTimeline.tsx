@@ -179,8 +179,9 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({ leadId, lead
     setLoading(true);
     try {
       const allEvents: TimelineEvent[] = [];
+      const usesNativeAdmin = Boolean(localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY));
       let allLeadIds = [leadId];
-      if (leadEmail) {
+      if (leadEmail && !usesNativeAdmin) {
         const { data: siblings } = await supabase.from('crm_leads').select('id').ilike('email', leadEmail.trim());
         if (siblings?.length) allLeadIds = [...new Set([leadId, ...siblings.map((l: { id: string }) => l.id)])];
       }
@@ -191,7 +192,7 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({ leadId, lead
       let aiRes: { data: unknown[] };
       let notifRes: { data: unknown[] };
 
-      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
+      if (usesNativeAdmin) {
         const response = await nativeAdminCall<{ summary?: {
           emails?: unknown[];
           interactions?: unknown[];
@@ -314,10 +315,18 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({ leadId, lead
     if (!newNote.trim()) return;
     setSavingNote(true);
     try {
-      await supabase.from('crm_interactions').insert([{
-        lead_id: leadId, type: 'note', channel: 'note', direction: 'outbound',
-        content: newNote.trim(), created_at: new Date().toISOString(),
-      }]);
+      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
+        await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/timeline`, {
+          method: 'POST',
+          body: JSON.stringify({ content: newNote.trim() }),
+        });
+      } else {
+        const { error } = await supabase.from('crm_interactions').insert([{
+          lead_id: leadId, type: 'note', channel: 'note', direction: 'outbound',
+          content: newNote.trim(), created_at: new Date().toISOString(),
+        }]);
+        if (error) throw error;
+      }
       setNewNote('');
       setShowNoteComposer(false);
       await loadCompleteTimeline();
