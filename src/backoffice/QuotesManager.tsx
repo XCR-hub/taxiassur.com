@@ -24,7 +24,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import { nativeAdminQuotes } from "@/lib/native-admin-data";
 import { SecureDocumentLink } from "@/components/crm/SecureDocumentLink";
 
 interface Quote {
@@ -116,21 +116,8 @@ const QuotesManager: React.FC = () => {
 
   const loadQuotes = async () => {
     try {
-      const { data, error } = await supabase
-        .from("lead_company_quotes")
-        .select(`
-          id, lead_id, company_id, status, quote_amount,
-          quote_file_url, quote_pdf_url, notes, refusal_reason,
-          refusal_reason_code, version, created_at, submitted_at,
-          validated_at, quote_accepted_at, refused_at,
-          sent_to_client_at, last_sent_at,
-          lead:crm_leads(first_name, last_name, email, phone, vehicle_type, status, pipeline_stage),
-          company:insurance_companies(name, logo_url)
-        `)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setQuotes((data as any[]) || []);
+      const result = await nativeAdminQuotes() as { quotes?: Quote[] };
+      setQuotes(result.quotes || []);
     } catch (error) {
       console.error("Failed to load quotes:", error);
     } finally {
