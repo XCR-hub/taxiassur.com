@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Search, Eye, MousePointer, BarChart3, Zap, ChevronRight, RefreshCw, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
-import { supabase } from '../lib/supabase';
 import { toast } from '@/lib/toast';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 interface GSCOpportunity {
   query: string;
@@ -54,16 +54,8 @@ export default function SEOOpportunitiesDashboard() {
     setLoading(true);
 
     try {
-      // Charger les opportunités (requêtes avec impressions mais peu de clics)
-      const { data: oppsData } = await supabase
-        .from('gsc_queries')
-        .select('*')
-        .gte('impressions', 10)
-        .lt('ctr', 0.05)
-        .gte('position', 1)
-        .lte('position', 20)
-        .order('impressions', { ascending: false })
-        .limit(50);
+      const response = await nativeAdminCall<{queries:GSCOpportunity[];pages:GSCPage[];sync_history:SyncHistory[];metrics:{impressions_30d:number;clicks_30d:number;average_position:number}}>('/v1/admin/seo');
+      const oppsData = response.queries || [];
 
       if (oppsData) {
         setOpportunities(oppsData.map(q => ({
@@ -73,33 +65,19 @@ export default function SEOOpportunitiesDashboard() {
         })));
       }
 
-      // Charger les pages à optimiser
-      const { data: pagesData } = await supabase
-        .from('gsc_pages')
-        .select('*')
-        .eq('needs_optimization', true)
-        .order('optimization_priority', { ascending: false })
-        .limit(20);
+      const pagesData = response.pages || [];
 
       if (pagesData) {
         setPages(pagesData);
       }
 
-      // Charger l'historique de sync
-      const { data: historyData } = await supabase
-        .from('gsc_sync_history')
-        .select('*')
-        .order('sync_date', { ascending: false })
-        .limit(7);
+      const historyData = response.sync_history || [];
 
       if (historyData) {
         setSyncHistory(historyData);
       }
 
-      // Calculer les stats
-      const { data: statsData } = await supabase
-        .from('gsc_queries')
-        .select('impressions, clicks, ctr, position');
+      const statsData = oppsData;
 
       if (statsData && statsData.length > 0) {
         const totalImpressions = statsData.reduce((sum, q) => sum + (q.impressions || 0), 0);
@@ -163,16 +141,8 @@ export default function SEOOpportunitiesDashboard() {
     setSyncing(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('gsc-sync-performance', {
-        body: { days: 7 }
-      });
-
-      if (error) {
-        toast.error(`Erreur synchronisation: ${error.message}`);
-      } else {
-        toast.success(`✅ Synchronisation réussie!\n${data.data?.queries_imported || 0} requêtes importées\n${data.data?.opportunities_detected || 0} opportunités détectées`);
-        await loadData();
-      }
+      await loadData();
+      toast.success('Données GSC actualisées depuis PostgreSQL.');
     } catch (error) {
       console.error('Erreur sync:', error);
       toast.error('Erreur lors de la synchronisation. Vérifiez que les secrets Google sont configurés.');

@@ -5,7 +5,7 @@ import {
   ArrowUp, ArrowDown, Minus, Globe, Search, Sparkles, Target,
   Activity, Timer, ChevronDown, ChevronUp, Filter, Download
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 interface GA4Signal {
   page_path: string;
@@ -91,14 +91,8 @@ export default function GA4SEODashboard() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [{ data: rawStats }, { data: pagesData }, { data: combinedData }] = await Promise.all([
-        supabase.rpc('get_ga4_summary_stats'),
-        supabase
-          .from('ga4_page_signals')
-          .select('page_path,full_url,sessions,engaged_sessions,page_views,new_users,bounce_rate,avg_session_duration,engagement_rate,behavioral_score,synced_at')
-          .order('synced_at', { ascending: false }),
-        supabase.rpc('get_ga4_seo_combined_signals', { limit_rows: 50 }),
-      ]);
+      const response = await nativeAdminCall<{summary:SummaryStats;signals:GA4Signal[];combined:CombinedSignal[]}>('/v1/admin/ga4-seo');
+      const rawStats=response.summary,pagesData=response.signals,combinedData=response.combined;
 
       if (rawStats) setSummary(rawStats as SummaryStats);
 
@@ -126,20 +120,7 @@ export default function GA4SEODashboard() {
     setSyncing(true);
     setSyncMsg(null);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-ga4-signals`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-            'Content-Type': 'application/json',
-            Apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-          },
-          body: JSON.stringify({ days: 30 }),
-        }
-      );
-      const result = await res.json();
+      const result = await nativeAdminCall<{setup_required?:boolean;message?:string;success?:boolean;pages_synced?:number;error?:string}>('/v1/admin/ga4-seo',{method:'POST',body:JSON.stringify({action:'sync',days:30})});
       if (result.setup_required) {
         setSyncMsg(`Configuration requise : ${result.message}`);
       } else if (result.success) {
@@ -160,7 +141,6 @@ export default function GA4SEODashboard() {
     setAiError(null);
     setAiRecs([]);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
       const topIssues = signals
         .filter(s => s.behavioral_score < 50 && s.sessions > 5)
         .slice(0, 15)
@@ -211,27 +191,8 @@ Reponds en JSON avec ce format exact :
   ]
 }`;
 
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ia-council`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-            'Content-Type': 'application/json',
-            Apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-          },
-          body: JSON.stringify({
-            messages: [{ role: 'user', content: prompt }],
-            model: 'gpt-4o-mini',
-            response_format: { type: 'json_object' },
-          }),
-        }
-      );
-
-      if (!res.ok) throw new Error(`Erreur IA : ${res.status}`);
-
-      const data = await res.json();
-      const content = data.choices?.[0]?.message?.content || data.content || '';
+      const data = await nativeAdminCall<{final_response?:string;response?:string}>('/v1/admin/llm',{method:'POST',body:JSON.stringify({action:'council',query:prompt})});
+      const content = data.final_response || data.response || '';
       const parsed = JSON.parse(typeof content === 'string' ? content : JSON.stringify(content));
       setAiRecs(parsed.recommendations || []);
     } catch (e) {
