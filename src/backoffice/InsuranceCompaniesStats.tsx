@@ -13,7 +13,7 @@ import {
   Euro,
   User
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminInsuranceCompanies, nativeAdminQuotes } from '@/lib/native-admin-data';
 
 interface CompanyQuote {
   id: string;
@@ -85,26 +85,20 @@ export default function InsuranceCompaniesStats() {
   const loadQuotes = async () => {
     setLoading(true);
     try {
-      let query = supabase
-        .from('lead_company_quotes')
-        .select(`
-          id, lead_id, company_id, status, quote_amount, quote_file_url,
-          created_at, sent_at, validated_at, quote_accepted_at, refused_at,
-          refusal_reason, notes,
-          insurance_companies(id, name, code, logo_url, is_active),
-          crm_leads(first_name, last_name, email, phone, status, pipeline_stage, vehicle_type)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (dateFilter !== 'all') {
-        const now = new Date();
-        const ms = dateFilter === '30d' ? 30 * 86400000 : dateFilter === '90d' ? 90 * 86400000 : 180 * 86400000;
-        query = query.gte('created_at', new Date(now.getTime() - ms).toISOString());
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      setQuotes(data || []);
+      const [quoteResult, companyResult] = await Promise.all([
+        nativeAdminQuotes(),
+        nativeAdminInsuranceCompanies(),
+      ]) as [{ quotes?: Array<Record<string, any>> }, { companies?: Array<Record<string, any>> }];
+      const companies = new Map((companyResult.companies || []).map((company) => [String(company.id), company]));
+      const cutoff = dateFilter === 'all' ? 0 : Date.now() - (dateFilter === '30d' ? 30 : dateFilter === '90d' ? 90 : 180) * 86400000;
+      const rows = (quoteResult.quotes || [])
+        .filter((quote) => !cutoff || Date.parse(String(quote.created_at || '')) >= cutoff)
+        .map((quote) => ({
+          ...quote,
+          insurance_companies: companies.get(String(quote.company_id || quote.insurance_company_id)) || null,
+          crm_leads: quote.lead || null,
+        })) as CompanyQuote[];
+      setQuotes(rows);
     } catch (err) {
       console.error('Error loading quotes:', err);
     } finally {

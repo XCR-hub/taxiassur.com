@@ -22,3 +22,5 @@ export const nativeAdminQuoteQueue=()=>call('/v1/admin/quote-queue');
 export const nativeAdminQuoteQueueAction=(id:string,action:'claim'|'start')=>call(`/v1/admin/quote-queue/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({action})});
 export const nativeAdminClaims=(status='')=>call(`/v1/admin/claims${status?`?status=${encodeURIComponent(status)}`:''}`);
 export const nativeAdminUpdateClaim=(id:string,updates:Record<string,unknown>)=>call(`/v1/admin/claims/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(updates)});
+export const nativeAdminQuotes=()=>call('/v1/admin/quotes');
+export const nativeAdminInsuranceCompanies=()=>call('/v1/admin/insurance-companies');
