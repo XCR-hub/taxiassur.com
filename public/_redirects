@@ -81,5 +81,8 @@
 # Legacy PHP API disabled on static hosts
 /api/* /api-disabled.json 200
 
+# Compatibility for a stale PWA chunk still referenced by older backoffice tabs
+/assets/backoffice-seo-tools-BDxLGk1i.js /assets/backoffice-seo-tools-BUzFrjSi.js 302
+
 # React/Vite SPA fallback - must stay last
 /* /index.html 200
