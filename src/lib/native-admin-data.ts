@@ -4,6 +4,7 @@ const BASE=(runtimeEnv?.VITE_NATIVE_PLATFORM_URL||runtimeEnv?.VITE_PLATFORM_API_
 export async function nativeAdminCall<T=any>(path:string,init:RequestInit={}):Promise<T>{const token=localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY);if(!token)throw new Error('native_session_required');const response=await fetch(`${BASE}${path}`,{...init,signal:init.signal||AbortSignal.timeout(45_000),cache:'no-store',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`,...init.headers}});const data=await response.json().catch(()=>({}));if(!response.ok){const error=new Error(data.error||'native_data_error') as Error&{status?:number};error.status=response.status;throw error;}return data as T;}
 const call=nativeAdminCall;
 export const nativeAdminDashboard=()=>call('/v1/admin/dashboard');
+export const nativeAdminLeads=(search='',status='')=>call(`/v1/admin/leads?search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}`);
 export const nativeAdminLead=(id:string)=>call(`/v1/admin/leads/${encodeURIComponent(id)}`);
 export const nativeAdminUpdateLead=(id:string,updates:Record<string,unknown>)=>call(`/v1/admin/leads/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(updates)});
 export const nativeAdminPipelineNotifications=()=>call('/v1/admin/pipeline/notifications');

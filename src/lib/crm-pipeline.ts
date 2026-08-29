@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { NATIVE_ADMIN_TOKEN_KEY } from './native-admin-auth';
-import { nativeAdminDashboard, nativeAdminLead, nativeAdminUpdateLead } from './native-admin-data';
+import { nativeAdminDashboard, nativeAdminLead, nativeAdminLeads, nativeAdminUpdateLead } from './native-admin-data';
 
 export interface PipelineActionResult {
   success: boolean;
@@ -261,12 +261,10 @@ export const pipelineService = {
     search?: string;
   }) {
     if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
-      const result = await nativeAdminDashboard();
+      const result = await nativeAdminLeads(filters?.search || '', filters?.status || '');
       let rows = (result.leads || []).filter((lead: any) => !lead.deleted_at);
-      if (filters?.status) rows = rows.filter((lead: any) => lead.status === filters.status);
       if (filters?.assignedTo) rows = rows.filter((lead: any) => lead.assigned_to === filters.assignedTo);
       if (filters?.source) rows = rows.filter((lead: any) => lead.source === filters.source);
-      if (filters?.search) { const needle=filters.search.toLowerCase(); rows=rows.filter((lead:any)=>[lead.first_name,lead.last_name,lead.email,lead.phone].some(value=>String(value||'').toLowerCase().includes(needle))); }
       return rows.map((lead:any)=>{
         const status=normalizePipelineStatus(lead);
         return {...lead,status,full_name:`${lead.first_name||''} ${lead.last_name||''}`.trim()||lead.email,vehicle_type:lead.vehicle_type||lead.metadata?.vehicle_type||null};
