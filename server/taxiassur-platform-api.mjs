@@ -1335,7 +1335,7 @@ async function adminBacklinksDashboard(req,res,origin,requestId){
   if(!await verifiedAdminSession(req))return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
   const [campaigns,opportunities,logs]=await Promise.all([recordsAll('backlink_campaigns'),recordsAll('backlink_opportunities'),recordsAll('backlink_outreach_log')]);
   const opportunityById=new Map(opportunities.map(x=>[String(x.id),x]));
-  return json(res,origin,200,{ok:true,campaigns:campaigns.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))),opportunities:opportunities.filter(x=>String(x.status||'new')==='new').sort((a,b)=>Number(b.quality_score||0)-Number(a.quality_score||0)),logs:logs.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))).slice(0,50).map(x=>({...x,backlink_opportunities:opportunityById.get(String(x.opportunity_id||x.backlink_opportunity_id))||null}))},requestId);
+  return json(res,origin,200,{ok:true,campaigns:campaigns.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))),opportunities:opportunities.sort((a,b)=>Number(b.quality_score||0)-Number(a.quality_score||0)),eligible_count:opportunities.filter(x=>String(x.status||'new')==='new').length,logs:logs.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))).slice(0,50).map(x=>({...x,backlink_opportunities:opportunityById.get(String(x.opportunity_id||x.backlink_opportunity_id))||null}))},requestId);
 }
 async function adminBacklinksPrepare(req,res,origin,requestId){
   const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);

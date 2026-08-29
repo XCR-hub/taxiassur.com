@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, Send, Eye, CheckCircle, XCircle, TrendingUp, Activity, BarChart3, Clock, Link2, Zap, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import Card from '../components/Card';
 import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
@@ -60,16 +60,8 @@ const BacklinkAutomationDashboard: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Charger les campagnes depuis backlink_campaigns
-      const { data: campaignsData, error: campaignsError } = await supabase
-        .from('backlink_campaigns')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (campaignsError) {
-        logger.error('Erreur chargement campagnes:', campaignsError);
-        throw campaignsError;
-      }
+      const response = await nativeAdminCall<{campaigns: Campaign[]; logs: Array<Record<string, any>>}>('/v1/admin/backlinks/dashboard');
+      const campaignsData = response.campaigns || [];
 
       if (campaignsData) {
         setCampaigns(campaignsData);
@@ -91,28 +83,7 @@ const BacklinkAutomationDashboard: React.FC = () => {
         });
       }
 
-      // Charger les logs récents
-      const { data: logsData, error: logsError } = await supabase
-        .from('backlink_outreach_log')
-        .select(`
-          id,
-          action_type,
-          recipient_email,
-          subject,
-          sentiment,
-          status,
-          created_at,
-          backlink_opportunities (
-            domain,
-            url
-          )
-        `)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (logsError) {
-        logger.error('Erreur chargement logs:', logsError);
-      }
+      const logsData = response.logs || [];
 
       if (logsData) {
         setLogs((logsData as Array<{ id?: string; status?: string; created_at?: string; backlink_opportunities?: { domain?: string; url?: string }; [key: string]: unknown }>).map((log) => ({
@@ -138,65 +109,12 @@ const BacklinkAutomationDashboard: React.FC = () => {
     }
 
     try {
-      // Vérifier les opportunités disponibles
-      const { data: opportunities, error: oppError } = await supabase
-        .from('backlink_opportunities')
-        .select('id, domain, contact_email, status')
-        .eq('status', 'new')
-        .order('quality_score', { ascending: false })
-        .limit(10);
-
-      if (oppError) {
-        logger.error('Erreur opportunités:', oppError);
-        toast.error(`❌ Erreur: ${oppError.message}`);
-        return;
-      }
-
-      if (!opportunities || opportunities.length === 0) {
-        toast.error('❌ Aucune opportunité disponible.\n\nExécutez d\'abord le SQL de correction pour créer 5 opportunités.');
-        return;
-      }
-
-      // Confirmer le lancement
-      const confirmed = confirm(
-        `🚀 Lancer l'automation pour ${opportunities.length} opportunité(s) ?\n\n` +
-        `Campagne: ${campaigns.find(c => c.id === selectedCampaign)?.name}\n` +
-        `Opportunités: ${opportunities.map(o => o.domain).join(', ')}\n\n` +
-        `Cliquez OK pour continuer.`
-      );
+      const confirmed = confirm(`Préparer jusqu'à 10 opportunités pour la campagne « ${campaigns.find(c => c.id === selectedCampaign)?.name || selectedCampaign} » ? Aucun email ne sera envoyé sans validation.`);
 
       if (!confirmed) return;
 
-      // Marquer les opportunités comme "contacted"
-      const { error: updateError } = await supabase
-        .from('backlink_opportunities')
-        .update({
-          status: 'contacted',
-          contacted_at: new Date().toISOString()
-        })
-        .in('id', opportunities.map(o => o.id));
-
-      if (updateError) {
-        logger.error('Erreur mise à jour:', updateError);
-      }
-
-      // Mettre à jour les stats de la campagne
-      const { error: campError } = await supabase
-        .from('backlink_campaigns')
-        .update({
-          sent_count: opportunities.length,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', selectedCampaign);
-
-      if (campError) {
-        logger.error('Erreur campagne:', campError);
-      }
-
-      toast.success(`✅ Automation lancée avec succès!\n\n` +
-        `${opportunities.length} opportunité(s) détectées\n` +
-        `Emails simulés: ${opportunities.length}\n\n` +
-        `Les opportunités sont maintenant marquées comme "contactées".`);
+      const result = await nativeAdminCall<{selected_count:number;email_sent:boolean}>('/v1/admin/backlinks/prepare',{method:'POST',body:JSON.stringify({campaign_id:selectedCampaign,limit:10})});
+      toast.success(`${result.selected_count} opportunité(s) préparée(s). Aucun email envoyé : validation humaine requise.`);
 
       // Recharger les données
       loadData();

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
 import {
@@ -8,7 +7,7 @@ import {
   Link2, Activity, Calendar, Filter, Download, RefreshCw, Home
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import Card from '../components/Card';
 import TestAutomationButton from './TestAutomationButton';
 
@@ -86,22 +85,9 @@ const BacklinkReports: React.FC = () => {
       const dateFrom = dateRange === 'all' ? '2020-01-01' :
         new Date(Date.now() - (dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90) * 86400000).toISOString();
 
-      // Charger toutes les opportunités
-      const { data: oppsData, error: oppsError } = await supabase
-        .from('backlink_opportunities')
-        .select('*')
-        .gte('created_at', dateFrom)
-        .order('created_at', { ascending: false });
-
-      if (oppsError) throw oppsError;
-
-      // Charger les logs d'outreach
-      const { data: logsData, error: logsError } = await supabase
-        .from('backlink_outreach_log')
-        .select('*')
-        .gte('created_at', dateFrom);
-
-      if (logsError) logger.error('Erreur logs:', logsError);
+      const response = await nativeAdminCall<{opportunities:OpportunityDetail[];logs:Array<Record<string,any>>}>('/v1/admin/backlinks/dashboard');
+      const oppsData = (response.opportunities || []).filter(item => String(item.created_at || '') >= dateFrom);
+      const logsData = (response.logs || []).filter(item => String(item.created_at || '') >= dateFrom);
 
       if (oppsData) {
         setOpportunities(oppsData);
@@ -230,27 +216,12 @@ const BacklinkReports: React.FC = () => {
             <div className="flex items-center gap-4">
               <button
                 onClick={async () => {
-                  if (!confirm('Envoyer 5 emails maintenant ?')) return;
+                  const campaignId = prompt('Identifiant de la campagne à préparer :');
+                  if (!campaignId) return;
                   setLoading(true);
                   try {
-                    const response = await fetch(
-                      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/backlink-auto-outreach`,
-                      {
-                        method: 'POST',
-                        headers: {
-                          'Authorization': (await internalFunctionHeaders()).Authorization,
-                          'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ maxEmailsPerRun: 5 })
-                      }
-                    );
-
-                    if (!response.ok) {
-                      throw new Error('Erreur envoi emails');
-                    }
-
-                    const result = await response.json();
-                    toast.success(`✅ ${result.emailsSent || 0} emails envoyés !`);
+                    const result = await nativeAdminCall<{selected_count:number}>('/v1/admin/backlinks/prepare',{method:'POST',body:JSON.stringify({campaign_id:campaignId,limit:5})});
+                    toast.success(`✅ ${result.selected_count || 0} opportunités préparées. Aucun email envoyé sans validation.`);
                     setTimeout(loadDetailedStats, 2000);
                   } catch (error) {
                     toast.error(`❌ Erreur: ${error.message}`);
@@ -262,7 +233,7 @@ const BacklinkReports: React.FC = () => {
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors"
               >
                 <Send size={18} />
-                Envoyer Emails
+                Préparer une campagne
               </button>
               <button
                 onClick={exportToCSV}
@@ -298,7 +269,7 @@ const BacklinkReports: React.FC = () => {
                     {opportunities.filter(o => o.status === 'pending' && o.contact_email).length} emails prêts à envoyer
                   </h3>
                   <p className="text-sm text-blue-700">
-                    Cliquez sur le bouton "Envoyer Emails" ci-dessus pour lancer la campagne d'outreach.
+                    Utilisez « Préparer une campagne » pour sélectionner les opportunités avant validation humaine.
                     Les emails seront envoyés aux sites scrapés avec un message personnalisé.
                   </p>
                 </div>

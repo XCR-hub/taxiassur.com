@@ -166,6 +166,7 @@ const SEOOpportunitiesDashboard = lazy(() => import('./backoffice/SEOOpportuniti
 const BacklinkManager = lazy(() => import('./backoffice/BacklinkManager'));
 const BacklinkProspector = lazy(() => import('./backoffice/BacklinkProspector'));
 const BacklinkAutomationDashboard = lazy(() => import('./backoffice/BacklinkAutomationDashboard'));
+const BacklinkReports = lazy(() => import('./backoffice/BacklinkReports'));
 const OutreachComposer = lazy(() => import('./backoffice/OutreachComposer'));
 const MarketingTemplates = lazy(() => import('./backoffice/MarketingTemplates'));
 const QRCodeGenerator = lazy(() => import('./backoffice/QRCodeGenerator'));
@@ -767,6 +768,7 @@ export const router = createBrowserRouter([
       { path: 'ga4-seo', element: <GA4SEODashboard /> },
       { path: 'seo-opportunities', element: <SEOOpportunitiesDashboard /> },
       { path: 'backlinks', element: <BacklinkManager /> },
+      { path: 'backlink-reports', element: <BacklinkReports /> },
       { path: 'backlink-prospector', element: <BacklinkProspector /> },
       { path: 'outreach', element: <OutreachComposer /> },
 
