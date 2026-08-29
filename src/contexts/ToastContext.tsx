@@ -61,10 +61,10 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const getStyles = (type: ToastType) => {
     switch (type) {
-      case 'success': return 'bg-green-50 text-green-800 border-green-200';
-      case 'error': return 'bg-red-50 text-red-800 border-red-200';
-      case 'warning': return 'bg-yellow-50 text-yellow-800 border-yellow-200';
-      default: return 'bg-blue-50 text-blue-800 border-blue-200';
+      case 'success': return 'bg-emerald-600 !text-white border-emerald-300';
+      case 'error': return 'bg-red-600 !text-white border-red-300';
+      case 'warning': return 'bg-amber-400 !text-gray-950 border-amber-200';
+      default: return 'bg-blue-600 !text-white border-blue-300';
     }
   };
 
@@ -78,7 +78,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             className={`flex items-center gap-3 p-4 rounded-lg border shadow-lg animate-slide-in ${getStyles(toast.type)}`}
           >
             {getIcon(toast.type)}
-            <p className="flex-1 text-sm font-medium">{toast.message}</p>
+            <p className="flex-1 text-sm font-medium whitespace-pre-line">{toast.message}</p>
             <button
               onClick={() => hideToast(toast.id)}
               className="p-1 hover:bg-white/50 rounded transition-colors"
