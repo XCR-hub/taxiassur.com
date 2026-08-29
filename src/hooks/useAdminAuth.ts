@@ -71,6 +71,8 @@ export function useAdminAuth() {
 
   useEffect(() => {
     let mounted = true;
+    const cachedUser = state.user;
+    const cachedPermissions = state.permissions;
     if (globalAuthState?.isAuthenticated) {
       setState(globalAuthState);
       return () => { mounted = false; };
@@ -88,17 +90,20 @@ export function useAdminAuth() {
       .catch((error: Error & { status?: number }) => {
         if (!mounted) return;
         const rejected = error.status === 401 || error.message === 'invalid_session';
-        if (rejected || !state.user) {
+        if (rejected || !cachedUser) {
           clearLocalAuth();
           updateState({ user: null, permissions: [], loading: false, isAuthenticated: false });
           return;
         }
         logger.warn('Validation de session temporairement indisponible; session locale conservée.', error);
-        updateState({ ...state, loading: false, isAuthenticated: true });
+        updateState({ user: cachedUser, permissions: cachedPermissions, loading: false, isAuthenticated: true });
       });
 
     return () => { mounted = false; };
-  }, [state, updateState]);
+    // Do not depend on state: a rejected session updates state and would start
+    // another request immediately, eventually rate-limiting the back-office.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [updateState]);
 
   const signOut = useCallback(async () => {
     try {
