@@ -67,6 +67,9 @@
 /blog/assurance-taxi-senior-guide-complet-2025 /blog 301
 /blog/assurance-taxi-courbevoie-2025 /blog 301
 
+# Compatibility for a stale PWA chunk still referenced by older backoffice tabs
+/assets/backoffice-seo-tools-BDxLGk1i.js /assets/backoffice-seo-tools-BUzFrjSi.js 302
+
 # Technical city slugs created by old automation
 /assurance-taxi-ville-:id /villes 301
 /ville-:id /villes 301
@@ -80,9 +83,6 @@
 
 # Legacy PHP API disabled on static hosts
 /api/* /api-disabled.json 200
-
-# Compatibility for a stale PWA chunk still referenced by older backoffice tabs
-/assets/backoffice-seo-tools-BDxLGk1i.js /assets/backoffice-seo-tools-BUzFrjSi.js 302
 
 # React/Vite SPA fallback - must stay last
 /* /index.html 200

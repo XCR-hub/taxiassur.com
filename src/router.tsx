@@ -157,7 +157,9 @@ const NewsManager = lazy(() => import('./backoffice/NewsManager'));
 const PopupManager = lazy(() => import('./backoffice/PopupManager'));
 const CityPageGenerator = lazy(() => import('./backoffice/CityPageGenerator'));
 const TrendAnalyzer = lazy(() => import('./backoffice/TrendAnalyzer'));
-const SeoTools = lazy(() => import('./backoffice/SeoTools'));
+// Keep an explicit revision on this lazy boundary so browsers and the CDN do
+// not reuse the broken SEO chunk that was previously cached as immutable.
+const SeoTools = lazy(() => import('./backoffice/SeoTools?rev=20260829'));
 const SEOStrategyDashboard = lazy(() => import('./backoffice/SEOStrategyDashboard'));
 const GSCOptimizationDashboard = lazy(() => import('./backoffice/GSCOptimizationDashboard'));
 const GSCAutonomousDashboard = lazy(() => import('./backoffice/GSCAutonomousDashboard'));
