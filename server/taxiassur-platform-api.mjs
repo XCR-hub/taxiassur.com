@@ -1062,16 +1062,22 @@ async function adminLeadsList(req, res, origin, requestId, url) {
   if (!await verifiedAdminSession(req)) return json(res, origin, 401, { ok: false, error: 'invalid_session' }, requestId);
   const search = String(url.searchParams.get('search') || '').trim().toLowerCase().slice(0, 120);
   const status = String(url.searchParams.get('status') || '').trim().slice(0, 80);
+  const page = Math.max(1, Math.min(100, Number.parseInt(String(url.searchParams.get('page') || '1'), 10) || 1));
+  const pageSize = Math.max(50, Math.min(500, Number.parseInt(String(url.searchParams.get('page_size') || '500'), 10) || 500));
+  const offset = (page - 1) * pageSize;
   const filters = [`COALESCE(data->>'deleted_at','')=''`];
   if (status) filters.push(`COALESCE(data->>'status',data->>'pipeline_stage')=${quoteLiteral(status)}`);
   if (search) filters.push(`lower(concat_ws(' ',data->>'first_name',data->>'last_name',data->>'email',data->>'phone')) LIKE ${quoteLiteral(`%${search}%`)}`);
-  const leads = parseJsonLine(await runPsql(`SELECT COALESCE(jsonb_agg(data ORDER BY COALESCE(data->>'updated_at',data->>'created_at','') DESC),'[]'::jsonb)::text FROM (
+  const result = parseJsonLine(await runPsql(`WITH lead_sources AS (
     SELECT data FROM taxiassur.records WHERE collection='crm_leads'
     UNION ALL
     SELECT legacy.data FROM supabase_rest.crm_leads legacy
     WHERE NOT EXISTS (SELECT 1 FROM taxiassur.records native WHERE native.collection='crm_leads' AND native.record_id=legacy.data->>'id')
-  ) lead_sources WHERE ${filters.join(' AND ')};`)) || [];
-  return json(res, origin, 200, { ok: true, leads }, requestId);
+  ), filtered AS (SELECT data FROM lead_sources WHERE ${filters.join(' AND ')}), page_rows AS (
+    SELECT data FROM filtered ORDER BY COALESCE(data->>'updated_at',data->>'created_at','') DESC LIMIT ${pageSize} OFFSET ${offset}
+  ) SELECT jsonb_build_object('leads',COALESCE((SELECT jsonb_agg(data) FROM page_rows),'[]'::jsonb),'total',(SELECT count(*) FROM filtered))::text;`)) || {};
+  const total = Number(result.total || 0);
+  return json(res, origin, 200, { ok: true, leads: result.leads || [], total, page, page_size: pageSize, has_more: offset + pageSize < total }, requestId);
 }
 const defaultCrmSettings={company_name:'TaxiAssur',primary_email:'team@taxiassur.com',timezone:'Europe/Paris',auto_assign_leads:true,ai_auto_decisions:true,ai_autonomy_level:'semi-automatic',ai_confidence_threshold:80,ai_agents:{lead_scorer:true,email_composer:true,negotiation_assistant:true,risk_analyzer:true,churn_predictor:true,cross_sell_recommender:true,sentiment_analyzer:false,response_generator:true},notifications:{new_leads:true,ai_decisions:true,churn_alerts:true,missing_documents:true}};
 async function adminInsuranceCompanies(req,res,origin,requestId){const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);if(req.method==='GET'){const [companies,documents]=await Promise.all([recordsAll('insurance_companies'),recordsAll('company_documents')]);companies.sort((a,b)=>Number(a.priority_order||0)-Number(b.priority_order||0)||String(a.name||'').localeCompare(String(b.name||'')));return json(res,origin,200,{ok:true,companies,documents},requestId);}if(session.role!=='master')return json(res,origin,403,{ok:false,error:'master_required'},requestId);const body=await readJsonBody(req),id=randomUUID(),now=new Date().toISOString(),record=sanitizeInsuranceCompany(body,id,now);await runPsql(`INSERT INTO taxiassur.records(collection,record_id,data,origin)VALUES('insurance_companies',${quoteLiteral(id)},${quoteLiteral(JSON.stringify(record))}::jsonb,'admin');`);return json(res,origin,201,{ok:true,company:record},requestId);}
