@@ -38,8 +38,8 @@ class ErrorBoundary extends Component<Props, State> {
       console.error('React Error #300: Rendered more hooks than previous render');
       console.error('This usually means hooks are called conditionally or in different order');
       console.error('Component stack:', errorInfo.componentStack);
-      // Reload la page pour récupérer l'état propre
-      setTimeout(() => window.location.reload(), 1000);
+      // Keep the error fallback visible. Automatic reloads can create an
+      // endless loop when the underlying render error is persistent.
     }
   }
 

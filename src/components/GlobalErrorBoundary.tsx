@@ -34,16 +34,8 @@ class GlobalErrorBoundary extends Component<Props, State> {
       errorInfo,
     });
 
-    // React Error #300: Rendered more hooks - auto-recover
-    if (error.message.includes('Minified React error #300') ||
-        error.message.includes('Rendered more hooks') ||
-        error.message.includes('Rendered fewer hooks')) {
-      console.error('[GlobalErrorBoundary] Hook rendering error detected - auto-reloading in 1s');
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-      return;
-    }
+    // Never reload automatically here. A persistent render error would turn
+    // the back-office into a reload loop and prevent the user from signing in.
 
     if (typeof window !== 'undefined' && (window as any).gtag) {
       (window as any).gtag('event', 'exception', {

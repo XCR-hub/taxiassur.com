@@ -20,7 +20,8 @@ window.addEventListener('unhandledrejection', (event) => {
     window.location.replace(url.toString());
   })();
 });
-window.setTimeout(() => sessionStorage.removeItem(CHUNK_RECOVERY_KEY), 15_000);
+// Keep the marker for the lifetime of the tab. If recovery did not fix the
+// stale chunk, another automatic reload would only create an endless loop.
 
 // Redirect auth hash fragments to the set-password page before React mounts
 // Supabase redirects to the root with #access_token when redirectTo is not in allowed list
