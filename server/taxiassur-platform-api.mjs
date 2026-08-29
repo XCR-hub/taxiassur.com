@@ -635,15 +635,7 @@ async function resetAdminPassword(req, res, origin, requestId) {
 async function adminDashboard(req, res, origin, requestId) {
   if (!await verifiedAdminSession(req)) return json(res, origin, 401, { ok: false, error: 'invalid_session' }, requestId);
   const sql = `SELECT json_build_object(
-    'leads',COALESCE((SELECT jsonb_agg(data ORDER BY COALESCE(data->>'created_at','') DESC) FROM (
-      SELECT data FROM taxiassur.records WHERE collection='crm_leads'
-      UNION ALL
-      SELECT mirror.data FROM supabase_rest.crm_leads mirror
-      WHERE NOT EXISTS (
-        SELECT 1 FROM taxiassur.records native
-        WHERE native.collection='crm_leads' AND native.record_id=mirror.data->>'id'
-      )
-    ) q),'[]'::jsonb),
+    'leads',COALESCE((SELECT jsonb_agg(data ORDER BY COALESCE(data->>'created_at','') DESC) FROM taxiassur.records WHERE collection='crm_leads' AND COALESCE(data->>'deleted_at','')=''),'[]'::jsonb),
     'ai_decisions',COALESCE((SELECT jsonb_agg(data ORDER BY COALESCE(data->>'created_at','') DESC) FROM (SELECT data FROM taxiassur.records WHERE collection='ai_decisions' ORDER BY COALESCE(data->>'created_at','') DESC LIMIT 5) q),'[]'::jsonb),
     'unread_messages',(SELECT count(*) FROM taxiassur.records WHERE collection='email_messages' AND COALESCE(data->>'is_read','false')='false'),
     'critical_alerts',(SELECT count(*) FROM taxiassur.records WHERE collection='crm_retention_alerts' AND data->>'alert_type'='churn_risk'),
@@ -660,11 +652,7 @@ async function adminDashboard(req, res, origin, requestId) {
       'total_blog_posts',(SELECT count(*) FROM taxiassur.records WHERE collection='blog_posts'),
       'total_news',(SELECT count(*) FROM taxiassur.records WHERE collection='news_articles'),
       'total_faqs',(SELECT count(*) FROM taxiassur.records WHERE collection='faqs'),
-      'total_leads',(SELECT count(*) FROM (
-        SELECT record_id FROM taxiassur.records WHERE collection='crm_leads'
-        UNION
-        SELECT data->>'id' FROM supabase_rest.crm_leads
-      ) all_leads),
+      'total_leads',(SELECT count(*) FROM taxiassur.records WHERE collection='crm_leads' AND COALESCE(data->>'deleted_at','')=''),
       'new_leads_today',(SELECT count(*) FROM taxiassur.records WHERE collection='crm_leads' AND left(COALESCE(data->>'created_at',''),10)=to_char(now(),'YYYY-MM-DD')),
       'new_leads_week',(SELECT count(*) FROM taxiassur.records WHERE collection='crm_leads' AND left(COALESCE(data->>'created_at',''),10)>=to_char(now()::date-7,'YYYY-MM-DD')),
       'leads_by_status',COALESCE((SELECT jsonb_object_agg(status,total) FROM (SELECT COALESCE(NULLIF(data->>'status',''),'inconnu') status,count(*) total FROM taxiassur.records WHERE collection='crm_leads' GROUP BY 1) s),'{}'::jsonb),
