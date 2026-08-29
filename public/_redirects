@@ -69,7 +69,6 @@
 
 # Compatibility for a stale PWA chunk still referenced by older backoffice tabs
 /assets/backoffice-seo-tools-BDxLGk1i.js /assets/backoffice-seo-tools-DwQ-4z2x.js 302
-/assets/SubtleConversionHelper-DJ8zE9G0.js /assets/SubtleConversionHelper-CD_JmQfd.js 302
 
 # Technical city slugs created by old automation
 /assurance-taxi-ville-:id /villes 301
