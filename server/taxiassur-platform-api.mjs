@@ -1057,7 +1057,7 @@ async function adminLeadsList(req, res, origin, requestId, url) {
   if (status) filters.push(`COALESCE(data->>'status',data->>'pipeline_stage')=${quoteLiteral(status)}`);
   if (search) filters.push(`lower(concat_ws(' ',data->>'first_name',data->>'last_name',data->>'email',data->>'phone')) LIKE ${quoteLiteral(`%${search}%`)}`);
   const result = parseJsonLine(await runPsql(`WITH filtered AS (
-    SELECT data FROM taxiassur.records WHERE collection='crm_leads' AND ${filters.join(' AND ')}
+    SELECT data || jsonb_build_object('id',record_id) AS data FROM taxiassur.records WHERE collection='crm_leads' AND ${filters.join(' AND ')}
   ), page_rows AS (
     SELECT data FROM filtered ORDER BY COALESCE(data->>'updated_at',data->>'created_at','') DESC LIMIT ${pageSize} OFFSET ${offset}
   ) SELECT jsonb_build_object('leads',COALESCE((SELECT jsonb_agg(data) FROM page_rows),'[]'::jsonb),'total',(SELECT count(*) FROM filtered))::text;`)) || {};
