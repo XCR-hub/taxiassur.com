@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { nativeAdminCall, nativeAdminLead } from '@/lib/native-admin-data';
+import { nativeAdminCall, nativeAdminLead, nativeAdminUploadQuoteDocument } from '@/lib/native-admin-data';
 import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 import { Upload, CheckCircle2, X, FileText, Send, Loader2, Building2, AlertCircle, Plus, CheckCheck, Mail } from 'lucide-react';
 import { toast } from '@/lib/toast';
@@ -131,6 +131,23 @@ export default function SaisieDevisStep({
     setUploading(companyId);
 
     try {
+      const workspace = await nativeAdminCall<{ workspace?: { quotes?: Quote[] } }>(
+        `/v1/admin/leads/${encodeURIComponent(leadId)}/quotes-workspace`,
+      );
+      const nativeQuote = (workspace.workspace?.quotes || []).find(
+        (row) => String(row.company_id) === String(companyId),
+      );
+      if (!nativeQuote?.id) throw new Error('Devis compagnie introuvable');
+      await nativeAdminUploadQuoteDocument(leadId, nativeQuote.id, file);
+      const nativeCompany = companies.find((company) => company.id === companyId);
+      await nativeAdminCall(
+        `/v1/admin/leads/${encodeURIComponent(leadId)}/quotes/${encodeURIComponent(nativeQuote.id)}/email`,
+        { method: 'POST', body: '{}' },
+      ).catch((emailError) => console.warn('Quote uploaded; email queue unavailable:', emailError));
+      toast.success(`Devis ${nativeCompany?.name || ''} uploadé avec succès !`);
+      await loadQuotes();
+      return;
+
       // Upload file to storage
       const safeName = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.\-]+/g, '_').replace(/_+/g, '_');
       const fileName = `${leadId}/${companyId}/${Date.now()}_${safeName}`;

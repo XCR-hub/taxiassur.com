@@ -193,8 +193,8 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/v1/admin/retention' && ['GET','PATCH'].includes(req.method)) return await adminRetention(req, res, origin, requestId);
     if (req.method === 'GET' && url.pathname === '/v1/admin/commercial/notifications') return await adminCommercialNotifications(req, res, origin, requestId);
     if (req.method === 'POST' && url.pathname === '/v1/admin/commercial/ai-assistant') return await adminCommercialAiAssistant(req, res, origin, requestId);
-    const commercialEmailMatch=url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/commercial-email$/i);
-    if(commercialEmailMatch&&req.method==='POST')return await adminLeadCommercialEmail(req,res,origin,requestId,commercialEmailMatch[1]);
+    const commercialEmailMatch=url.pathname.match(/^\/v1\/admin\/leads\/([^/]{1,200})\/commercial-email$/i);
+    if(commercialEmailMatch&&req.method==='POST')return await adminLeadCommercialEmail(req,res,origin,requestId,decodeURIComponent(commercialEmailMatch[1]));
     const commercialSuggestionMatch=url.pathname.match(/^\/v1\/admin\/commercial\/suggestions\/([^/]+)$/i);
     if(commercialSuggestionMatch&&req.method==='PATCH')return await adminCommercialSuggestion(req,res,origin,requestId,commercialSuggestionMatch[1]);
     if (url.pathname === '/v1/admin/inbox' && ['GET','PATCH'].includes(req.method)) return await adminInbox(req, res, origin, requestId, url);
@@ -233,18 +233,19 @@ const server = createServer(async (req, res) => {
     if (adminDocumentCollectionMatch && ['GET','POST'].includes(req.method)) return await adminDocumentCollection(req, res, origin, requestId, adminDocumentCollectionMatch[1]);
     const adminDocumentWorkspaceMatch = url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/document-workspace$/i);
     if (adminDocumentWorkspaceMatch && ['GET','POST'].includes(req.method)) return await adminDocumentWorkspace(req, res, origin, requestId, adminDocumentWorkspaceMatch[1]);
-    const adminDocumentWorkspaceUploadMatch = url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/document-workspace\/upload$/i);
-    if (adminDocumentWorkspaceUploadMatch && req.method === 'POST') return await adminDocumentWorkspaceUpload(req, res, origin, requestId, adminDocumentWorkspaceUploadMatch[1]);
-    const adminLeadContractUploadMatch = url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/contract-documents$/i);
-    if (adminLeadContractUploadMatch && req.method === 'POST') return await uploadAdminContractDocument(req, res, origin, requestId, adminLeadContractUploadMatch[1]);
-    const adminLeadRibsMatch = url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/ribs(?:\/([0-9a-f-]{36}))?(?:\/(download))?$/i);
+    const adminDocumentWorkspaceUploadMatch = url.pathname.match(/^\/v1\/admin\/leads\/([^/]{1,200})\/document-workspace\/upload$/i);
+    if (adminDocumentWorkspaceUploadMatch && req.method === 'POST') return await adminDocumentWorkspaceUpload(req, res, origin, requestId, decodeURIComponent(adminDocumentWorkspaceUploadMatch[1]));
+    const adminLeadContractUploadMatch = url.pathname.match(/^\/v1\/admin\/leads\/([^/]{1,200})\/contract-documents$/i);
+    if (adminLeadContractUploadMatch && req.method === 'POST') return await uploadAdminContractDocument(req, res, origin, requestId, decodeURIComponent(adminLeadContractUploadMatch[1]));
+    const adminLeadRibsMatch = url.pathname.match(/^\/v1\/admin\/leads\/([^/]{1,200})\/ribs(?:\/([0-9a-f-]{36}))?(?:\/(download))?$/i);
+    if (adminLeadRibsMatch) adminLeadRibsMatch[1] = decodeURIComponent(adminLeadRibsMatch[1]);
     if (adminLeadRibsMatch && req.method === 'GET' && !adminLeadRibsMatch[2]) return await adminLeadRibsList(req, res, origin, requestId, adminLeadRibsMatch[1]);
     if (adminLeadRibsMatch && req.method === 'POST' && !adminLeadRibsMatch[2]) return await adminLeadRibUpload(req, res, origin, requestId, adminLeadRibsMatch[1]);
     if (adminLeadRibsMatch && req.method === 'PATCH' && adminLeadRibsMatch[2]) return await adminLeadRibPatch(req, res, origin, requestId, adminLeadRibsMatch[1], adminLeadRibsMatch[2]);
     if (adminLeadRibsMatch && req.method === 'DELETE' && adminLeadRibsMatch[2]) return await adminLeadRibDelete(req, res, origin, requestId, adminLeadRibsMatch[1], adminLeadRibsMatch[2]);
     if (adminLeadRibsMatch && req.method === 'GET' && adminLeadRibsMatch[2] && adminLeadRibsMatch[3] === 'download') return await adminLeadRibDownload(req, res, origin, requestId, adminLeadRibsMatch[1], adminLeadRibsMatch[2]);
-    const adminLeadRibEmailMatch = url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/ribs\/email-request$/i);
-    if (adminLeadRibEmailMatch && req.method === 'POST') return await adminLeadRibEmailRequest(req, res, origin, requestId, adminLeadRibEmailMatch[1]);
+    const adminLeadRibEmailMatch = url.pathname.match(/^\/v1\/admin\/leads\/([^/]{1,200})\/ribs\/email-request$/i);
+    if (adminLeadRibEmailMatch && req.method === 'POST') return await adminLeadRibEmailRequest(req, res, origin, requestId, decodeURIComponent(adminLeadRibEmailMatch[1]));
     // Restored PostgreSQL records can use historical non-UUID record_id values.
     // This exact detail route accepts one encoded path segment; SQL quoting and
     // authenticated access remain enforced by adminLeadGet/adminLeadPatch.
@@ -255,22 +256,23 @@ const server = createServer(async (req, res) => {
     if (adminLeadAccessEmailMatch && req.method === 'POST') return await adminLeadAccessEmail(req, res, origin, requestId, adminLeadAccessEmailMatch[1]);
     const adminInsurerDossierMatch=url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/insurer-dossier$/i);
     if(adminInsurerDossierMatch&&['GET','POST','PATCH'].includes(req.method))return await adminInsurerDossier(req,res,origin,requestId,adminInsurerDossierMatch[1]);
-    const adminLeadQuoteSignatureMatch=url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/quote-signature$/i);
-    if(adminLeadQuoteSignatureMatch&&['GET','PATCH'].includes(req.method))return await adminLeadQuoteSignature(req,res,origin,requestId,adminLeadQuoteSignatureMatch[1]);
+    const adminLeadQuoteSignatureMatch=url.pathname.match(/^\/v1\/admin\/leads\/([^/]{1,200})\/quote-signature$/i);
+    if(adminLeadQuoteSignatureMatch&&['GET','PATCH'].includes(req.method))return await adminLeadQuoteSignature(req,res,origin,requestId,decodeURIComponent(adminLeadQuoteSignatureMatch[1]));
     const adminLeadTimelineMatch=url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/timeline$/i);
     if(adminLeadTimelineMatch&&['GET','POST'].includes(req.method))return await adminLeadTimeline(req,res,origin,requestId,adminLeadTimelineMatch[1]);
     const adminLeadSmsMatch=url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/sms$/i);
     if(adminLeadSmsMatch&&['GET','POST'].includes(req.method))return await adminLeadSms(req,res,origin,requestId,adminLeadSmsMatch[1]);
-    const adminLeadQuotesWorkspaceMatch = url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/quotes-workspace$/i);
-    if (adminLeadQuotesWorkspaceMatch && req.method === 'GET') return await adminLeadQuotesWorkspace(req, res, origin, requestId, adminLeadQuotesWorkspaceMatch[1]);
-    const adminLeadQuoteMatch = url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/quotes\/([0-9a-f-]{36})$/i);
-    if (adminLeadQuoteMatch && req.method === 'PATCH') return await adminLeadQuotePatch(req, res, origin, requestId, adminLeadQuoteMatch[1], adminLeadQuoteMatch[2]);
-    const adminLeadQuoteDocumentMatch=url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/quotes\/([0-9a-f-]{36})\/document$/i);
+    const adminLeadQuotesWorkspaceMatch = url.pathname.match(/^\/v1\/admin\/leads\/([^/]{1,200})\/quotes-workspace$/i);
+    if (adminLeadQuotesWorkspaceMatch && req.method === 'GET') return await adminLeadQuotesWorkspace(req, res, origin, requestId, decodeURIComponent(adminLeadQuotesWorkspaceMatch[1]));
+    const adminLeadQuoteMatch = url.pathname.match(/^\/v1\/admin\/leads\/([^/]{1,200})\/quotes\/([0-9a-f-]{36})$/i);
+    if (adminLeadQuoteMatch && req.method === 'PATCH') return await adminLeadQuotePatch(req, res, origin, requestId, decodeURIComponent(adminLeadQuoteMatch[1]), adminLeadQuoteMatch[2]);
+    const adminLeadQuoteDocumentMatch=url.pathname.match(/^\/v1\/admin\/leads\/([^/]{1,200})\/quotes\/([0-9a-f-]{36})\/document$/i);
+    if(adminLeadQuoteDocumentMatch)adminLeadQuoteDocumentMatch[1]=decodeURIComponent(adminLeadQuoteDocumentMatch[1]);
     if(adminLeadQuoteDocumentMatch&&req.method==='POST')return await adminLeadQuoteDocumentUpload(req,res,origin,requestId,adminLeadQuoteDocumentMatch[1],adminLeadQuoteDocumentMatch[2]);
     if(adminLeadQuoteDocumentMatch&&req.method==='GET')return await adminLeadQuoteDocumentDownload(req,res,origin,requestId,adminLeadQuoteDocumentMatch[1],adminLeadQuoteDocumentMatch[2]);
     if(adminLeadQuoteDocumentMatch&&req.method==='DELETE')return await adminLeadQuoteDocumentDelete(req,res,origin,requestId,adminLeadQuoteDocumentMatch[1],adminLeadQuoteDocumentMatch[2]);
-    const adminLeadQuoteEmailMatch=url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/quotes\/([0-9a-f-]{36})\/email$/i);
-    if(adminLeadQuoteEmailMatch&&req.method==='POST')return await adminLeadQuoteEmail(req,res,origin,requestId,adminLeadQuoteEmailMatch[1],adminLeadQuoteEmailMatch[2]);
+    const adminLeadQuoteEmailMatch=url.pathname.match(/^\/v1\/admin\/leads\/([^/]{1,200})\/quotes\/([0-9a-f-]{36})\/email$/i);
+    if(adminLeadQuoteEmailMatch&&req.method==='POST')return await adminLeadQuoteEmail(req,res,origin,requestId,decodeURIComponent(adminLeadQuoteEmailMatch[1]),adminLeadQuoteEmailMatch[2]);
     if (adminLeadMatch && req.method === 'GET') return await adminLeadGet(req, res, origin, requestId, decodeURIComponent(adminLeadMatch[1]));
     if (adminLeadMatch && req.method === 'PATCH') return await adminLeadPatch(req, res, origin, requestId, decodeURIComponent(adminLeadMatch[1]));
     if (adminLeadMatch && req.method === 'DELETE') return await adminLeadDelete(req, res, origin, requestId, decodeURIComponent(adminLeadMatch[1]));
@@ -1705,7 +1707,7 @@ async function adminPaymentsList(req,res,origin,requestId,url){
 }
 async function adminPaymentCreate(req,res,origin,requestId){
   const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);const body=await readJsonBody(req),amount=Number(body.amount),leadId=String(body.lead_id||body.leadId||'').trim(),requestKey=String(body.request_id||body.requestId||'').trim();
-  if(!Number.isFinite(amount)||amount<.5||amount>999999.99||leadId&&!uuidPattern.test(leadId))return json(res,origin,400,{ok:false,error:'invalid_payment'},requestId);
+  if(!Number.isFinite(amount)||amount<.5||amount>999999.99||leadId.length>200)return json(res,origin,400,{ok:false,error:'invalid_payment'},requestId);
   if(requestKey&&uuidPattern.test(requestKey)){const existing=parseJsonLine(await runPsql(`SELECT data::text FROM taxiassur.records WHERE collection='monetico_payments' AND data->>'request_id'=${quoteLiteral(requestKey)} LIMIT 1;`));if(existing)return json(res,origin,200,{ok:true,payment:existing,reference:existing.reference,paymentAccessToken:existing.payment_access_token,idempotent:true},requestId);}
   const lead=leadId?parseJsonLine(await runPsql(`SELECT data::text FROM taxiassur.records WHERE collection='crm_leads' AND record_id=${quoteLiteral(leadId)} LIMIT 1;`)):null;if(leadId&&!lead)return json(res,origin,404,{ok:false,error:'lead_not_found'},requestId);
   const email=String(lead?.email||body.customer_email||body.customerEmail||'').trim().toLowerCase(),first=String(lead?.first_name||body.customer_first_name||body.customerFirstName||'').trim(),last=String(lead?.last_name||body.customer_last_name||body.customerLastName||'').trim();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!first||!last)return json(res,origin,400,{ok:false,error:'invalid_customer'},requestId);
@@ -2075,7 +2077,7 @@ async function downloadProspectCompanyDocument(req, res, origin, requestId, docu
 }
 
 async function leadByToken(token) {
-  const sql = `SELECT data::text FROM taxiassur.records WHERE collection = 'crm_leads' AND data ->> 'access_token' = ${quoteLiteral(token)} AND COALESCE(data ->> 'deleted_at', '') = '' LIMIT 1;`;
+  const sql = `SELECT (data || jsonb_build_object('id', record_id))::text FROM taxiassur.records WHERE collection = 'crm_leads' AND data ->> 'access_token' = ${quoteLiteral(token)} AND COALESCE(data ->> 'deleted_at', '') = '' LIMIT 1;`;
   return parseJsonLine(await runPsql(sql));
 }
 

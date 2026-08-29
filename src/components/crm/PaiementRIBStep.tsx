@@ -4,6 +4,7 @@ import { Upload, CheckCircle2, X, FileText, Loader2, AlertCircle, CreditCard, Ma
 import { MoneticoPaymentManager } from './MoneticoPaymentManager';
 import { toast } from '@/lib/toast';
 import { getSecureDocumentUrl } from '@/lib/secure-document-url';
+import { nativeAdminCall, nativeAdminUploadRib } from '@/lib/native-admin-data';
 
 interface PaiementRIBStepProps {
   leadId: string;
@@ -52,6 +53,11 @@ export default function PaiementRIBStep({
 
   async function loadRibs() {
     try {
+      const native = await nativeAdminCall<{ ribs?: RIBUpload[] }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/ribs`);
+      const nativeRibs = native.ribs || [];
+      setRibs(nativeRibs);
+      if (nativeRibs.some(rib => rib.validation_status === 'validated')) onComplete?.();
+      return;
       const { data, error } = await supabase
         .from('lead_rib_uploads')
         .select('*')
@@ -118,6 +124,10 @@ export default function PaiementRIBStep({
     setUploading(true);
 
     try {
+      await nativeAdminUploadRib(leadId, file);
+      toast.success('RIB uploadé avec succès !');
+      await loadRibs();
+      return;
       // Upload to storage
       const safeName = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.-]+/g, '_').replace(/_+/g, '_');
       const fileName = `${leadId}/${Date.now()}_${safeName}`;
@@ -172,6 +182,14 @@ export default function PaiementRIBStep({
         payload.bank_name = bankName || null;
       }
 
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/ribs/${encodeURIComponent(ribId)}`, { method: 'PATCH', body: JSON.stringify(payload) });
+      toast.success(validated ? 'RIB validé !' : 'RIB rejeté');
+      setSelectedRib(null);
+      setIban(''); setBic(''); setAccountHolder(''); setBankName('');
+      await loadRibs();
+      if (validated) onComplete?.();
+      return;
+
       const { error } = await supabase
         .from('lead_rib_uploads')
         .update(payload)
@@ -202,6 +220,10 @@ export default function PaiementRIBStep({
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce RIB ?')) return;
 
     try {
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/ribs/${encodeURIComponent(ribId)}`, { method: 'DELETE' });
+      toast.success('RIB supprimé');
+      await loadRibs();
+      return;
       await supabase.storage.from('lead-rib').remove([filePath]);
 
       const { error } = await supabase
@@ -241,6 +263,10 @@ export default function PaiementRIBStep({
     setSendingEmail(true);
 
     try {
+      const native = await nativeAdminCall<{ ok: boolean; email_queued?: boolean }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/ribs/email-request`, { method: 'POST', body: '{}' });
+      if (!native.ok || !native.email_queued) throw new Error('Envoi impossible');
+      toast.success(`Demande de RIB mise en file d’envoi à ${leadEmail}.`);
+      return;
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         throw new Error('Votre session a expiré. Reconnectez-vous avant d’envoyer la demande.');

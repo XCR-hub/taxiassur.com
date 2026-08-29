@@ -5,6 +5,7 @@ import { downloadDocument, openDocument } from '../../lib/document-utils';
 import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, XCircle, Check, Upload, GripVertical, Mail, ChevronDown, Eye, ArrowRightLeft, Trash2 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { getRequiredDocuments } from '@/lib/document-requirements';
+import { nativeAdminUploadLeadDocument } from '@/lib/native-admin-data';
 
 interface DocumentValidationCompleteProps {
   caseId: string;
@@ -684,35 +685,7 @@ export default function DocumentValidationComplete({
         customLabel = docType.replace('custom_', '');
       }
 
-      const safeName = file.name
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^\w.-]+/g, '_')
-        .replace(/_+/g, '_');
-      const filePath = `${caseId}/${finalDocType}/${Date.now()}_${safeName}`;
-
-      const { data: uploadData, error: uploadError } = await supabase
-        .storage
-        .from('crm-documents')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { error: insertError } = await supabase
-        .from('crm_lead_documents')
-        .insert({
-          lead_id: caseId,
-          document_type: finalDocType,
-          file_name: file.name,
-          file_path: uploadData.path,
-          bucket: 'crm-documents',
-          file_size: file.size,
-          mime_type: resolvedMime || file.type,
-          status: 'pending',
-          custom_label: customLabel || null
-        });
-
-      if (insertError) throw insertError;
+      await nativeAdminUploadLeadDocument(caseId, finalDocType, file, customLabel);
 
       toast.success(`Document "${file.name}" ajouté dans ${categories.find(c => c.id === docType)?.label || docType}`);
       await loadAll();

@@ -3,6 +3,7 @@ import { CreditCard, CheckCircle, XCircle, Loader, Euro, AlertCircle, Mail, Send
 import { supabase } from '@/lib/supabase';
 import { clearPaymentRequestId, getPaymentRequestId } from '@/lib/payment-idempotency';
 import { toast } from '@/lib/toast';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 interface MoneticoPaymentManagerProps {
   leadId: string;
@@ -32,6 +33,11 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
 
   const loadPayments = useCallback(async () => {
     try {
+      const native = await nativeAdminCall<{ payments?: Array<Payment & { lead_id?: string }> }>('/v1/admin/payments');
+      const nativePayments = (native.payments || []).filter(payment => String(payment.lead_id || '') === leadId);
+      setPayments(nativePayments);
+      if (nativePayments.some(payment => ['success', 'paid'].includes(payment.status))) onPaymentSuccess?.();
+      return;
       const { data, error } = await supabase
         .from('monetico_payments')
         .select('*')
@@ -87,6 +93,19 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
     setError(null);
 
     try {
+      const nativePaymentSignature = JSON.stringify({ leadId, amount: Number.parseFloat(amount).toFixed(2), description: (description || 'Paiement comptant assurance taxi').trim() });
+      const nativePaymentRequestId = getPaymentRequestId(nativePaymentSignature);
+      const native = await nativeAdminCall<{ ok: boolean; paymentUrl?: string }>('/v1/admin/payments', {
+        method: 'POST',
+        body: JSON.stringify({ leadId, amount: Number.parseFloat(amount), description: description || 'Paiement comptant assurance taxi', requestId: nativePaymentRequestId }),
+      });
+      if (!native.ok || !native.paymentUrl) throw new Error('Page de paiement indisponible');
+      window.open(native.paymentUrl, '_blank', 'noopener,noreferrer');
+      clearPaymentRequestId(nativePaymentSignature);
+      setAmount('');
+      setDescription('');
+      await loadPayments();
+      return;
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error('Session administrateur expirée. Reconnectez-vous.');
@@ -160,6 +179,11 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
     setSuccessMessage(null);
 
     try {
+      const native = await nativeAdminCall<{ ok: boolean; email_queued?: boolean }>(`/v1/admin/payments/${encodeURIComponent(paymentId)}/email`, { method: 'POST', body: '{}' });
+      if (!native.ok || !native.email_queued) throw new Error('Erreur lors de l’envoi de l’email');
+      setSuccessMessage('Email de paiement mis en file d’envoi.');
+      setTimeout(() => setSuccessMessage(null), 5000);
+      return;
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error('Session administrateur expirée. Reconnectez-vous.');
 
@@ -344,6 +368,19 @@ export function MoneticoPaymentManager({ leadId, onPaymentSuccess }: MoneticoPay
                   setError(null);
 
                   try {
+                    const nativePaymentSignature = JSON.stringify({ leadId, amount: Number.parseFloat(amount).toFixed(2), description: (description || 'Paiement comptant assurance taxi').trim() });
+                    const nativePaymentRequestId = getPaymentRequestId(nativePaymentSignature);
+                    const native = await nativeAdminCall<{ ok: boolean; payment?: { id: string } }>('/v1/admin/payments', {
+                      method: 'POST',
+                      body: JSON.stringify({ leadId, amount: Number.parseFloat(amount), description: description || 'Paiement comptant assurance taxi', requestId: nativePaymentRequestId }),
+                    });
+                    if (!native.ok || !native.payment?.id) throw new Error('Création du paiement impossible');
+                    await sendPaymentEmail(native.payment.id);
+                    clearPaymentRequestId(nativePaymentSignature);
+                    setAmount('');
+                    setDescription('');
+                    await loadPayments();
+                    return;
                     const { data: { session } } = await supabase.auth.getSession();
                     if (!session?.access_token) throw new Error('Session administrateur expirée. Reconnectez-vous.');
 
