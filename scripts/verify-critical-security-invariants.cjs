@@ -279,6 +279,7 @@ requireMatch('src/backoffice/InsuranceCompaniesStats.tsx', /nativeAdminQuotes\(\
 forbidMatch('src/backoffice/InsuranceCompaniesManager.tsx', /from ['"]@\/lib\/supabase['"]|\bsupabase\./, 'insurance companies manager still uses Supabase');
 requireMatch('src/backoffice/InsuranceCompaniesManager.tsx', /nativeAdminInsuranceCompanies[\s\S]*nativeAdminUploadInsuranceCompanyFile/, 'insurance companies manager does not use native XCR API');
 requireMatch('src/lib/crm-pipeline.ts', /getLeads[\s\S]*nativeAdminLeads\(/, 'CRM Kanban lead loading does not use the dedicated native XCR endpoint');
+requireMatch('server/taxiassur-platform-api.mjs', /adminLeadsList[\s\S]*supabase_rest\.crm_leads[\s\S]*NOT EXISTS[\s\S]*native\.record_id=legacy\.data->>'id'/, 'native Kanban endpoint drops historical PostgreSQL leads or duplicates migrated leads');
 forbidMatch('src/backoffice/QuotesManager.tsx', /supabase|lead_company_quotes/i, 'quotes manager still queries Supabase');
 requireMatch('src/backoffice/QuotesManager.tsx', /nativeAdminQuotes\(\)/, 'quotes manager does not use the native XCR quotes endpoint');
 requireMatch('src/pages/client/ClientPaiements.tsx', /emailClientPlatformPaymentLink\(accessToken, paymentId\)/, 'client payment e-mail is not bound to the native client token');

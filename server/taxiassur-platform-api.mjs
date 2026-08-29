@@ -1061,10 +1061,15 @@ async function adminLeadsList(req, res, origin, requestId, url) {
   if (!await verifiedAdminSession(req)) return json(res, origin, 401, { ok: false, error: 'invalid_session' }, requestId);
   const search = String(url.searchParams.get('search') || '').trim().toLowerCase().slice(0, 120);
   const status = String(url.searchParams.get('status') || '').trim().slice(0, 80);
-  const filters = [`collection='crm_leads'`, `COALESCE(data->>'deleted_at','')=''`];
+  const filters = [`COALESCE(data->>'deleted_at','')=''`];
   if (status) filters.push(`COALESCE(data->>'status',data->>'pipeline_stage')=${quoteLiteral(status)}`);
   if (search) filters.push(`lower(concat_ws(' ',data->>'first_name',data->>'last_name',data->>'email',data->>'phone')) LIKE ${quoteLiteral(`%${search}%`)}`);
-  const leads = parseJsonLine(await runPsql(`SELECT COALESCE(jsonb_agg(data ORDER BY COALESCE(data->>'updated_at',data->>'created_at','') DESC),'[]'::jsonb)::text FROM taxiassur.records WHERE ${filters.join(' AND ')};`)) || [];
+  const leads = parseJsonLine(await runPsql(`SELECT COALESCE(jsonb_agg(data ORDER BY COALESCE(data->>'updated_at',data->>'created_at','') DESC),'[]'::jsonb)::text FROM (
+    SELECT data FROM taxiassur.records WHERE collection='crm_leads'
+    UNION ALL
+    SELECT legacy.data FROM supabase_rest.crm_leads legacy
+    WHERE NOT EXISTS (SELECT 1 FROM taxiassur.records native WHERE native.collection='crm_leads' AND native.record_id=legacy.data->>'id')
+  ) lead_sources WHERE ${filters.join(' AND ')};`)) || [];
   return json(res, origin, 200, { ok: true, leads }, requestId);
 }
 const defaultCrmSettings={company_name:'TaxiAssur',primary_email:'team@taxiassur.com',timezone:'Europe/Paris',auto_assign_leads:true,ai_auto_decisions:true,ai_autonomy_level:'semi-automatic',ai_confidence_threshold:80,ai_agents:{lead_scorer:true,email_composer:true,negotiation_assistant:true,risk_analyzer:true,churn_predictor:true,cross_sell_recommender:true,sentiment_analyzer:false,response_generator:true},notifications:{new_leads:true,ai_decisions:true,churn_alerts:true,missing_documents:true}};
