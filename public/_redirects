@@ -68,7 +68,7 @@
 /blog/assurance-taxi-courbevoie-2025 /blog 301
 
 # Compatibility for a stale PWA chunk still referenced by older backoffice tabs
-/assets/backoffice-seo-tools-BDxLGk1i.js /assets/backoffice-seo-tools-BUzFrjSi.js 302
+/assets/backoffice-seo-tools-BDxLGk1i.js /assets/backoffice-seo-tools-DwQ-4z2x.js 302
 
 # Technical city slugs created by old automation
 /assurance-taxi-ville-:id /villes 301
