@@ -462,7 +462,7 @@ async function adminInsurerDossier(req,res,origin,requestId,leadId){
 
 async function adminLeadSms(req,res,origin,requestId,leadId){
   const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
-  const lead=parseJsonLine(await runPsql("SELECT data::text FROM taxiassur.records WHERE collection='crm_leads' AND record_id="+quoteLiteral(leadId)+" LIMIT 1;"));if(!lead)return json(res,origin,404,{ok:false,error:'lead_not_found'},requestId);
+  const lead=parseJsonLine(await runPsql("SELECT data::text FROM (SELECT data,0 priority FROM taxiassur.records WHERE collection='crm_leads' AND record_id="+quoteLiteral(leadId)+" UNION ALL SELECT data,1 priority FROM supabase_rest.crm_leads WHERE data->>'id'="+quoteLiteral(leadId)+") lead_sources ORDER BY priority LIMIT 1;"));if(!lead)return json(res,origin,404,{ok:false,error:'lead_not_found'},requestId);
   if(req.method==='GET'){
     const conversation=parseJsonLine(await runPsql("SELECT data::text FROM taxiassur.records WHERE collection='sms_conversations' AND data->>'lead_id'="+quoteLiteral(leadId)+" AND COALESCE(data->>'status','active')='active' ORDER BY COALESCE(data->>'last_message_at',data->>'created_at','') DESC LIMIT 1;"));
     const messages=parseJsonLine(await runPsql("SELECT COALESCE(jsonb_agg(data ORDER BY COALESCE(data->>'created_at','')),'[]'::jsonb)::text FROM taxiassur.records WHERE collection='sms_messages' AND data->>'lead_id'="+quoteLiteral(leadId)+";"))||[];
@@ -485,7 +485,7 @@ async function adminLeadSms(req,res,origin,requestId,leadId){
 }
 async function adminLeadTimeline(req,res,origin,requestId,leadId){
   const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
-  const lead=parseJsonLine(await runPsql("SELECT data::text FROM taxiassur.records WHERE collection='crm_leads' AND record_id="+quoteLiteral(leadId)+" LIMIT 1;"));if(!lead)return json(res,origin,404,{ok:false,error:'lead_not_found'},requestId);
+  const lead=parseJsonLine(await runPsql("SELECT data::text FROM (SELECT data,0 priority FROM taxiassur.records WHERE collection='crm_leads' AND record_id="+quoteLiteral(leadId)+" UNION ALL SELECT data,1 priority FROM supabase_rest.crm_leads WHERE data->>'id'="+quoteLiteral(leadId)+") lead_sources ORDER BY priority LIMIT 1;"));if(!lead)return json(res,origin,404,{ok:false,error:'lead_not_found'},requestId);
   if(req.method==='POST'){
     const body=await readJsonBody(req),content=String(body.content||'').normalize('NFKC').trim().slice(0,5000);if(!content)return json(res,origin,400,{ok:false,error:'invalid_note'},requestId);
     const id=randomUUID(),now=new Date().toISOString(),note={id,lead_id:leadId,type:'note',channel:'note',direction:'outbound',content,created_by:session.sub,created_at:now,updated_at:now};
