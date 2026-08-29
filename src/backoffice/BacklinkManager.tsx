@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Link, Plus, ExternalLink, CheckCircle, XCircle, Clock, Home } from 'lucide-react';
-import { getBacklinks, addBacklink, type Backlink } from '../lib/backlinks';
-import { verifyBacklink } from '../lib/ping';
+import { getBacklinks, addBacklink, verifyStoredBacklink, type Backlink } from '../lib/backlinks';
 import Card from '../components/Card';
 import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
@@ -73,7 +72,8 @@ const BacklinkManager: React.FC = () => {
   const handleVerifyBacklink = async (backlink: Backlink) => {
     setVerifying(backlink.id);
     try {
-      const result = await verifyBacklink(backlink.url);
+      const result = await verifyStoredBacklink(backlink.id);
+      await loadBacklinks();
       // Ici on pourrait mettre à jour le statut du backlink
       toast.info(result.exists ? 'Backlink vérifié ✓' : 'Backlink non trouvé ✗');
     } catch (error) {

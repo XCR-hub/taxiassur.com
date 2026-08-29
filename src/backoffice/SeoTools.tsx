@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import TestAutomationButton from './TestAutomationButton';
 import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 const GSC_LIBRARY_URL = 'https://console.cloud.google.com/apis/library';
 const GSC_CREDENTIALS_URL = 'https://console.cloud.google.com/apis/credentials';
@@ -42,7 +43,9 @@ const SeoTools: React.FC = () => {
 
   const loadSeoData = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_current_seo_metrics');
+      const response = await nativeAdminCall<{metrics: Record<string, any>}>('/v1/admin/seo');
+      const data = response.metrics ? [response.metrics] : [];
+      const error = null;
 
       if (error) {
         logger.error('Error loading SEO metrics:', error);
@@ -107,7 +110,9 @@ const SeoTools: React.FC = () => {
 
   const loadCronJobsStatus = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_seo_cron_stats');
+      const response = await nativeAdminCall<{cron_jobs: Record<string, unknown>[]}>('/v1/admin/seo');
+      const data = response.cron_jobs;
+      const error = null;
       if (!error && data) {
         setCronJobsStatus(data);
       }

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 export const BacklinkSchema = z.object({
   id: z.string(),
@@ -39,16 +40,8 @@ export type Partner = z.infer<typeof PartnerSchema>;
 // Fonctions pour gérer les backlinks et partenaires
 export async function getBacklinks(): Promise<Backlink[]> {
   try {
-    const response = await fetch('/content/backlinks.json');
-    if (!response.ok) return [];
-
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      return [];
-    }
-
-    const data = await response.json();
-    return Array.isArray(data) ? data.map(item => BacklinkSchema.parse(item)) : [];
+    const data = await nativeAdminCall<{backlinks: unknown[]}>('/v1/admin/backlinks');
+    return (data.backlinks || []).map(item => BacklinkSchema.parse(item));
   } catch (error) {
     logger.warn('Failed to load backlinks:', error);
     return [];
@@ -75,26 +68,8 @@ export async function getPartners(): Promise<Partner[]> {
 
 export async function addBacklink(backlink: Omit<Backlink, 'id' | 'dateAdded'>): Promise<boolean> {
   try {
-    const newBacklink: Backlink = {
-      ...backlink,
-      id: `backlink-${Date.now()}`,
-      dateAdded: new Date().toISOString()
-    };
-
-    const response = await fetch('/webhooks/make.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-MAKE-SECRET': ''
-      },
-      body: JSON.stringify({
-        type: 'backlink',
-        action: 'add',
-        payload: newBacklink
-      })
-    });
-
-    return response.ok;
+    await nativeAdminCall('/v1/admin/backlinks', { method: 'POST', body: JSON.stringify(backlink) });
+    return true;
   } catch (error) {
     logger.error('Failed to add backlink:', error);
     return false;
@@ -127,4 +102,8 @@ export async function addPartner(partner: Omit<Partner, 'id' | 'dateAdded'>): Pr
     logger.error('Failed to add partner:', error);
     return false;
   }
+}
+
+export async function verifyStoredBacklink(id: string): Promise<{ exists: boolean; status?: number; error?: string }> {
+  return nativeAdminCall('/v1/admin/backlinks', { method: 'PATCH', body: JSON.stringify({ action: 'verify', id }) });
 }
