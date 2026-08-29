@@ -4,6 +4,24 @@ import { HelmetProvider } from 'react-helmet-async';
 import App from './App.tsx';
 import './index.css';
 
+const CHUNK_RECOVERY_KEY = 'taxiassur_chunk_recovery';
+window.addEventListener('unhandledrejection', (event) => {
+  const message = String(event.reason?.message || event.reason || '');
+  if (!/dynamically imported module|failed to fetch.*module|importing a module script failed/i.test(message)) return;
+  if (sessionStorage.getItem(CHUNK_RECOVERY_KEY)) return;
+  sessionStorage.setItem(CHUNK_RECOVERY_KEY, String(Date.now()));
+  event.preventDefault();
+  void (async () => {
+    const registrations = await navigator.serviceWorker?.getRegistrations?.() || [];
+    await Promise.all(registrations.map((registration) => registration.unregister()));
+    if ('caches' in window) await Promise.all((await caches.keys()).map((key) => caches.delete(key)));
+    const url = new URL(window.location.href);
+    url.searchParams.set('__chunk_retry', String(Date.now()));
+    window.location.replace(url.toString());
+  })();
+});
+window.setTimeout(() => sessionStorage.removeItem(CHUNK_RECOVERY_KEY), 15_000);
+
 // Redirect auth hash fragments to the set-password page before React mounts
 // Supabase redirects to the root with #access_token when redirectTo is not in allowed list
 ;(() => {
