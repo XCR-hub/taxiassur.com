@@ -638,10 +638,10 @@ async function adminDashboard(req, res, origin, requestId) {
     'ready_for_quote',(SELECT count(*) FROM taxiassur.records WHERE collection='ready_for_quote_queue' AND data->>'status'='waiting'),
     'lead_performance',jsonb_build_object(
       'daily_goal',10,
-      'today',(SELECT count(*) FROM taxiassur.records WHERE collection='crm_leads' AND ((data->>'created_at')::timestamptz AT TIME ZONE 'Europe/Paris')::date=(now() AT TIME ZONE 'Europe/Paris')::date),
-      'yesterday',(SELECT count(*) FROM taxiassur.records WHERE collection='crm_leads' AND ((data->>'created_at')::timestamptz AT TIME ZONE 'Europe/Paris')::date=(now() AT TIME ZONE 'Europe/Paris')::date-1),
-      'average_7_days',(SELECT round(count(*)::numeric/7,1) FROM taxiassur.records WHERE collection='crm_leads' AND (data->>'created_at')::timestamptz>=(date_trunc('day',now() AT TIME ZONE 'Europe/Paris') AT TIME ZONE 'Europe/Paris')-interval '6 days'),
-      'daily_history',(SELECT COALESCE(jsonb_agg(jsonb_build_object('date',d.day::date,'count',COALESCE(c.total,0)) ORDER BY d.day),'[]'::jsonb) FROM generate_series((now() AT TIME ZONE 'Europe/Paris')::date-13,(now() AT TIME ZONE 'Europe/Paris')::date,interval '1 day') d(day) LEFT JOIN (SELECT ((data->>'created_at')::timestamptz AT TIME ZONE 'Europe/Paris')::date AS lead_date,count(*) total FROM taxiassur.records WHERE collection='crm_leads' AND (data->>'created_at')::timestamptz>=now()-interval '15 days' GROUP BY 1)c ON c.lead_date=d.day::date)
+      'today',(SELECT count(*) FROM taxiassur.records WHERE collection='crm_leads' AND left(COALESCE(data->>'created_at',''),10)=to_char(now() AT TIME ZONE 'Europe/Paris','YYYY-MM-DD')),
+      'yesterday',(SELECT count(*) FROM taxiassur.records WHERE collection='crm_leads' AND left(COALESCE(data->>'created_at',''),10)=to_char((now() AT TIME ZONE 'Europe/Paris')::date-1,'YYYY-MM-DD')),
+      'average_7_days',(SELECT round(count(*)::numeric/7,1) FROM taxiassur.records WHERE collection='crm_leads' AND left(COALESCE(data->>'created_at',''),10)>=to_char((now() AT TIME ZONE 'Europe/Paris')::date-6,'YYYY-MM-DD')),
+      'daily_history',(SELECT COALESCE(jsonb_agg(jsonb_build_object('date',d.day::date,'count',COALESCE(c.total,0)) ORDER BY d.day),'[]'::jsonb) FROM generate_series((now() AT TIME ZONE 'Europe/Paris')::date-13,(now() AT TIME ZONE 'Europe/Paris')::date,interval '1 day') d(day) LEFT JOIN (SELECT left(data->>'created_at',10) AS lead_date,count(*) total FROM taxiassur.records WHERE collection='crm_leads' AND left(COALESCE(data->>'created_at',''),10)>=to_char((now() AT TIME ZONE 'Europe/Paris')::date-14,'YYYY-MM-DD') GROUP BY 1)c ON c.lead_date=to_char(d.day,'YYYY-MM-DD'))
     ),
     'admin_users',COALESCE((SELECT json_agg(json_build_object('id',id,'email',email,'full_name',full_name,'role',role) ORDER BY full_name) FROM taxiassur.auth_users WHERE is_active=true),'[]'::json),
     'content_stats',jsonb_build_object(
@@ -653,8 +653,8 @@ async function adminDashboard(req, res, origin, requestId) {
         UNION
         SELECT data->>'id' FROM supabase_rest.crm_leads
       ) all_leads),
-      'new_leads_today',(SELECT count(*) FROM taxiassur.records WHERE collection='crm_leads' AND COALESCE(data->>'created_at','1970-01-01')::timestamptz>=date_trunc('day',now())),
-      'new_leads_week',(SELECT count(*) FROM taxiassur.records WHERE collection='crm_leads' AND COALESCE(data->>'created_at','1970-01-01')::timestamptz>=now()-interval '7 days'),
+      'new_leads_today',(SELECT count(*) FROM taxiassur.records WHERE collection='crm_leads' AND left(COALESCE(data->>'created_at',''),10)=to_char(now(),'YYYY-MM-DD')),
+      'new_leads_week',(SELECT count(*) FROM taxiassur.records WHERE collection='crm_leads' AND left(COALESCE(data->>'created_at',''),10)>=to_char(now()::date-7,'YYYY-MM-DD')),
       'leads_by_status',COALESCE((SELECT jsonb_object_agg(status,total) FROM (SELECT COALESCE(NULLIF(data->>'status',''),'inconnu') status,count(*) total FROM taxiassur.records WHERE collection='crm_leads' GROUP BY 1) s),'{}'::jsonb),
       'recent_blog_posts',COALESCE((SELECT jsonb_agg(data ORDER BY COALESCE(data->>'published_at',data->>'created_at','') DESC) FROM (SELECT data FROM taxiassur.records WHERE collection='blog_posts' ORDER BY COALESCE(data->>'published_at',data->>'created_at','') DESC LIMIT 5) b),'[]'::jsonb)
     ))::text;`;
