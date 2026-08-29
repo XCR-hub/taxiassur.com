@@ -96,6 +96,26 @@ export const PIPELINE_STATUSES: Record<string, { label: string; color: string; i
   LOST_RECONTACT_SCHEDULED: { label: 'Recontact Programmé', color: 'slate', icon: '📅' }
 };
 
+// Colonnes réellement rendues par le Kanban. Chaque lead doit être rangé
+// dans exactement une de ces colonnes, y compris avec un ancien statut CRM.
+export const KANBAN_VISIBLE_STATUSES: PipelineStatus[] = [
+  'NOUVEAU_LEAD', 'COLLECTE_DOCUMENTS', 'DEVIS', 'DECISION_CLIENT',
+  'PAIEMENT', 'CONTRAT_SIGNATURE', 'CLIENT_ACTIF', 'RELANCE', 'PERDU',
+  'RECONTACT_PROGRAMME'
+];
+
+const KANBAN_VISIBLE_STATUS_SET = new Set<PipelineStatus>(KANBAN_VISIBLE_STATUSES);
+const CLIENT_MANAGEMENT_STATUSES = new Set<PipelineStatus>([
+  'CROSS_SELLING', 'RISK_CHURN', 'SINISTRE',
+  'ATTESTATION_REQUEST', 'SUPPORT_ASSISTANCE'
+]);
+
+function toVisibleKanbanStatus(status: PipelineStatus): PipelineStatus {
+  if (KANBAN_VISIBLE_STATUS_SET.has(status)) return status;
+  if (CLIENT_MANAGEMENT_STATUSES.has(status)) return 'CLIENT_ACTIF';
+  return 'NOUVEAU_LEAD';
+}
+
 export const PIPELINE_TRANSITIONS: PipelineTransition[] = [
   // 📋 WORKFLOW PRINCIPAL (7 ÉTAPES)
   // 1→2: Nouveau Lead → Collecte Documents
@@ -534,12 +554,13 @@ export const pipelineService = {
 
   async getKanbanData() {
     const leads = await this.getLeads();
-    const kanban: Record<PipelineStatus, CRMLead[]> = {} as any;
+    const kanban = Object.fromEntries(
+      KANBAN_VISIBLE_STATUSES.map(status => [status, [] as CRMLead[]])
+    ) as Record<PipelineStatus, CRMLead[]>;
 
-    Object.keys(PIPELINE_STATUSES).forEach(status => {
-      kanban[status as PipelineStatus] = leads.filter(
-        lead => lead.status === status
-      );
+    leads.forEach(lead => {
+      const status = toVisibleKanbanStatus(lead.status);
+      kanban[status].push({ ...lead, status });
     });
 
     return kanban;
