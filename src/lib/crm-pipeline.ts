@@ -261,7 +261,7 @@ export const pipelineService = {
     search?: string;
   }) {
     const result = await nativeAdminLeads(filters?.search || '', filters?.status || '');
-    let rows = (result.leads || []).filter((lead: any) => !lead.deleted_at && lead.is_archived !== true);
+    let rows = (result.leads || []).filter((lead: any) => !lead.deleted_at);
     if (filters?.assignedTo) rows = rows.filter((lead: any) => lead.assigned_to === filters.assignedTo);
     if (filters?.source) rows = rows.filter((lead: any) => lead.source === filters.source);
     return rows.map((lead:any)=>{

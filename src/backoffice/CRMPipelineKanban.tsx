@@ -2,15 +2,14 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, RefreshCw, AlertCircle, TrendingUp, Clock, FileText, Building2, Euro, PenTool, AlertTriangle, Mail, Phone, FileCheck, Users, User } from 'lucide-react';
 import { pipelineService, PIPELINE_STATUSES, PipelineStatus, CRMLead, AdminUser, normalizePipelineStatus } from '@/lib/crm-pipeline';
+import RealtimeNotifications from '@/components/crm/RealtimeNotifications';
 import { PipelineCard } from '@/components/crm/PipelineCard';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
-import RealtimeNotifications from '@/components/crm/RealtimeNotifications';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { NATIVE_ADMIN_TOKEN_KEY } from '@/lib/native-admin-auth';
 import { nativeAdminPipelineNotifications } from '@/lib/native-admin-data';
-
 interface ColumnNotifications {
   newEmails: number;
   newDocuments: number;
@@ -717,7 +716,7 @@ const CRMPipelineKanban: React.FC = () => {
               </button>
 
               <div className="ml-1 pl-2 border-l border-white/[0.08]">
-                <RealtimeNotifications />
+                {window.location.hostname === '__legacy-supabase-disabled__' && <RealtimeNotifications />}
               </div>
             </div>
           </div>

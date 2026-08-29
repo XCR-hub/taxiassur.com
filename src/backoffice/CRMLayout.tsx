@@ -525,8 +525,10 @@ const CRMLayout: React.FC = () => {
       </aside>
 
       <main className="flex-1 flex flex-col overflow-hidden min-w-0" style={{ background: '#0b0e14' }}>
-        <CRMPushNotifications />
-        <IncomingCallNotification onNavigateToLead={(id) => navigate(`/backoffice/crm/lead/${id}`)} />
+        {window.location.hostname === '__legacy-supabase-disabled__' && <CRMPushNotifications />}
+        {window.location.hostname === '__legacy-supabase-disabled__' && (
+          <IncomingCallNotification onNavigateToLead={(id) => navigate(`/backoffice/crm/lead/${id}`)} />
+        )}
         <div className="flex-1 overflow-auto min-h-0">
           <Outlet />
         </div>
