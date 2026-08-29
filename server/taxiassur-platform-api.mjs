@@ -245,7 +245,10 @@ const server = createServer(async (req, res) => {
     if (adminLeadRibsMatch && req.method === 'GET' && adminLeadRibsMatch[2] && adminLeadRibsMatch[3] === 'download') return await adminLeadRibDownload(req, res, origin, requestId, adminLeadRibsMatch[1], adminLeadRibsMatch[2]);
     const adminLeadRibEmailMatch = url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/ribs\/email-request$/i);
     if (adminLeadRibEmailMatch && req.method === 'POST') return await adminLeadRibEmailRequest(req, res, origin, requestId, adminLeadRibEmailMatch[1]);
-    const adminLeadMatch = url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})$/i);
+    // Restored PostgreSQL records can use historical non-UUID record_id values.
+    // This exact detail route accepts one encoded path segment; SQL quoting and
+    // authenticated access remain enforced by adminLeadGet/adminLeadPatch.
+    const adminLeadMatch = url.pathname.match(/^\/v1\/admin\/leads\/([^/]{1,200})$/i);
     const adminLeadSummaryMatch = url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/summary$/i);
     if (adminLeadSummaryMatch && req.method === 'GET') return await adminLeadSummary(req, res, origin, requestId, adminLeadSummaryMatch[1]);
     const adminLeadAccessEmailMatch = url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/access-email$/i);
@@ -268,9 +271,9 @@ const server = createServer(async (req, res) => {
     if(adminLeadQuoteDocumentMatch&&req.method==='DELETE')return await adminLeadQuoteDocumentDelete(req,res,origin,requestId,adminLeadQuoteDocumentMatch[1],adminLeadQuoteDocumentMatch[2]);
     const adminLeadQuoteEmailMatch=url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/quotes\/([0-9a-f-]{36})\/email$/i);
     if(adminLeadQuoteEmailMatch&&req.method==='POST')return await adminLeadQuoteEmail(req,res,origin,requestId,adminLeadQuoteEmailMatch[1],adminLeadQuoteEmailMatch[2]);
-    if (adminLeadMatch && req.method === 'GET') return await adminLeadGet(req, res, origin, requestId, adminLeadMatch[1]);
-    if (adminLeadMatch && req.method === 'PATCH') return await adminLeadPatch(req, res, origin, requestId, adminLeadMatch[1]);
-    if (adminLeadMatch && req.method === 'DELETE') return await adminLeadDelete(req, res, origin, requestId, adminLeadMatch[1]);
+    if (adminLeadMatch && req.method === 'GET') return await adminLeadGet(req, res, origin, requestId, decodeURIComponent(adminLeadMatch[1]));
+    if (adminLeadMatch && req.method === 'PATCH') return await adminLeadPatch(req, res, origin, requestId, decodeURIComponent(adminLeadMatch[1]));
+    if (adminLeadMatch && req.method === 'DELETE') return await adminLeadDelete(req, res, origin, requestId, decodeURIComponent(adminLeadMatch[1]));
     if (req.method === 'GET' && url.pathname === '/v1/admin/documents') return await adminDocuments(req, res, origin, requestId, url);
     if (req.method === 'POST' && url.pathname === '/v1/admin/documents/open') return await adminDocumentOpen(req, res, origin, requestId);
     const adminDocumentMatch=url.pathname.match(/^\/v1\/admin\/documents\/([0-9a-f-]{36})(\/download)?$/i);
