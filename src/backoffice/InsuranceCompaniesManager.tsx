@@ -5,7 +5,13 @@ import {
   Download, Eye, X, ChevronRight, Shield, Loader2, ImagePlus,
   Settings, Star, Zap, Link as LinkIcon
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import {
+  nativeAdminCompanyDocumentUrl, nativeAdminCreateInsuranceCompany,
+  nativeAdminDeleteCompanyDocument, nativeAdminDeleteInsuranceCompany,
+  nativeAdminDownloadCompanyDocument, nativeAdminInsuranceCompanies,
+  nativeAdminUpdateCompanyDocument, nativeAdminUpdateInsuranceCompany,
+  nativeAdminUploadInsuranceCompanyFile,
+} from '@/lib/native-admin-data';
 
 interface UsefulLink {
   label: string;
@@ -106,8 +112,10 @@ const InsuranceCompaniesManager: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const docInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const logoObjectUrls = useRef<string[]>([]);
 
   useEffect(() => { loadCompanies(); }, []);
+  useEffect(() => () => logoObjectUrls.current.forEach(URL.revokeObjectURL), []);
 
   useEffect(() => {
     if (selectedCompany) {
@@ -124,14 +132,17 @@ const InsuranceCompaniesManager: React.FC = () => {
   const loadCompanies = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('insurance_companies')
-        .select('*')
-        .order('priority_order', { ascending: true })
-        .order('name');
-      if (error) throw error;
-      const list = (data || []).map((c: any) => ({
+      const response = await nativeAdminInsuranceCompanies() as { companies?: Company[]; documents?: CompanyDocument[] };
+      logoObjectUrls.current.forEach(URL.revokeObjectURL);
+      logoObjectUrls.current = [];
+      const logoDocuments = (response.documents || []).filter(doc => doc.document_type === 'logo');
+      const logoUrls = new Map<string, string>();
+      await Promise.all(logoDocuments.map(async doc => {
+        try { const url = await nativeAdminCompanyDocumentUrl(doc.id); logoObjectUrls.current.push(url); logoUrls.set(doc.company_id, url); } catch { /* logo facultatif */ }
+      }));
+      const list = (response.companies || []).map((c: Company) => ({
         ...c,
+        logo_url: logoUrls.get(c.id) || null,
         useful_links: Array.isArray(c.useful_links) ? c.useful_links : [],
       })) as Company[];
       setCompanies(list);
@@ -145,14 +156,8 @@ const InsuranceCompaniesManager: React.FC = () => {
 
   const loadDocuments = async (companyId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('company_documents')
-        .select('*')
-        .eq('company_id', companyId)
-        .order('display_order', { ascending: true })
-        .order('created_at', { ascending: true });
-      if (error) throw error;
-      setDocuments(data || []);
+      const response = await nativeAdminInsuranceCompanies() as { documents?: CompanyDocument[] };
+      setDocuments((response.documents || []).filter(doc => doc.company_id === companyId && doc.document_type !== 'logo').sort((a, b) => a.display_order - b.display_order || Date.parse(a.created_at) - Date.parse(b.created_at)));
     } catch {
       showToast('error', 'Erreur lors du chargement des documents');
     }
@@ -163,21 +168,14 @@ const InsuranceCompaniesManager: React.FC = () => {
     setSaving(true);
     try {
       if (isNewCompany) {
-        const { data, error } = await supabase
-          .from('insurance_companies')
-          .insert([{ ...editForm, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }])
-          .select().single();
-        if (error) throw error;
+        const response = await nativeAdminCreateInsuranceCompany(editForm) as { company: Company };
         setIsNewCompany(false);
         await loadCompanies();
-        setSelectedCompany(data);
+        setSelectedCompany(response.company);
         showToast('success', 'Compagnie créée avec succès');
       } else if (selectedCompany) {
-        const { error } = await supabase.from('insurance_companies')
-          .update({ ...editForm, updated_at: new Date().toISOString() })
-          .eq('id', selectedCompany.id);
-        if (error) throw error;
-        const updated = { ...selectedCompany, ...editForm } as Company;
+        const response = await nativeAdminUpdateInsuranceCompany(selectedCompany.id, editForm) as { company: Company };
+        const updated = { ...response.company, logo_url: selectedCompany.logo_url };
         setSelectedCompany(updated);
         setCompanies(prev => prev.map(c => c.id === updated.id ? updated : c));
         showToast('success', 'Compagnie mise à jour');
@@ -193,16 +191,7 @@ const InsuranceCompaniesManager: React.FC = () => {
     if (!selectedCompany) return;
     setDeleting(true);
     try {
-      const { data: docs } = await supabase.from('company_documents').select('file_url').eq('company_id', selectedCompany.id);
-      if (docs && docs.length > 0) {
-        const paths = docs.map(d => {
-          const parts = d.file_url?.split('/company-documents/');
-          return parts?.[1] || null;
-        }).filter(Boolean) as string[];
-        if (paths.length > 0) await supabase.storage.from('company-documents').remove(paths);
-        await supabase.from('company_documents').delete().eq('company_id', selectedCompany.id);
-      }
-      await supabase.from('insurance_companies').delete().eq('id', selectedCompany.id);
+      await nativeAdminDeleteInsuranceCompany(selectedCompany.id);
       setConfirmDelete(false);
       setSelectedCompany(null);
       await loadCompanies();
@@ -219,16 +208,9 @@ const InsuranceCompaniesManager: React.FC = () => {
     if (!file || !selectedCompany) return;
     setUploadingLogo(true);
     try {
-      const ext = file.name.split('.').pop();
-      const path = `logos/${selectedCompany.id}-${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from('company-documents').upload(path, file, { upsert: true });
-      if (uploadError) throw uploadError;
-      const { data: urlData } = supabase.storage.from('company-documents').getPublicUrl(path);
-      const logoUrl = urlData.publicUrl;
-      const { error: updateError } = await supabase.from('insurance_companies')
-        .update({ logo_url: logoUrl, updated_at: new Date().toISOString() })
-        .eq('id', selectedCompany.id);
-      if (updateError) throw updateError;
+      const response = await nativeAdminUploadInsuranceCompanyFile(selectedCompany.id, 'logo', file) as { document: CompanyDocument };
+      const logoUrl = await nativeAdminCompanyDocumentUrl(response.document.id);
+      logoObjectUrls.current.push(logoUrl);
       setEditForm(prev => ({ ...prev, logo_url: logoUrl }));
       setSelectedCompany(prev => prev ? { ...prev, logo_url: logoUrl } : prev);
       setCompanies(prev => prev.map(c => c.id === selectedCompany.id ? { ...c, logo_url: logoUrl } : c));
@@ -246,31 +228,11 @@ const InsuranceCompaniesManager: React.FC = () => {
     if (!file || !selectedCompany) return;
     setUploadingDoc(section.key);
     try {
-      const safeName = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.\-]+/g, '_').replace(/_+/g, '_');
-      const path = `${selectedCompany.id}/${section.key}/${Date.now()}-${safeName}`;
-      const { error: uploadError } = await supabase.storage.from('company-documents').upload(path, file, { upsert: false });
-      if (uploadError) throw uploadError;
-      const { data: urlData } = supabase.storage.from('company-documents').getPublicUrl(path);
-      const { error: insertError } = await supabase.from('company_documents').insert([{
-        company_id: selectedCompany.id,
-        document_name: file.name.replace(/\.[^.]+$/, ''),
-        document_type: section.key,
-        file_url: urlData.publicUrl,
-        file_size: file.size,
-        mime_type: file.type,
-        is_mandatory: true,
-        send_with_quote: section.key === 'quote',
-        send_with_contract: section.key === 'contract',
-        send_with_claim: section.key === 'claim',
-        display_order: documents.filter(d => d[section.field]).length + 1,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }]);
-      if (insertError) throw insertError;
+      await nativeAdminUploadInsuranceCompanyFile(selectedCompany.id, 'documents', file, section.key);
       await loadDocuments(selectedCompany.id);
       showToast('success', `Document "${file.name}" ajouté`);
     } catch (err) {
-      showToast('error', err?.message || "Erreur lors de l'upload");
+      showToast('error', err instanceof Error ? err.message : "Erreur lors de l'upload");
     } finally {
       setUploadingDoc(null);
       if (docInputRefs.current[section.key]) docInputRefs.current[section.key]!.value = '';
@@ -280,9 +242,7 @@ const InsuranceCompaniesManager: React.FC = () => {
   const handleDeleteDocument = async (doc: CompanyDocument) => {
     if (!confirm(`Supprimer "${doc.document_name}" ?`)) return;
     try {
-      const urlParts = doc.file_url.split('/company-documents/');
-      if (urlParts[1]) await supabase.storage.from('company-documents').remove([urlParts[1]]);
-      await supabase.from('company_documents').delete().eq('id', doc.id);
+      await nativeAdminDeleteCompanyDocument(doc.id);
       setDocuments(prev => prev.filter(d => d.id !== doc.id));
       showToast('success', 'Document supprimé');
     } catch {
@@ -292,10 +252,28 @@ const InsuranceCompaniesManager: React.FC = () => {
 
   const handleToggleDocFlag = async (doc: CompanyDocument, field: 'send_with_quote' | 'send_with_contract' | 'send_with_claim' | 'is_mandatory') => {
     try {
-      await supabase.from('company_documents').update({ [field]: !doc[field] }).eq('id', doc.id);
+      await nativeAdminUpdateCompanyDocument(doc.id, { [field]: !doc[field] });
       setDocuments(prev => prev.map(d => d.id === doc.id ? { ...d, [field]: !doc[field] } : d));
     } catch {
       showToast('error', 'Erreur lors de la mise à jour');
+    }
+  };
+
+  const handlePreviewDocument = async (doc: CompanyDocument) => {
+    try {
+      const url = await nativeAdminCompanyDocumentUrl(doc.id);
+      window.open(url, '_blank', 'noopener,noreferrer');
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch {
+      showToast('error', 'Document indisponible');
+    }
+  };
+
+  const handleDownloadDocument = async (doc: CompanyDocument) => {
+    try {
+      await nativeAdminDownloadCompanyDocument(doc.id, doc.document_name);
+    } catch {
+      showToast('error', 'Téléchargement impossible');
     }
   };
 
@@ -610,6 +588,8 @@ const InsuranceCompaniesManager: React.FC = () => {
                   docInputRefs={docInputRefs}
                   onUpload={handleDocumentUpload}
                   onDelete={handleDeleteDocument}
+                  onPreview={handlePreviewDocument}
+                  onDownload={handleDownloadDocument}
                   onToggle={handleToggleDocFlag}
                   formatFileSize={formatFileSize}
                 />
@@ -893,9 +873,11 @@ const DocumentsPanel: React.FC<{
   docInputRefs: React.MutableRefObject<Record<string, HTMLInputElement | null>>;
   onUpload: (e: React.ChangeEvent<HTMLInputElement>, section: typeof DOC_SECTIONS[0]) => void;
   onDelete: (doc: CompanyDocument) => void;
+  onPreview: (doc: CompanyDocument) => void;
+  onDownload: (doc: CompanyDocument) => void;
   onToggle: (doc: CompanyDocument, field: 'send_with_quote' | 'send_with_contract' | 'send_with_claim' | 'is_mandatory') => void;
   formatFileSize: (bytes: number | null) => string;
-}> = ({ documents, uploadingDoc, docInputRefs, onUpload, onDelete, onToggle, formatFileSize }) => {
+}> = ({ documents, uploadingDoc, docInputRefs, onUpload, onDelete, onPreview, onDownload, onToggle, formatFileSize }) => {
   const sectionStyles: Record<string, { card: string; header: string; badge: string; btn: string; accent: string; empty: string }> = {
     blue: {
       card: 'border-sky-200',
@@ -999,14 +981,14 @@ const DocumentsPanel: React.FC<{
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                       <MiniToggle label="Obligatoire" checked={doc.is_mandatory} onChange={() => onToggle(doc, 'is_mandatory')} />
-                      <a href={doc.file_url} target="_blank" rel="noreferrer"
+                      <button type="button" onClick={() => onPreview(doc)}
                         className="p-2 text-gray-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-colors" title="Aperçu">
                         <Eye className="w-4 h-4" />
-                      </a>
-                      <a href={doc.file_url} download={doc.document_name}
+                      </button>
+                      <button type="button" onClick={() => onDownload(doc)}
                         className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Télécharger">
                         <Download className="w-4 h-4" />
-                      </a>
+                      </button>
                       <button onClick={() => onDelete(doc)}
                         className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
                         <Trash2 className="w-4 h-4" />

@@ -276,6 +276,8 @@ forbidMatch('src/backoffice/ClaimsManager.tsx', /supabase|get_all_claims_for_adm
 requireMatch('src/backoffice/ClaimsManager.tsx', /nativeAdminClaims\(filterStatus\)[\s\S]*nativeAdminUpdateClaim\(claimId/, 'claims manager does not use the native XCR claims endpoints');
 forbidMatch('src/backoffice/InsuranceCompaniesStats.tsx', /supabase|lead_company_quotes/i, 'insurance company statistics still query Supabase');
 requireMatch('src/backoffice/InsuranceCompaniesStats.tsx', /nativeAdminQuotes\(\)[\s\S]*nativeAdminInsuranceCompanies\(\)/, 'insurance company statistics do not use native XCR data');
+forbidMatch('src/backoffice/InsuranceCompaniesManager.tsx', /from ['"]@\/lib\/supabase['"]|\bsupabase\./, 'insurance companies manager still uses Supabase');
+requireMatch('src/backoffice/InsuranceCompaniesManager.tsx', /nativeAdminInsuranceCompanies[\s\S]*nativeAdminUploadInsuranceCompanyFile/, 'insurance companies manager does not use native XCR API');
 forbidMatch('src/backoffice/QuotesManager.tsx', /supabase|lead_company_quotes/i, 'quotes manager still queries Supabase');
 requireMatch('src/backoffice/QuotesManager.tsx', /nativeAdminQuotes\(\)/, 'quotes manager does not use the native XCR quotes endpoint');
 requireMatch('src/pages/client/ClientPaiements.tsx', /emailClientPlatformPaymentLink\(accessToken, paymentId\)/, 'client payment e-mail is not bound to the native client token');
