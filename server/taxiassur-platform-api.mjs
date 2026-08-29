@@ -6,6 +6,15 @@ import { createCipheriv, createDecipheriv, createHash, createHmac, createSign, r
 import path from 'node:path';
 import { createSession, hashPassword, verifyPassword, verifySession } from './native-auth.mjs';
 
+process.on('uncaughtException', (error) => {
+  console.log(`[taxiassur-platform-api] fatal uncaughtException: ${error?.stack || error}`);
+  process.exit(1);
+});
+process.on('unhandledRejection', (error) => {
+  console.log(`[taxiassur-platform-api] fatal unhandledRejection: ${error?.stack || error}`);
+  process.exit(1);
+});
+
 const env = loadEnv([
   process.env.TAXIASSUR_PLATFORM_ENV_FILE,
   'F:/TaxiAssur/Secrets/taxiassur-platform-api.env',
