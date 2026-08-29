@@ -260,46 +260,14 @@ export const pipelineService = {
     source?: string;
     search?: string;
   }) {
-    if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
-      const result = await nativeAdminLeads(filters?.search || '', filters?.status || '');
-      let rows = (result.leads || []).filter((lead: any) => !lead.deleted_at);
-      if (filters?.assignedTo) rows = rows.filter((lead: any) => lead.assigned_to === filters.assignedTo);
-      if (filters?.source) rows = rows.filter((lead: any) => lead.source === filters.source);
-      return rows.map((lead:any)=>{
-        const status=normalizePipelineStatus(lead);
-        return {...lead,status,full_name:`${lead.first_name||''} ${lead.last_name||''}`.trim()||lead.email,vehicle_type:lead.vehicle_type||lead.metadata?.vehicle_type||null};
-      }) as CRMLead[];
-    }
-    let query = supabase
-      .from('crm_leads')
-      .select('*')
-      .is('deleted_at', null)
-      .order('updated_at', { ascending: false });
-
-    if (filters?.status) {
-      query = query.eq('status', filters.status);
-    }
-
-    if (filters?.assignedTo) {
-      query = query.eq('assigned_to', filters.assignedTo);
-    }
-
-    if (filters?.source) {
-      query = query.eq('source', filters.source);
-    }
-
-    if (filters?.search) {
-      query = query.or(`first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,phone.ilike.%${filters.search}%`);
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-
-    return (data || []).map(lead => ({
-      ...lead,
-      full_name: `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || lead.email,
-      vehicle_type: lead.metadata?.vehicle_type || null
-    })) as CRMLead[];
+    const result = await nativeAdminLeads(filters?.search || '', filters?.status || '');
+    let rows = (result.leads || []).filter((lead: any) => !lead.deleted_at && lead.is_archived !== true);
+    if (filters?.assignedTo) rows = rows.filter((lead: any) => lead.assigned_to === filters.assignedTo);
+    if (filters?.source) rows = rows.filter((lead: any) => lead.source === filters.source);
+    return rows.map((lead:any)=>{
+      const status=normalizePipelineStatus(lead);
+      return {...lead,status,full_name:`${lead.first_name||''} ${lead.last_name||''}`.trim()||lead.email,vehicle_type:lead.vehicle_type||lead.metadata?.vehicle_type||null};
+    }) as CRMLead[];
   },
 
   async getLead(id: string) {

@@ -157,7 +157,6 @@ const CRMPipelineKanban: React.FC = () => {
   const [viewFilter, setViewFilter] = useState<'all' | 'mine' | 'unassigned'>('all');
   const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
   const autoRefreshInterval = useRef<NodeJS.Timeout | null>(null);
-  const realtimeChannel = useRef<any>(null);
   const previousLeadCount = useRef<number>(0);
   const moveInProgressRef = useRef(false);
 
@@ -333,6 +332,7 @@ const CRMPipelineKanban: React.FC = () => {
     };
   }, [loadKanbanData, autoRefreshEnabled]);
 
+  /* Legacy Supabase realtime subscription disabled: native API polling is authoritative.
   // Realtime subscription avec notification des nouveaux leads
   useEffect(() => {
     realtimeChannel.current = supabase
@@ -394,6 +394,7 @@ const CRMPipelineKanban: React.FC = () => {
     };
   }, [loadKanbanData]);
 
+  */
   const [syncingEmails, setSyncingEmails] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
