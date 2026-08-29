@@ -1025,9 +1025,9 @@ const CRMPipelineKanban: React.FC = () => {
                       )}
                     </div>
                   ) : (
-                    leads.map((lead) => (
+                    leads.map((lead, leadIndex) => (
                       <PipelineCard
-                        key={lead.id}
+                        key={`${status}-${lead.id}-${leadIndex}`}
                         lead={lead}
                         onClick={() => navigate(`/backoffice/crm-killer/lead/${lead.id}`)}
                         onDragStart={() => handleDragStart(lead)}

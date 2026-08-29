@@ -232,7 +232,9 @@ const PIPELINE_STATUS_ALIASES: Record<string, PipelineStatus> = {
   client_actif: 'CLIENT_ACTIF', active_client: 'CLIENT_ACTIF', signed: 'CLIENT_ACTIF',
   relance: 'RELANCE', relance_active: 'RELANCE', no_response: 'RELANCE',
   perdu: 'PERDU', lost: 'PERDU', client_lost: 'PERDU',
-  recontact_programme: 'RECONTACT_PROGRAMME', lost_recontact_scheduled: 'RECONTACT_PROGRAMME',
+  recontact_programme: 'RECONTACT_PROGRAMME', recontact_programmé: 'RECONTACT_PROGRAMME',
+  contact_reprogramme: 'RECONTACT_PROGRAMME', contact_reprogrammé: 'RECONTACT_PROGRAMME',
+  recontact_scheduled: 'RECONTACT_PROGRAMME', lost_recontact_scheduled: 'RECONTACT_PROGRAMME',
 };
 
 const PIPELINE_STAGE_KEYS: Record<PipelineStatus, string> = {
@@ -244,7 +246,14 @@ const PIPELINE_STAGE_KEYS: Record<PipelineStatus, string> = {
 };
 
 export function normalizePipelineStatus(lead: Record<string, unknown>): PipelineStatus {
-  const candidates = [lead.current_stage_key, lead.pipeline_stage, lead.status];
+  const candidates = [
+    lead.status,
+    lead.lead_status,
+    lead.pipeline_stage,
+    lead.workflow_stage,
+    lead.stage,
+    lead.current_stage_key
+  ];
   for (const value of candidates) {
     const key = String(value || '').trim().toLowerCase();
     if (!key) continue;
@@ -287,9 +296,10 @@ export const pipelineService = {
     let rows = result.leads || [];
     if (filters?.assignedTo) rows = rows.filter((lead: any) => lead.assigned_to === filters.assignedTo);
     if (filters?.source) rows = rows.filter((lead: any) => lead.source === filters.source);
-    return rows.map((lead:any)=>{
+    return rows.map((lead:any, index: number)=>{
       const status=normalizePipelineStatus(lead);
-      return {...lead,status,full_name:`${lead.first_name||''} ${lead.last_name||''}`.trim()||lead.email,vehicle_type:lead.vehicle_type||lead.metadata?.vehicle_type||null};
+      const id = lead.id || lead.record_id || `restored-${index}-${lead.email || lead.phone || 'lead'}`;
+      return {...lead,id,status,full_name:`${lead.first_name||''} ${lead.last_name||''}`.trim()||lead.email||`Lead ${index + 1}`,vehicle_type:lead.vehicle_type||lead.metadata?.vehicle_type||null};
     }) as CRMLead[];
   },
 
