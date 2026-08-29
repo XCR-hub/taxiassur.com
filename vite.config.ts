@@ -180,7 +180,7 @@ export default defineConfig(({ mode }) => ({
             }
             // AI after CRM
             if (id.includes('AI') || id.includes('Master') || id.includes('Autonomous')) {
-              return 'backoffice-ai';
+              return 'backoffice-ai-v2';
             }
             // Marketing
             if (id.includes('Social') || id.includes('WhatsApp') || id.includes('Campaign') || id.includes('Email')) {
@@ -200,7 +200,7 @@ export default defineConfig(({ mode }) => ({
             }
             // GSC, GA4, LLM
             if (id.includes('GSC') || id.includes('GA4') || id.includes('LLM') || id.includes('Ultron') || id.includes('Trend')) {
-              return 'backoffice-ai';
+              return 'backoffice-ai-v2';
             }
             // Keep remaining route screens independent. Grouping them into one
             // administration chunk makes Rolldown merge their shared graph into
