@@ -13,6 +13,7 @@ import {
 import { toast } from "@/lib/toast";
 import { withTimeout } from "@/lib/promise-timeout";
 import { SecureDocumentLink } from "./SecureDocumentLink";
+import { nativeAdminCall, nativeAdminUploadContractDocument } from "@/lib/native-admin-data";
 
 interface SignatureDevisStepProps {
   leadId: string;
@@ -48,9 +49,23 @@ export default function SignatureDevisStep(
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    loadSignature();
-    loadUploadedDocument();
+    void loadNativeWorkspace();
   }, [leadId]);
+
+  async function loadNativeWorkspace() {
+    setLoading(true);
+    try {
+      const native = await nativeAdminCall<{ signature?: SignatureHistory | null; document?: SignedQuoteDocument | null }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/quote-signature`);
+      setSignature(native.signature || null);
+      setUploadedFile(native.document || null);
+      if (native.signature?.external_signature_url) setExternalUrl(native.signature.external_signature_url);
+      if (native.signature?.notes) setNotes(native.signature.notes);
+      if (native.signature?.is_signed) onComplete?.();
+    } catch (error) {
+      console.error("Error loading native quote signature:", error);
+      toast.error("Impossible de charger la signature du devis");
+    } finally { setLoading(false); }
+  }
 
   async function loadSignature() {
     try {
@@ -119,6 +134,11 @@ export default function SignatureDevisStep(
     setUploading(true);
 
     try {
+      const result = await nativeAdminUploadContractDocument(leadId, "devis_signe", file) as { document?: SignedQuoteDocument };
+      if (result.document) setUploadedFile(result.document);
+      else await loadNativeWorkspace();
+      toast.success("Devis signé uploadé avec succès !");
+      return;
       const fileName = leadId + "/signed-quotes/" + crypto.randomUUID() +
         ".pdf";
       const { error: uploadError } = await withTimeout(
@@ -201,6 +221,14 @@ export default function SignatureDevisStep(
     setSaving(true);
 
     try {
+      const native = await nativeAdminCall<{ signature?: SignatureHistory }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/quote-signature`, {
+        method: "PATCH",
+        body: JSON.stringify({ is_signed: signed, external_signature_url: externalUrl || null, notes: notes || null }),
+      });
+      setSignature(native.signature || null);
+      toast.success(signed ? "Signature confirmée !" : "Statut enregistré");
+      if (signed) onComplete?.();
+      return;
       const payload = {
         lead_id: leadId,
         signature_type: "devis",

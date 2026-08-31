@@ -20,6 +20,7 @@ import {
 import { Badge } from "../Badge";
 import { Modal, ModalFooter } from "../Modal";
 import { SecureDocumentLink } from "./SecureDocumentLink";
+import { nativeAdminCall } from "@/lib/native-admin-data";
 
 interface ValidationDevisStepProps {
   leadId: string;
@@ -133,6 +134,11 @@ export default function ValidationDevisStep({
 
   const loadQuotes = async () => {
     try {
+      const native = await nativeAdminCall<{ workspace?: { quotes?: CompanyQuote[]; refusal_reasons?: RefusalReason[]; company_documents?: Array<{ id: string; document_name: string; is_mandatory: boolean }> } }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/quotes-workspace`);
+      setQuotes(native.workspace?.quotes || []);
+      setRefusalReasons(native.workspace?.refusal_reasons || []);
+      setDocuments(native.workspace?.company_documents || []);
+      return;
       const { data, error } = await supabase
         .from("lead_company_quotes")
         .select(`
