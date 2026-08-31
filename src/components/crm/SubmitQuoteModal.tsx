@@ -9,6 +9,7 @@ import {
   Upload,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { nativeAdminSession } from "@/lib/native-admin-auth";
 import { invokeIdempotentDelivery } from "@/lib/invoke-idempotent-delivery";
 import { toast } from "@/lib/toast";
 import { getSecureDocumentUrl } from "@/lib/secure-document-url";
@@ -416,20 +417,8 @@ export function SubmitQuoteModal({
         .eq("id", leadId)
         .maybeSingle();
 
-      const { data: { user } } = await supabase.auth.getUser();
-      let commercialName: string | null = null;
-      if (user?.id) {
-        const { data: admin } = await supabase
-          .from("admin_users")
-          .select("first_name, last_name, email")
-          .eq("id", user.id)
-          .maybeSingle();
-        if (admin) {
-          commercialName =
-            [admin.first_name, admin.last_name].filter(Boolean).join(" ")
-              .trim() || admin.email || null;
-        }
-      }
+      const { user } = await nativeAdminSession();
+      const commercialName = user?.full_name || user?.email || null;
 
       const html = generateNeedsAssessmentHtml(leadData || {}, quoteData, {
         generatedDate: new Date(),
@@ -596,7 +585,7 @@ export function SubmitQuoteModal({
 
     setSubmitting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { user } = await nativeAdminSession();
       const annual = parseFloat(formData.quote_amount) || null;
       const monthlyParsed = parseFloat(formData.monthly_price);
       const monthly = !isNaN(monthlyParsed) && monthlyParsed > 0

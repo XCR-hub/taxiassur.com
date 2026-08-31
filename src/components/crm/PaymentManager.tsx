@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CreditCard, Check, X, Calendar, FileText, Lock, Unlock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { nativeAdminSession } from '@/lib/native-admin-auth';
 import { toast } from '@/lib/toast';
 
 interface PaymentManagerProps {
@@ -79,7 +80,7 @@ export const PaymentManager: React.FC<PaymentManagerProps> = ({ leadId, onUpdate
     setSaving(true);
 
     try {
-      const { data: adminUser } = await supabase.auth.getUser();
+      const { user: adminUser } = await nativeAdminSession();
 
       const { data, error } = await supabase.rpc('confirm_payment', {
         p_lead_id: leadId,
@@ -87,7 +88,7 @@ export const PaymentManager: React.FC<PaymentManagerProps> = ({ leadId, onUpdate
         p_payment_date: form.payment_date,
         p_payment_reference: form.payment_reference || null,
         p_payment_notes: form.payment_notes || null,
-        p_admin_user_id: adminUser?.user?.id || null
+        p_admin_user_id: adminUser?.id || null
       });
 
       if (error) throw error;

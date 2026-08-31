@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import { nativeAdminSession } from '@/lib/native-admin-auth';
 import { withTimeout } from '@/lib/promise-timeout';
 import { clearDeliveryRequestId, getDeliveryRequestId } from '@/lib/delivery-idempotency';
 import {
@@ -245,7 +246,7 @@ export default function WhatsAppManager() {
 
   const assignToMe = async () => {
     if (!selectedConversation) return;
-    const { data: { user } } = await supabase.auth.getUser();
+    const { user } = await nativeAdminSession().catch(() => ({ user: null }));
     if (!user) return;
     await supabase
       .from('wa_conversations')

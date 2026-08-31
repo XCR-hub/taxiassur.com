@@ -10,7 +10,8 @@ import {
   RefreshCw,
   Euro
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminConfigureDownPayment, nativeAdminCreateMoneticoPayment } from '@/lib/native-admin-data';
+import { clearPaymentRequestId, getPaymentRequestId } from '@/lib/payment-idempotency';
 
 interface DownPaymentManagerProps {
   contractId: string;
@@ -51,31 +52,10 @@ export const DownPaymentManager: React.FC<DownPaymentManagerProps> = ({
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('Session administrateur expirée. Reconnectez-vous.');
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-monetico-payment`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`
-          },
-          body: JSON.stringify({
-            leadId: leadId,
-            amount: parseFloat(amount),
-            description: `Paiement comptant assurance taxi - Contrat ${contractId.slice(0, 8)}`
-          })
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erreur lors de la création du paiement Monético');
-      }
-
-      const data = await response.json();
+      const description = `Paiement comptant assurance taxi - Contrat ${contractId.slice(0, 8)}`;
+      const paymentSignature = JSON.stringify({ leadId, amount: Number.parseFloat(amount).toFixed(2), description });
+      const paymentRequestId = getPaymentRequestId(paymentSignature);
+      const data = await nativeAdminCreateMoneticoPayment({ leadId, amount: parseFloat(amount), description, requestId: paymentRequestId });
 
       if (data.success && data.actionUrl && data.formData) {
         const action = new URL(data.actionUrl);
@@ -100,45 +80,11 @@ export const DownPaymentManager: React.FC<DownPaymentManagerProps> = ({
         setIsEditMode(false);
 
         // Construire l'URL complète du paiement
-        if (!/^[0-9a-f]{64}$/i.test(data.paymentAccessToken || '')) {           throw new Error('Jeton de paiement manquant');         }         const paymentPath = `${encodeURIComponent(data.reference)}?token=${encodeURIComponent(data.paymentAccessToken)}`;         const paymentUrl = `${window.location.origin}/paiement/${paymentPath}`;
-
-        const { error: contractUpdateError } = await supabase
-          .from('lead_contracts')
-          .update({
-            down_payment_required: true,
-            down_payment_amount: parseFloat(amount),
-            down_payment_status: 'pending',
-            down_payment_link: paymentPath
-          })
-          .eq('id', contractId);
-        if (contractUpdateError) throw contractUpdateError;
-
-        // Récupérer les données du lead pour l'email
-        const { data: lead, error: leadError } = await supabase
-          .from('crm_leads')
-          .select('email, first_name, last_name')
-          .eq('id', leadId)
-          .single();
-        if (leadError) throw leadError;
-
-        // Envoyer l'email de paiement automatiquement
-        if (lead && lead.email) {
-          try {
-            const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-payment-link-email', {
-              body: {
-                lead_id: leadId,
-                payment_url: paymentUrl,
-                amount: parseFloat(amount)
-              }
-            });
-            if (emailError || emailResult?.success !== true) {
-              throw emailError || new Error('E-mail de paiement non envoyé');
-            }
-          } catch (emailError) {
-            console.error('Payment email delivery failed', emailError instanceof Error ? emailError.name : 'UnknownError');
-            setError('Lien créé, mais l’e-mail de paiement n’a pas été envoyé. Copiez le lien manuellement.');
-          }
-        }
+        if (!/^[0-9a-f]{64}$/i.test(data.paymentAccessToken || '')) throw new Error('Jeton de paiement manquant');
+        const paymentPath = `${encodeURIComponent(data.reference)}?token=${encodeURIComponent(data.paymentAccessToken)}`;
+        const configured = await nativeAdminConfigureDownPayment(contractId, { leadId, paymentId: data.paymentId, paymentPath, amount: parseFloat(amount) });
+        if (configured?.success !== true || configured?.emailQueued !== true) throw new Error('Lien créé, mais la configuration du comptant a échoué');
+        clearPaymentRequestId(paymentSignature);
 
         onPaymentUpdated?.();
       } else {

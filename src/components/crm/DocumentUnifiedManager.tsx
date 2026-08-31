@@ -5,6 +5,7 @@ import {
   RefreshCw, Send, RotateCcw, GripVertical
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { nativeAdminSession } from '@/lib/native-admin-auth';
 import { SecureDocumentLink } from './SecureDocumentLink';
 
 interface DocumentStatus {
@@ -320,8 +321,8 @@ export function DocumentUnifiedManager({
   const handleValidate = async (docType: string) => {
     setActionLoading(docType);
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      const adminId = userData.user?.id;
+      const { user } = await nativeAdminSession();
+      const adminId = user?.id;
 
       const { error } = await supabase.rpc('validate_document', {
         p_lead_id: leadId,
@@ -348,8 +349,8 @@ export function DocumentUnifiedManager({
 
     setActionLoading(docType);
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      const adminId = userData.user?.id;
+      const { user } = await nativeAdminSession();
+      const adminId = user?.id;
 
       const { error } = await supabase.rpc('invalidate_document', {
         p_lead_id: leadId,

@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminDeleteRib, nativeAdminLeadRibs, nativeAdminQueueRibRequest, nativeAdminRibUrl, nativeAdminUpdateRib, nativeAdminUploadRib } from '@/lib/native-admin-data';
 import { Upload, CheckCircle2, X, FileText, Loader2, AlertCircle, CreditCard, Mail } from 'lucide-react';
 import { MoneticoPaymentManager } from './MoneticoPaymentManager';
 import { toast } from '@/lib/toast';
-import { getSecureDocumentUrl } from '@/lib/secure-document-url';
-import { nativeAdminCall, nativeAdminUploadRib } from '@/lib/native-admin-data';
 
 interface PaiementRIBStepProps {
   leadId: string;
@@ -53,20 +51,8 @@ export default function PaiementRIBStep({
 
   async function loadRibs() {
     try {
-      const native = await nativeAdminCall<{ ribs?: RIBUpload[] }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/ribs`);
-      const nativeRibs = native.ribs || [];
-      setRibs(nativeRibs);
-      if (nativeRibs.some(rib => rib.validation_status === 'validated')) onComplete?.();
-      return;
-      const { data, error } = await supabase
-        .from('lead_rib_uploads')
-        .select('*')
-        .eq('lead_id', leadId)
-        .order('uploaded_at', { ascending: false });
-
-      if (error) throw error;
-
-      setRibs(data || []);
+      const { ribs: data = [] } = await nativeAdminLeadRibs(leadId);
+      setRibs(data);
 
       // Check if one is validated
       const validated = data?.find(r => r.validation_status === 'validated');
@@ -125,32 +111,6 @@ export default function PaiementRIBStep({
 
     try {
       await nativeAdminUploadRib(leadId, file);
-      toast.success('RIB uploadé avec succès !');
-      await loadRibs();
-      return;
-      // Upload to storage
-      const safeName = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.-]+/g, '_').replace(/_+/g, '_');
-      const fileName = `${leadId}/${Date.now()}_${safeName}`;
-      const { data: uploadData, error: uploadError } = await supabase
-        .storage
-        .from('lead-rib')
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      // Create record
-      const { error: insertError } = await supabase
-        .from('lead_rib_uploads')
-        .insert({
-          lead_id: leadId,
-          file_name: file.name,
-          file_path: uploadData.path,
-          file_size: file.size,
-          mime_type: file.type,
-          validation_status: 'pending'
-        });
-
-      if (insertError) throw insertError;
 
       toast.success('RIB uploadé avec succès !');
       loadRibs();
@@ -182,20 +142,7 @@ export default function PaiementRIBStep({
         payload.bank_name = bankName || null;
       }
 
-      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/ribs/${encodeURIComponent(ribId)}`, { method: 'PATCH', body: JSON.stringify(payload) });
-      toast.success(validated ? 'RIB validé !' : 'RIB rejeté');
-      setSelectedRib(null);
-      setIban(''); setBic(''); setAccountHolder(''); setBankName('');
-      await loadRibs();
-      if (validated) onComplete?.();
-      return;
-
-      const { error } = await supabase
-        .from('lead_rib_uploads')
-        .update(payload)
-        .eq('id', ribId);
-
-      if (error) throw error;
+      await nativeAdminUpdateRib(leadId, ribId, payload);
 
       toast.success(validated ? 'RIB validé !' : 'RIB rejeté');
       setSelectedRib(null);
@@ -216,22 +163,11 @@ export default function PaiementRIBStep({
     }
   }
 
-  async function deleteRIB(ribId: string, filePath: string) {
+  async function deleteRIB(ribId: string) {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce RIB ?')) return;
 
     try {
-      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/ribs/${encodeURIComponent(ribId)}`, { method: 'DELETE' });
-      toast.success('RIB supprimé');
-      await loadRibs();
-      return;
-      await supabase.storage.from('lead-rib').remove([filePath]);
-
-      const { error } = await supabase
-        .from('lead_rib_uploads')
-        .delete()
-        .eq('id', ribId);
-
-      if (error) throw error;
+      await nativeAdminDeleteRib(leadId, ribId);
 
       toast.success('RIB supprimé');
       loadRibs();
@@ -241,10 +177,11 @@ export default function PaiementRIBStep({
     }
   }
 
-  async function openRIB(filePath: string) {
+  async function openRIB(ribId: string) {
     try {
-      const url = await getSecureDocumentUrl({ bucket: 'lead-rib', path: filePath });
+      const url = await nativeAdminRibUrl(leadId, ribId);
       window.open(url, '_blank', 'noopener,noreferrer');
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (error: unknown) {
       console.error('Error opening RIB:', error);
       toast.error(error instanceof Error ? error.message : 'Impossible d\'ouvrir le RIB');
@@ -263,34 +200,8 @@ export default function PaiementRIBStep({
     setSendingEmail(true);
 
     try {
-      const native = await nativeAdminCall<{ ok: boolean; email_queued?: boolean }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/ribs/email-request`, { method: 'POST', body: '{}' });
-      if (!native.ok || !native.email_queued) throw new Error('Envoi impossible');
-      toast.success(`Demande de RIB mise en file d’envoi à ${leadEmail}.`);
-      return;
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Votre session a expiré. Reconnectez-vous avant d’envoyer la demande.');
-      }
-      const token = session.access_token;
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-intelligent-document-request`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            lead_id: leadId,
-            specific_documents: ['rib']
-          }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
+      const result = await nativeAdminQueueRibRequest(leadId);
+      if (!result.success || !result.queued) {
         throw new Error(result.error || 'Erreur lors de l\'envoi');
       }
 
@@ -377,7 +288,7 @@ export default function PaiementRIBStep({
                 )}
               </div>
               <button
-                onClick={() => void openRIB(validatedRib.file_path)}
+                onClick={() => void openRIB(validatedRib.id)}
                 className="mt-3 inline-flex items-center gap-2 text-sm text-green-700 hover:text-green-800"
               >
                 <FileText className="h-4 w-4" />
@@ -459,7 +370,7 @@ export default function PaiementRIBStep({
                     </p>
                   </div>
                   <button
-                    onClick={() => void openRIB(rib.file_path)}
+                    onClick={() => void openRIB(rib.id)}
                     className="text-sm py-1 px-3 bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
                   >
                     Voir
@@ -531,7 +442,7 @@ export default function PaiementRIBStep({
                       Valider ce RIB
                     </button>
                     <button
-                      onClick={() => deleteRIB(rib.id, rib.file_path)}
+                      onClick={() => deleteRIB(rib.id)}
                       className="py-2 px-3 bg-red-50 text-red-600 rounded hover:bg-red-100"
                     >
                       <X className="h-5 w-5" />

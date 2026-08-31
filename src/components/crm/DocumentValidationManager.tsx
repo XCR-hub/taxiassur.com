@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, XCircle, AlertCircle, Eye, Download, FileText, Clock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { nativeAdminSession } from '@/lib/native-admin-auth';
 import { toast } from '@/lib/toast';
 
 interface Document {
@@ -84,14 +85,14 @@ export default function DocumentValidationManager({ leadId, onValidationChange }
     try {
       setProcessing(activeModal.document.id);
 
-      const { data: adminData } = await supabase.auth.getUser();
+      const { user: adminUser } = await nativeAdminSession();
 
       const { error } = await supabase
         .from('document_validation_status')
         .update({
           validation_status: 'validated',
           validated_at: new Date().toISOString(),
-          validated_by: adminData?.user?.id,
+          validated_by: adminUser?.id,
           updated_at: new Date().toISOString()
         })
         .eq('id', activeModal.document.id);
@@ -118,7 +119,7 @@ export default function DocumentValidationManager({ leadId, onValidationChange }
     try {
       setProcessing(activeModal.document.id);
 
-      const { data: adminData } = await supabase.auth.getUser();
+      const { user: adminUser } = await nativeAdminSession();
 
       const { error } = await supabase
         .from('document_validation_status')
@@ -127,7 +128,7 @@ export default function DocumentValidationManager({ leadId, onValidationChange }
           rejection_reason: rejectionForm.reason,
           rejection_comment: rejectionForm.comment || null,
           rejected_at: new Date().toISOString(),
-          rejected_by: adminData?.user?.id,
+          rejected_by: adminUser?.id,
           updated_at: new Date().toISOString()
         })
         .eq('id', activeModal.document.id);

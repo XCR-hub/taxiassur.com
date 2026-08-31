@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import { Mail, Phone, Check, ChevronRight, Clock, AlertCircle, Send, X, MessageSquare, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { nativeAdminSession } from '@/lib/native-admin-auth';
 import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 import { logger } from '@/lib/logger';
 import { DocumentValidationWithReasons } from './DocumentValidationWithReasons';
@@ -104,7 +105,7 @@ export function StepByStepWorkflow({ leadId, leadEmail, onStepCompleted }: StepB
 
     try {
       // Save call log
-      const { data: { user } } = await supabase.auth.getUser();
+      const { user } = await nativeAdminSession();
 
       const { error: callError } = await supabase
         .from('crm_call_logs')
@@ -166,7 +167,7 @@ export function StepByStepWorkflow({ leadId, leadEmail, onStepCompleted }: StepB
 
   const handleSendQualificationEmail = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { user } = await nativeAdminSession();
 
       // Send email via edge function
       const { data: sendResult, error: sendError } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
@@ -194,7 +195,7 @@ export function StepByStepWorkflow({ leadId, leadEmail, onStepCompleted }: StepB
 
   const handleSendDocumentRequest = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { user } = await nativeAdminSession();
 
       // Mark step as completed
       await supabase.from('crm_workflow_step_actions').insert({
@@ -268,7 +269,7 @@ export function StepByStepWorkflow({ leadId, leadEmail, onStepCompleted }: StepB
 
   const handleMarkAsQualified = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { user } = await nativeAdminSession();
 
       await supabase.from('crm_workflow_step_actions').insert({
         lead_id: leadId,
@@ -486,7 +487,7 @@ export function StepByStepWorkflow({ leadId, leadEmail, onStepCompleted }: StepB
               <button
                 onClick={async () => {
                   try {
-                    const { data: { user } } = await supabase.auth.getUser();
+                    const { user } = await nativeAdminSession();
 
                     // Mark step as completed
                     await supabase.from('crm_workflow_step_actions').insert({
@@ -533,7 +534,7 @@ export function StepByStepWorkflow({ leadId, leadEmail, onStepCompleted }: StepB
               <button
                 onClick={async () => {
                   try {
-                    const { data: { user } } = await supabase.auth.getUser();
+                    const { user } = await nativeAdminSession();
 
                     await supabase.from('crm_workflow_step_actions').insert({
                       lead_id: leadId,
@@ -593,7 +594,7 @@ export function StepByStepWorkflow({ leadId, leadEmail, onStepCompleted }: StepB
               <button
                 onClick={async () => {
                   try {
-                    const { data: { user } } = await supabase.auth.getUser();
+                    const { user } = await nativeAdminSession();
 
                     const { data: sendResult, error: sendError } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
                       body: { to: leadEmail, subject: 'Réponses à vos questions - TaxiAssur', content: '<p>Bonjour,</p><p>Notre équipe reste disponible pour répondre à vos questions concernant votre proposition. Vous pouvez répondre directement à cet e-mail ou nous appeler.</p><p>L équipe TaxiAssur</p>', lead_id: leadId }
@@ -630,7 +631,7 @@ export function StepByStepWorkflow({ leadId, leadEmail, onStepCompleted }: StepB
               <button
                 onClick={async () => {
                   try {
-                    const { data: { user } } = await supabase.auth.getUser();
+                    const { user } = await nativeAdminSession();
 
                     await supabase.from('crm_workflow_step_actions').insert({
                       lead_id: leadId,
@@ -726,7 +727,7 @@ export function StepByStepWorkflow({ leadId, leadEmail, onStepCompleted }: StepB
               <button
                 onClick={async () => {
                   try {
-                    const { data: { user } } = await supabase.auth.getUser();
+                    const { user } = await nativeAdminSession();
 
                     // Update lead status to signed
                     await supabase

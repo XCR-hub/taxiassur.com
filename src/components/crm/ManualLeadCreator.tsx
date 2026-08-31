@@ -14,6 +14,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { nativeAdminSession } from '@/lib/native-admin-auth';
 
 interface ManualLeadCreatorProps {
   onSuccess?: (leadId: string) => void;
@@ -85,7 +86,7 @@ export const ManualLeadCreator: React.FC<ManualLeadCreatorProps> = ({
     setSaving(true);
 
     try {
-      const { data: userData } = await supabase.auth.getUser();
+      const { user } = await nativeAdminSession();
 
       const leadData = {
         first_name: formData.first_name.trim(),
@@ -98,7 +99,7 @@ export const ManualLeadCreator: React.FC<ManualLeadCreatorProps> = ({
         source: formData.source,
         status: 'NOUVEAU_LEAD' as const,
         vehicle_type: formData.vehicle_type,
-        assigned_to: userData?.user?.id || null,
+        assigned_to: user?.id || null,
         internal_notes: formData.notes.trim() || null,
         metadata: {
           created_manually: true,
@@ -123,7 +124,7 @@ export const ManualLeadCreator: React.FC<ManualLeadCreatorProps> = ({
           direction: 'inbound',
           channel: formData.source,
           content: `Lead créé manuellement via ${sourceLabels[formData.source]}. ${formData.notes ? `Notes: ${formData.notes}` : ''}`,
-          created_by: userData?.user?.id,
+          created_by: user?.id,
           metadata: {
             manual_creation: true,
             preferred_contact: formData.preferred_contact

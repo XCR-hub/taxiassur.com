@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import { FileText, CheckCircle, XCircle, Eye, Download, Printer, AlertCircle, Mail, CreditCard as Edit3, X, Check } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { nativeAdminSession } from '@/lib/native-admin-auth';
 import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 import { logger } from '@/lib/logger';
 
@@ -117,7 +118,7 @@ export function DocumentValidationWithReasons({
   const handleValidate = async (docId: string) => {
     setActionLoading(docId);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { user } = await nativeAdminSession();
 
       const doc = documents.find(d => d.id === docId);
       if (!doc) {
@@ -197,7 +198,7 @@ export function DocumentValidationWithReasons({
 
     setActionLoading(rejectModal);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { user } = await nativeAdminSession();
 
       const doc = documents.find(d => d.id === rejectModal);
       if (!doc) return;
@@ -264,7 +265,7 @@ export function DocumentValidationWithReasons({
 
     setActionLoading(categoryChangeModal);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { user } = await nativeAdminSession();
 
       const doc = documents.find(d => d.id === categoryChangeModal);
       if (!doc) return;

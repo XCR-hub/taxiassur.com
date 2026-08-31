@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Check, X, Download, ExternalLink, AlertCircle, RefreshCw, Eye } from 'lucide-react';
+import { FileText, Check, X, Download, AlertCircle, RefreshCw, Eye } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { nativeAdminSession } from '@/lib/native-admin-auth';
 import { getSecureDocumentUrl } from '@/lib/secure-document-url';
 import { logger } from '@/lib/logger';
 import DocumentViewer from './DocumentViewer';
@@ -71,7 +72,7 @@ const DocumentValidationSimple: React.FC<DocumentValidationSimpleProps> = ({ lea
     try {
       setValidating(docId);
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const { user } = await nativeAdminSession();
 
       const { error } = await supabase
         .from('prospect_documents')

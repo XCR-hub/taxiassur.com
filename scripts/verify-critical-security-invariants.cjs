@@ -45,9 +45,14 @@ requireMatch(createPayment, /requestId[\s\S]*requestFingerprint[\s\S]*findExisti
 for (const file of ['src/backoffice/FreeInvoicing.tsx', 'src/backoffice/LeadInvoicing.tsx']) {
   requireMatch(file, /getPaymentRequestId\(paymentSignature\)/, 'payment UI lacks a stable retry key');
   requireMatch(file, /requestId: paymentRequestId/, 'payment UI does not send its idempotency key');
-  requireMatch(file, /withTimeout\(supabase\.functions\.invoke\('create-monetico-payment'[\s\S]*45_000/, 'payment creation can spin forever');
   requireMatch(file, /clearPaymentRequestId\(paymentSignature\)/, 'payment UI does not clear a successful request key');
 }
+requireMatch('src/backoffice/FreeInvoicing.tsx', /withTimeout\(supabase\.functions\.invoke\('create-monetico-payment'[\s\S]*45_000/, 'public payment creation can spin forever');
+requireMatch('src/backoffice/LeadInvoicing.tsx', /withTimeout\(nativeAdminCreateMoneticoPayment\([\s\S]*45_000/, 'native admin payment creation can spin forever');
+requireMatch('server/taxiassur-platform-api.mjs', /createAdminMoneticoPayment[\s\S]*verifiedAdminSession\(req\)/, 'native payment creation is not session-authenticated');
+requireMatch('server/taxiassur-platform-api.mjs', /createHmac\('sha1'/, 'native payment creation is not signed');
+requireMatch('server/taxiassur-platform-api.mjs', /collection='monetico_payments'/, 'native payment creation is not persisted');
+forbidMatch('server/taxiassur-platform-api.mjs', /SUPABASE_URL|SUPABASE_SERVICE_ROLE_KEY|supabaseServiceKey/, 'native platform API still depends on Supabase');
 requireMatch(createPayment, /MAC:\s*payment\.mac_sent/, 'signed payment form does not include its persisted MAC');
 requireMatch(createPayment, /if\s*\(!await isAuthorized/, 'payment creation is not staff-authorized');
 forbidMatch(createPayment, /htmlForm|document\.write/, 'server still returns injectable payment HTML');
@@ -78,7 +83,8 @@ requireMatch(paymentEmail, /status: 'delivery_uncertain'[\s\S]*Statut d envoi in
 requireMatch('supabase/migrations/20260810043000_harden_monetico_email_delivery_status.sql', /DROP CONSTRAINT[\s\S]*'sent'[\s\S]*'delivery_uncertain'[\s\S]*manual reconciliation/, 'Monetico status constraint rejects sent or uncertain delivery states');
 requireCount('src/components/crm/MoneticoPaymentManager.tsx', /getPaymentRequestId\(paymentSignature\)/, 2, 'Monetico manager lacks stable keys for both creation actions');
 requireCount('src/components/crm/MoneticoPaymentManager.tsx', /requestId: paymentRequestId/, 2, 'Monetico manager omits a creation request ID');
-requireCount('src/components/crm/MoneticoPaymentManager.tsx', /AbortSignal\.timeout\(45_000\)/, 3, 'Monetico manager has an unbounded create or send request');
+requireCount('src/components/crm/MoneticoPaymentManager.tsx', /nativeAdminCreateMoneticoPayment\(/, 2, 'Monetico manager does not use native creation for both actions');
+requireMatch('src/lib/native-admin-data.ts', /nativeAdminCreateMoneticoPayment[\s\S]*AbortSignal\.timeout\(45_000\)/, 'native Monetico creation has no timeout');
 requireMatch('src/components/crm/MoneticoPaymentManager.tsx', /form\.remove\(\)[\s\S]*clearPaymentRequestId\(paymentSignature\)/, 'Monetico manager clears its retry key before validating and submitting the payment form');
 const legacyCicPayment = 'supabase/functions/create-cic-payment-link/index.ts';
 requireMatch(legacyCicPayment, /numericAmount[\s\S]*canReuse[\s\S]*existingExpiry[\s\S]*PaymentTokenCreationFailed/, 'legacy CIC creation is unvalidated or creates a fresh token on every retry');
@@ -317,7 +323,8 @@ forbidMatch('src/components/crm/ContratSignatureStep.tsx', /getPublicUrl|access_
 requireMatch('src/components/crm/ContratSignatureStep.tsx', /SecureDocumentLink[\s\S]*bucket="contract-documents"/, 'contract backoffice preview bypasses the secure signer');
 requireMatch('src/components/crm/ContratSignatureStep.tsx', /remove\(\[uploadData\.path\]\)[\s\S]*storageError/, 'contract document failures leave broken rows or orphan uploads');
 forbidMatch('src/components/crm/PaiementRIBStep.tsx', /getPublicUrl/, 'back-office exposes private RIBs through public URLs');
-requireMatch('src/components/crm/PaiementRIBStep.tsx', /getSecureDocumentUrl\(\{ bucket: 'lead-rib'/, 'back-office RIB view does not use short-lived signed URLs');
+requireMatch('src/components/crm/PaiementRIBStep.tsx', /nativeAdminRibUrl\(ribId\)/, 'back-office RIB view does not use the authenticated native download');
+requireMatch('server/taxiassur-platform-api.mjs', /downloadAdminRib[\s\S]*verifiedAdminSession\(req\)/, 'native RIB download is not session protected');
 requireMatch(privateEmailAttachmentMigration, /SET public = false[\s\S]*Public read access to email attachments[\s\S]*Public read access for email attachments/, 'email attachment bucket or public read policies remain public');
 requireMatch(privateEmailAttachmentMigration, /SET download_url = NULL/, 'persisted public email attachment URLs are not cleared');
 for (const emailAttachmentImporter of [
@@ -495,8 +502,9 @@ requireMatch('supabase/migrations/20260809234500_restrict_down_payment_confirmat
 
 requireMatch('supabase/functions/send-payment-link-monetico/index.ts', /sentError[\s\S]*audit non enregistré[\s\S]*notificationError[\s\S]*JSON\.stringify\(\{ success: true \}\)/, 'Monetico payment email audit can silently fail or response leaks payment data');
 forbidMatch('src/components/crm/MoneticoPaymentManager.tsx', /console\.log|result\.details|result\.email/, 'Monetico manager logs or displays sensitive server response data');
-requireMatch('src/components/crm/MoneticoPaymentManager.tsx', /!response\.ok \|\| result\?\.success !== true/, 'Monetico manager reports email success from HTTP status alone');
-requireMatch('src/components/crm/DownPaymentManager.tsx', /contractUpdateError[\s\S]*leadError[\s\S]*emailResult\?\.success !== true[\s\S]*Copiez le lien manuellement/, 'down-payment workflow ignores persistence or email delivery failures');
+requireMatch('src/components/crm/MoneticoPaymentManager.tsx', /nativeAdminQueuePaymentEmail\(paymentId\)[\s\S]*result\?\.success !== true/, 'Monetico manager reports email success without native queue acknowledgement');
+requireMatch('src/components/crm/DownPaymentManager.tsx', /nativeAdminConfigureDownPayment[\s\S]*configured\?\.success !== true \|\| configured\?\.emailQueued !== true/, 'down-payment workflow ignores native persistence or email queue failures');
+forbidMatch('src/components/crm/DownPaymentManager.tsx', /supabase/i, 'down-payment workflow still depends on Supabase');
 forbidMatch('src/components/crm/DownPaymentManager.tsx', /email:\s*lead\.email|first_name:\s*lead\.first_name|last_name:\s*lead\.last_name/, 'down-payment caller sends unnecessary prospect PII to payment email function');
 requireMatch('supabase/functions/whatsapp-status/index.ts', /statusMap[\s\S]*Invalid message status[\s\S]*message_status: normalizedStatus/, 'WhatsApp statuses are not allowlisted or webhook logs remain excessive');
 requireMatch('supabase/functions/whatsapp-webhook/index.ts', /Invalid WhatsApp payload[\s\S]*api\.twilio\.com[\s\S]*msgError\?\.code === "23505"[\s\S]*normalizedCommand/, 'inbound WhatsApp validation, idempotence, media trust, or exact consent commands are missing');

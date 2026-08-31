@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { nativeAdminSession } from "@/lib/native-admin-auth";
 import { invokeIdempotentDelivery } from "@/lib/invoke-idempotent-delivery";
 import { toast } from "@/lib/toast";
 import {
@@ -234,7 +235,7 @@ export default function ValidationDevisStep({
 
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { user } = await nativeAdminSession();
 
       const annualPrice = parseFloat(quoteFormData.quote_amount) || null;
       const monthlyPriceParsed = parseFloat(quoteFormData.monthly_price);
@@ -283,7 +284,7 @@ export default function ValidationDevisStep({
 
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { user } = await nativeAdminSession();
       const selectedReason = refusalReasons.find((r) =>
         r.code === refusalFormData.refusal_reason_code
       );

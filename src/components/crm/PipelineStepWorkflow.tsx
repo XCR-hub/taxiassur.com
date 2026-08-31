@@ -11,6 +11,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { nativeAdminSession } from '@/lib/native-admin-auth';
 import { logger } from '@/lib/logger';
 import { CallDialog } from './CallDialog';
 
@@ -119,7 +120,7 @@ export const PipelineStepWorkflow: React.FC<PipelineStepWorkflowProps> = ({
 
       if (updateError) throw updateError;
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const { user } = await nativeAdminSession();
 
       await supabase.from('crm_interactions').insert({
         lead_id: leadId,

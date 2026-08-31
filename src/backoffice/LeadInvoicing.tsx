@@ -5,9 +5,9 @@ import {
   ChevronRight, Zap, Receipt, BadgeEuro, Calendar,
   Hash
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
 import { withTimeout } from '@/lib/promise-timeout';
+import { nativeAdminCreateMoneticoPayment, nativeAdminInvoicing } from '@/lib/native-admin-data';
 import { clearPaymentRequestId, getPaymentRequestId } from '@/lib/payment-idempotency';
 
 interface Lead {
@@ -88,12 +88,9 @@ const LeadInvoicing: React.FC = () => {
   const loadData = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true); else setLoading(true);
     try {
-      const [{ data: leadsData }, { data: paymentsData }] = await Promise.all([
-        supabase.from('crm_leads').select('id, email, phone, first_name, last_name, status, created_at, city').order('created_at', { ascending: false }).limit(100),
-        supabase.from('monetico_payments').select('*').not('lead_id', 'is', null).order('created_at', { ascending: false }).limit(20)
-      ]);
-      if (leadsData) { setLeads(leadsData); setFilteredLeads(leadsData); }
-      if (paymentsData) setRecentPayments(paymentsData);
+      const { leads: leadsData = [], payments: paymentsData = [] } = await nativeAdminInvoicing();
+      setLeads(leadsData); setFilteredLeads(leadsData);
+      setRecentPayments(paymentsData);
     } catch (error) {
       console.error('Erreur chargement:', error);
     } finally {
@@ -116,16 +113,14 @@ const LeadInvoicing: React.FC = () => {
     setCreating(true);
     setPaymentSuccess(false);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { toast.info('Session expirée'); return; }
-
       const paymentSignature = JSON.stringify({ leadId: selectedLead.id, amount: parseFloat(amount).toFixed(2), description: description.trim() });
       const paymentRequestId = getPaymentRequestId(paymentSignature);
-      const { data, error } = await withTimeout(supabase.functions.invoke('create-monetico-payment', {
-        body: { leadId: selectedLead.id, amount: parseFloat(amount), description: description || `Paiement ${selectedLead.first_name} ${selectedLead.last_name}`, requestId: paymentRequestId }
+      const data = await withTimeout(nativeAdminCreateMoneticoPayment({
+        leadId: selectedLead.id,
+        amount: parseFloat(amount),
+        description: description || `Paiement ${selectedLead.first_name} ${selectedLead.last_name}`,
+        requestId: paymentRequestId
       }), 45_000);
-
-      if (error) { toast.error('Erreur lors de la création du lien de paiement'); return; }
 
       if (data?.success && data?.actionUrl && data?.formData) {
         clearPaymentRequestId(paymentSignature);

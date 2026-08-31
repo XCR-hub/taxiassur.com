@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { nativeAdminSession } from '@/lib/native-admin-auth';
 import {
   Trash2, AlertTriangle, Users, Mail, Calendar, Shield, GitMerge,
   FileText, MessageSquare, RefreshCw, ChevronDown, ChevronUp,
@@ -120,10 +121,8 @@ export default function DuplicateLeadsManager() {
 
   async function checkMasterAdmin() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.email) return;
-      const { data } = await supabase.from('admin_users').select('role').eq('email', user.email).eq('is_active', true).single();
-      setIsMasterAdmin(data?.role === 'master');
+      const { user } = await nativeAdminSession();
+      setIsMasterAdmin(user?.role === 'master');
     } catch { setIsMasterAdmin(false); }
   }
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, Circle, Clock, User, Plus, Edit2, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { nativeAdminSession } from '@/lib/native-admin-auth';
 import { Badge } from '../Badge';
 
 interface ChecklistItem {
@@ -109,7 +110,7 @@ export function CommercialChecklist({ leadId, productType = 'all', onProgressCha
   const handleToggleItem = async (itemId: string, currentState: boolean) => {
     setUpdating(itemId);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { user } = await nativeAdminSession();
 
       const { error } = await supabase
         .from('commercial_checklist_items')

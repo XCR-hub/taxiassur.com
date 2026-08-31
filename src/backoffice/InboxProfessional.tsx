@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { nativeAdminSession } from '@/lib/native-admin-auth';
 import { toast } from '@/lib/toast';
 import { Inbox, Star, Send, File as FileEdit, Archive, Trash2, HelpCircle, Handshake, Bell, Mail, Plus, FolderPlus, Search, Filter, RefreshCw, ChevronDown, ChevronRight, Circle, CheckCircle, AlertCircle, Reply, Forward, MoreHorizontal, User, Building2, Sparkles, X, Check, Clock, Tag, Folder, MessageSquare, ExternalLink, type LucideIcon } from 'lucide-react';
 
@@ -217,11 +218,12 @@ export default function InboxProfessional() {
 
   async function handleEmailAction(emailId: string, action: string) {
     try {
+      const { user } = await nativeAdminSession().catch(() => ({ user: null }));
       // Enregistrer l'action
       await supabase.from('email_actions').insert({
         email_id: emailId,
         action_type: action,
-        performed_by: (await supabase.auth.getUser()).data.user?.id
+        performed_by: user?.id
       });
 
       // Mettre à jour l'email selon l'action
@@ -389,6 +391,7 @@ export default function InboxProfessional() {
 
   async function handleSuggestion(suggestionId: string, action: 'accept' | 'reject') {
     try {
+      const { user } = await nativeAdminSession().catch(() => ({ user: null }));
       const suggestion = suggestions.find(s => s.id === suggestionId);
       if (!suggestion) return;
 
@@ -436,7 +439,7 @@ export default function InboxProfessional() {
         .from('email_suggestions')
         .update({
           status: action === 'accept' ? 'accepted' : 'rejected',
-          reviewed_by: (await supabase.auth.getUser()).data.user?.id,
+          reviewed_by: user?.id,
           reviewed_at: new Date().toISOString()
         })
         .eq('id', suggestionId);

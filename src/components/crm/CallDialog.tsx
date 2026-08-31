@@ -15,6 +15,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { nativeAdminSession } from '@/lib/native-admin-auth';
 import { logger } from '@/lib/logger';
 import { telephonyService, TelephonyStatus } from '@/lib/telephony-service';
 
@@ -39,8 +40,6 @@ export const CallDialog: React.FC<CallDialogProps> = ({
   leadEmail,
   onCallCompleted
 }) => {
-  if (!isOpen) return null;
-
   const [callStatus, setCallStatus] = useState<'idle' | 'connecting' | 'active' | 'ended'>('idle');
   const [deviceStatus, setDeviceStatus] = useState<TelephonyStatus>('disconnected');
   const [isMuted, setIsMuted] = useState(false);
@@ -91,13 +90,13 @@ export const CallDialog: React.FC<CallDialogProps> = ({
       setDeviceStatus(status);
       if (status === 'on-call') {
         setCallStatus('active');
-      } else if (status === 'ready' && callStatus === 'active') {
-        setCallStatus('ended');
+      } else if (status === 'ready') {
+        setCallStatus((current) => current === 'active' ? 'ended' : current);
       }
     });
 
     return unsubscribe;
-  }, [isOpen]);
+  }, [isOpen, cleanup]);
 
   useEffect(() => {
     if (callStatus === 'active') {
@@ -146,7 +145,7 @@ export const CallDialog: React.FC<CallDialogProps> = ({
     try {
       setSaving(true);
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const { user } = await nativeAdminSession();
       if (!user) throw new Error('User not authenticated');
 
       const { error: interactionError } = await supabase.from('crm_interactions').insert({
@@ -187,6 +186,8 @@ export const CallDialog: React.FC<CallDialogProps> = ({
   };
 
   const isDeviceReady = deviceStatus === 'ready' || deviceStatus === 'on-call';
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">

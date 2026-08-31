@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Check, Download, ExternalLink, AlertCircle, RefreshCw, ShoppingCart, Maximize2, Bug, CheckCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { nativeAdminSession } from '@/lib/native-admin-auth';
 import { logger } from '@/lib/logger';
 import { SecureDocumentLink } from './SecureDocumentLink';
 import { toast } from '@/lib/toast';
@@ -253,7 +254,7 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { user } = await nativeAdminSession();
       const wasValidated = draggedDoc.validated;
 
       logger.info(`Reclassification: "${draggedDoc.file_name}" de "${draggedDoc.document_type}" vers "${docType}"`);
@@ -339,11 +340,7 @@ const DocumentDragDropSimple: React.FC<DocumentDragDropSimpleProps> = ({ leadId,
 
   const handleValidate = async (doc: Document) => {
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-      if (authError) {
-        throw new Error(`Erreur d'authentification : ${authError.message}`);
-      }
+      const { user } = await nativeAdminSession();
 
       logger.info('Validating document:', {
         id: doc.id,

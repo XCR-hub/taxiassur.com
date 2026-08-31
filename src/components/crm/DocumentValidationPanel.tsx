@@ -5,13 +5,11 @@ import {
   XCircle,
   Clock,
   AlertCircle,
-  Download,
   FileText,
   Loader2,
-  ChevronDown,
-  ChevronUp
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { nativeAdminSession } from '@/lib/native-admin-auth';
 import { logger } from '@/lib/logger';
 import { SecureDocumentLink } from './SecureDocumentLink';
 
@@ -79,8 +77,6 @@ const DocumentValidationPanel: React.FC<DocumentValidationPanelProps> = ({ leadI
     reason: '',
     details: ''
   });
-  const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
-
   useEffect(() => {
     loadDocuments();
   }, [leadId]);
@@ -106,7 +102,7 @@ const DocumentValidationPanel: React.FC<DocumentValidationPanelProps> = ({ leadI
   const handleValidate = async (documentId: string) => {
     setValidating(documentId);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { user } = await nativeAdminSession();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase.rpc('validate_document', {
@@ -136,7 +132,7 @@ const DocumentValidationPanel: React.FC<DocumentValidationPanelProps> = ({ leadI
 
     setRejecting(rejectModal.documentId);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { user } = await nativeAdminSession();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase.rpc('reject_document', {
@@ -252,7 +248,6 @@ const DocumentValidationPanel: React.FC<DocumentValidationPanelProps> = ({ leadI
 
         <div className="divide-y divide-gray-200">
           {documents.map((doc) => {
-            const isExpanded = expandedDoc === doc.id;
             const documentLabel = DOCUMENT_TYPE_LABELS[doc.document_type] || doc.document_type;
 
             return (

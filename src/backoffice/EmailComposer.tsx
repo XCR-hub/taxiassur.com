@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Send, Mail, Sparkles, FileText, Loader2, CheckCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { nativeAdminSession } from '@/lib/native-admin-auth';
 import { logger } from '@/lib/logger';
 
 interface EmailComposerProps {
@@ -63,7 +64,7 @@ const EmailComposer: React.FC<EmailComposerProps> = ({ contact, onClose, onSent 
     setError(null);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { user } = await nativeAdminSession().catch(() => ({ user: null }));
 
       const { data, error: sendError } = await supabase.functions.invoke('ia-auto-executor', {
         body: {

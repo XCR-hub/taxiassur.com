@@ -1,31 +1,29 @@
 import { useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { NATIVE_ADMIN_TOKEN_KEY, nativeAdminSession } from '@/lib/native-admin-auth';
 
 /**
- * Keeps the admin session alive by periodically checking the session.
- * Does NOT manually call refreshSession() — Supabase handles that automatically.
- * Manual refreshSession() calls conflict with Supabase's built-in token rotation
- * and cause "Invalid Refresh Token: Already Used" errors, kicking the user out.
+ * Checks that the native backoffice session remains valid and keeps the cached
+ * user timestamp current. Public pages do not trigger an authentication request.
  */
 export const AdminSessionKeepAlive: React.FC = () => {
   useEffect(() => {
     const checkSession = async () => {
+      if (!localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) return;
+
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          const userStr = localStorage.getItem('taxiassur_user');
-          if (userStr) {
-            try {
-              const user = JSON.parse(userStr);
-              user.cachedAt = Date.now();
-              localStorage.setItem('taxiassur_user', JSON.stringify(user));
-            } catch {
-              // ignore
-            }
+        await nativeAdminSession();
+        const userStr = localStorage.getItem('taxiassur_user');
+        if (userStr) {
+          try {
+            const user = JSON.parse(userStr);
+            user.cachedAt = Date.now();
+            localStorage.setItem('taxiassur_user', JSON.stringify(user));
+          } catch {
+            // A malformed cache is ignored; the native token remains authoritative.
           }
         }
       } catch {
-        // Ignore errors — Supabase handles session recovery internally
+        // The auth hook owns logout and redirection when the native session expires.
       }
     };
 

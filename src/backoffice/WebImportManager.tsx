@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Download, Settings, Play, Clock, CheckCircle, XCircle, Eye, Loader2, FileText, Database, Key } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { nativeAdminSession } from '@/lib/native-admin-auth';
 import { toast } from '@/lib/toast';
 
 interface Credential {
@@ -131,7 +132,7 @@ const WebImportManager: React.FC = () => {
 
     try {
       // Vérifier l'authentification
-      const { data: { user } } = await supabase.auth.getUser();
+      const { user } = await nativeAdminSession().catch(() => ({ user: null }));
 
       if (!user) {
         toast.info('Vous devez être connecté pour ajouter des identifiants');
