@@ -1,5 +1,6 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { spawn } from 'node:child_process';
+import path from 'node:path';
 import net from 'node:net';
 import tls from 'node:tls';
 
@@ -16,6 +17,7 @@ const config = {
   smtpUser: env.SMTP_USER || 'team@taxiassur.com',
   smtpPassword: env.SMTP_PASS || '',
   smtpCertSha256: env.SMTP_CERT_SHA256 || '',
+  documentRoot: env.TAXIASSUR_DOCUMENT_ROOT || 'F:/TaxiAssur/Documents',
 };
 
 if (!config.dbPassword || !config.smtpPassword) process.exit(2);
@@ -101,10 +103,27 @@ async function sendMail(row) {
     const contentType = 'text/html';
     const body = Buffer.from(content, 'utf8').toString('base64').match(/.{1,76}/g)?.join('\r\n') || '';
     phase = 'message_body';
-    socket.write(`From: TaxiAssur <${config.smtpUser}>\r\nTo: <${row.recipient}>\r\nSubject: =?UTF-8?B?${subject}?=\r\nMIME-Version: 1.0\r\nContent-Type: ${contentType}; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n${body}\r\n.\r\n`);
+    const attachment=mailAttachment(row);
+    if(attachment){
+      const boundary=`taxiassur-${String(row.id).replace(/[^a-z0-9]/gi,'')}`;
+      const fileBody=attachment.content.toString('base64').match(/.{1,76}/g)?.join('\r\n')||'';
+      const encodedName=encodeURIComponent(attachment.name);
+      socket.write(`From: TaxiAssur <${config.smtpUser}>\r\nTo: <${row.recipient}>\r\nSubject: =?UTF-8?B?${subject}?=\r\nMIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary="${boundary}"\r\n\r\n--${boundary}\r\nContent-Type: ${contentType}; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n${body}\r\n--${boundary}\r\nContent-Type: ${attachment.mime}; name*=UTF-8''${encodedName}\r\nContent-Disposition: attachment; filename*=UTF-8''${encodedName}\r\nContent-Transfer-Encoding: base64\r\n\r\n${fileBody}\r\n--${boundary}--\r\n.\r\n`);
+    }else{
+      socket.write(`From: TaxiAssur <${config.smtpUser}>\r\nTo: <${row.recipient}>\r\nSubject: =?UTF-8?B?${subject}?=\r\nMIME-Version: 1.0\r\nContent-Type: ${contentType}; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n${body}\r\n.\r\n`);
+    }
     await expect([250]);
     await command('QUIT', [221], 'quit');
   } finally { socket.destroy(); }
+}
+
+function mailAttachment(row){
+  if(!row.attachment_path)return null;
+  const root=path.resolve(config.documentRoot),file=path.resolve(root,String(row.attachment_path));
+  if(!file.startsWith(root+path.sep)||!existsSync(file))throw new Error('attachment_unavailable');
+  const content=readFileSync(file);
+  if(!content.length||content.length>15*1024*1024)throw new Error('attachment_invalid_size');
+  return {content,name:path.basename(String(row.attachment_name||'document')),mime:String(row.attachment_mime||'application/octet-stream')};
 }
 
 function fallbackHtml(row) {

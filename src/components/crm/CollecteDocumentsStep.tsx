@@ -250,16 +250,10 @@ export default function CollecteDocumentsStep({
 
     try {
       // Ajouter le document personnalisé à la base
-      const { error } = await supabase
-        .from('crm_lead_documents')
-        .insert({
-          lead_id: leadId,
-          document_type: 'custom',
-          custom_label: newCustomDoc.trim(),
-          status: 'missing'
-        });
-
-      if (error) throw error;
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/document-collection`, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'add_custom', label: newCustomDoc.trim() }),
+      });
 
       // Recharger les données
       await loadDocumentStats();
@@ -281,14 +275,10 @@ export default function CollecteDocumentsStep({
     }
 
     try {
-      const { error } = await supabase
-        .from('crm_lead_documents')
-        .delete()
-        .eq('lead_id', leadId)
-        .eq('document_type', 'custom')
-        .eq('custom_label', docLabel);
-
-      if (error) throw error;
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/document-collection`, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'remove_custom', label: docLabel }),
+      });
 
       await loadDocumentStats();
       await loadCustomDocuments();
@@ -372,50 +362,35 @@ export default function CollecteDocumentsStep({
       const subject = editableSubject;
 
       if (template.channel === 'email') {
-        const htmlContent = messageContent.replace(/\n/g, '<br>');
+        const emailResult = await nativeAdminCall<{ ok?: boolean; email_queued?: boolean }>(
+          `/v1/admin/leads/${encodeURIComponent(leadId)}/document-collection`, {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'send_email',
+              subject: subject || 'Documents necessaires - TaxiAssur',
+              message: messageContent,
+              template_key: template.template_key,
+            }),
+          }
+        );
 
-        const { data: emailResult, error } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
-            to: leadEmail,
-            to_email: leadEmail,
-            subject: subject || 'Documents necessaires - TaxiAssur',
-            content: htmlContent,
-            body: htmlContent,
-            lead_id: leadId
-
-        });
-
-        // Vérifier l'erreur ET le résultat
-        if (error || !emailResult?.success) {
-          const errorMsg = error?.message || emailResult?.error || 'Erreur inconnue';
-          throw new Error(`Email non envoyé: ${errorMsg}`);
+        if (!emailResult.ok || !emailResult.email_queued) {
+          throw new Error('Email non mis en file d\'envoi');
         }
-
-        // Log interaction
-        await supabase
-          .from('crm_interactions')
-          .insert({
-            lead_id: leadId,
-            type: 'email',
-            channel: 'email',
-            subject: subject,
-            body: messageContent,
-            status: 'sent',
-            metadata: { template_key: template.template_key }
-          });
 
       } else if (template.channel === 'sms') {
-        const { data: smsResult, error } = await invokeIdempotentDelivery(supabase, 'sms', 'send-sms-brevo', {
-            to: leadPhone,
-            content: messageContent,
-            lead_id: leadId,
-            tag: 'documents-request'
+        const smsResult = await nativeAdminCall<{ ok?: boolean }>(
+          `/v1/admin/leads/${encodeURIComponent(leadId)}/sms`, {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'send',
+              content: messageContent,
+              request_id: crypto.randomUUID(),
+            }),
+          }
+        );
 
-        });
-
-        if (error || !smsResult?.success) {
-          const errorMsg = error?.message || smsResult?.error || 'Erreur inconnue';
-          throw new Error(`SMS non envoyé: ${errorMsg}`);
-        }
+        if (!smsResult.ok) throw new Error('SMS non envoyé');
 
       } else if (template.channel === 'whatsapp') {
         // Send WhatsApp

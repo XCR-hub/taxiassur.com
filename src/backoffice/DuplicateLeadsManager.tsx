@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { nativeAdminSession } from '@/lib/native-admin-auth';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import {
   Trash2, AlertTriangle, Users, Mail, Calendar, Shield, GitMerge,
   FileText, MessageSquare, RefreshCw, ChevronDown, ChevronUp,
@@ -26,6 +26,16 @@ interface Lead {
   created_at: string;
   metadata: Record<string, unknown>;
   _counts?: { interactions: number; documents: number; emails: number; quotes: number };
+}
+
+interface DuplicateLeadsResponse {
+  duplicates?: DuplicateLead[];
+  details?: Record<string, Lead[]>;
+}
+
+interface MergeResponse {
+  success?: boolean;
+  documents_moved?: number;
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
@@ -129,11 +139,12 @@ export default function DuplicateLeadsManager() {
   async function loadDuplicates() {
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('find_duplicate_leads');
-      if (error) throw error;
-      setDuplicates(data || []);
+      const data = await nativeAdminCall<DuplicateLeadsResponse>('/v1/admin/leads/duplicates');
+      setDuplicates(data.duplicates || []);
+      setLeadsDetails(data.details || {});
     } catch (e) {
       console.error(e);
+      showToast('Impossible de charger les doublons', 'error');
     } finally {
       setLoading(false);
     }
@@ -145,28 +156,18 @@ export default function DuplicateLeadsManager() {
       return;
     }
     try {
-      const { data, error } = await supabase
-        .from('crm_leads').select('*').in('id', leadIds).is('deleted_at', null).order('created_at', { ascending: false });
-      if (error) throw error;
-      const leadsWithCounts = await Promise.all((data || []).map(async (lead) => {
-        const [a, b, c, d] = await Promise.all([
-          supabase.from('crm_interactions').select('*', { count: 'exact', head: true }).eq('lead_id', lead.id),
-          supabase.from('crm_lead_documents').select('*', { count: 'exact', head: true }).eq('lead_id', lead.id),
-          supabase.from('email_messages').select('*', { count: 'exact', head: true }).eq('lead_id', lead.id),
-          supabase.from('lead_company_quotes').select('*', { count: 'exact', head: true }).eq('lead_id', lead.id),
-        ]);
-        return { ...lead, _counts: { interactions: a.count || 0, documents: b.count || 0, emails: c.count || 0, quotes: d.count || 0 } };
-      }));
-      setLeadsDetails(prev => ({ ...prev, [email]: leadsWithCounts }));
+      const data = await nativeAdminCall<DuplicateLeadsResponse>('/v1/admin/leads/duplicates');
+      const details = data.details?.[email] || [];
+      setLeadsDetails(prev => ({ ...prev, [email]: details.filter(lead => leadIds.includes(lead.id)) }));
       setExpandedEmail(email);
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error(e); showToast('Impossible de charger les leads', 'error'); }
   }
 
   function confirmDelete(leadId: string, email: string) {
     if (!isMasterAdmin) { showToast('Seul le Master Admin peut supprimer des leads', 'error'); return; }
     askConfirm({
       title: 'Supprimer ce lead ?',
-      message: 'Cette action est irréversible. Le lead sera marqué comme supprimé mais conservé en base pour audit.',
+      message: 'Cette action est irréversible. Le lead et ses données associées seront supprimés. Un journal d\'audit conservera la trace de l\'opération.',
       confirmLabel: 'Supprimer',
       onConfirm: () => { setConfirm(null); executeDelete(leadId, email); },
     });
@@ -175,9 +176,11 @@ export default function DuplicateLeadsManager() {
   async function executeDelete(leadId: string, email: string) {
     try {
       setDeletingId(leadId);
-      const { data, error } = await supabase.rpc('soft_delete_lead', { p_lead_id: leadId });
-      if (error) throw error;
-      if (data?.success) {
+      const data = await nativeAdminCall<{ ok?: boolean }>(`/v1/admin/leads/${encodeURIComponent(leadId)}`, {
+        method: 'DELETE',
+        body: JSON.stringify({ reason: 'doublon', confirmation: 'SUPPRIMER' }),
+      });
+      if (data.ok) {
         showToast('Lead supprimé avec succès', 'success');
         setLeadsDetails(prev => ({ ...prev, [email]: prev[email]?.filter(l => l.id !== leadId) || [] }));
         await loadDuplicates();
@@ -202,14 +205,10 @@ export default function DuplicateLeadsManager() {
   async function executeMerge(email: string) {
     try {
       setMerging(email);
-      const { data, error } = await supabase.rpc('merge_all_duplicates_for_email', { p_email: email });
-      if (error) throw error;
-      if (data?.success) {
-        showToast(`${data.leads_merged} lead(s) fusionné(s) — ${data.total_documents} doc(s) transféré(s)`, 'success');
-        await loadDuplicates();
-        setExpandedEmail(null);
-        setLeadsDetails(prev => { const n = { ...prev }; delete n[email]; return n; });
-      } else throw new Error(data?.message);
+      const result = await mergeDuplicateGroup(email);
+      showToast(`${result.merged} lead(s) fusionné(s) — ${result.documents} doc(s) transféré(s)`, 'success');
+      await loadDuplicates();
+      setExpandedEmail(null);
     } catch (e) {
       showToast('Erreur : ' + (e.message || 'Impossible de fusionner'), 'error');
     } finally {
@@ -230,18 +229,34 @@ export default function DuplicateLeadsManager() {
   async function executeAutoMergeAll() {
     try {
       setMerging('all');
-      const { data, error } = await supabase.rpc('auto_merge_all_duplicates');
-      if (error) throw error;
-      if (data?.success) {
-        showToast(`${data.emails_processed} email(s) — ${data.total_leads_merged} lead(s) fusionné(s)`, 'success');
-        await loadDuplicates();
-        setExpandedEmail(null);
-      } else throw new Error(data?.message);
+      let merged = 0;
+      for (const duplicate of duplicates) merged += (await mergeDuplicateGroup(duplicate.email)).merged;
+      showToast(`${duplicates.length} email(s) — ${merged} lead(s) fusionné(s)`, 'success');
+      await loadDuplicates();
+      setExpandedEmail(null);
     } catch (e) {
       showToast('Erreur : ' + (e.message || 'Impossible de fusionner'), 'error');
     } finally {
       setMerging(false);
     }
+  }
+
+  async function mergeDuplicateGroup(email: string) {
+    const leads = leadsDetails[email] || [];
+    if (leads.length < 2) throw new Error('Détails des doublons indisponibles');
+    const score = (lead: Lead) => Object.values(lead._counts || {}).reduce((sum, count) => sum + count, 0)
+      + Object.values(lead).filter(value => value !== null && value !== undefined && value !== '').length;
+    const [target, ...sources] = [...leads].sort((a, b) => score(b) - score(a));
+    let documents = 0;
+    for (const source of sources) {
+      const result = await nativeAdminCall<MergeResponse>('/v1/admin/leads/merge', {
+        method: 'POST',
+        body: JSON.stringify({ source_id: source.id, target_id: target.id }),
+      });
+      if (!result.success) throw new Error('Fusion refusée par le serveur');
+      documents += result.documents_moved || 0;
+    }
+    return { merged: sources.length, documents };
   }
 
   const totalDuplicates = duplicates.reduce((acc, d) => acc + d.count, 0);
@@ -518,7 +533,7 @@ export default function DuplicateLeadsManager() {
               <li className="flex items-start gap-2"><CheckCircle className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5" /><span>Les doublons sont autorisés pour ne pas bloquer les demandes de devis</span></li>
               <li className="flex items-start gap-2"><Shield className="w-3.5 h-3.5 text-red-500 flex-shrink-0 mt-0.5" /><span>Seul le <strong>Master Admin</strong> peut supprimer des leads</span></li>
               <li className="flex items-start gap-2"><FileText className="w-3.5 h-3.5 text-blue-500 flex-shrink-0 mt-0.5" /><span>Toutes les suppressions sont tracées dans les logs d'audit</span></li>
-              <li className="flex items-start gap-2"><X className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-0.5" /><span>Les leads supprimés restent en base avec <code className="bg-gray-100 px-1 rounded">deleted_at</code> pour l'historique</span></li>
+              <li className="flex items-start gap-2"><X className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-0.5" /><span>Les suppressions retirent les données du lead et conservent un journal d'audit dédié</span></li>
             </ul>
           </div>
         </div>

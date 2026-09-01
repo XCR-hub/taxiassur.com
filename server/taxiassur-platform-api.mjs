@@ -229,10 +229,10 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/v1/admin/ai-governance/generate' && req.method === 'POST') return await adminAiGovernanceGenerate(req, res, origin, requestId);
     const aiDecisionMatch = url.pathname.match(/^\/v1\/admin\/ai-decisions\/([0-9a-f-]{36})$/i);
     if (aiDecisionMatch && req.method === 'PATCH') return await adminAiDecisionPatch(req, res, origin, requestId, aiDecisionMatch[1]);
-    const adminDocumentCollectionMatch = url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/document-collection$/i);
-    if (adminDocumentCollectionMatch && ['GET','POST'].includes(req.method)) return await adminDocumentCollection(req, res, origin, requestId, adminDocumentCollectionMatch[1]);
-    const adminDocumentWorkspaceMatch = url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/document-workspace$/i);
-    if (adminDocumentWorkspaceMatch && ['GET','POST'].includes(req.method)) return await adminDocumentWorkspace(req, res, origin, requestId, adminDocumentWorkspaceMatch[1]);
+    const adminDocumentCollectionMatch = url.pathname.match(/^\/v1\/admin\/leads\/([^/]{1,200})\/document-collection$/i);
+    if (adminDocumentCollectionMatch && ['GET','POST'].includes(req.method)) return await adminDocumentCollection(req, res, origin, requestId, decodeURIComponent(adminDocumentCollectionMatch[1]));
+    const adminDocumentWorkspaceMatch = url.pathname.match(/^\/v1\/admin\/leads\/([^/]{1,200})\/document-workspace$/i);
+    if (adminDocumentWorkspaceMatch && ['GET','POST'].includes(req.method)) return await adminDocumentWorkspace(req, res, origin, requestId, decodeURIComponent(adminDocumentWorkspaceMatch[1]));
     const adminDocumentWorkspaceUploadMatch = url.pathname.match(/^\/v1\/admin\/leads\/([^/]{1,200})\/document-workspace\/upload$/i);
     if (adminDocumentWorkspaceUploadMatch && req.method === 'POST') return await adminDocumentWorkspaceUpload(req, res, origin, requestId, decodeURIComponent(adminDocumentWorkspaceUploadMatch[1]));
     const adminLeadContractUploadMatch = url.pathname.match(/^\/v1\/admin\/leads\/([^/]{1,200})\/contract-documents$/i);
@@ -260,8 +260,8 @@ const server = createServer(async (req, res) => {
     if(adminLeadQuoteSignatureMatch&&['GET','PATCH'].includes(req.method))return await adminLeadQuoteSignature(req,res,origin,requestId,decodeURIComponent(adminLeadQuoteSignatureMatch[1]));
     const adminLeadTimelineMatch=url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/timeline$/i);
     if(adminLeadTimelineMatch&&['GET','POST'].includes(req.method))return await adminLeadTimeline(req,res,origin,requestId,adminLeadTimelineMatch[1]);
-    const adminLeadSmsMatch=url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/sms$/i);
-    if(adminLeadSmsMatch&&['GET','POST'].includes(req.method))return await adminLeadSms(req,res,origin,requestId,adminLeadSmsMatch[1]);
+    const adminLeadSmsMatch=url.pathname.match(/^\/v1\/admin\/leads\/([^/]{1,200})\/sms$/i);
+    if(adminLeadSmsMatch&&['GET','POST'].includes(req.method))return await adminLeadSms(req,res,origin,requestId,decodeURIComponent(adminLeadSmsMatch[1]));
     const adminLeadQuotesWorkspaceMatch = url.pathname.match(/^\/v1\/admin\/leads\/([^/]{1,200})\/quotes-workspace$/i);
     if (adminLeadQuotesWorkspaceMatch && req.method === 'GET') return await adminLeadQuotesWorkspace(req, res, origin, requestId, decodeURIComponent(adminLeadQuotesWorkspaceMatch[1]));
     const adminLeadQuoteMatch = url.pathname.match(/^\/v1\/admin\/leads\/([^/]{1,200})\/quotes\/([0-9a-f-]{36})$/i);
@@ -478,7 +478,9 @@ async function adminInsurerDossier(req,res,origin,requestId,leadId){
 
 async function adminLeadSms(req,res,origin,requestId,leadId){
   const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
-  const lead=parseJsonLine(await runPsql("SELECT data::text FROM (SELECT data,0 priority FROM taxiassur.records WHERE collection='crm_leads' AND record_id="+quoteLiteral(leadId)+" UNION ALL SELECT data,1 priority FROM supabase_rest.crm_leads WHERE data->>'id'="+quoteLiteral(leadId)+") lead_sources ORDER BY priority LIMIT 1;"));if(!lead)return json(res,origin,404,{ok:false,error:'lead_not_found'},requestId);
+  let lead=parseJsonLine(await runPsql("SELECT data::text FROM taxiassur.records WHERE collection='crm_leads' AND record_id="+quoteLiteral(leadId)+" LIMIT 1;"));
+  if(!lead){try{lead=parseJsonLine(await runPsql("SELECT data::text FROM supabase_rest.crm_leads WHERE data->>'id'="+quoteLiteral(leadId)+" LIMIT 1;"));}catch(error){console.warn('[crm-lead-mirror-fallback]',{leadId,error:error instanceof Error?error.message:'unknown'});}}
+  if(!lead)return json(res,origin,404,{ok:false,error:'lead_not_found'},requestId);
   if(req.method==='GET'){
     const conversation=parseJsonLine(await runPsql("SELECT data::text FROM taxiassur.records WHERE collection='sms_conversations' AND data->>'lead_id'="+quoteLiteral(leadId)+" AND COALESCE(data->>'status','active')='active' ORDER BY COALESCE(data->>'last_message_at',data->>'created_at','') DESC LIMIT 1;"));
     const messages=parseJsonLine(await runPsql("SELECT COALESCE(jsonb_agg(data ORDER BY COALESCE(data->>'created_at','')),'[]'::jsonb)::text FROM taxiassur.records WHERE collection='sms_messages' AND data->>'lead_id'="+quoteLiteral(leadId)+";"))||[];
@@ -491,13 +493,14 @@ async function adminLeadSms(req,res,origin,requestId,leadId){
     const response=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+openai.key,'Content-Type':'application/json'},body:JSON.stringify({model:openai.model,temperature:0.3,max_tokens:100,messages:[{role:'system',content:'Rédige une réponse SMS professionnelle en français, 160 caractères maximum, pour TaxiAssur. Ne promets ni tarif ni garantie.'},{role:'user',content:context||'Rédige un SMS de suivi assurance taxi pour '+String(lead.first_name||'le prospect')}]})});const payload=await response.json().catch(()=>null);if(!response.ok)return json(res,origin,502,{ok:false,error:'ai_provider_error'},requestId);return json(res,origin,200,{ok:true,response:String(payload?.choices?.[0]?.message?.content||'').trim().slice(0,160)},requestId);
   }
   if(action!=='send')return json(res,origin,400,{ok:false,error:'invalid_action'},requestId);const brevo=await effectiveBrevo();if(!brevo.key)return json(res,origin,503,{ok:false,error:'sms_unavailable'},requestId);
-  const content=String(body.content||'').normalize('NFKC').trim().slice(0,480),requestKey=String(body.request_id||''),phone=String(lead.phone||'').replace(/[\s().-]/g,'');if(!content||!uuidPattern.test(requestKey)||!(/^\+?[1-9][0-9]{7,14}$/).test(phone))return json(res,origin,400,{ok:false,error:'invalid_sms'},requestId);
+  const content=String(body.content||'').normalize('NFKC').trim().slice(0,480),requestKey=String(body.request_id||'');let phone=String(lead.phone||'').replace(/[\s().-]/g,'');if(/^0[1-9][0-9]{8}$/.test(phone))phone='+33'+phone.slice(1);if(!content||!uuidPattern.test(requestKey)||!(/^\+?[1-9][0-9]{7,14}$/).test(phone))return json(res,origin,400,{ok:false,error:'invalid_sms'},requestId);
   const previous=parseJsonLine(await runPsql("SELECT data::text FROM taxiassur.records WHERE collection='sms_messages' AND data->>'request_id'="+quoteLiteral(requestKey)+" LIMIT 1;"));if(previous)return json(res,origin,200,{ok:true,message:previous,idempotent:true},requestId);
   const response=await fetch('https://api.brevo.com/v3/transactionalSMS/sms',{method:'POST',signal:AbortSignal.timeout(15_000),headers:{'api-key':brevo.key,'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({sender:brevo.sender,recipient:phone,content,type:'transactional',tag:'crm-manual'})});const provider=await response.json().catch(()=>null);if(!response.ok)return json(res,origin,502,{ok:false,error:'sms_provider_error'},requestId);
   let conversation=parseJsonLine(await runPsql("SELECT data::text FROM taxiassur.records WHERE collection='sms_conversations' AND data->>'lead_id'="+quoteLiteral(leadId)+" AND COALESCE(data->>'status','active')='active' LIMIT 1;"));const now=new Date().toISOString();if(!conversation)conversation={id:randomUUID(),lead_id:leadId,phone_number:phone,status:'active',unread_count:0,created_at:now};
   const message={id:randomUUID(),conversation_id:conversation.id,lead_id:leadId,direction:'outbound',from_number:config.smsSender,to_number:phone,content,status:'sent',provider_message_id:String(provider?.messageId||provider?.reference||''),request_id:requestKey,is_automated:false,created_at:now,delivered_at:now};conversation={...conversation,last_message_at:now,last_message_preview:content.slice(0,120),updated_at:now};
-  await runPsql("BEGIN;INSERT INTO taxiassur.records(collection,record_id,data,origin)VALUES('sms_conversations',"+quoteLiteral(String(conversation.id))+","+quoteLiteral(JSON.stringify(conversation))+"::jsonb,'admin') ON CONFLICT(collection,record_id) DO UPDATE SET data=EXCLUDED.data,updated_at=now(),revision=taxiassur.records.revision+1;INSERT INTO taxiassur.records(collection,record_id,data,origin)VALUES('sms_messages',"+quoteLiteral(message.id)+","+quoteLiteral(JSON.stringify(message))+"::jsonb,'admin');INSERT INTO taxiassur.audit_events(actor_type,actor_id,action,target_type,target_id,request_id,metadata)VALUES('admin',"+quoteLiteral(session.sub)+",'crm_sms_sent','crm_lead',"+quoteLiteral(leadId)+","+quoteLiteral(requestId)+"::uuid,"+quoteLiteral(JSON.stringify({message_id:message.id,provider_message_id:message.provider_message_id}))+"::jsonb);COMMIT;");
-  return json(res,origin,201,{ok:true,message,conversation},requestId);
+  let historyRecorded=true;
+  try{await runPsql("BEGIN;INSERT INTO taxiassur.records(collection,record_id,data,origin)VALUES('sms_conversations',"+quoteLiteral(String(conversation.id))+","+quoteLiteral(JSON.stringify(conversation))+"::jsonb,'admin') ON CONFLICT(collection,record_id) DO UPDATE SET data=EXCLUDED.data,updated_at=now(),revision=taxiassur.records.revision+1;INSERT INTO taxiassur.records(collection,record_id,data,origin)VALUES('sms_messages',"+quoteLiteral(message.id)+","+quoteLiteral(JSON.stringify(message))+"::jsonb,'admin');INSERT INTO taxiassur.audit_events(actor_type,actor_id,action,target_type,target_id,request_id,metadata)VALUES('admin',"+quoteLiteral(session.sub)+",'crm_sms_sent','crm_lead',"+quoteLiteral(leadId)+","+quoteLiteral(requestId)+"::uuid,"+quoteLiteral(JSON.stringify({message_id:message.id,provider_message_id:message.provider_message_id}))+"::jsonb);COMMIT;");}catch(error){historyRecorded=false;console.error('[crm-sms-history]',{leadId,requestKey,error:error instanceof Error?error.message:'unknown'});}
+  return json(res,origin,201,{ok:true,message,conversation,history_recorded:historyRecorded},requestId);
 }
 async function adminLeadTimeline(req,res,origin,requestId,leadId){
   const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
@@ -1207,7 +1210,7 @@ async function adminDocumentOpen(req,res,origin,requestId){
 async function adminDocuments(req,res,origin,requestId,url){
   if(!await verifiedAdminSession(req))return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
   const status=String(url.searchParams.get('status')||'').trim(); const leadId=String(url.searchParams.get('lead_id')||'').trim();
-  const scope=String(url.searchParams.get('scope')||'prospect'); const filters=[scope==='all'?"d.collection IN ('prospect_documents','crm_lead_documents')":"d.collection='prospect_documents'"]; if(status)filters.push("d.data->>'status'="+quoteLiteral(status)); if(uuidPattern.test(leadId))filters.push("d.data->>'lead_id'="+quoteLiteral(leadId));
+  const scope=String(url.searchParams.get('scope')||'prospect'); const filters=[scope==='all'?"d.collection IN ('prospect_documents','crm_lead_documents')":"d.collection='prospect_documents'"]; if(status)filters.push("d.data->>'status'="+quoteLiteral(status)); if(leadId)filters.push("d.data->>'lead_id'="+quoteLiteral(leadId));
   const sql=`SELECT COALESCE(jsonb_agg(d.data||jsonb_build_object('lead_email',l.data->>'email','lead_first_name',l.data->>'first_name','lead_last_name',l.data->>'last_name','lead_phone',l.data->>'phone') ORDER BY COALESCE(d.data->>'uploaded_at',d.data->>'created_at','') DESC),'[]'::jsonb)::text FROM taxiassur.records d LEFT JOIN taxiassur.records l ON l.collection='crm_leads' AND l.record_id=d.data->>'lead_id' WHERE ${filters.join(' AND ')};`;
   return json(res,origin,200,{ok:true,documents:parseJsonLine(await runPsql(sql))||[]},requestId);
 }
@@ -1812,7 +1815,8 @@ async function adminDocumentCollection(req,res,origin,requestId,leadId){
   if(!lead)return json(res,origin,404,{ok:false,error:'lead_not_found'},requestId);
   if(req.method==='GET'){
     const documents=await recordsWhere('crm_lead_documents','lead_id',leadId);
-    const templates=(await recordsAll('crm_communication_templates')).filter((row)=>String(row.stage)==='collecte_documents'&&row.is_active!==false&&String(row.channel)==='email');
+    const templates=(await recordsAll('crm_communication_templates')).filter((row)=>String(row.stage)==='collecte_documents'&&row.is_active!==false&&['email','sms','whatsapp'].includes(String(row.channel)));
+    if(!templates.some(row=>String(row.channel)==='sms'))templates.push({id:'native-document-request-sms',template_key:'documents_request_sms',template_name:'Demande de pièces par SMS',channel:'sms',body_text:'Bonjour {{first_name}}, pour finaliser votre dossier TaxiAssur, merci de déposer les pièces demandées dans votre espace sécurisé : {{prospect_space_url}}',variables:['first_name','prospect_space_url'],stage:'collecte_documents',is_active:true});
     return json(res,origin,200,{ok:true,lead,documents,templates},requestId);
   }
   const body=await readJsonBody(req);
@@ -2088,17 +2092,16 @@ async function recordsWhere(collection, field, value) {
 
 async function recordsWhereWithMirror(collection, field, value) {
   if (!/^[a-z0-9_]+$/.test(collection) || !/^[a-z0-9_]+$/.test(field)) throw new Error('invalid_collection');
-  const sql = `SELECT COALESCE(jsonb_agg(data ORDER BY COALESCE(data->>'updated_at',data->>'created_at',data->>'uploaded_at','') DESC),'[]'::jsonb)::text FROM (
-    SELECT data FROM taxiassur.records WHERE collection=${quoteLiteral(collection)} AND data->>${quoteLiteral(field)}=${quoteLiteral(value)}
-    UNION ALL
-    SELECT mirror.data FROM supabase_rest.${collection} mirror
-    WHERE mirror.data->>${quoteLiteral(field)}=${quoteLiteral(value)}
-      AND NOT EXISTS (
-        SELECT 1 FROM taxiassur.records native
-        WHERE native.collection=${quoteLiteral(collection)} AND native.record_id=mirror.data->>'id'
-      )
-  ) combined;`;
-  return parseJsonLine(await runPsql(sql)) || [];
+  const native=await recordsWhere(collection,field,value);
+  try {
+    const sql=`SELECT COALESCE(jsonb_agg(data ORDER BY COALESCE(data->>'updated_at',data->>'created_at',data->>'uploaded_at','') DESC),'[]'::jsonb)::text FROM supabase_rest.${collection} WHERE data->>${quoteLiteral(field)}=${quoteLiteral(value)};`;
+    const mirror=parseJsonLine(await runPsql(sql))||[];
+    const nativeIds=new Set(native.map(row=>String(row?.id||'')));
+    return native.concat(mirror.filter(row=>!nativeIds.has(String(row?.id||''))));
+  } catch(error) {
+    console.warn('[records-mirror-fallback]',{collection,error:error instanceof Error?error.message:'unknown'});
+    return native;
+  }
 }
 
 async function recordsAll(collection) {
@@ -2109,8 +2112,14 @@ async function recordsAll(collection) {
 async function insertFileObject(file) {
   const now = new Date().toISOString();
   const document = { id: file.id, lead_id: String(file.leadId), document_type: file.documentType, file_name: file.originalName, file_path: file.relativePath, file_size: file.size, mime_type: file.mimeType, status: file.status, validated: false, uploaded_by: 'prospect', uploaded_at: now, created_at: now, updated_at: now, security_scan_status: file.scan.status, security_scan_engine: 'clamav', security_scan_checked_at: now };
+  const lead=parseJsonLine(await runPsql(`SELECT data::text FROM taxiassur.records WHERE collection='crm_leads' AND record_id=${quoteLiteral(String(file.leadId))} LIMIT 1;`))||{};
+  const leadName=String(lead.full_name||`${lead.first_name||''} ${lead.last_name||''}`.trim()||lead.name||'Prospect non renseigné');
+  const leadEmail=String(lead.email||'Non renseigné');
+  const leadPhone=String(lead.phone||'Non renseigné');
+  const leadUrl=`https://taxiassur.com/backoffice/crm/lead/${encodeURIComponent(String(file.leadId))}`;
+  const isRib=String(file.documentType).toLowerCase()==='rib';
   const notificationId=randomUUID();
-  const notification={id:notificationId,recipient:'slebon@xcr.fr',subject:`Nouveau document TaxiAssur - ${file.originalName}`,body:`Un nouveau document a été déposé.\n\nLead : ${file.leadId}\nType : ${file.documentType}\nFichier : ${file.originalName}`,status:'pending',attempts:0,next_attempt_at:now,created_at:now,lead_id:String(file.leadId),document_id:file.id};
+  const notification={id:notificationId,recipient:'team@taxiassur.com',subject:`${isRib?'Nouveau RIB':'Nouveau document'} déposé - ${leadName}`,body:`Un prospect a déposé ${isRib?'un RIB':'un document'} dans son espace TaxiAssur.\n\nProspect : ${leadName}\nEmail : ${leadEmail}\nTéléphone : ${leadPhone}\nRéférence : ${file.leadId}\nType : ${file.documentType}\nFichier : ${file.originalName}\n\nOuvrir directement la fiche CRM :\n${leadUrl}`,status:'pending',attempts:0,next_attempt_at:now,created_at:now,lead_id:String(file.leadId),document_id:file.id,attachment_path:file.relativePath,attachment_name:file.originalName,attachment_mime:file.mimeType};
   const sql = `BEGIN;
     INSERT INTO taxiassur.file_objects (id, owner_type, owner_id, document_type, original_name, storage_path, mime_type, size_bytes, sha256_hex, scan_status, scan_engine, scan_checked_at, status)
     VALUES (${quoteLiteral(file.id)}::uuid, 'prospect', ${quoteLiteral(String(file.leadId))}, ${quoteLiteral(file.documentType)}, ${quoteLiteral(file.originalName)}, ${quoteLiteral(file.relativePath)}, ${quoteLiteral(file.mimeType)}, ${file.size}, ${quoteLiteral(file.sha256)}, ${quoteLiteral(file.scan.status)}, 'clamav', now(), ${quoteLiteral(file.status)});
