@@ -9,10 +9,8 @@ import {
   ArrowDownRight, Sparkles, ClipboardList, Bell, Settings,
   UserPlus, Search, Star
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { ThemeToggle } from '../components/ThemeToggle';
-import { NATIVE_ADMIN_TOKEN_KEY } from '@/lib/native-admin-auth';
-import { nativeAdminCrmDashboard } from '@/lib/native-admin-data';
+import { nativeAdminCrmDashboard, nativeAdminLeads, nativeAdminUpdateAiDecision } from '@/lib/native-admin-data';
 
 interface DashboardStats {
   total_leads: number;
@@ -123,21 +121,19 @@ const CRMKillerDashboard: React.FC = () => {
       const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
       const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
-      const native = localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY) ? await nativeAdminCrmDashboard() as any : null;
-      const [leadsRes, aiDecisionsRes, unreadCount, criticalAlerts, quoteQueue] = native ? [
-        { data: native.leads }, { data: native.ai_decisions }, { count: native.unread_messages }, { count: native.critical_alerts }, { count: native.ready_for_quote },
-      ] : await Promise.all([
-        supabase.from('crm_leads').select('*').order('created_at', { ascending: false }),
-        supabase.from('ai_decisions').select('*').order('created_at', { ascending: false }).limit(5),
-        supabase.from('email_messages').select('id', { count: 'exact', head: true }).eq('is_read', false),
-        supabase.from('crm_retention_alerts').select('id', { count: 'exact', head: true }).eq('alert_type', 'churn_risk'),
-        supabase.from('ready_for_quote_queue').select('id', { count: 'exact', head: true }).eq('status', 'waiting'),
+      const [native, historicalLeads] = await Promise.all([
+        nativeAdminCrmDashboard() as Promise<any>,
+        nativeAdminLeads() as Promise<any>,
       ]);
+      const [leadsRes, aiDecisionsRes, unreadCount, criticalAlerts, quoteQueue] = [
+        { data: historicalLeads.leads }, { data: native.ai_decisions }, { count: native.unread_messages }, { count: native.critical_alerts }, { count: native.ready_for_quote },
+      ];
 
       const leads = leadsRes.data || [];
       const aiDecisions = aiDecisionsRes.data || [];
 
-      const summary = native?.lead_stats;
+      // Calculer les statistiques sur la liste fusionnée native + archive Supabase.
+      const summary = null;
       const activeContracts = summary ? Number(summary.active_contracts || 0) : leads.filter(l =>
         ['won', 'ACTIVE_CLIENT', 'active_client', 'CLIENT_ACTIF'].includes(l.status) ||
         l.current_stage_key === 'active_client' ||
@@ -209,12 +205,12 @@ const CRMKillerDashboard: React.FC = () => {
   ];
 
   const approveDecision = async (decisionId: string) => {
-    await supabase.from('ai_decisions').update({ status: 'approved' }).eq('id', decisionId);
+    await nativeAdminUpdateAiDecision(decisionId, 'approved');
     loadDashboardData();
   };
 
   const rejectDecision = async (decisionId: string) => {
-    await supabase.from('ai_decisions').update({ status: 'rejected' }).eq('id', decisionId);
+    await nativeAdminUpdateAiDecision(decisionId, 'rejected');
     loadDashboardData();
   };
 

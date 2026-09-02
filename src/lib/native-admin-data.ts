@@ -34,6 +34,7 @@ export async function nativeAdminLead(id:string){
 }
 export const nativeAdminUpdateLead=(id:string,updates:Record<string,unknown>)=>call(`/v1/admin/leads/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(updates)});
 export const nativeAdminLeadSummary=(id:string)=>call(`/v1/admin/leads/${encodeURIComponent(id)}/summary`);
+export const nativeAdminUpdateAiDecision=(id:string,status:'approved'|'rejected')=>call(`/v1/admin/ai-decisions/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({status})});
 export const nativeAdminPipelineNotifications=()=>call('/v1/admin/pipeline/notifications');
 export const nativeAdminDocuments=(status='')=>call(`/v1/admin/documents${status?`?status=${encodeURIComponent(status)}`:''}`);
 export const nativeAdminUpdateDocument=(id:string,updates:Record<string,string>)=>call(`/v1/admin/documents/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(updates)});
