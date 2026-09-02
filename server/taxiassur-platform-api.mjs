@@ -214,6 +214,7 @@ const server = createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/v1/admin/leads/duplicates') return await adminLeadDuplicates(req,res,origin,requestId);
     if (req.method === 'POST' && url.pathname === '/v1/admin/leads/merge') return await adminMergeLeads(req, res, origin, requestId);
     if (req.method === 'GET' && url.pathname === '/v1/admin/leads') return await adminLeadsList(req, res, origin, requestId, url);
+    if (req.method === 'POST' && url.pathname === '/v1/admin/leads') return await adminLeadCreate(req, res, origin, requestId);
     if (req.method === 'GET' && url.pathname === '/v1/admin/users') return await adminUsersList(req, res, origin, requestId);
     if (req.method === 'POST' && url.pathname === '/v1/admin/users') return await adminUserCreate(req, res, origin, requestId);
     const adminUserAction=url.pathname.match(/^\/v1\/admin\/users\/([0-9a-f-]{36})(?:\/(permissions|invite|password-reset))?$/i);
@@ -1375,6 +1376,18 @@ async function adminDocumentPatch(req,res,origin,requestId,documentId){
   }
   await runPsql("INSERT INTO taxiassur.audit_events(actor_type,actor_id,action,target_type,target_id,request_id,metadata) VALUES('admin',"+quoteLiteral(session.sub)+","+quoteLiteral('document_'+status)+",'prospect_document',"+quoteLiteral(documentId)+","+quoteLiteral(requestId)+"::uuid,"+quoteLiteral(JSON.stringify({status:status}))+"::jsonb);");
   return json(res,origin,200,{ok:true,document:document,email_queued:status==='rejected'||validationEmailQueued},requestId);
+}
+async function adminLeadCreate(req,res,origin,requestId){
+  const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
+  const body=await readJsonBody(req),first=String(body.first_name||'').normalize('NFKC').trim().slice(0,120),last=String(body.last_name||'').normalize('NFKC').trim().slice(0,120),email=String(body.email||'').trim().toLowerCase(),source=String(body.source||'phone').toLowerCase();
+  let phone=String(body.phone||'').replace(/[\s().-]/g,'');if(/^0[1-9][0-9]{8}$/.test(phone))phone='+33'+phone.slice(1);
+  if(!first||!last||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!['phone','email','walk-in','referral'].includes(source)|| (phone&&!/^\+?[1-9][0-9]{7,14}$/.test(phone)))return json(res,origin,400,{ok:false,error:'invalid_lead'},requestId);
+  const duplicate=parseJsonLine(await runPsql(`SELECT (data||jsonb_build_object('id',record_id))::text FROM taxiassur.records WHERE collection='crm_leads' AND lower(data->>'email')=${quoteLiteral(email)} AND COALESCE(data->>'deleted_at','')='' LIMIT 1;`));
+  if(duplicate)return json(res,origin,409,{ok:false,error:'lead_already_exists',lead_id:duplicate.id},requestId);
+  const id=randomUUID(),now=new Date().toISOString(),notes=String(body.internal_notes||'').normalize('NFKC').trim().slice(0,4000),preferred=String(body.metadata?.preferred_contact||'email').slice(0,30),lead={id,first_name:first,last_name:last,email,phone:phone||'',company_name:String(body.company_name||'').normalize('NFKC').trim().slice(0,200)||null,city:String(body.city||'').normalize('NFKC').trim().slice(0,120)||null,postal_code:String(body.postal_code||'').trim().slice(0,12)||null,source,status:'NOUVEAU_LEAD',pipeline_stage:'nouveau_lead',current_stage_key:'nouveau_lead',vehicle_type:String(body.vehicle_type||'taxi').slice(0,50),assigned_to:session.sub,internal_notes:notes||null,access_token:randomBytes(32).toString('hex'),metadata:{created_manually:true,preferred_contact:preferred,creation_date:now},created_at:now,updated_at:now};
+  const interactionId=randomUUID(),interaction={id:interactionId,lead_id:id,type:'note',direction:'inbound',channel:source,content:`Lead créé manuellement via ${source}${notes?`. Notes: ${notes}`:''}`.slice(0,5000),created_by:session.sub,metadata:{manual_creation:true,preferred_contact:preferred},created_at:now};
+  await runPsql(`BEGIN;INSERT INTO taxiassur.records(collection,record_id,data,origin)VALUES('crm_leads',${quoteLiteral(id)},${quoteLiteral(JSON.stringify(lead))}::jsonb,'admin'),('crm_interactions',${quoteLiteral(interactionId)},${quoteLiteral(JSON.stringify(interaction))}::jsonb,'admin');INSERT INTO taxiassur.audit_events(actor_type,actor_id,action,target_type,target_id,request_id,metadata)VALUES('admin',${quoteLiteral(session.sub)},'crm_lead_created','crm_lead',${quoteLiteral(id)},${quoteLiteral(requestId)}::uuid,${quoteLiteral(JSON.stringify({source}))}::jsonb);COMMIT;`);
+  return json(res,origin,201,{ok:true,lead},requestId);
 }
 async function adminDocumentDelete(req,res,origin,requestId,documentId){
   const session=await verifiedAdminSession(req);
