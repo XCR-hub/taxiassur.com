@@ -175,6 +175,10 @@ main().catch((error) => {
       info('Bot Management token not configured; keeping the dashboard setting unchanged');
       process.exit(0);
     }
+    if (/Cloudflare API (401|403) on .*\/bot_management/i.test(rawMessage)) {
+      info('Bot Management API access unavailable; keeping the verified dashboard setting unchanged');
+      process.exit(0);
+    }
     warn(message);
     githubWarning(message);
     warn('continuing because --soft is enabled');
