@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, Calendar, Activity, TrendingUp, Database, ArrowRight } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminLeads } from '@/lib/native-admin-data';
 import { logger } from '@/lib/logger';
 
 interface LeadStats {
@@ -30,19 +30,8 @@ export default function LeadCRM() {
 
   const loadLeadStats = async () => {
     try {
-      const { data: leads, error } = await supabase
-        .from('crm_leads')
-        .select('created_at')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        logger.error('Error loading leads:', error);
-        return;
-      }
-
-      if (leads) {
-        calculateStats(leads);
-      }
+      const { leads = [] } = await nativeAdminLeads();
+      calculateStats(leads);
     } catch (error) {
       logger.error('Error loading lead stats:', error);
     } finally {
