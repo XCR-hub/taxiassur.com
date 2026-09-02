@@ -171,6 +171,10 @@ main().catch((error) => {
   const rawMessage = error && error.message ? error.message : String(error);
   const message = withActionableCloudflareGuidance(rawMessage);
   if (SOFT) {
+    if (/^Missing CLOUDFLARE_BOT_MANAGEMENT_API_TOKEN/.test(rawMessage)) {
+      info('Bot Management token not configured; keeping the dashboard setting unchanged');
+      process.exit(0);
+    }
     warn(message);
     githubWarning(message);
     warn('continuing because --soft is enabled');
