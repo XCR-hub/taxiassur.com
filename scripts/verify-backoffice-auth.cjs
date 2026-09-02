@@ -157,11 +157,16 @@ function readLocalBuildBundle() {
 
 function extractJsAssetPaths(text) {
   const assets = new Set();
-  const assetPattern = /(?:^|["'(`,\s])((?:\.\/|\/)?assets\/[A-Za-z0-9._~@/-]+\.js)(?=["'`),\s]|$)/g;
+  // Vite/Rolldown may place lazy chunks inside generated arrays (`["assets/x.js"]`).
+  // The old prefix whitelist omitted `[` and therefore scanned only the entry bundle.
+  const assetPattern = /((?:\.\/|\/)?(?:assets\/)?[A-Za-z0-9._~@/-]+\.js)/g;
   let match;
 
   while ((match = assetPattern.exec(text || '')) !== null) {
-    let assetPath = match[1].replace(/^\.\//, '');
+    const rawPath = match[1];
+    let assetPath = rawPath.startsWith('./') && !rawPath.startsWith('./assets/')
+      ? `assets/${rawPath.slice(2)}`
+      : rawPath.replace(/^\.\//, '');
     if (!assetPath.startsWith('/')) assetPath = `/${assetPath}`;
     assets.add(assetPath);
   }
