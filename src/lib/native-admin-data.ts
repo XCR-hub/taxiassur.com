@@ -35,6 +35,11 @@ export async function nativeAdminLead(id:string){
 export const nativeAdminUpdateLead=(id:string,updates:Record<string,unknown>)=>call(`/v1/admin/leads/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(updates)});
 export const nativeAdminLeadSummary=(id:string)=>call(`/v1/admin/leads/${encodeURIComponent(id)}/summary`);
 export const nativeAdminUpdateAiDecision=(id:string,status:'approved'|'rejected')=>call(`/v1/admin/ai-decisions/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({status})});
+export const nativeAdminCommercialAi=(leadId:string,content:string)=>call('/v1/admin/commercial/ai-assistant',{method:'POST',body:JSON.stringify({action:'improve_email',lead_id:leadId,content})});
+export const nativeAdminCommercialEmail=(leadId:string,subject:string,content:string)=>call(`/v1/admin/leads/${encodeURIComponent(leadId)}/commercial-email`,{method:'POST',body:JSON.stringify({subject,content,request_id:crypto.randomUUID()})});
+export const nativeAdminAcceptCommercialSuggestion=(id:string)=>call(`/v1/admin/commercial/suggestions/${encodeURIComponent(id)}`,{method:'PATCH',body:'{}'});
+export const nativeAdminAddTimeline=(leadId:string,body:Record<string,unknown>)=>call(`/v1/admin/leads/${encodeURIComponent(leadId)}/timeline`,{method:'POST',body:JSON.stringify(body)});
+export const nativeAdminSendSms=(leadId:string,content:string)=>call(`/v1/admin/leads/${encodeURIComponent(leadId)}/sms`,{method:'POST',body:JSON.stringify({action:'send',content,request_id:crypto.randomUUID()}),signal:AbortSignal.timeout(30_000)});
 export const nativeAdminPipelineNotifications=()=>call('/v1/admin/pipeline/notifications');
 export const nativeAdminDocuments=(status='')=>call(`/v1/admin/documents${status?`?status=${encodeURIComponent(status)}`:''}`);
 export const nativeAdminUpdateDocument=(id:string,updates:Record<string,string>)=>call(`/v1/admin/documents/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(updates)});

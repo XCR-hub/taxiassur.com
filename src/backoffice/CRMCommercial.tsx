@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
 import { Phone, Mail, MessageSquare, Calendar, FileText, CheckCircle, TrendingUp, Users, Send, Sparkles, AlertCircle, Search, Download, Target, BarChart3, Activity, DollarSign, Zap, Star, RefreshCw } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
+import { nativeAdminAcceptCommercialSuggestion, nativeAdminAddTimeline, nativeAdminCall, nativeAdminCommercialAi, nativeAdminCommercialEmail, nativeAdminLead, nativeAdminLeads, nativeAdminLeadSummary, nativeAdminSendSms, nativeAdminUpdateLead } from '@/lib/native-admin-data';
 import DocumentsViewer from './DocumentsViewer';
 import EmailTrendline from './EmailTrendline';
 
@@ -115,24 +113,15 @@ const CRMCommercial: React.FC = () => {
       }, 1000);
     }
 
-    const notifSubscription = supabase
-      .channel('crm_notifications')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'crm_notifications'
-      }, handleNewNotification)
-      .subscribe();
-
     const interval = setInterval(() => {
       loadStats();
+      loadNotifications();
       if (selectedLead) {
         loadLeadDetails(selectedLead.id);
       }
     }, 30000);
 
     return () => {
-      notifSubscription.unsubscribe();
       clearInterval(interval);
     };
   }, [searchParams]);
@@ -144,9 +133,7 @@ const CRMCommercial: React.FC = () => {
   }, [selectedLead]);
 
   const loadStats = async () => {
-    const { data: leadsData } = await supabase
-      .from('crm_leads')
-      .select('behavior_score, lead_status, prime_realisee, created_at, client_at');
+    const { leads: leadsData = [] } = await nativeAdminLeads() as any;
 
     if (leadsData) {
       const thisMonth = new Date();
@@ -184,11 +171,7 @@ const CRMCommercial: React.FC = () => {
     try {
       console.log('🔍 Loading lead with ID:', leadId);
 
-      const { data: leadData, error } = await supabase
-        .from('crm_leads')
-        .select('id, name, email, phone, city, status, lead_status, behavior_score, prime_realisee, created_at, contacted_at, devis_envoye_at, client_at, assigned_to, notes')
-        .eq('id', leadId)
-        .maybeSingle();
+      const { lead: leadData, error = null } = await nativeAdminLead(leadId) as any;
 
       if (error) {
         console.error('❌ Error loading lead:', error);
@@ -208,8 +191,8 @@ const CRMCommercial: React.FC = () => {
         id: leadData.id,
         email: leadData.email,
         phone: leadData.phone,
-        first_name: leadData.name?.split(' ')[0] || '',
-        last_name: leadData.name?.split(' ').slice(1).join(' ') || '',
+        first_name: leadData.first_name || leadData.name?.split(' ')[0] || '',
+        last_name: leadData.last_name || leadData.name?.split(' ').slice(1).join(' ') || '',
         company_name: '',
         activity_type: leadData.status || 'taxi',
         vehicle_count: 1,
@@ -241,20 +224,13 @@ const CRMCommercial: React.FC = () => {
   };
 
   const loadMyLeads = async () => {
-    let query = supabase
-      .from('crm_leads')
-      .select('id, name, email, phone, city, status, lead_status, behavior_score, prime_realisee, created_at, contacted_at, devis_envoye_at, client_at, assigned_to, notes')
-      .limit(200);
-
-    if (sortBy === 'score') {
-      query = query.order('behavior_score', { ascending: false, nullsLast: true });
-    } else if (sortBy === 'date') {
-      query = query.order('created_at', { ascending: false });
-    } else {
-      query = query.order('prime_realisee', { ascending: false, nullsLast: true });
-    }
-
-    const { data, error } = await query;
+    const { leads: loaded = [] } = await nativeAdminLeads() as any;
+    const data = [...loaded].sort((a, b) => sortBy === 'score'
+      ? Number(b.behavior_score || b.lead_score || 0) - Number(a.behavior_score || a.lead_score || 0)
+      : sortBy === 'date'
+        ? Date.parse(b.created_at || '') - Date.parse(a.created_at || '')
+        : Number(b.prime_realisee || 0) - Number(a.prime_realisee || 0));
+    const error = null;
 
     if (data) {
       // Transform data to match expected interface
@@ -262,8 +238,8 @@ const CRMCommercial: React.FC = () => {
         id: lead.id,
         email: lead.email,
         phone: lead.phone,
-        first_name: lead.name?.split(' ')[0] || '',
-        last_name: lead.name?.split(' ').slice(1).join(' ') || '',
+        first_name: lead.first_name || lead.name?.split(' ')[0] || '',
+        last_name: lead.last_name || lead.name?.split(' ').slice(1).join(' ') || '',
         company_name: '',
         activity_type: lead.status || 'taxi',
         vehicle_count: 1,
@@ -298,55 +274,17 @@ const CRMCommercial: React.FC = () => {
   };
 
   const loadLeadDetails = async (leadId: string) => {
-    const [interactionsRes, crmDocsRes, prospectDocsRes, suggestionsRes] = await Promise.all([
-      supabase.from('crm_interactions')
-        .select('*')
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: false }),
-
-      supabase.from('crm_documents')
-        .select('*')
-        .eq('lead_id', leadId)
-        .order('upload_date', { ascending: false }),
-
-      supabase.from('prospect_documents')
-        .select('*')
-        .eq('lead_id', leadId)
-        .order('upload_date', { ascending: false }),
-
-      supabase.from('crm_ai_suggestions')
-        .select('*')
-        .eq('lead_id', leadId)
-        .eq('status', 'pending')
-        .order('priority_score', { ascending: false })
-    ]);
-
-    if (interactionsRes.data) setInteractions(interactionsRes.data);
-
-    const allDocuments = [
-      ...(crmDocsRes.data || []),
-      ...(prospectDocsRes.data || []).map(doc => ({
-        ...doc,
-        document_type: doc.document_type,
-        file_name: doc.file_name,
-        upload_date: doc.upload_date,
-        status: doc.status
-      }))
-    ].sort((a, b) => new Date(b.upload_date).getTime() - new Date(a.upload_date).getTime());
+    const { summary = {} } = await nativeAdminLeadSummary(leadId) as any;
+    setInteractions((summary.interactions || []).sort((a, b) => Date.parse(b.created_at || '') - Date.parse(a.created_at || '')));
+    const allDocuments = (summary.documents || []).sort((a, b) => Date.parse(b.upload_date || b.created_at || '') - Date.parse(a.upload_date || a.created_at || ''));
 
     setDocuments(allDocuments);
-    if (suggestionsRes.data) setAISuggestions(suggestionsRes.data);
+    setAISuggestions((summary.ai_suggestions || []).filter(suggestion => suggestion.status === 'pending').sort((a, b) => Number(b.priority_score || 0) - Number(a.priority_score || 0)));
   };
 
   const loadNotifications = async () => {
-    const { data } = await supabase
-      .from('crm_notifications')
-      .select('*')
-      .eq('is_read', false)
-      .order('created_at', { ascending: false })
-      .limit(10);
-
-    if (data) setNotifications(data);
+    const { notifications = [] } = await nativeAdminCall('/v1/admin/commercial/notifications') as any;
+    setNotifications(notifications);
   };
 
   const handleNewNotification = (payload: { new: { message?: string; [key: string]: unknown } }) => {
@@ -361,13 +299,12 @@ const CRMCommercial: React.FC = () => {
   };
 
   const updateLeadStage = async (leadId: string, newStage: string) => {
-    const { error } = await supabase
-      .from('crm_leads')
-      .update({
-        stage: newStage,
-        last_contact_at: new Date().toISOString()
-      })
-      .eq('id', leadId);
+    let error: unknown = null;
+    try {
+      await nativeAdminUpdateLead(leadId, { stage: newStage, last_contact_at: new Date().toISOString() });
+    } catch (caught) {
+      error = caught;
+    }
 
     if (!error) {
       loadMyLeads();
@@ -380,9 +317,9 @@ const CRMCommercial: React.FC = () => {
   const addQuickNote = async () => {
     if (!selectedLead || !quickNote) return;
 
-    await supabase.from('crm_interactions').insert({
-      lead_id: selectedLead.id,
+    await nativeAdminAddTimeline(selectedLead.id, {
       type: 'note',
+      channel: 'note',
       direction: 'internal',
       content: quickNote
     });
@@ -397,23 +334,7 @@ const CRMCommercial: React.FC = () => {
     setIsImproving(true);
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crm-ai-assistant`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': (await internalFunctionHeaders()).Authorization,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            action: 'improve_email',
-            lead_id: selectedLead.id,
-            content: emailForm.content
-          })
-        }
-      );
-
-      const data = await response.json();
+      const data = await nativeAdminCommercialAi(selectedLead.id, emailForm.content) as any;
 
       if (data.success) {
         setEmailForm(prev => ({
@@ -438,16 +359,9 @@ const CRMCommercial: React.FC = () => {
 
     try {
 
-      const { data: result, error: sendError } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
-        body: {
-          to_email: selectedLead.email,
-          to_name: [selectedLead.first_name, selectedLead.last_name].filter(Boolean).join(' ') || selectedLead.email,
-          subject: emailForm.subject,
-          content: emailForm.content,
-          lead_id: selectedLead.id
-        }
-      });
-      if (sendError || !result?.success) throw new Error('Envoi e-mail refusé');
+      const result = await nativeAdminCommercialEmail(selectedLead.id, emailForm.subject, emailForm.content) as any;
+      const sendError = null;
+      if (sendError || (!result?.ok && !result?.queued)) throw new Error('Envoi e-mail refusé');
 
       // Succès !
       toast.success('✅ Email envoyé avec succès à ' + selectedLead.email + ' !\n\nUn email de confirmation sera visible dans l\'onglet Interactions.');
@@ -477,13 +391,12 @@ const CRMCommercial: React.FC = () => {
       return;
     }
 
-    const { error } = await supabase.from('crm_interactions').insert({
-      lead_id: selectedLead.id,
-      type: 'sms',
-      direction: 'outbound',
-      content: smsForm.content,
-      to_phone: selectedLead.phone
-    });
+    let error: unknown = null;
+    try {
+      await nativeAdminSendSms(selectedLead.id, smsForm.content);
+    } catch (caught) {
+      error = caught;
+    }
 
     if (!error) {
       toast.success('SMS envoyé !');
@@ -498,12 +411,12 @@ const CRMCommercial: React.FC = () => {
       return;
     }
 
-    const { error } = await supabase.from('crm_interactions').insert({
-      lead_id: selectedLead.id,
-      type: 'call',
-      direction: 'outbound',
-      content: callNote
-    });
+    let error: unknown = null;
+    try {
+      await nativeAdminAddTimeline(selectedLead.id, { type: 'call', channel: 'call', direction: 'outbound', content: callNote });
+    } catch (caught) {
+      error = caught;
+    }
 
     if (!error) {
       toast.success('Appel enregistré');
@@ -536,9 +449,7 @@ const CRMCommercial: React.FC = () => {
   };
 
   const acceptSuggestion = async (suggestionId: string) => {
-    await supabase.from('crm_ai_suggestions')
-      .update({ status: 'accepted', accepted_at: new Date().toISOString() })
-      .eq('id', suggestionId);
+    await nativeAdminAcceptCommercialSuggestion(suggestionId);
 
     loadLeadDetails(selectedLead!.id);
   };
