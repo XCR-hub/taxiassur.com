@@ -5,7 +5,7 @@ import {
   XCircle, Eye, Calendar, Layers, ListChecks, Building2,
   TrendingUp, Users, Euro, FileCheck,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminInsuranceCompanies, nativeAdminLeads, nativeAdminLeadSummary } from '@/lib/native-admin-data';
 
 interface Lead {
   id: string;
@@ -164,11 +164,10 @@ export default function CRMProductionManager() {
   const loadLeads = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await supabase
-        .from('crm_leads')
-        .select('id,first_name,last_name,email,phone,pipeline_stage,status,vehicle_type,updated_at,created_at')
-        .not('status', 'eq', 'PERDU')
-        .order('updated_at', { ascending: false });
+      const { leads: allLeads = [] } = await nativeAdminLeads() as any;
+      const data = allLeads
+        .filter(lead => lead.status !== 'PERDU')
+        .sort((a, b) => Date.parse(b.updated_at || b.created_at || '') - Date.parse(a.updated_at || a.created_at || ''));
 
       const rows = (data || []).filter(l =>
         l.pipeline_stage !== 'nouveau_lead' || ['DEVIS', 'COLLECTE_DOCUMENTS', 'CLIENT_ACTIF', 'RECONTACT_PROGRAMME', 'RELANCE'].includes(l.status || '')
@@ -183,15 +182,19 @@ export default function CRMProductionManager() {
   const loadDetail = useCallback(async (leadId: string) => {
     setDetailLoading(true);
     try {
-      const [docsRes, quotesRes, paysRes] = await Promise.all([
-        supabase.from('crm_lead_documents').select('id,document_type,file_name,status,validated_at,created_at,file_url,custom_label').eq('lead_id', leadId).order('created_at', { ascending: false }),
-        supabase.from('lead_company_quotes').select('id,status,quote_amount,created_at,sent_at,validated_at,quote_accepted_at,refused_at,insurance_companies(name,logo_url)').eq('lead_id', leadId).order('created_at', { ascending: false }),
-        supabase.from('monetico_payments').select('id,amount,currency,status,card_type,card_last4,payment_date,created_at,description,reference').eq('lead_id', leadId).order('created_at', { ascending: false }),
+      const [detail, companiesResult] = await Promise.all([
+        nativeAdminLeadSummary(leadId) as Promise<any>,
+        nativeAdminInsuranceCompanies() as Promise<any>,
       ]);
-
-      setDocuments(docsRes.data || []);
-      setQuotes(quotesRes.data || []);
-      setPayments(paysRes.data || []);
+      const summary = detail.summary || {};
+      const companies = companiesResult.companies || [];
+      const companyById = new Map(companies.map((company: any) => [String(company.id), company]));
+      setDocuments((summary.documents || []).sort((a, b) => Date.parse(b.created_at || b.upload_date || '') - Date.parse(a.created_at || a.upload_date || '')));
+      setQuotes((summary.quotes || []).map((quote: any) => ({
+        ...quote,
+        insurance_companies: quote.insurance_companies || companyById.get(String(quote.company_id || quote.insurance_company_id || '')) || null,
+      })).sort((a, b) => Date.parse(b.created_at || '') - Date.parse(a.created_at || '')));
+      setPayments((summary.payments || []).sort((a, b) => Date.parse(b.created_at || b.payment_date || '') - Date.parse(a.created_at || a.payment_date || '')));
     } finally {
       setDetailLoading(false);
     }
