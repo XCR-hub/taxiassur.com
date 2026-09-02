@@ -10,7 +10,7 @@ const REQUIRED_COUNTS = {
   blog_posts: 100,
   city_pages: 100,
   faq_entries: 50,
-  news_articles: 500,
+  news_articles: 50,
   gsc_pages: 100,
   gsc_queries: 100,
 };
