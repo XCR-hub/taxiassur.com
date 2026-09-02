@@ -84,7 +84,10 @@ jobs:
           PUBLIC_MIRROR_COUNT_TOLERANCE: '10'
           PUBLIC_MIRROR_GSC_COUNT_TOLERANCE: '25'
           REQUIRE_D1_CACHE_METADATA: '1'
-          REQUIRE_POSTGRES_IMPORT_METADATA: '1'
+          # PostgreSQL is now the native live source; only the refreshed D1 cache
+          # carries import metadata. Requiring mirror metadata here creates a
+          # false failure after an otherwise successful cache refresh.
+          REQUIRE_POSTGRES_IMPORT_METADATA: '0'
           MAX_D1_CACHE_AGE_HOURS: '2'
           MAX_POSTGRES_IMPORT_AGE_HOURS: '4'
         run: |
