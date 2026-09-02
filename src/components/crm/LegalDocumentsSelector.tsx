@@ -9,7 +9,7 @@ import {
   Info,
   Paperclip
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminInsuranceCompanies } from '@/lib/native-admin-data';
 
 interface InsuranceCompany {
   id: string;
@@ -141,14 +141,11 @@ export function LegalDocumentsSelector({
 
   const loadCompanies = async () => {
     try {
-      const { data, error } = await supabase
-        .from('insurance_companies')
-        .select('id, name, code, logo_url')
-        .eq('is_active', true)
-        .order('priority_order');
-
-      if (error) throw error;
-      setCompanies(data || []);
+      const result = await nativeAdminInsuranceCompanies() as { companies?: Array<InsuranceCompany & { is_active?: boolean; priority_order?: number }> };
+      const activeCompanies = (result.companies || [])
+        .filter(company => company.is_active !== false)
+        .sort((a, b) => Number(a.priority_order || 0) - Number(b.priority_order || 0));
+      setCompanies(activeCompanies);
     } catch (err) {
       console.error('Error loading companies:', err);
     } finally {

@@ -569,7 +569,7 @@ async function adminLeadQuoteSignature(req,res,origin,requestId,leadId){
 async function adminClientsList(req,res,origin,requestId){
   const session=await verifiedAdminSession(req);
   if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
-  const [leads,contracts,claims]=await Promise.all([recordsAll('crm_leads'),recordsAll('insurance_contracts'),recordsAll('insurance_claims')]);
+  const [leads,contracts,claims]=await Promise.all([recordsAllWithMirror('crm_leads'),recordsAllWithMirror('insurance_contracts'),recordsAllWithMirror('insurance_claims')]);
   const active=new Set(['CLIENT_ACTIF','ACTIVE_CLIENT','client_actif','active_client']);
   const clients=leads.filter(function(lead){return active.has(String(lead.status||lead.lead_status||''))&&!lead.deleted_at;}).map(function(lead){
     return Object.assign({},lead,{
@@ -2421,6 +2421,19 @@ function scanFile(filePath) {
     child.on('error', () => { clearTimeout(timer); resolve({ status: 'error' }); });
     child.on('close', (code) => { clearTimeout(timer); resolve({ status: code === 0 ? 'clean' : code === 1 ? 'infected' : 'error' }); });
   });
+}
+
+async function recordsAllWithMirror(collection) {
+  if (!/^[a-z0-9_]+$/.test(collection)) throw new Error('invalid_collection');
+  const native=await recordsAll(collection);
+  try {
+    const mirror=parseJsonLine(await runPsql(`SELECT COALESCE(jsonb_agg(data),'[]'::jsonb)::text FROM supabase_rest.${collection};`))||[];
+    const nativeIds=new Set(native.map(row=>String(row?.id||'')));
+    return native.concat(mirror.filter(row=>!nativeIds.has(String(row?.id||''))));
+  } catch(error) {
+    console.warn('[records-all-mirror-fallback]',{collection,error:error instanceof Error?error.message:'unknown'});
+    return native;
+  }
 }
 
 function runPsql(sql) {

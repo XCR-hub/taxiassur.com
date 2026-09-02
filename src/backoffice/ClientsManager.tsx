@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import {
   Users, Search, Building2, Download, Loader2, ArrowUpDown,
   Activity, Shield, Eye, MessageSquare, LayoutGrid, List,
@@ -191,20 +191,9 @@ export default function ClientsManager() {
   const loadClients = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('crm_leads')
-        .select(`
-          id, first_name, last_name, email, phone, city, postal_code,
-          immatriculation, status, pipeline_stage, access_token, created_at, updated_at,
-          insurance_contracts(insurer_name, contract_number, premium_ttc, renewal_date, effective_date, status, contract_type),
-          insurance_claims(id, status)
-        `)
-        .in('status', ['CLIENT_ACTIF', 'ACTIVE_CLIENT'])
-        .is('deleted_at', null)
-        .order('updated_at', { ascending: false });
-
-      if (error) throw error;
-      setClients((data as any[]) || []);
+      const result = await nativeAdminCall<{ clients?: Client[] }>('/v1/admin/clients');
+      const data = result.clients || [];
+      setClients(data);
 
       const seen = new Set<string>();
       const insurers: string[] = [];
