@@ -47,12 +47,20 @@
       <image:title>MFA - Partenaire TaxiAssur</image:title>
     </image:image>
     <image:image>
-      <image:loc>https://taxiassur.com/logo_zephir.png</image:loc>
+      <image:loc>https://taxiassur.com/logo_zephir.svg</image:loc>
       <image:title>Zephir - Partenaire TaxiAssur</image:title>
     </image:image>
     <image:image>
       <image:loc>https://taxiassur.com/logo-officiel-solly-azar_0.png</image:loc>
       <image:title>Solly Azar - Partenaire TaxiAssur</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://taxiassur.com/logo_swisslife.svg</image:loc>
+      <image:title>Swiss Life - Partenaire TaxiAssur</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://taxiassur.com/logo_axa.svg</image:loc>
+      <image:title>AXA - Partenaire TaxiAssur</image:title>
     </image:image>
   </url>
 </urlset>

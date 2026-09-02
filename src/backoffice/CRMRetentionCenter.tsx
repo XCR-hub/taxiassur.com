@@ -7,8 +7,8 @@ import {
   Search, Users, Heart, Target, BarChart3, ShieldCheck,
   ShieldAlert, Eye, Sparkles,
 } from 'lucide-react';
-import { retentionService, ChurnAlert, CrossSellOpportunity, RenewalReminder } from '@/lib/crm-retention';
-import { supabase } from '@/lib/supabase';
+import { ChurnAlert, CrossSellOpportunity, RenewalReminder } from '@/lib/crm-retention';
+import { nativeAdminRetention, nativeAdminRetentionAction } from '@/lib/native-admin-data';
 import { toast } from '@/lib/toast';
 
 type Tab = 'alerts' | 'crosssell' | 'renewals';
@@ -64,33 +64,14 @@ const CRMRetentionCenter: React.FC = () => {
     if (!silent) setLoading(true);
     else setRefreshing(true);
     try {
-      const [alertsData, opsData, renewalsData, statsData, clientsData] = await Promise.all([
-        retentionService.getChurnAlerts({ status: 'new' }),
-        retentionService.getCrossSellOpportunities(),
-        retentionService.getRenewalReminders({ daysUntil: 60 }),
-        retentionService.getRetentionStats(),
-        supabase.from('crm_leads')
-          .select('current_stage_key')
-          .is('deleted_at', null)
-          .eq('is_archived', false),
-      ]);
-      setChurnAlerts(alertsData);
-      setCrossSellOps(opsData.filter(o => o.status === 'suggested'));
-      setRenewals(renewalsData.filter(r => r.status === 'pending'));
-      setStats(statsData);
-
-      const stages = clientsData.data || [];
-      const activeStages = ['active_client', 'client_actif', 'signed', 'contrat_signature'];
-      const riskStages = ['risk_churn', 'no_response', 'relance_active'];
-      const churnedStages = ['client_lost'];
-      setClientStats({
-        active: stages.filter((s: { current_stage_key: string }) => activeStages.includes(s.current_stage_key?.toLowerCase())).length,
-        atRisk: stages.filter((s: { current_stage_key: string }) => riskStages.includes(s.current_stage_key?.toLowerCase())).length,
-        churned: stages.filter((s: { current_stage_key: string }) => churnedStages.includes(s.current_stage_key?.toLowerCase())).length,
-        total: stages.length,
-      });
+      const result = await nativeAdminRetention() as { alerts?: ChurnAlert[]; opportunities?: CrossSellOpportunity[]; reminders?: RenewalReminder[]; stats?: typeof stats; client_stats?: ClientStats };
+      setChurnAlerts((result.alerts || []).filter(a => a.status === 'new'));
+      setCrossSellOps((result.opportunities || []).filter(o => o.status === 'suggested'));
+      setRenewals((result.reminders || []).filter(r => r.status === 'pending' && r.days_until_renewal <= 60));
+      setStats(result.stats || null);
+      setClientStats(result.client_stats || { active: 0, atRisk: 0, churned: 0, total: 0 });
     } catch {
-      // silent fail
+      toast.error('Impossible de charger le centre de rétention');
     } finally {
       if (!silent) setLoading(false);
       else setRefreshing(false);
@@ -99,18 +80,13 @@ const CRMRetentionCenter: React.FC = () => {
 
   useEffect(() => {
     loadData();
-    const channel = supabase
-      .channel('retention_realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'crm_churn_alerts' }, () => loadData(true))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'crm_cross_sell_opportunities' }, () => loadData(true))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'crm_renewal_reminders' }, () => loadData(true))
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    const interval = window.setInterval(() => loadData(true), 60_000);
+    return () => window.clearInterval(interval);
   }, [loadData]);
 
   const resolveAlert = async (alertId: string) => {
     try {
-      await retentionService.updateAlertStatus(alertId, 'resolved');
+      await nativeAdminRetentionAction('alert', alertId, 'resolved');
       toast.success('Alerte resolue');
       await loadData(true);
     } catch { toast.error('Erreur'); }
@@ -118,26 +94,26 @@ const CRMRetentionCenter: React.FC = () => {
 
   const dismissAlert = async (alertId: string) => {
     try {
-      await retentionService.updateAlertStatus(alertId, 'dismissed');
+      await nativeAdminRetentionAction('alert', alertId, 'dismissed');
       await loadData(true);
     } catch { toast.error('Erreur'); }
   };
 
   const convertOpp = async (oppId: string) => {
     try {
-      await retentionService.updateOpportunityStatus(oppId, 'converted');
+      await nativeAdminRetentionAction('opportunity', oppId, 'converted');
       toast.success('Opportunite convertie');
       await loadData(true);
     } catch { toast.error('Erreur'); }
   };
 
   const declineOpp = async (oppId: string) => {
-    await retentionService.updateOpportunityStatus(oppId, 'declined');
+    await nativeAdminRetentionAction('opportunity', oppId, 'declined');
     await loadData(true);
   };
 
   const contactRenewal = async (renewal: RenewalReminder) => {
-    await retentionService.updateRenewalStatus(renewal.id, 'contacted');
+    await nativeAdminRetentionAction('renewal', renewal.id, 'contacted');
     navigate(`/backoffice/crm/lead/${renewal.lead_id}`);
   };
 

@@ -11,6 +11,7 @@ import { AIDecisionCard } from '@/components/crm/AIDecisionCard';
 import AIGovernanceAgents from './AIGovernanceAgents';
 import AIGovernanceSettings from './AIGovernanceSettings';
 import { nativeAdminCall } from '@/lib/native-admin-data';
+import { toast } from '@/lib/toast';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -145,6 +146,7 @@ const CRMAIGovernance: React.FC = () => {
       setAllDecisions(data.decisions || []);
     } catch (e) {
       console.error(e);
+      toast.error('Impossible de charger les décisions IA');
     } finally {
       setLoading(false);
     }
@@ -158,8 +160,10 @@ const CRMAIGovernance: React.FC = () => {
   }, [loadAllDecisions, loadAutoStatus]);
 
   const loadRecentLeads = async () => {
-    const data = await nativeAdminCall<{ recent_leads?: RecentLead[] }>('/v1/admin/ai-governance');
-    setRecentLeads(data.recent_leads || []);
+    try {
+      const data = await nativeAdminCall<{ recent_leads?: RecentLead[] }>('/v1/admin/ai-governance');
+      setRecentLeads(data.recent_leads || []);
+    } catch { toast.error('Impossible de charger les leads récents'); }
   };
 
   const handleRefresh = async () => {
@@ -265,7 +269,7 @@ const CRMAIGovernance: React.FC = () => {
     .filter(d => {
       if (!searchQuery) return true;
       const q = searchQuery.toLowerCase();
-      return d.title.toLowerCase().includes(q) || d.description.toLowerCase().includes(q);
+      return String(d.title || '').toLowerCase().includes(q) || String(d.description || '').toLowerCase().includes(q);
     });
 
   const pendingFiltered = filteredDecisions.filter(d => d.status === 'pending');
@@ -300,11 +304,11 @@ const CRMAIGovernance: React.FC = () => {
               ) : (
                 <div className="flex items-center gap-1.5 bg-gray-500/10 border border-gray-500/25 rounded-full px-3 py-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-                  <span className="text-gray-400 text-xs font-medium">8 agents actifs</span>
+                  <span className="text-gray-400 text-xs font-medium">Mode manuel sécurisé</span>
                 </div>
               )}
 
-              {autoStatus?.next_generate_in_minutes !== undefined && (
+              {autoStatus?.crons_active && autoStatus.next_generate_in_minutes !== undefined && (
                 <div className="flex items-center gap-1.5 bg-blue-500/8 border border-blue-500/20 rounded-full px-3 py-1.5">
                   <Timer size={11} className="text-blue-400" />
                   <span className="text-blue-400 text-xs">

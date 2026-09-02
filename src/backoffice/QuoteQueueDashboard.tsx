@@ -135,7 +135,7 @@ export default function QuoteQueueDashboard() {
   }, [loadData]);
 
   const queue = useMemo(() => {
-    let items = filter === 'all' ? allQueue : allQueue.filter(item => item.status === filter);
+    let items = filter === 'all' ? allQueue : allQueue.filter(item => filter === 'claimed' ? ['claimed', 'in_progress'].includes(item.status) : item.status === filter);
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -156,7 +156,7 @@ export default function QuoteQueueDashboard() {
   }, [allQueue, filter, searchQuery, sort]);
 
   const waitingCount = allQueue.filter(q => q.status === 'waiting').length;
-  const claimedCount = allQueue.filter(q => q.status === 'claimed').length;
+  const claimedCount = allQueue.filter(q => ['claimed', 'in_progress'].includes(q.status)).length;
   const totalStageLeads = stageCounts.reduce((s, c) => s + c.count, 0);
 
   const claimLead = async (queueId: string) => {

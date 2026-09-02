@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   Mail, RefreshCw, Star, User, Paperclip, Search,
   ExternalLink, CheckCircle, Send, Archive, AlertCircle,
@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { SecureDocumentLink } from '@/components/crm/SecureDocumentLink';
 import {
-  nativeAdminDashboard,
+  nativeAdminLeads,
   nativeAdminInbox,
   nativeAdminInboxAction,
   nativeAdminInboxSync,
@@ -30,8 +30,12 @@ interface EmailMessage {
   is_read: boolean;
   is_starred: boolean;
   classification: string | null;
+  priority?: 'high' | 'normal' | 'low';
+  github_status?: 'failure' | 'cancelled' | 'success' | 'unknown';
   confidence_score: number | null;
   lead_id: string | null;
+  lead_name?: string | null;
+  lead_email?: string | null;
   attachments: Array<{ filename?: string; content_type?: string; size?: number; storage_path?: string; url?: string }>;
   auto_matched: boolean;
   email_status?: 'active' | 'archived' | 'deleted' | 'spam';
@@ -66,6 +70,13 @@ interface FolderConfig {
   filter: (email: EmailMessage) => boolean;
 }
 
+interface LeadMailFolder {
+  lead_id: string;
+  lead_name: string;
+  lead_email?: string | null;
+  count: number;
+}
+
 const AVATAR_COLORS = [
   'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500',
   'bg-cyan-500', 'bg-violet-500', 'bg-orange-500', 'bg-teal-500',
@@ -84,6 +95,18 @@ const getInitials = (name: string | null, email: string): string => {
     return parts[0].substring(0, 2).toUpperCase();
   }
   return email.substring(0, 2).toUpperCase();
+};
+
+const conversationKey = (email: EmailMessage): string => {
+  const subject = String(email.subject || '')
+    .toLowerCase()
+    .replace(/^\s*((re|réf?|fw|fwd|tr)\s*:\s*)+/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const correspondent = email.direction === 'outbound'
+    ? String(email.to_emails?.[0] || '').toLowerCase()
+    : String(email.from_email || '').toLowerCase();
+  return `${email.lead_id || correspondent}|${subject}`;
 };
 
 const decodeEmailContent = (text: string): string => {
@@ -184,7 +207,8 @@ const CRMInboxMulticanal: React.FC = () => {
   const [extractedInfo, setExtractedInfo] = useState<ExtractedLeadInfo | null>(null);
   const [filter, setFilter] = useState<string>('inbox');
   const [searchQuery, setSearchQuery] = useState('');
-  const [stats, setStats] = useState({ total: 0, unread: 0, leads: 0, starred: 0, archived: 0, mails: 0 });
+  const [stats, setStats] = useState({ total: 0, unread: 0, alerts: 0, leads: 0, partners: 0, services: 0, starred: 0, archived: 0, mails: 0 });
+  const [leadMailFolders, setLeadMailFolders] = useState<LeadMailFolder[]>([]);
   const [draggedEmail, setDraggedEmail] = useState<string | null>(null);
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' | 'info' } | null>(null);
@@ -208,9 +232,10 @@ const CRMInboxMulticanal: React.FC = () => {
   const loadMessages = async () => {
     setLoading(true);
     try {
-      const result = await nativeAdminInbox(filter, searchQuery) as { messages?: EmailMessage[]; stats?: typeof stats };
+      const result = await nativeAdminInbox(filter, searchQuery) as { messages?: EmailMessage[]; stats?: typeof stats; lead_folders?: LeadMailFolder[] };
       setMessages(result.messages || []);
       if (result.stats) setStats(result.stats);
+      setLeadMailFolders(result.lead_folders || []);
     } catch (err) { console.error(err); showToast('Impossible de charger la boite de reception', 'error'); } finally { setLoading(false); }
   };
 
@@ -226,15 +251,15 @@ const CRMInboxMulticanal: React.FC = () => {
     } catch { showToast('Erreur réseau', 'error'); } finally { setSyncing(false); }
   };
 
-  const autoCreateLeads = async () => {
+  const autoLinkExistingLeads = async () => {
     setSyncing(true);
-    showToast('Création automatique des leads...', 'info');
+    showToast('Rattachement aux leads existants...', 'info');
     try {
       const result = await nativeAdminInboxWorkflow('auto_create_leads') as { success?: boolean; summary?: { leads_created?: number; emails_linked?: number } };
       if (result.success) {
-        showToast(`${result.summary?.leads_created || 0} leads créés, ${result.summary?.emails_linked || 0} liés`, 'success');
+        showToast(`${result.summary?.emails_linked || 0} email(s) rattaché(s), aucun lead créé`, 'success');
         await loadMessages();
-      } else showToast('Erreur création automatique', 'error');
+      } else showToast('Erreur de rattachement', 'error');
     } catch { showToast('Erreur réseau', 'error'); } finally { setSyncing(false); }
   };
 
@@ -314,7 +339,7 @@ const CRMInboxMulticanal: React.FC = () => {
     if (!query || query.length < 3) { setSearchResults([]); return; }
     setSearchingLeads(true);
     try {
-      const result = await nativeAdminDashboard() as { leads?: LeadSearchResult[] };
+      const result = await nativeAdminLeads(query) as { leads?: LeadSearchResult[] };
       const needle = query.trim().toLowerCase();
       setSearchResults((result.leads || []).filter(lead =>
         [lead.email, lead.first_name, lead.last_name, lead.phone]
@@ -376,6 +401,38 @@ const CRMInboxMulticanal: React.FC = () => {
     showToast(`${ids.length} emails archivés`, 'success');
   };
 
+  const bulkResolveAlerts = async () => {
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+    try {
+      await nativeAdminInboxAction('resolve_alert', ids);
+      setSelectedIds(new Set());
+      if (selectedMessage && ids.includes(selectedMessage.id)) setSelectedMessage(null);
+      await loadMessages();
+      showToast(`${ids.length} alerte(s) marquée(s) comme traitée(s)`, 'success');
+    } catch { showToast('Erreur lors du traitement des alertes', 'error'); }
+  };
+
+  const resolveAlert = async (emailId: string) => {
+    try {
+      await nativeAdminInboxAction('resolve_alert', [emailId]);
+      await loadMessages();
+      setSelectedMessage(null);
+      showToast('Alerte marquée comme traitée', 'success');
+    } catch { showToast('Erreur lors du traitement de l’alerte', 'error'); }
+  };
+
+  const openConversation = (email: EmailMessage) => {
+    setSelectedMessage(email);
+    setShowEmailBody(email.body_html ? 'html' : 'text');
+    const key = conversationKey(email);
+    const unreadIds = messages.filter(item => conversationKey(item) === key && !item.is_read).map(item => item.id);
+    if (!unreadIds.length) return;
+    setMessages(prev => prev.map(item => unreadIds.includes(item.id) ? { ...item, is_read: true } : item));
+    setStats(prev => ({ ...prev, unread: Math.max(0, prev.unread - unreadIds.length) }));
+    void nativeAdminInboxAction('mark_read', unreadIds).catch(() => loadMessages());
+  };
+
   const bulkMarkRead = async () => {
     const ids = [...selectedIds];
     if (ids.length === 0) return;
@@ -408,7 +465,9 @@ const CRMInboxMulticanal: React.FC = () => {
       if (!info) return;
       setExtractedInfo(info);
       try {
-        const result = await nativeAdminDashboard() as { leads?: LeadSearchResult[] };
+        const lookup = info.email || info.phone || '';
+        if (!lookup) return;
+        const result = await nativeAdminLeads(lookup) as { leads?: LeadSearchResult[] };
         const leads = result.leads || [];
         const email = info.email?.trim().toLowerCase();
         const phone = info.phone?.replace(/\D/g, '');
@@ -440,7 +499,10 @@ const CRMInboxMulticanal: React.FC = () => {
         console.error('[crm-inbox-auto-sync]', error);
       }
     };
-    void synchronize();
+    // The inbox content is loaded immediately by the effect above. Starting a
+    // full IMAP synchronization at the same time can saturate the API and make
+    // the initial screen look unavailable. Keep background refresh periodic;
+    // the toolbar button remains available for an immediate manual sync.
     const interval = window.setInterval(synchronize, 5 * 60 * 1000);
     return () => { active = false; window.clearInterval(interval); };
   }, []);
@@ -485,11 +547,42 @@ const CRMInboxMulticanal: React.FC = () => {
   const folders: FolderConfig[] = [
     { id: 'inbox', name: 'Boite de reception', icon: <Inbox size={16} />, count: stats.total, color: 'text-sky-500', filter: () => true },
     { id: 'unread', name: 'Non lus', icon: <MailOpen size={16} />, count: stats.unread, color: 'text-amber-500', filter: e => !e.is_read },
+    { id: 'alerts', name: 'Alertes techniques', icon: <AlertCircle size={16} />, count: stats.alerts, color: 'text-red-400', filter: e => e.priority === 'high' },
     { id: 'starred', name: 'Favoris', icon: <Star size={16} />, count: stats.starred, color: 'text-yellow-500', filter: e => e.is_starred },
     { id: 'leads', name: 'Leads', icon: <Users size={16} />, count: stats.leads, color: 'text-emerald-500', filter: e => !!e.lead_id },
+    { id: 'partners', name: 'Partenaires', icon: <Users size={16} />, count: stats.partners, color: 'text-violet-400', filter: e => e.classification === 'partner' },
+    { id: 'services', name: 'Interne et services', icon: <Settings size={16} />, count: stats.services, color: 'text-cyan-400', filter: e => ['internal', 'system'].includes(String(e.classification || '')) },
+    { id: 'unassigned', name: 'Non rattaches', icon: <UserPlus size={16} />, count: Math.max(0, stats.total - stats.leads), color: 'text-orange-400', filter: e => !e.lead_id },
     { id: 'mails', name: 'Mails', icon: <Folder size={16} />, count: stats.mails, color: 'text-gray-400', filter: e => e.classification === 'non_lead' },
     { id: 'archived', name: 'Archives', icon: <Archive size={16} />, count: stats.archived, color: 'text-gray-500', filter: e => e.email_status === 'archived' },
   ];
+
+  const leadFolders: FolderConfig[] = useMemo(() => leadMailFolders.map(lead => ({
+    id: `lead:${lead.lead_id}`,
+    name: lead.lead_name || lead.lead_email || `Lead ${lead.lead_id.slice(0, 8)}`,
+    icon: <User size={15} />,
+    count: Number(lead.count || 0),
+    color: 'text-sky-400',
+    filter: (email: EmailMessage) => email.lead_id === lead.lead_id,
+  })), [leadMailFolders]);
+
+  const threadCounts = useMemo(() => messages.reduce<Record<string, number>>((counts, email) => {
+    const key = conversationKey(email);
+    counts[key] = (counts[key] || 0) + 1;
+    return counts;
+  }, {}), [messages]);
+  const unreadThreadCounts = useMemo(() => messages.reduce<Record<string, number>>((counts, email) => {
+    if (!email.is_read) {
+      const key = conversationKey(email);
+      counts[key] = (counts[key] || 0) + 1;
+    }
+    return counts;
+  }, {}), [messages]);
+
+  const conversationMessages = useMemo(() => selectedMessage
+    ? messages.filter(email => conversationKey(email) === conversationKey(selectedMessage))
+      .sort((a, b) => Date.parse(a.received_at) - Date.parse(b.received_at))
+    : [], [messages, selectedMessage]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -506,8 +599,17 @@ const CRMInboxMulticanal: React.FC = () => {
     return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
   };
 
-  const currentFolder = folders.find(f => f.id === filter);
-  const filteredMessages = filter === 'inbox' ? messages : messages.filter(currentFolder?.filter || (() => true));
+  const currentFolder = [...folders, ...leadFolders].find(f => f.id === filter);
+  const filteredMessagesRaw = filter === 'inbox' ? messages : messages.filter(currentFolder?.filter || (() => true));
+  const filteredMessages = useMemo(() => {
+    const latestByThread = new Map<string, EmailMessage>();
+    for (const email of filteredMessagesRaw) {
+      const key = conversationKey(email);
+      const current = latestByThread.get(key);
+      if (!current || Date.parse(email.received_at) > Date.parse(current.received_at)) latestByThread.set(key, email);
+    }
+    return [...latestByThread.values()].sort((a, b) => Date.parse(b.received_at) - Date.parse(a.received_at));
+  }, [filteredMessagesRaw]);
   const allSelected = filteredMessages.length > 0 && filteredMessages.every(m => selectedIds.has(m.id));
 
   const toggleSelectAll = () => {
@@ -552,12 +654,12 @@ const CRMInboxMulticanal: React.FC = () => {
             </button>
 
             <button
-              onClick={autoCreateLeads}
+              onClick={autoLinkExistingLeads}
               disabled={syncing}
               className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-amber-400 border border-gray-700 rounded-lg font-medium text-sm transition-colors"
             >
               <Zap size={14} />
-              Créer leads auto
+              Rattacher aux leads
             </button>
           </div>
 
@@ -596,6 +698,28 @@ const CRMInboxMulticanal: React.FC = () => {
                 </div>
               ))}
             </div>
+            {leadFolders.length > 0 && (
+              <>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-2 mt-5 mb-2">Sous-dossiers leads</p>
+                <div className="space-y-0.5">
+                  {leadFolders.map(folder => (
+                    <button
+                      type="button"
+                      key={folder.id}
+                      onClick={() => { setFilter(folder.id); setSelectedMessage(null); setSelectedIds(new Set()); }}
+                      className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg transition-all ${filter === folder.id ? 'bg-sky-500/20 border border-sky-500/40' : 'hover:bg-gray-800 border border-transparent'}`}
+                      title={folder.name}
+                    >
+                      <span className="flex items-center gap-2 min-w-0">
+                        <span className={filter === folder.id ? 'text-sky-300' : folder.color}>{folder.icon}</span>
+                        <span className={`text-sm truncate ${filter === folder.id ? 'font-semibold text-sky-200' : 'text-gray-300'}`}>{folder.name}</span>
+                      </span>
+                      <span className="text-xs font-bold min-w-[20px] px-1.5 py-0.5 rounded-full bg-gray-700 text-gray-400">{folder.count > 99 ? '99+' : folder.count}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </nav>
 
           {/* Footer */}
@@ -614,7 +738,7 @@ const CRMInboxMulticanal: React.FC = () => {
         </div>
 
         {/* COLONNE 2 — Liste emails */}
-        <div className="w-80 flex-shrink-0 flex flex-col bg-white border-r border-gray-200">
+        <div className="w-72 2xl:w-80 flex-shrink-0 flex flex-col bg-white border-r border-gray-200">
 
           {/* Header liste */}
           <div className="px-4 pt-4 pb-3 border-b border-gray-100">
@@ -660,6 +784,12 @@ const CRMInboxMulticanal: React.FC = () => {
             <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border-b border-amber-100">
               <span className="text-xs font-semibold text-amber-800">{selectedIds.size} sélectionné(s)</span>
               <div className="flex items-center gap-1 ml-auto">
+                {filter === 'alerts' && (
+                  <button onClick={bulkResolveAlerts} className="px-2.5 py-1 text-xs bg-emerald-600 border border-emerald-700 rounded-lg hover:bg-emerald-700 text-white font-semibold flex items-center gap-1">
+                    <CheckCircle size={12} />
+                    Traitées
+                  </button>
+                )}
                 <button onClick={bulkMarkRead} className="px-2.5 py-1 text-xs bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 font-medium">Lu</button>
                 <button onClick={bulkArchive} className="px-2.5 py-1 text-xs bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 font-medium">Archiver</button>
                 <button onClick={bulkDelete} className="px-2.5 py-1 text-xs bg-white border border-red-200 rounded-lg hover:bg-red-50 text-red-600 font-medium flex items-center gap-1">
@@ -680,7 +810,9 @@ const CRMInboxMulticanal: React.FC = () => {
                 {allSelected ? <CheckSquare size={14} className="text-amber-500" /> : <Square size={14} />}
                 <span>Tout sélectionner</span>
               </button>
-              <span className="ml-auto text-xs text-gray-400">{filteredMessages.length} email(s)</span>
+              <span className="ml-auto text-xs text-gray-400">
+                {filteredMessages.length} conversation(s){filteredMessagesRaw.length !== filteredMessages.length ? ` · ${filteredMessagesRaw.length} emails` : ''}
+              </span>
             </div>
           )}
 
@@ -699,8 +831,9 @@ const CRMInboxMulticanal: React.FC = () => {
             ) : (
               <div className="divide-y divide-gray-100">
                 {filteredMessages.map(email => {
-                  const isSelected = selectedMessage?.id === email.id;
+                  const isSelected = selectedMessage ? conversationKey(selectedMessage) === conversationKey(email) : false;
                   const isChecked = selectedIds.has(email.id);
+                  const hasUnread = (unreadThreadCounts[conversationKey(email)] || 0) > 0;
                   const initials = getInitials(email.from_name, email.from_email);
                   const avatarColor = getAvatarColor(email.from_email);
 
@@ -709,9 +842,9 @@ const CRMInboxMulticanal: React.FC = () => {
                       key={email.id}
                       draggable
                       onDragStart={e => handleDragStart(e, email.id)}
-                      onClick={() => { setSelectedMessage(email); if (!email.is_read) markAsRead(email.id); }}
+                      onClick={() => openConversation(email)}
                       className={`relative flex items-start gap-3 px-4 py-3 cursor-pointer transition-all group ${
-                        isSelected ? 'bg-amber-50 border-l-2 border-l-amber-500' : email.is_read ? 'hover:bg-gray-50 border-l-2 border-l-transparent' : 'bg-sky-50/40 hover:bg-sky-50 border-l-2 border-l-sky-400'
+                        isSelected ? 'bg-amber-50 border-l-2 border-l-amber-500' : !hasUnread ? 'hover:bg-gray-50 border-l-2 border-l-transparent' : 'bg-sky-50/40 hover:bg-sky-50 border-l-2 border-l-sky-400'
                       }`}
                     >
                       {/* Checkbox */}
@@ -732,15 +865,46 @@ const CRMInboxMulticanal: React.FC = () => {
                       {/* Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1 mb-0.5">
-                          <span className={`text-xs truncate ${!email.is_read ? 'font-bold text-gray-900' : 'font-semibold text-gray-700'}`}>
+                          <span className={`text-xs truncate ${hasUnread ? 'font-bold text-gray-900' : 'font-semibold text-gray-700'}`}>
                             {email.from_name || email.from_email}
                           </span>
                           <span className="text-xs text-gray-400 flex-shrink-0">{formatDate(email.received_at)}</span>
                         </div>
 
-                        <div className={`text-xs truncate mb-1 ${!email.is_read ? 'font-semibold text-gray-900' : 'text-gray-600'}`}>
+                        <div className={`text-xs truncate mb-1 ${hasUnread ? 'font-semibold text-gray-900' : 'text-gray-600'}`}>
                           {email.subject || '(Sans objet)'}
                         </div>
+
+                        {(threadCounts[conversationKey(email)] || 0) > 1 && (
+                          <div className="mb-1 inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-bold text-violet-700">
+                            <Mail size={10} /> {threadCounts[conversationKey(email)]} messages
+                            {hasUnread && <span className="ml-1 text-sky-700">· {unreadThreadCounts[conversationKey(email)]} non lu(s)</span>}
+                          </div>
+                        )}
+
+                        {email.priority === 'high' && (
+                          <div className="mb-1 inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-red-700 ring-1 ring-red-200">
+                            <AlertCircle size={10} /> Alerte technique
+                          </div>
+                        )}
+
+                        {email.github_status === 'success' && (
+                          <div className="mb-1 ml-1 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-200">
+                            <CheckCircle size={10} /> GitHub réussi
+                          </div>
+                        )}
+                        {email.github_status === 'cancelled' && (
+                          <div className="mb-1 ml-1 inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-600 ring-1 ring-gray-200">
+                            <Clock size={10} /> GitHub annulé
+                          </div>
+                        )}
+
+                        {email.lead_id && (
+                          <div className="mb-1 flex items-center gap-1 text-[11px] font-semibold text-emerald-700 truncate">
+                            <User size={11} className="flex-shrink-0" />
+                            {email.lead_name || email.lead_email || 'Lead rattache'}
+                          </div>
+                        )}
 
                         <div className="text-xs text-gray-400 truncate leading-relaxed">
                           {cleanEmailPreview(email.body_text).substring(0, 70)}
@@ -847,16 +1011,6 @@ const CRMInboxMulticanal: React.FC = () => {
                   </a>
                 )}
 
-                {!foundLeadId && extractedInfo && (
-                  <button
-                    onClick={() => createLeadFromEmail(selectedMessage)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold transition-colors"
-                  >
-                    <UserPlus size={13} />
-                    Créer lead
-                  </button>
-                )}
-
                 {!foundLeadId && (
                   <>
                     <button
@@ -877,6 +1031,16 @@ const CRMInboxMulticanal: React.FC = () => {
                 )}
 
                 <div className="flex items-center gap-0.5 ml-auto">
+                  {selectedMessage.priority === 'high' && (
+                    <button
+                      onClick={() => resolveAlert(selectedMessage.id)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 mr-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-colors"
+                      title="Marquer cette alerte comme traitée"
+                    >
+                      <CheckCircle size={14} />
+                      Traité
+                    </button>
+                  )}
                   <button
                     onClick={() => toggleStar(selectedMessage.id, selectedMessage.is_starred)}
                     className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
@@ -974,6 +1138,35 @@ const CRMInboxMulticanal: React.FC = () => {
 
               {/* Email body */}
               <div className="flex-1 overflow-y-auto">
+                {conversationMessages.length > 1 && (
+                  <div className="mx-6 mt-5 rounded-xl border border-violet-200 bg-violet-50/60 p-3">
+                    <div className="mb-2 flex items-center gap-2 text-sm font-bold text-violet-900">
+                      <Mail size={15} /> Conversation ({conversationMessages.length} messages)
+                    </div>
+                    <div className="space-y-2">
+                      {conversationMessages.filter(message => message.id !== selectedMessage.id).map(message => (
+                        <details key={message.id} className="group rounded-lg border border-violet-100 bg-white">
+                          <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-xs">
+                            <span className={`rounded-full px-2 py-0.5 font-bold ${message.direction === 'outbound' ? 'bg-sky-100 text-sky-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                              {message.direction === 'outbound' ? 'Envoye' : 'Recu'}
+                            </span>
+                            <span className="min-w-0 flex-1 truncate font-semibold text-gray-700">
+                              {message.direction === 'outbound' ? `A : ${message.to_emails?.[0] || message.lead_email || ''}` : message.from_name || message.from_email}
+                            </span>
+                            <span className="flex-shrink-0 text-gray-400">{new Date(message.received_at).toLocaleString('fr-FR')}</span>
+                          </summary>
+                          <div className="border-t border-gray-100 px-4 py-3">
+                            {message.body_html ? (
+                              <iframe title={`Message ${message.id}`} sandbox="allow-popups allow-popups-to-escape-sandbox" srcDoc={message.body_html} className="block min-h-[300px] w-full bg-white" />
+                            ) : (
+                              <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-6 text-gray-700">{cleanEmailPreview(message.body_text || '')}</pre>
+                            )}
+                          </div>
+                        </details>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {/* View toggle */}
                 {selectedMessage.body_html && selectedMessage.body_text && (
                   <div className="flex gap-1 px-6 pt-4">
@@ -981,7 +1174,7 @@ const CRMInboxMulticanal: React.FC = () => {
                       onClick={() => setShowEmailBody('html')}
                       className={`text-xs px-3 py-1 rounded-full font-medium transition-colors ${showEmailBody === 'html' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-100'}`}
                     >
-                      HTML
+                      Mise en page
                     </button>
                     <button
                       onClick={() => setShowEmailBody('text')}
@@ -994,12 +1187,16 @@ const CRMInboxMulticanal: React.FC = () => {
 
                 <div className="px-6 py-4">
                   {showEmailBody === 'html' && selectedMessage.body_html ? (
-                    <div
-                      dangerouslySetInnerHTML={{ __html: stripAllInlineStyles(selectedMessage.body_html) }}
-                      className="text-sm text-gray-800 leading-relaxed prose max-w-none prose-sm"
-                    />
+                    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+                      <iframe
+                        title={`Email - ${selectedMessage.subject || 'Sans objet'}`}
+                        sandbox="allow-popups allow-popups-to-escape-sandbox"
+                        srcDoc={selectedMessage.body_html}
+                        className="block min-h-[560px] w-full bg-white"
+                      />
+                    </div>
                   ) : (
-                    <pre className="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed font-sans">
+                    <pre className="whitespace-pre-wrap break-words rounded-xl border border-gray-100 bg-white p-5 text-[15px] text-gray-800 leading-7 font-sans shadow-sm">
                       {cleanEmailPreview(selectedMessage.body_text || '')}
                     </pre>
                   )}

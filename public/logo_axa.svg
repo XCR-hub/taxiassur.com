@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 140" role="img" aria-labelledby="title">
+  <title id="title">AXA</title>
+  <rect width="360" height="140" rx="16" fill="#fff"/>
+  <rect x="22" y="14" width="112" height="112" fill="#00008f"/>
+  <path d="M36 104 57 54l21 50M46 81h22M78 104l20-50m-20 0 20 50m0-50 19 50m-8-25h-21" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M83 96 128 19" stroke="#ed1b2f" stroke-width="5"/>
+  <text x="157" y="92" font-family="Arial,Helvetica,sans-serif" font-size="68" font-weight="700" fill="#00008f">AXA</text>
+</svg>
