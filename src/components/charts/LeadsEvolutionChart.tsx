@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { TrendingUp, Loader2 } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { nativeAdminDashboard } from '@/lib/native-admin-data';
 
 interface DayData {
   date: string;
@@ -19,13 +19,8 @@ export function LeadsEvolutionChart() {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        const { data: leads, error } = await supabase
-          .from('crm_leads')
-          .select('created_at')
-          .gte('created_at', thirtyDaysAgo.toISOString())
-          .order('created_at', { ascending: true });
-
-        if (error) throw error;
+        const result = await nativeAdminDashboard() as { leads?: { created_at?: string }[] };
+        const leads = (result.leads || []).filter((lead) => lead.created_at && new Date(lead.created_at) >= thirtyDaysAgo);
 
         const dailyCounts: Record<string, number> = {};
         const days: DayData[] = [];
@@ -37,7 +32,7 @@ export function LeadsEvolutionChart() {
           dailyCounts[dateStr] = 0;
         }
 
-        leads?.forEach(lead => {
+        leads.forEach(lead => {
           const dateStr = new Date(lead.created_at).toISOString().split('T')[0];
           if (dailyCounts[dateStr] !== undefined) {
             dailyCounts[dateStr]++;
@@ -54,7 +49,7 @@ export function LeadsEvolutionChart() {
         });
 
         setData(days);
-        setTotal(leads?.length || 0);
+        setTotal(leads.length);
       } catch (err) {
         console.error('Error fetching leads evolution:', err);
       } finally {

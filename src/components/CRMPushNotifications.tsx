@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { X, Bell, CheckCircle, AlertCircle, Info, AlertTriangle, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 interface PushNotification {
   id: string;
@@ -26,6 +26,7 @@ export function CRMPushNotifications() {
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
+  const seenIds = useRef(new Set<string>());
 
   // Charger la préférence de son depuis localStorage
   useEffect(() => {
@@ -146,33 +147,35 @@ export function CRMPushNotifications() {
     showToast(testNotif);
   };
 
-  // Écouter les nouvelles notifications en temps réel
+  // Interroger le flux natif : Supabase Realtime n'est plus la source de vérité.
   useEffect(() => {
-    console.log('🔔 [CRMPushNotifications] Setting up realtime subscription...');
-
-    const channel = supabase
-      .channel('push_notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'crm_event_notifications',
-        },
-        (payload) => {
-          console.log('🆕 [CRMPushNotifications] New notification received:', payload.new);
-          console.log('🔊 About to play sound for notification...');
-          showToast(payload.new as PushNotification);
+    let active = true;
+    let polling = false;
+    let cursor = new Date(Date.now() - 10_000).toISOString();
+    const poll = async () => {
+      if (polling || document.visibilityState === 'hidden') return;
+      polling = true;
+      try {
+        const result = await nativeAdminCall<{ events?: PushNotification[]; server_time?: string }>(`/v1/admin/pipeline/notifications?since=${encodeURIComponent(cursor)}`);
+        if (!active) return;
+        for (const event of result.events || []) {
+          if (seenIds.current.has(event.id)) continue;
+          seenIds.current.add(event.id);
+          showToast(event);
+          if (document.visibilityState !== 'visible' && 'Notification' in window && Notification.permission === 'granted') {
+            new Notification('TaxiAssur', { body: event.message, icon: '/logo-512x512.svg', tag: event.id });
+          }
         }
-      )
-      .subscribe((status) => {
-        console.log('📡 [CRMPushNotifications] Subscription status:', status);
-      });
-
-    return () => {
-      console.log('🔌 [CRMPushNotifications] Unsubscribing...');
-      channel.unsubscribe();
+        cursor = result.server_time || new Date().toISOString();
+      } catch (error) {
+        console.warn('[CRMPushNotifications] Flux natif indisponible', error);
+      } finally {
+        polling = false;
+      }
     };
+    void poll();
+    const timer = window.setInterval(() => void poll(), 15_000);
+    return () => { active = false; window.clearInterval(timer); };
   }, [showToast]);
 
   const dismissToast = (id: string) => {
@@ -181,13 +184,6 @@ export function CRMPushNotifications() {
 
   const handleToastClick = async (notification: ToastNotification) => {
     if (notification.lead_id) {
-      // Marquer comme lu
-      await supabase
-        .from('crm_event_notifications')
-        .update({ is_read: true })
-        .eq('id', notification.id);
-
-      // Naviguer vers le lead
       dismissToast(notification.id);
       navigate(`/backoffice/crm-killer/lead/${notification.lead_id}`);
     }
@@ -231,7 +227,10 @@ export function CRMPushNotifications() {
       email_received: '📧 Nouvel Email',
       ai_decision: '🤖 Décision IA',
       document_validated: '✅ Document Validé',
-      quote_requested: '💰 Demande de Devis'
+      quote_requested: '💰 Demande de Devis',
+      quote_validated: '✅ Devis Validé par le Prospect',
+      quote_refused: '❌ Devis Refusé par le Prospect',
+      quote_modification_requested: '✏️ Modification de Devis Demandée'
     };
     return titles[eventType] || '🔔 Notification';
   };

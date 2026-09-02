@@ -1,11 +1,9 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail, Phone, AlertCircle, Copy, CheckCircle, User, Building2, MapPin, Car, FileText, Calculator, ClipboardCheck, MessageSquare, Star, StickyNote, Pencil, Save, X, MessageCircle, Send } from 'lucide-react';
 import { logger } from '@/lib/logger';
-import { useRealtimeDocuments } from '@/hooks/useRealtimeDocuments';
 import { useDocumentToast, DocumentToastContainer } from '@/components/crm/DocumentToast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { pipelineService } from '@/lib/crm-pipeline';
 import { LeadWorkflowTabs, WorkflowTab } from '@/components/crm/LeadWorkflowTabs';
 import PipelineWorkflow7Etapes from '@/components/crm/PipelineWorkflow7Etapes';
 import DocumentValidationComplete from '@/components/crm/DocumentValidationComplete';
@@ -15,7 +13,6 @@ import CompleteTimeline from '@/components/crm/CompleteTimeline';
 import LeadDeleteSecure from '@/components/crm/LeadDeleteSecure';
 import SMSSendModal from '@/components/crm/SMSSendModal';
 import SMSConversationPanel from '@/components/crm/SMSConversationPanel';
-import { NATIVE_ADMIN_TOKEN_KEY } from '@/lib/native-admin-auth';
 import { nativeAdminCall, nativeAdminLead, nativeAdminUpdateLead } from '@/lib/native-admin-data';
 
 interface Lead {
@@ -80,24 +77,9 @@ const CRMLeadDetail: React.FC = () => {
   const loadLeadData = async () => {
     try {
       setLoading(true);
-      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY) && leadId) {
-        const native = await nativeAdminLead(leadId);
-        setLead(native.lead);
-        return;
-      }
-      const { data, error: fetchError } = await supabase
-        .from('crm_leads')
-        .select('*')
-        .eq('id', leadId)
-        .single();
-
-      if (fetchError) {
-        logger.error('Error loading lead:', fetchError);
-        setError('Impossible de charger les données du lead');
-        return;
-      }
-
-      setLead(data);
+      if (!leadId) return;
+      const native = await nativeAdminLead(leadId);
+      setLead(native.lead);
     } catch (err) {
       logger.error('Error:', err);
       setError('Une erreur est survenue');
@@ -108,19 +90,8 @@ const CRMLeadDetail: React.FC = () => {
 
   const updateVehicleType = async (type: string) => {
     if (!leadId) return;
-    if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
-      const native = await nativeAdminUpdateLead(leadId, { vehicle_type: type });
-      setLead(native.lead);
-      setEditingVehicleType(false);
-      return;
-    }
-    const { error } = await supabase
-      .from('crm_leads')
-      .update({ vehicle_type: type, updated_at: new Date().toISOString() })
-      .eq('id', leadId);
-    if (!error && lead) {
-      setLead({ ...lead, vehicle_type: type });
-    }
+    const native = await nativeAdminUpdateLead(leadId, { vehicle_type: type });
+    setLead(native.lead);
     setEditingVehicleType(false);
   };
 
@@ -155,34 +126,8 @@ const CRMLeadDetail: React.FC = () => {
       if (editForm.company_name !== (lead.company_name || '')) updates.company_name = editForm.company_name;
       if (editForm.immatriculation !== (lead.immatriculation || '')) updates.immatriculation = editForm.immatriculation;
 
-      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
-        const native = await nativeAdminUpdateLead(leadId, updates);
-        setLead(native.lead);
-        setEditingContact(false);
-        showToast('Coordonnees mises a jour', 'success');
-        return;
-      }
-
-      const { error: updateError } = await supabase
-        .from('crm_leads')
-        .update(updates)
-        .eq('id', leadId);
-
-      if (updateError) {
-        showToast('Erreur lors de la sauvegarde', 'error');
-        return;
-      }
-
-      setLead({
-        ...lead,
-        first_name: editForm.first_name,
-        last_name: editForm.last_name,
-        email: editForm.email,
-        phone: editForm.phone,
-        city: editForm.city,
-        company_name: editForm.company_name,
-        immatriculation: editForm.immatriculation,
-      });
+      const native = await nativeAdminUpdateLead(leadId, updates);
+      setLead(native.lead);
       setEditingContact(false);
       showToast('Coordonnees mises a jour', 'success');
     } catch (err) {
@@ -195,132 +140,40 @@ const CRMLeadDetail: React.FC = () => {
 
   const loadStats = async () => {
     if (!leadId) return;
-
     try {
-      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
-        const response = await nativeAdminCall<{ summary?: {
-          documents?: Array<{ status?: string; document_type?: string }>;
-          total_documents?: number;
-          validated_documents?: number;
-          pending_documents?: number;
-          missing_documents?: number;
-          documents_complete?: boolean;
-          quotes?: unknown[];
-          contracts?: unknown[];
-          total_events?: number;
-          notes_count?: number;
-        } }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/summary`);
-        const summary = response.summary || {};
-        setStats({
-          documentsComplete: summary.documents_complete === true,
-          documentsMissing: Number(summary.missing_documents || 0),
-          basketCount: Number(summary.pending_documents || 0),
-          quotesCount: summary.quotes?.length || 0,
-          hasContract: (summary.contracts?.length || 0) > 0,
-          unreadMessages: 0,
-          totalInteractions: Number(summary.total_events || 0),
-          notesCount: Number(summary.notes_count || 0),
-        });
-        return;
-      }
-
-      // Documents
-      const { data: documents } = await supabase
-        .from('crm_lead_documents')
-        .select('*')
-        .eq('lead_id', leadId);
-
-      const totalDocs = documents?.length || 0;
-      const validatedDocs = documents?.filter(d => d.status === 'validated').length || 0;
-      const pendingDocs = documents?.filter(d => d.status === 'pending').length || 0;
-
-      // Devis
-      const { data: quotes } = await supabase
-        .from('lead_company_quotes')
-        .select('id')
-        .eq('lead_id', leadId);
-
-      // Contrat
-      const { data: contracts } = await supabase
-        .from('lead_contracts')
-        .select('id')
-        .eq('lead_id', leadId)
-        .limit(1);
-
-      // Interactions (emails + messages + tous les événements)
-      const { data: emails } = await supabase
-        .from('email_messages')
-        .select('id')
-        .eq('lead_id', leadId);
-
-      const { data: interactions } = await supabase
-        .from('crm_interactions')
-        .select('id')
-        .eq('lead_id', leadId);
-
-      const { data: aiDecisions } = await supabase
-        .from('crm_ai_decisions')
-        .select('id')
-        .eq('lead_id', leadId);
-
-      const { data: notifications } = await supabase
-        .from('crm_event_notifications')
-        .select('id')
-        .eq('lead_id', leadId);
-
-      const { data: notes } = await supabase
-        .from('crm_interactions')
-        .select('id')
-        .eq('lead_id', leadId)
-        .eq('channel', 'note');
-
-      const totalEvents =
-        (emails?.length || 0) +
-        (interactions?.length || 0) +
-        (documents?.length || 0) +
-        (aiDecisions?.length || 0) +
-        (notifications?.length || 0);
-
-      const REQUIRED_CATEGORIES = 9;
-      const uniqueValidatedTypes = new Set(
-        documents?.filter(d => d.status === 'validated').map(d => d.document_type) || []
-      );
-      const missingCount = Math.max(0, REQUIRED_CATEGORIES - uniqueValidatedTypes.size);
-
+      const response = await nativeAdminCall<{ summary?: {
+        documents_complete?: boolean;
+        missing_documents?: number;
+        pending_documents?: number;
+        quotes?: unknown[];
+        contracts?: unknown[];
+        total_events?: number;
+        notes_count?: number;
+      } }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/summary`);
+      const summary = response.summary || {};
       setStats({
-        documentsComplete: uniqueValidatedTypes.size >= REQUIRED_CATEGORIES,
-        documentsMissing: missingCount,
-        basketCount: pendingDocs,
-        quotesCount: quotes?.length || 0,
-        hasContract: (contracts?.length || 0) > 0,
+        documentsComplete: summary.documents_complete === true,
+        documentsMissing: Number(summary.missing_documents || 0),
+        basketCount: Number(summary.pending_documents || 0),
+        quotesCount: summary.quotes?.length || 0,
+        hasContract: (summary.contracts?.length || 0) > 0,
         unreadMessages: 0,
-        totalInteractions: totalEvents,
-        notesCount: notes?.length || 0,
+        totalInteractions: Number(summary.total_events || 0),
+        notesCount: Number(summary.notes_count || 0),
       });
     } catch (err) {
       logger.error('Error loading stats:', err);
     }
   };
-
-  // Rafraîchir les stats en temps réel quand un document change
-  const handleDocumentChange = useCallback(() => {
-    logger.info('📄 Document changed, refreshing stats...');
-    showToast('Nouveau document reçu!', 'success');
-    loadStats();
-    loadLeadData(); // Aussi recharger les données du lead au cas où
-  }, [leadId, showToast]);
-
-  // Subscribe aux changements de documents en temps réel
-  useRealtimeDocuments({
-    leadId,
-    onDocumentChange: handleDocumentChange,
-    enabled: false
-  });
-
   useEffect(() => {
     if (leadId) {
-      loadLeadData();
-      loadStats();
+      void loadLeadData();
+      void loadStats();
+      const refreshTimer = window.setInterval(() => {
+        void loadLeadData();
+        void loadStats();
+      }, 30_000);
+      return () => window.clearInterval(refreshTimer);
     }
   }, [leadId]);
 
@@ -329,18 +182,19 @@ const CRMLeadDetail: React.FC = () => {
     if (!lead || !user?.id || !leadId) return;
 
     if (!lead.assigned_to) {
-      pipelineService.autoAssignLead(leadId, user.id).then((ok) => {
-        if (ok) {
-          setLead(prev => prev ? { ...prev, assigned_to: user.id, assigned_at: new Date().toISOString() } : prev);
+      nativeAdminUpdateLead(leadId, { assigned_to: user.id })
+        .then((response) => {
+          setLead(response.lead);
           setAssigneeName(user.full_name);
-        }
-      });
+        })
+        .catch((error) => logger.error('Error assigning lead:', error));
     } else {
-      // Load assignee name
-      pipelineService.getAdminUsers().then((users) => {
-        const found = users.find(u => u.id === lead.assigned_to);
-        setAssigneeName(found?.full_name || null);
-      });
+      nativeAdminCall<{ users?: Array<{ id: string; full_name?: string }> }>('/v1/admin/users')
+        .then((response) => {
+          const found = (response.users || []).find(candidate => candidate.id === lead.assigned_to);
+          setAssigneeName(found?.full_name || null);
+        })
+        .catch((error) => logger.error('Error loading assignee:', error));
     }
   }, [lead?.id, lead?.assigned_to, user?.id, leadId]);
 

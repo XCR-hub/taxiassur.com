@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { CheckCircle2, Circle, Loader2, ChevronRight, ChevronLeft } from 'lucide-react';
 import CollecteDocumentsStep from './CollecteDocumentsStep';
 import SaisieDevisStep from './SaisieDevisStep';
@@ -96,39 +95,6 @@ export default function PipelineWorkflow7Etapes({ leadId, leadData }: PipelineWo
         pipeline_stage: targetStage,
         updated_at: new Date().toISOString(),
       });
-      setCurrentStage(targetStage);
-      return;
-
-      // First, verify the lead exists
-      const { data: existingLead, error: fetchError } = await supabase
-        .from('crm_leads')
-        .select('id, pipeline_stage, status')
-        .eq('id', leadId)
-        .single();
-
-      if (fetchError) {
-        console.error('Error fetching lead:', fetchError);
-        throw new Error(`Impossible de charger le lead: ${fetchError.message}`);
-      }
-
-      if (!existingLead) {
-        throw new Error('Lead introuvable');
-      }
-
-      // Update the stage
-      const { error: updateError } = await supabase
-        .from('crm_leads')
-        .update({
-          pipeline_stage: targetStage,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', leadId);
-
-      if (updateError) {
-        console.error('Error updating stage:', updateError);
-        throw new Error(`Erreur de mise à jour: ${updateError.message}`);
-      }
-
       setCurrentStage(targetStage);
     } catch (error) {
       console.error('Error moving to stage:', error);

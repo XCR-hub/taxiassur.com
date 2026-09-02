@@ -163,7 +163,8 @@ export default function ClientDocuments() {
       setUploadError(`Fichier trop volumineux (${formatBytes(file.size)}). La limite est de 10 MB.`);
       return;
     }
-    if (!['application/pdf', 'image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    const extension = file.name.toLowerCase().split('.').pop() || '';
+    if (!['application/pdf', 'image/jpeg', 'image/png', 'image/webp'].includes(file.type) && !['pdf', 'jpg', 'jpeg', 'png', 'webp'].includes(extension)) {
       setUploadError('Type de fichier refusé. Formats autorisés : PDF, JPG, PNG ou WEBP.');
       return;
     }
@@ -232,7 +233,23 @@ export default function ClientDocuments() {
       />
 
       <ClientLayout email="">
-        <div className="space-y-5">
+          <div
+            className="space-y-5"
+            onDragEnter={(event) => {
+              if (!Array.from(event.dataTransfer.types || []).includes('Files')) return;
+              event.preventDefault();
+              setShowUpload(true);
+              setDragOver(true);
+            }}
+            onDragOver={(event) => {
+              if (!Array.from(event.dataTransfer.types || []).includes('Files')) return;
+              event.preventDefault();
+              event.dataTransfer.dropEffect = 'copy';
+              setShowUpload(true);
+              setDragOver(true);
+            }}
+            onDrop={handleDrop}
+          >
 
           {/* Header */}
           <div className="flex items-center justify-between gap-4">

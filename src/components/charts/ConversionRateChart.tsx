@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BarChart3, Loader2 } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { nativeAdminDashboard } from '@/lib/native-admin-data';
 
 interface StatusData {
   status: string;
@@ -31,19 +31,16 @@ export function ConversionRateChart() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const { data: leads, error } = await supabase
-          .from('crm_leads')
-          .select('status');
-
-        if (error) throw error;
+        const result = await nativeAdminDashboard() as { leads?: { status?: string }[] };
+        const leads = result.leads || [];
 
         const statusCounts: Record<string, number> = {};
-        leads?.forEach(lead => {
+        leads.forEach(lead => {
           const status = lead.status || 'NOUVEAU_LEAD';
           statusCounts[status] = (statusCounts[status] || 0) + 1;
         });
 
-        const total = leads?.length || 1;
+        const total = leads.length || 1;
         const converted = (statusCounts['ACTIVE_CLIENT'] || 0) + (statusCounts['QUOTE_ACCEPTED'] || 0);
         setConversionRate(Math.round((converted / total) * 100));
 

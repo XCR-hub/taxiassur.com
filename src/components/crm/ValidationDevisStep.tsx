@@ -1,7 +1,4 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { nativeAdminSession } from "@/lib/native-admin-auth";
-import { invokeIdempotentDelivery } from "@/lib/invoke-idempotent-delivery";
 import { toast } from "@/lib/toast";
 import {
   AlertTriangle,
@@ -109,27 +106,11 @@ export default function ValidationDevisStep({
 
   useEffect(() => {
     loadQuotes();
-    loadRefusalReasons();
 
-    // Écouter les changements en temps réel
-    const channel = supabase
-      .channel(`quotes-${leadId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "lead_company_quotes",
-          filter: `lead_id=eq.${leadId}`,
-        },
-        () => {
-          loadQuotes();
-        },
-      )
-      .subscribe();
+    const refreshTimer = window.setInterval(() => void loadQuotes(), 30_000);
 
     return () => {
-      supabase.removeChannel(channel);
+      window.clearInterval(refreshTimer);
     };
   }, [leadId]);
 
@@ -139,18 +120,6 @@ export default function ValidationDevisStep({
       setQuotes(native.workspace?.quotes || []);
       setRefusalReasons(native.workspace?.refusal_reasons || []);
       setDocuments(native.workspace?.company_documents || []);
-      return;
-      const { data, error } = await supabase
-        .from("lead_company_quotes")
-        .select(`
-          *,
-          company:insurance_companies!lead_company_quotes_company_id_fkey(*)
-        `)
-        .eq("lead_id", leadId)
-        .order("created_at", { ascending: true });
-
-      if (error) throw error;
-      setQuotes(data || []);
     } catch (error) {
       console.error("Error loading quotes:", error);
     } finally {
@@ -158,32 +127,11 @@ export default function ValidationDevisStep({
     }
   };
 
-  const loadRefusalReasons = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("company_quote_refusal_reasons")
-        .select("*")
-        .eq("is_active", true)
-        .order("display_order", { ascending: true });
-      if (error) throw error;
-      setRefusalReasons(data || []);
-    } catch (error) {
-      console.error("Erreur chargement motifs refus:", error);
-    }
-  };
-
   const loadCompanyDocuments = async (companyId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("company_documents")
-        .select("*")
-        .eq("company_id", companyId)
-        .eq("send_with_quote", true);
-      if (error) throw error;
-      setDocuments(data || []);
-    } catch (error) {
-      console.error("Erreur chargement documents:", error);
-    }
+    const native = await nativeAdminCall<{ workspace?: { company_documents?: Array<{ id: string; document_name: string; is_mandatory: boolean; company_id?: string }> } }>(
+      `/v1/admin/leads/${encodeURIComponent(leadId)}/quotes-workspace`,
+    );
+    setDocuments((native.workspace?.company_documents || []).filter(document => String(document.company_id || '') === String(companyId)));
   };
 
   const handleSubmitQuote = (quote: CompanyQuote) => {
@@ -235,17 +183,15 @@ export default function ValidationDevisStep({
 
     setSaving(true);
     try {
-      const { user } = await nativeAdminSession();
-
       const annualPrice = parseFloat(quoteFormData.quote_amount) || null;
       const monthlyPriceParsed = parseFloat(quoteFormData.monthly_price);
       const monthlyPrice = !isNaN(monthlyPriceParsed) && monthlyPriceParsed > 0
         ? monthlyPriceParsed
         : (annualPrice ? Math.round((annualPrice / 12) * 100) / 100 : null);
 
-      const { error } = await supabase
-        .from("lead_company_quotes")
-        .update({
+      await nativeAdminCall(
+        `/v1/admin/leads/${encodeURIComponent(leadId)}/quotes/${encodeURIComponent(selectedQuote.id)}`,
+        { method: "PATCH", body: JSON.stringify({
           status: "quote_submitted",
           quote_amount: annualPrice,
           monthly_price: monthlyPrice,
@@ -258,12 +204,9 @@ export default function ValidationDevisStep({
             quoteFormData.includes_depannage_remorquage,
           coverage_details: quoteFormData.coverage_details || null,
           notes: quoteFormData.notes,
-          submitted_by: user?.id,
           submitted_at: new Date().toISOString(),
-        })
-        .eq("id", selectedQuote.id);
-
-      if (error) throw error;
+        }) },
+      );
 
       await loadQuotes();
       setIsQuoteModalOpen(false);
@@ -284,7 +227,6 @@ export default function ValidationDevisStep({
 
     setSaving(true);
     try {
-      const { user } = await nativeAdminSession();
       const selectedReason = refusalReasons.find((r) =>
         r.code === refusalFormData.refusal_reason_code
       );
@@ -294,19 +236,17 @@ export default function ValidationDevisStep({
         }`
         : refusalFormData.notes;
 
-      const { error } = await supabase
-        .from("lead_company_quotes")
-        .update({
+      await nativeAdminCall(
+        `/v1/admin/leads/${encodeURIComponent(leadId)}/quotes/${encodeURIComponent(selectedQuote.id)}`,
+        { method: "PATCH", body: JSON.stringify({
           status: "refused",
+          refusal_reason_code: refusalFormData.refusal_reason_code,
           refusal_reason: fullRefusalReason,
           refusal_screenshot_url: refusalFormData.refusal_screenshot_url,
           notes: refusalFormData.notes,
-          submitted_by: user?.id,
           submitted_at: new Date().toISOString(),
-        })
-        .eq("id", selectedQuote.id);
-
-      if (error) throw error;
+        }) },
+      );
 
       await loadQuotes();
       setIsRefusalModalOpen(false);
@@ -428,21 +368,11 @@ export default function ValidationDevisStep({
         </div>
       `;
 
-      const { data: sendResult, error } = await invokeIdempotentDelivery(
-        supabase,
-        "email",
-        "send-crm-email",
-        {
-          to: leadEmail,
-          subject: subject,
-          content: html,
-          lead_id: leadId,
-        },
+      const sendResult = await nativeAdminCall<{ email_queued?: boolean }>(
+        `/v1/admin/leads/${encodeURIComponent(leadId)}/access-email`,
+        { method: "POST", body: JSON.stringify({ subject, content: html, context: "quote_reminder" }) },
       );
-
-      if (error || !sendResult?.success) {
-        throw error || new Error("Envoi refusé");
-      }
+      if (!sendResult.email_queued) throw new Error("Email non mis en file d'envoi");
 
       toast.success("✅ Email de relance envoyé avec succès !");
     } catch (error) {
@@ -479,20 +409,11 @@ Des questions ? Contactez-nous au 01 80 85 57 88
 
 L'équipe TaxiAssur`;
 
-      const { data: sendResult, error } = await invokeIdempotentDelivery(
-        supabase,
-        "whatsapp",
-        "send-whatsapp",
-        {
-          to: leadPhone,
-          message: message,
-          lead_id: leadId,
-        },
+      const sendResult = await nativeAdminCall<{ success?: boolean }>(
+        `/v1/admin/leads/${encodeURIComponent(leadId)}/whatsapp`,
+        { method: "POST", body: JSON.stringify({ content: message }) },
       );
-
-      if (error || sendResult?.success !== true) {
-        throw error || new Error("WhatsApp non envoyé");
-      }
+      if (!sendResult.success) throw new Error("WhatsApp non envoyé");
 
       toast.success("✅ Message WhatsApp envoyé avec succès !");
     } catch (error) {
@@ -518,20 +439,11 @@ L'équipe TaxiAssur`;
         leadFirstName || "Bonjour"
       }, vos 5 devis d'assurance taxi sont prêts ! Consultez-les : ${prospectUrl} - TaxiAssur`;
 
-      const { data, error } = await invokeIdempotentDelivery(
-        supabase,
-        "sms",
-        "send-sms-brevo",
-        {
-          to: leadPhone,
-          content: message,
-          lead_id: leadId,
-          tag: "devis-notification",
-        },
+      const data = await nativeAdminCall<{ ok?: boolean }>(
+        `/v1/admin/leads/${encodeURIComponent(leadId)}/sms`,
+        { method: "POST", body: JSON.stringify({ action: "send", content: message, request_id: crypto.randomUUID() }) },
       );
-      if (error || !data?.success) {
-        throw new Error(error?.message || data?.error);
-      }
+      if (!data.ok) throw new Error("SMS non envoyé");
 
       toast.success("✅ SMS envoyé avec succès !");
     } catch (error) {
@@ -635,14 +547,19 @@ L'équipe TaxiAssur`;
           return (
             <div
               key={companyId}
-              className={`bg-white rounded-lg border p-4 ${
+              className={`bg-white rounded-lg border p-4 relative overflow-hidden transition-all ${
                 hasValidated
-                  ? "border-green-500/30 bg-green-50/30"
+                  ? "border-2 border-green-500 bg-green-50 shadow-lg shadow-green-200/70 ring-4 ring-green-100"
                   : hasRefused
                   ? "border-red-500/30 bg-red-50/30"
                   : "border-gray-200"
               }`}
             >
+              {hasValidated && (
+                <div className="-mx-4 -mt-4 mb-4 bg-green-600 text-white px-4 py-2.5 font-black tracking-wide flex items-center justify-center gap-2">
+                  <CheckCircle className="w-5 h-5" /> CHOIX VALIDÉ PAR LE CLIENT
+                </div>
+              )}
               {/* En-tête de la compagnie */}
               <div className="flex items-start gap-3 mb-3 pb-3 border-b border-gray-200">
                 {company.logo_url
@@ -672,7 +589,7 @@ L'équipe TaxiAssur`;
                 {companyQuotes.map((quote, idx) => (
                   <div
                     key={quote.id}
-                    className={`${
+                    className={`${quote.status === "validated" ? "bg-white border-2 border-green-500 rounded-lg p-3 shadow-md" : ""} ${
                       idx > 0 ? "pt-3 border-t border-gray-100" : ""
                     }`}
                   >

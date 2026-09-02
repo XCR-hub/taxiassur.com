@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Phone, X, Check, Calendar, User, FileText, MessageSquare } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 interface CallLoggerModalProps {
   leadId: string;
@@ -35,8 +35,7 @@ export const CallLoggerModal: React.FC<CallLoggerModalProps> = ({
     setSaving(true);
     try {
       // Créer l'interaction dans crm_interactions
-      const { error } = await supabase.from('crm_interactions').insert({
-        lead_id: leadId,
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/timeline`, { method: 'POST', body: JSON.stringify({
         channel: 'call',
         direction: 'outbound',
         subject: callAnswered ? 'Appel abouti' : 'Appel non abouti',
@@ -69,9 +68,7 @@ ${appointmentDate ? `📅 RDV fixé: ${new Date(appointmentDate).toLocaleDateStr
           next_action: nextAction,
           appointment_date: appointmentDate || null
         }
-      });
-
-      if (error) throw error;
+      }) });
 
       toast.success('✅ Appel enregistré avec succès !');
       onSuccess();

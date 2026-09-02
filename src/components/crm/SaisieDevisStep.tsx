@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { nativeAdminCall, nativeAdminLead, nativeAdminUploadQuoteDocument } from '@/lib/native-admin-data';
-import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
+import { nativeAdminCall, nativeAdminCompanyDocumentUrl, nativeAdminLead, nativeAdminUploadQuoteDocument } from '@/lib/native-admin-data';
 import { Upload, CheckCircle2, X, FileText, Send, Loader2, Building2, AlertCircle, Plus, CheckCheck, Mail } from 'lucide-react';
 import { toast } from '@/lib/toast';
-import { generateAdviceSheetHtml } from '@/lib/advice-sheet-generator';
 import SubmitQuoteModal from './SubmitQuoteModal';
 import SendToInsurerModal from './SendToInsurerModal';
+import { companyVisualStyle } from '@/lib/company-visual-style';
 
 interface SaisieDevisStepProps {
   leadId: string;
@@ -44,12 +42,41 @@ export default function SaisieDevisStep({
   onComplete
 }: SaisieDevisStepProps) {
   const [companies, setCompanies] = useState<InsuranceCompany[]>([]);
+  const [companyLogoUrls, setCompanyLogoUrls] = useState<Record<string, string>>({});
+  const [logoErrors, setLogoErrors] = useState<Set<string>>(new Set());
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [uploading, setUploading] = useState<string | null>(null);
   const [sending, setSending] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [dragOverCompanyId, setDragOverCompanyId] = useState<string | null>(null);
   const [openModalQuote, setOpenModalQuote] = useState<Quote | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const objectUrls: string[] = [];
+    void Promise.all(companies.map(async company => {
+      const rawUrl = String(company.logo_url || '').trim();
+      if (!rawUrl) return [company.id, ''] as const;
+      const documentId = rawUrl.match(/\/company-documents\/([0-9a-f-]{36})\/download/i)?.[1];
+      if (!documentId) return [company.id, rawUrl] as const;
+      try {
+        const securedUrl = await nativeAdminCompanyDocumentUrl(documentId);
+        objectUrls.push(securedUrl);
+        return [company.id, securedUrl] as const;
+      } catch {
+        return [company.id, ''] as const;
+      }
+    })).then(entries => {
+      if (active) {
+        setCompanyLogoUrls(Object.fromEntries(entries));
+        setLogoErrors(new Set());
+      }
+    });
+    return () => {
+      active = false;
+      objectUrls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [companies]);
   const [showSendToInsurer, setShowSendToInsurer] = useState(false);
   const [leadFullName, setLeadFullName] = useState('');
   const [leadPhone, setLeadPhone] = useState<string | undefined>();
@@ -113,8 +140,10 @@ export default function SaisieDevisStep({
 
   async function loadQuotes() {
     try {
-      const response = await nativeAdminCall<{ quotes?: Array<Quote & { lead_id?: string }> }>('/v1/admin/quotes');
-      const rows = (response.quotes || []).filter(q => String(q.lead_id) === String(leadId)).map((q: any) => {
+      const response = await nativeAdminCall<{ workspace?: { quotes?: Quote[] } }>(
+        `/v1/admin/leads/${encodeURIComponent(leadId)}/quotes-workspace`,
+      );
+      const rows = (response.workspace?.quotes || []).map((q: any) => {
         const url = (q.quote_pdf_url && String(q.quote_pdf_url).trim())
           || (q.quote_file_url && String(q.quote_file_url).trim())
           || '';
@@ -140,96 +169,8 @@ export default function SaisieDevisStep({
       if (!nativeQuote?.id) throw new Error('Devis compagnie introuvable');
       await nativeAdminUploadQuoteDocument(leadId, nativeQuote.id, file);
       const nativeCompany = companies.find((company) => company.id === companyId);
-      await nativeAdminCall(
-        `/v1/admin/leads/${encodeURIComponent(leadId)}/quotes/${encodeURIComponent(nativeQuote.id)}/email`,
-        { method: 'POST', body: '{}' },
-      ).catch((emailError) => console.warn('Quote uploaded; email queue unavailable:', emailError));
       toast.success(`Devis ${nativeCompany?.name || ''} uploadé avec succès !`);
       await loadQuotes();
-      return;
-
-      // Upload file to storage
-      const safeName = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.\-]+/g, '_').replace(/_+/g, '_');
-      const fileName = `${leadId}/${companyId}/${Date.now()}_${safeName}`;
-      const { data: uploadData, error: uploadError } = await supabase
-        .storage
-        .from('contract-documents')
-        .upload(fileName, file);
-
-      if (uploadError) {
-        console.error('Storage upload error:', uploadError);
-        throw new Error(`Erreur upload storage: ${uploadError.message}`);
-      }
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase
-        .storage
-        .from('contract-documents')
-        .getPublicUrl(uploadData.path);
-
-      // Get company details
-      const company = companies.find(c => c.id === companyId);
-      const now = new Date().toISOString();
-
-      // If a pending row already exists for this company without a file, update it
-      // (auto-seeded by Validation Compagnies). Otherwise insert a new submitted row.
-      const { data: pendingRow } = await supabase
-        .from('lead_company_quotes')
-        .select('id')
-        .eq('lead_id', leadId)
-        .eq('company_id', companyId)
-        .eq('status', 'pending')
-        .is('quote_file_url', null)
-        .limit(1)
-        .maybeSingle();
-
-      if (pendingRow) {
-        const { error: updateError } = await supabase
-          .from('lead_company_quotes')
-          .update({
-            quote_file_url: publicUrl,
-            quote_pdf_url: publicUrl,
-            status: 'quote_submitted',
-            quote_status: 'quote_submitted',
-            submitted_at: now,
-            sent_at: now
-          })
-          .eq('id', pendingRow.id);
-
-        if (updateError) {
-          console.error('Database update error:', updateError);
-          throw new Error(`Erreur base de données: ${updateError.message}`);
-        }
-      } else {
-        const { error: insertError } = await supabase
-          .from('lead_company_quotes')
-          .insert({
-            lead_id: leadId,
-            company_id: companyId,
-            insurance_company_id: companyId,
-            quote_file_url: publicUrl,
-            quote_pdf_url: publicUrl,
-            status: 'quote_submitted',
-            quote_status: 'quote_submitted',
-            submitted_at: now,
-            sent_at: now
-          });
-
-        if (insertError) {
-          console.error('Database insert error:', insertError);
-          throw new Error(`Erreur base de données: ${insertError.message}`);
-        }
-      }
-
-      // Auto-generate fiche de conseil (advice sheet) for this company
-      await generateAdviceSheet(companyId, company?.name || 'Compagnie');
-
-      // Send automatic email to prospect
-      await sendQuoteEmail(companyId, company?.name || 'Compagnie', file.name);
-
-      toast.success(`✅ Devis ${company?.name} uploadé avec succès !`);
-      loadQuotes();
-
     } catch (error) {
       console.error('Error uploading quote:', error);
       toast.error(`❌ Erreur lors de l'upload du devis\n\n${error.message || error}`);
@@ -238,222 +179,38 @@ export default function SaisieDevisStep({
     }
   }
 
-  async function generateAdviceSheet(companyId: string, companyName: string) {
-    try {
-      const { data: leadData } = await supabase
-        .from('crm_leads')
-        .select('first_name, last_name, email, phone, address, postal_code, city, immatriculation, vehicle_type')
-        .eq('id', leadId)
-        .maybeSingle();
-
-      const { data: companyData } = await supabase
-        .from('insurance_companies')
-        .select('id, name, logo_url, advice_template')
-        .eq('id', companyId)
-        .maybeSingle();
-
-      if (!companyData) return;
-
-      const html = generateAdviceSheetHtml(
-        leadData || {},
-        companyData as any,
-        { generatedDate: new Date() }
-      );
-
-      const safeCompany = companyName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w]+/g, '_');
-      const ts = Date.now();
-      const filePath = `${leadId}/${companyId}/fiche_conseil_${safeCompany}_${ts}.html`;
-      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-
-      const { error: uploadError } = await supabase
-        .storage
-        .from('contract-documents')
-        .upload(filePath, blob, { contentType: 'text/html;charset=utf-8', upsert: true });
-
-      if (uploadError) {
-        console.error('Fiche conseil upload error:', uploadError);
-        return;
-      }
-
-      const { data: { publicUrl } } = supabase
-        .storage
-        .from('contract-documents')
-        .getPublicUrl(filePath);
-
-      await supabase
-        .from('crm_lead_documents')
-        .insert({
-          lead_id: leadId,
-          document_type: 'fiche_conseil',
-          file_name: `Fiche de conseil - ${companyName}.html`,
-          file_path: filePath,
-          file_url: publicUrl,
-          mime_type: 'text/html',
-          bucket: 'contract-documents',
-          custom_label: `Fiche de conseil ${companyName}`,
-          status: 'validated',
-          metadata: { company_id: companyId, company_name: companyName, auto_generated: true }
-        });
-    } catch (error) {
-      console.error('Error generating advice sheet:', error);
-    }
-  }
-
-  async function sendQuoteEmail(companyId: string, companyName: string, fileName: string) {
-    if (!leadEmail) return;
-
-    setSending(companyId);
-
-    try {
-      // Lien direct vers l'onglet Devis de l'espace prospect
-      const prospectSpaceUrl = leadAccessToken
-        ? `${window.location.origin}/espace-prospect?token=${leadAccessToken}&tab=devis`
-        : `${window.location.origin}/espace-prospect?tab=devis`;
-
-      // Récupérer les documents contractuels de la compagnie à joindre au devis
-      const { data: companyDocs } = await supabase
-        .from('company_documents')
-        .select('document_name, file_url, document_type, description')
-        .eq('company_id', companyId)
-        .eq('send_with_quote', true)
-        .order('display_order', { nullsFirst: false });
-
-      const docsListHtml = (companyDocs && companyDocs.length > 0)
-        ? `
-            <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 25px 0; border-radius: 6px;">
-              <p style="color: #92400e; font-weight: bold; margin: 0 0 10px 0;">Documents contractuels ${companyName} :</p>
-              <ul style="color: #78350f; margin: 0; padding-left: 20px;">
-                ${companyDocs.map(d => `<li style="margin: 6px 0;"><a href="${d.file_url}" style="color: #b45309; text-decoration: underline;" target="_blank" rel="noopener">${d.document_name}</a>${d.description ? ` <span style="color: #92400e; font-size: 12px;">- ${d.description}</span>` : ''}</li>`).join('')}
-              </ul>
-              <p style="color: #92400e; font-size: 12px; margin: 10px 0 0 0;">Ces documents sont également disponibles dans votre espace prospect.</p>
-            </div>
-          `
-        : '';
-
-      const subject = `Nouveau devis ${companyName} disponible - TaxiAssur`;
-      const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px; border-radius: 10px;">
-          <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <h2 style="color: #16a34a; margin-bottom: 20px;">📄 Votre devis est prêt !</h2>
-            <p style="color: #374151; font-size: 16px; line-height: 1.6;">Bonjour ${leadFirstName || 'Cher client'},</p>
-            <p style="color: #374151; font-size: 16px; line-height: 1.6;">
-              Excellente nouvelle ! Votre devis d'assurance taxi est maintenant disponible dans votre espace personnel :
-            </p>
-
-            <div style="background: linear-gradient(135deg, #16a34a 0%, #059669 100%); border-radius: 12px; padding: 20px; margin: 25px 0; text-align: center;">
-              <div style="color: white; font-size: 20px; font-weight: bold; margin-bottom: 8px;">${companyName}</div>
-              <div style="color: rgba(255,255,255,0.9); font-size: 14px;">${fileName}</div>
-            </div>
-
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${prospectSpaceUrl}" style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 16px 40px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);">
-                📋 Voir mon devis maintenant
-              </a>
-            </div>
-
-            ${docsListHtml}
-
-            <div style="background-color: #eff6ff; border-left: 4px solid #2563eb; padding: 15px; margin: 25px 0; border-radius: 6px;">
-              <p style="color: #1e40af; font-weight: bold; margin: 0 0 10px 0;">Dans votre espace sécurisé :</p>
-              <ul style="color: #1e3a8a; margin: 0; padding-left: 20px;">
-                <li style="margin: 5px 0;">✓ Consultez votre devis en ligne</li>
-                <li style="margin: 5px 0;">✓ Téléchargez le PDF</li>
-                <li style="margin: 5px 0;">✓ Imprimez-le directement</li>
-                <li style="margin: 5px 0;">✓ Comparez avec d'autres offres</li>
-              </ul>
-            </div>
-
-            <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin-top: 25px;">
-              Une question ? Notre équipe est à votre disposition :<br>
-              <strong style="color: #16a34a;">📞 01 80 85 57 88</strong> ou
-              <strong style="color: #2563eb;">✉️ team@taxiassur.com</strong>
-            </p>
-
-            <div style="border-top: 1px solid #e5e7eb; margin-top: 30px; padding-top: 20px;">
-              <p style="color: #9ca3af; font-size: 13px; line-height: 1.5; margin: 0;">
-                Cordialement,<br>
-                <strong style="color: #374151;">L'équipe TaxiAssur</strong><br>
-                <span style="font-size: 12px;">Votre expert en assurance taxi et VTC</span>
-              </p>
-            </div>
-          </div>
-        </div>
-      `;
-
-      // Send email via edge function
-      const { data: sendResult, error } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
-        body: {
-          to: leadEmail,
-          subject: subject,
-          content: html,
-          lead_id: leadId
-        }
-      });
-
-      if (error || !sendResult?.success) throw error || new Error("Envoi refusé");
-
-      // Log interaction
-      await supabase
-        .from('crm_interactions')
-        .insert({
-          lead_id: leadId,
-          type: 'email',
-          channel: 'email',
-          subject: subject,
-          body: html,
-          status: 'sent',
-          metadata: { company_id: companyId, company_name: companyName, file_name: fileName }
-        });
-
-    } catch (error) {
-      console.error('Error sending email:', error);
-    } finally {
-      setSending(null);
-    }
-  }
-
   async function resendQuoteEmail(quote: Quote) {
     const company = companies.find(c => c.id === quote.company_id);
     if (company) {
-      // Extract filename from URL
-      const fileName = quote.quote_pdf_url.split('/').pop() || 'devis.pdf';
-      await sendQuoteEmail(company.id, company.name, fileName);
-
-      // Update last_sent_at
-      await supabase
-        .from('lead_company_quotes')
-        .update({ last_sent_at: new Date().toISOString() })
-        .eq('id', quote.id);
-
-      loadQuotes();
-      toast.success('Email renvoyé avec succès !');
+      setSending(company.id);
+      try {
+        const result = await nativeAdminCall<{ email_queued?: boolean }>(
+          `/v1/admin/leads/${encodeURIComponent(leadId)}/quotes/${encodeURIComponent(quote.id)}/email`,
+          { method: 'POST', body: '{}' },
+        );
+        if (!result.email_queued) throw new Error('Email non mis en file d\'envoi');
+        await loadQuotes();
+        toast.success('Email renvoyé avec succès !');
+      } catch (error) {
+        console.error('Error resending quote email:', error);
+        toast.error("Erreur lors de l'envoi de l'email");
+      } finally {
+        setSending(null);
+      }
     }
   }
 
-  async function deleteQuote(quoteId: string, fileUrl: string) {
+  async function deleteQuote(quoteId: string, _fileUrl: string) {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce devis ?')) return;
 
     try {
-      // Extract file path from public URL
-      // Native storage URLs are served by the authenticated TaxiAssur platform API.
-      const urlParts = fileUrl.split('/contract-documents/');
-      const filePath = urlParts.length > 1 ? urlParts[1] : '';
-
-      if (filePath) {
-        // Delete from storage
-        await supabase.storage.from('contract-documents').remove([filePath]);
-      }
-
-      // Delete record
-      const { error } = await supabase
-        .from('lead_company_quotes')
-        .delete()
-        .eq('id', quoteId);
-
-      if (error) throw error;
+      await nativeAdminCall(
+        `/v1/admin/leads/${encodeURIComponent(leadId)}/quotes/${encodeURIComponent(quoteId)}/document`,
+        { method: 'DELETE' },
+      );
 
       toast.success('✅ Devis supprimé avec succès !');
-      loadQuotes();
+      await loadQuotes();
     } catch (error) {
       console.error('Error deleting quote:', error);
       toast.error('❌ Erreur lors de la suppression');
@@ -543,8 +300,9 @@ export default function SaisieDevisStep({
       </div>
 
       {/* Companies & Quotes */}
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
         {companies.map((company) => {
+          const companyStyle = companyVisualStyle(company.id || company.name);
           const companyQuotes = getQuotesForCompany(company.id);
           const isUploading = uploading === company.id;
           const isSending = sending === company.id;
@@ -552,26 +310,32 @@ export default function SaisieDevisStep({
           return (
             <div
               key={company.id}
-              className={`bg-white rounded-lg shadow-sm border-2 p-6 transition-all ${
+              className={`rounded-lg shadow-sm border-2 border-l-4 ${companyStyle.border} ${companyStyle.light} p-6 transition-all ${
                 companyQuotes.length > 0
                   ? 'border-green-300 bg-green-50'
                   : 'border-gray-200'
               }`}
             >
               <div className="flex items-start gap-4 mb-4">
-                <div className="flex-shrink-0">
-                  {company.logo_url ? (
+                <div className="flex h-16 w-28 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white p-2 shadow-sm">
+                  {companyLogoUrls[company.id] && !logoErrors.has(company.id) ? (
                     <img
-                      src={company.logo_url}
+                      src={companyLogoUrls[company.id]}
                       alt={`Logo ${company.name}`}
-                      className="h-12 w-12 object-contain"
+                      className="h-full w-full object-contain"
+                      onError={() => setLogoErrors(previous => new Set(previous).add(company.id))}
                     />
+                  ) : company.name.toLowerCase().includes('axa') || company.code.toLowerCase().includes('axa') ? (
+                    <div className="flex h-full w-full items-center justify-center rounded bg-red-600 text-2xl font-black tracking-tight text-white">AXA</div>
                   ) : (
-                    <Building2 className="h-8 w-8 text-blue-600" />
+                    <div className="flex flex-col items-center justify-center gap-1 text-center text-gray-500">
+                      <Building2 className="h-6 w-6 text-blue-600" />
+                      <span className="max-w-[90px] truncate text-[10px] font-semibold">{company.name}</span>
+                    </div>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
+                  <h4 className={`text-lg font-semibold mb-1 flex items-center gap-2 w-fit px-2.5 py-1 rounded-md ${companyStyle.lightAccent}`}>
                     {company.name}
                     {company.code === 'SWISSLIFE_RCPRO' && (
                       <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-xs font-medium rounded-full border border-amber-300">

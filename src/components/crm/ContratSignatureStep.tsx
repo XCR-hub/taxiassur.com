@@ -1,10 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
-import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 import { SecureDocumentLink } from './SecureDocumentLink';
 import { Upload, CheckCircle2, X, Loader2, Ligature as FileSignature, AlertCircle, PartyPopper, Send } from 'lucide-react';
 import { toast } from '@/lib/toast';
-import { nativeAdminCall, nativeAdminUploadContractDocument } from '@/lib/native-admin-data';
+import { nativeAdminCall, nativeAdminDeleteDocument, nativeAdminUpdateLead, nativeAdminUploadContractDocument } from '@/lib/native-admin-data';
 
 interface ContratSignatureStepProps {
   leadId: string;
@@ -52,15 +50,6 @@ export default function ContratSignatureStep({ leadId }: ContratSignatureStepPro
     try {
       const native = await nativeAdminCall<{ documents?: ContractDocument[] }>(`/v1/admin/documents?lead_id=${encodeURIComponent(leadId)}&scope=all`);
       setDocuments((native.documents || []).filter(document => REQUIRED_DOCS.some(required => required.type === document.document_type)));
-      return;
-      const { data, error } = await supabase
-        .from('lead_contract_documents')
-        .select('*')
-        .eq('lead_id', leadId)
-        .order('uploaded_at', { ascending: false });
-
-      if (error) throw error;
-      setDocuments(data || []);
     } catch (error) {
       console.error('Error loading documents:', error);
     } finally {
@@ -70,19 +59,9 @@ export default function ContratSignatureStep({ leadId }: ContratSignatureStepPro
 
   async function loadSignature() {
     try {
-      const { data, error } = await supabase
-        .from('lead_signature_history')
-        .select('*')
-        .eq('lead_id', leadId)
-        .eq('signature_type', 'contrat')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error && error.code !== 'PGRST116') throw error;
-
-      setSignature(data);
-      if (data?.external_signature_url) setExternalUrl(data.external_signature_url);
+      const data=await nativeAdminCall<{signature?:SignatureHistory|null}>(`/v1/admin/leads/${encodeURIComponent(leadId)}/contract-signature`);
+      setSignature(data.signature||null);
+      if (data.signature?.external_signature_url) setExternalUrl(data.signature.external_signature_url);
     } catch (error) {
       console.error('Error loading signature:', error);
     }
@@ -96,34 +75,6 @@ export default function ContratSignatureStep({ leadId }: ContratSignatureStepPro
       await nativeAdminUploadContractDocument(leadId, docType, file);
       toast.success('Document uploadé avec succès !');
       await loadDocuments();
-      return;
-      const safeName = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.-]+/g, '_').replace(/_+/g, '_');
-      const fileName = `${leadId}/${docType}/${Date.now()}_${safeName}`;
-      const { data: uploadData, error: uploadError } = await supabase
-        .storage
-        .from('contract-documents')
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      const { error: insertError } = await supabase
-        .from('lead_contract_documents')
-        .insert({
-          lead_id: leadId,
-          document_type: docType,
-          file_name: file.name,
-          file_path: uploadData.path,
-          file_size: file.size,
-          mime_type: file.type
-        });
-
-      if (insertError) {
-        await supabase.storage.from('contract-documents').remove([uploadData.path]);
-        throw insertError;
-      }
-
-      toast.success('Document uploadé avec succès !');
-      loadDocuments();
     } catch (error) {
       console.error('Error uploading document:', error);
       toast.error('Erreur lors de l\'upload');
@@ -132,18 +83,11 @@ export default function ContratSignatureStep({ leadId }: ContratSignatureStepPro
     }
   }
 
-  async function deleteDocument(docId: string, filePath: string) {
+  async function deleteDocument(docId: string, _filePath: string) {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) return;
 
     try {
-      const { error } = await supabase
-        .from('lead_contract_documents')
-        .delete()
-        .eq('id', docId);
-
-      if (error) throw error;
-      const { error: storageError } = await supabase.storage.from('contract-documents').remove([filePath]);
-      if (storageError) console.warn("Contract document object cleanup failed");
+      await nativeAdminDeleteDocument(docId);
 
       toast.success('Document supprimé');
       loadDocuments();
@@ -155,31 +99,8 @@ export default function ContratSignatureStep({ leadId }: ContratSignatureStepPro
 
   async function confirmContractSignature() {
     try {
-      const payload = {
-        lead_id: leadId,
-        signature_type: 'contrat',
-        is_signed: true,
-        signed_at: new Date().toISOString(),
-        external_signature_url: externalUrl || null,
-        confirmed_at: new Date().toISOString()
-      };
-
-      if (signature) {
-        const { error } = await supabase
-          .from('lead_signature_history')
-          .update(payload)
-          .eq('id', signature.id);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('lead_signature_history')
-          .insert(payload);
-
-        if (error) throw error;
-      }
-
-      loadSignature();
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/contract-signature`,{method:'PATCH',body:JSON.stringify({is_signed:true,external_signature_url:externalUrl||null})});
+      await loadSignature();
     } catch (error) {
       console.error('Error confirming signature:', error);
       throw error;
@@ -199,10 +120,7 @@ export default function ContratSignatureStep({ leadId }: ContratSignatureStepPro
     setSendingEmail(true);
 
     try {
-      const { data: accessResult, error: accessError } = await invokeIdempotentDelivery(supabase, 'email', 'send-client-access', {
-        body: { lead_id: leadId }
-      });
-      if (accessError || !accessResult?.success) throw accessError || new Error("Envoi de l accès sécurisé refusé");
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/access-email`,{method:'POST',body:'{}'});
       toast.success("Accès sécurisé aux documents envoyé au prospect");
     } catch (error) {
       console.error('Error sending documents email:', error);
@@ -233,32 +151,10 @@ export default function ContratSignatureStep({ leadId }: ContratSignatureStepPro
       // Confirm contract signature
       await confirmContractSignature();
 
-      // Activate lead as client using the RPC function
-      const { data: activationResult, error: activationError } = await supabase
-        .rpc('activate_lead_as_client', { p_lead_id: leadId });
-
-      if (activationError) throw activationError;
-
-      if (!activationResult?.success) {
-        throw new Error(activationResult?.error || 'Erreur lors de l\'activation du client');
-      }
-
-      // Ensure client app access, then send the dedicated client portal email.
-      const { error: portalAccessError } = await supabase
-        .rpc('ensure_client_app_access', { p_lead_id: leadId });
-
-      if (portalAccessError) throw portalAccessError;
-
-      const { data: accessEmailResult, error: accessEmailError } = await invokeIdempotentDelivery(supabase, 'email', 'send-client-access', {
-        body: { lead_id: leadId }
-      });
-      if (accessEmailError || !accessEmailResult?.success) throw accessEmailError || new Error("E-mail d accès client non envoyé");
-
-      toast.success('🎉 Contrat finalisé ! Le prospect est maintenant client.');
-
-      // Recharger la page pour afficher le nouveau statut
+      await nativeAdminUpdateLead(leadId,{status:'CLIENT_ACTIF',lead_status:'CLIENT_ACTIF',pipeline_stage:'client_actif',current_stage_key:'client_active'});
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/access-email`,{method:'POST',body:'{}'});
+      toast.success('Contrat finalisé ! Le prospect est maintenant client.');
       window.location.reload();
-
     } catch (error) {
       console.error('Error transforming to client:', error);
       toast.error('Erreur lors de la finalisation : ' + (error as Error).message);

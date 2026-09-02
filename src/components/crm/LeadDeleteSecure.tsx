@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Trash2, AlertTriangle, X, Loader2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/lib/toast';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 interface Props {
   leadId: string;
@@ -26,18 +26,11 @@ export const LeadDeleteSecure: React.FC<Props> = ({ leadId, leadName, leadEmail 
     setLoading(true);
 
     try {
-      // Appeler la fonction RPC sécurisée qui supprime le lead et log l'action
-      const { data, error } = await supabase.rpc('delete_spam_lead', {
-        p_lead_id: leadId,
-        p_reason: deleteReason
+      const data = await nativeAdminCall<{ ok?: boolean; error?: string }>(`/v1/admin/leads/${encodeURIComponent(leadId)}`, {
+        method: 'DELETE',
+        body: JSON.stringify({ reason: deleteReason, confirmation: confirmText }),
       });
-
-      if (error) {
-        console.error('Error calling delete_spam_lead:', error);
-        throw error;
-      }
-
-      if (!data.success) {
+      if (!data.ok) {
         throw new Error(data.error || 'Erreur lors de la suppression');
       }
 

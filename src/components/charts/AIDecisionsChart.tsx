@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Brain, Loader2, Sparkles, Target, TrendingUp, AlertCircle } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { nativeAdminDashboard } from '@/lib/native-admin-data';
 
 interface AIMetric {
   label: string;
@@ -24,11 +24,8 @@ export function AIDecisionsChart() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const { data: leads, error } = await supabase
-          .from('crm_leads')
-          .select('ai_recommended_action, ai_score, needs_followup, status');
-
-        if (error) throw error;
+        const result = await nativeAdminDashboard() as { leads?: { ai_recommended_action?: string | null; ai_score?: number | null; needs_followup?: boolean; status?: string }[] };
+        const leads = result.leads || [];
 
         const withRecommendations = leads?.filter(l => l.ai_recommended_action) || [];
         const withScore = leads?.filter(l => l.ai_score !== null) || [];
@@ -61,7 +58,7 @@ export function AIDecisionsChart() {
           },
           {
             label: 'Taux analyse',
-            value: leads?.length ? Math.round((withRecommendations.length / leads.length) * 100) : 0,
+          value: leads.length ? Math.round((withRecommendations.length / leads.length) * 100) : 0,
             icon: AlertCircle,
             color: 'text-blue-400',
             description: '% de leads analysés par IA',

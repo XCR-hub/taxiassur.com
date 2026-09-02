@@ -1,6 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import { supabase } from '@/lib/supabase';
-import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 import { Mail, MessageSquare, Phone, Send, CheckCircle2, AlertCircle, Loader2, FileText, Download, Plus, X, CreditCard as Edit3 } from 'lucide-react';
 import DocumentValidationComplete from './DocumentValidationComplete';
 import { toast } from '@/lib/toast';
@@ -83,23 +81,6 @@ export default function CollecteDocumentsStep({
       const native = await nativeAdminCall<{ lead?: { first_name?: string; full_name?: string; email?: string } }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/document-collection`);
       const nativeLead = native.lead;
       setActualFirstName(nativeLead?.first_name || nativeLead?.full_name?.split(' ')[0] || nativeLead?.email?.split('@')[0] || 'Madame, Monsieur');
-      return;
-
-      const { data, error } = await supabase
-        .from('crm_leads')
-        .select('first_name, last_name, full_name, email')
-        .eq('id', leadId)
-        .single();
-
-      if (error) throw error;
-
-      // Try multiple sources for the name
-      const firstName = data?.first_name
-        || data?.full_name?.split(' ')[0]
-        || data?.email?.split('@')[0]
-        || 'Madame, Monsieur';
-
-      setActualFirstName(firstName);
     } catch (error) {
       console.error('Error loading lead name:', error);
       setActualFirstName('Madame, Monsieur');
@@ -116,17 +97,6 @@ export default function CollecteDocumentsStep({
     try {
       const native = await nativeAdminCall<{ templates?: CommunicationTemplate[] }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/document-collection`);
       setTemplates(native.templates || []);
-      return;
-
-      const { data, error } = await supabase
-        .from('crm_communication_templates')
-        .select('*')
-        .eq('stage', 'collecte_documents')
-        .eq('is_active', true)
-        .order('channel');
-
-      if (error) throw error;
-      setTemplates(data || []);
     } catch (error) {
       console.error('Error loading templates:', error);
     }
@@ -165,56 +135,7 @@ export default function CollecteDocumentsStep({
         totalRequired: requiredDocs.length,
         pendingDocsCount: documentsList.filter(d => d.status === 'pending').length,
       });
-      return;
       }
-
-      const { data, error } = await supabase
-        .from('crm_lead_documents')
-        .select('document_type, status, custom_label')
-        .eq('lead_id', leadId);
-
-      if (error) throw error;
-
-      const documentLabels: Record<string, string> = {};
-      requiredDocs.forEach(d => { documentLabels[d.type] = d.label; });
-
-      const documentsList: DocumentInfo[] = data?.map(d => ({
-        type: d.document_type,
-        label: d.custom_label || documentLabels[d.document_type] || d.document_type,
-        status: d.status
-      })) || [];
-
-      setDocuments(documentsList);
-
-      const categoryStatus = new Map<string, Set<string>>();
-      data?.forEach(d => {
-        const key = d.document_type === 'custom' ? `custom_${d.custom_label}` : d.document_type;
-        if (!categoryStatus.has(key)) categoryStatus.set(key, new Set());
-        categoryStatus.get(key)!.add(d.status);
-      });
-
-      let categoriesValidated = 0;
-      let categoriesPending = 0;
-      const pendingDocsCount = data?.filter(d => d.status === 'pending').length || 0;
-
-      requiredDocs.forEach(reqDoc => {
-        const statuses = categoryStatus.get(reqDoc.type);
-        if (statuses?.has('validated')) {
-          categoriesValidated++;
-        } else if (statuses && statuses.size > 0) {
-          categoriesPending++;
-        }
-      });
-
-      const categoriesMissing = requiredDocs.length - categoriesValidated - categoriesPending;
-
-      setStats({
-        categoriesValidated,
-        categoriesPending,
-        categoriesMissing,
-        totalRequired: requiredDocs.length,
-        pendingDocsCount
-      });
     } catch (error) {
       console.error('Error loading document stats:', error);
     }
@@ -224,19 +145,6 @@ export default function CollecteDocumentsStep({
     try {
       const native = await nativeAdminCall<{ documents?: Array<{ document_type?: string; custom_label?: string }> }>(`/v1/admin/documents?lead_id=${encodeURIComponent(leadId)}&scope=all`);
       setCustomDocuments((native.documents || []).filter(d => d.document_type === 'custom' && d.custom_label).map(d => String(d.custom_label)));
-      return;
-
-      const { data, error } = await supabase
-        .from('crm_lead_documents')
-        .select('custom_label')
-        .eq('lead_id', leadId)
-        .eq('document_type', 'custom')
-        .not('custom_label', 'is', null);
-
-      if (error) throw error;
-
-      const customDocs = data?.map(d => d.custom_label).filter(Boolean) || [];
-      setCustomDocuments(customDocs as string[]);
     } catch (error) {
       console.error('Error loading custom documents:', error);
     }
@@ -393,30 +301,13 @@ export default function CollecteDocumentsStep({
         if (!smsResult.ok) throw new Error('SMS non envoyé');
 
       } else if (template.channel === 'whatsapp') {
-        // Send WhatsApp
-        const { data: waResult, error } = await invokeIdempotentDelivery(supabase, 'whatsapp', 'send-whatsapp', {
-            to: leadPhone,
-            message: messageContent,
-            leadId: leadId
-
-        });
-
-        // Vérifier l'erreur ET le résultat
-        if (error || !waResult?.success) {
-          const errorMsg = error?.message || waResult?.error || 'Erreur inconnue';
-          throw new Error(`WhatsApp non envoyé: ${errorMsg}`);
-        }
-
-        await supabase
-          .from('crm_interactions')
-          .insert({
-            lead_id: leadId,
-            type: 'whatsapp',
-            channel: 'whatsapp',
-            body: messageContent,
-            status: 'sent',
-            metadata: { template_key: template.template_key }
-          });
+        const waResult = await nativeAdminCall<{ success?: boolean }>(
+          `/v1/admin/leads/${encodeURIComponent(leadId)}/whatsapp`, {
+            method: 'POST',
+            body: JSON.stringify({ content: messageContent, template_key: template.template_key }),
+          }
+        );
+        if (!waResult.success) throw new Error('WhatsApp non envoyé');
       }
 
       toast.success(`✅ ${template.channel.toUpperCase()} envoyé avec succès !`);

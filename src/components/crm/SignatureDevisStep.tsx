@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import {
   AlertCircle,
   CheckCircle2,
@@ -11,9 +10,8 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
-import { withTimeout } from "@/lib/promise-timeout";
 import { SecureDocumentLink } from "./SecureDocumentLink";
-import { nativeAdminCall, nativeAdminUploadContractDocument } from "@/lib/native-admin-data";
+import { nativeAdminCall, nativeAdminDeleteDocument, nativeAdminUploadContractDocument } from "@/lib/native-admin-data";
 
 interface SignatureDevisStepProps {
   leadId: string;
@@ -67,54 +65,6 @@ export default function SignatureDevisStep(
     } finally { setLoading(false); }
   }
 
-  async function loadSignature() {
-    try {
-      const { data, error } = await supabase
-        .from("lead_signature_history")
-        .select("*")
-        .eq("lead_id", leadId)
-        .eq("signature_type", "devis")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error && error.code !== "PGRST116") throw error;
-
-      setSignature(data);
-      if (data?.external_signature_url) {
-        setExternalUrl(data.external_signature_url);
-      }
-      if (data?.notes) setNotes(data.notes);
-
-      if (data?.is_signed) {
-        onComplete?.();
-      }
-    } catch (error) {
-      console.error("Error loading signature:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function loadUploadedDocument() {
-    try {
-      const { data, error } = await supabase
-        .from("crm_lead_documents")
-        .select("id, file_name, file_path, uploaded_at")
-        .eq("lead_id", leadId)
-        .eq("document_type", "devis_signe")
-        .eq("status", "validated")
-        .order("uploaded_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error && error.code !== "PGRST116") throw error;
-      if (data) setUploadedFile(data);
-    } catch (error) {
-      console.error("Error loading uploaded document:", error);
-    }
-  }
-
   async function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -138,52 +88,14 @@ export default function SignatureDevisStep(
       if (result.document) setUploadedFile(result.document);
       else await loadNativeWorkspace();
       toast.success("Devis signé uploadé avec succès !");
-      return;
-      const fileName = leadId + "/signed-quotes/" + crypto.randomUUID() +
-        ".pdf";
-      const { error: uploadError } = await withTimeout(
-        supabase.storage.from("contract-documents").upload(fileName, file, {
-          cacheControl: "3600",
-          contentType: "application/pdf",
-          upsert: false,
-        }),
-        60_000,
-      );
-      if (uploadError) throw uploadError;
-
-      // Enregistrer dans crm_lead_documents
-      const { data: docData, error: docError } = await supabase
-        .from("crm_lead_documents")
-        .insert({
-          lead_id: leadId,
-          document_type: "devis_signe",
-          file_name: file.name,
-          file_url: null,
-          file_path: fileName,
-          bucket: "contract-documents",
-          status: "validated",
-          validated_at: new Date().toISOString(),
-          validated_by: (await supabase.auth.getUser()).data.user?.id,
-        })
-        .select()
-        .single();
-
-      if (docError) {
-        await supabase.storage.from("contract-documents").remove([fileName]);
-        throw docError;
-      }
-
-      setUploadedFile({
-        id: docData.id,
-        file_name: file.name,
-        file_path: fileName,
-        uploaded_at: docData.uploaded_at,
-      });
-
-      toast.success("Devis signé uploadé avec succès !");
     } catch (error) {
       console.error("Error uploading file:", error);
-      toast.error("Erreur lors de l'upload du fichier");
+      const code = error instanceof Error ? error.message : "upload_failed";
+      toast.error(code === "invalid_contract_file"
+        ? "Le devis signé doit être un PDF non vide de 10 Mo maximum"
+        : code === "scan_failed"
+        ? "Le contrôle antivirus est momentanément indisponible"
+        : `Erreur lors de l'upload du devis signé (${code})`);
     } finally {
       setUploading(false);
     }
@@ -195,20 +107,7 @@ export default function SignatureDevisStep(
     if (!confirm("Voulez-vous vraiment supprimer ce document ?")) return;
 
     try {
-      const filePath = uploadedFile.file_path;
-      // Supprimer de la table
-      const { error: deleteError } = await supabase
-        .from("crm_lead_documents")
-        .delete()
-        .eq("id", uploadedFile.id);
-
-      if (deleteError) throw deleteError;
-      const { error: storageError } = await withTimeout(
-        supabase.storage.from("contract-documents").remove([filePath]),
-        20_000,
-      );
-      if (storageError) throw storageError;
-
+      await nativeAdminDeleteDocument(uploadedFile.id);
       setUploadedFile(null);
       toast.success("Document supprimé avec succès");
     } catch (error) {
@@ -228,40 +127,6 @@ export default function SignatureDevisStep(
       setSignature(native.signature || null);
       toast.success(signed ? "Signature confirmée !" : "Statut enregistré");
       if (signed) onComplete?.();
-      return;
-      const payload = {
-        lead_id: leadId,
-        signature_type: "devis",
-        is_signed: signed,
-        signed_at: signed ? new Date().toISOString() : null,
-        external_signature_url: externalUrl || null,
-        notes: notes || null,
-        confirmed_at: new Date().toISOString(),
-      };
-
-      if (signature) {
-        // Update existing
-        const { error } = await supabase
-          .from("lead_signature_history")
-          .update(payload)
-          .eq("id", signature.id);
-
-        if (error) throw error;
-      } else {
-        // Create new
-        const { error } = await supabase
-          .from("lead_signature_history")
-          .insert(payload);
-
-        if (error) throw error;
-      }
-
-      toast.success(signed ? "Signature confirmée !" : "Statut enregistré");
-      loadSignature();
-
-      if (signed) {
-        onComplete?.();
-      }
     } catch (error) {
       console.error("Error saving signature:", error);
       toast.error("Erreur lors de l'enregistrement");

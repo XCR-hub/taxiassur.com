@@ -6,7 +6,7 @@ import {
   Download, TrendingUp, Shield, AlertCircle, RefreshCw
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall, nativeAdminDocumentUrl } from '@/lib/native-admin-data';
 
 interface Document {
   id: string;
@@ -70,19 +70,17 @@ const AllDocumentsViewer: React.FC = () => {
   const loadDocuments = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('crm_lead_documents')
-        .select(`
-          id, lead_id, document_type, file_name, file_path,
-          file_size, mime_type, status, uploaded_by, uploaded_at,
-          validated_at, rejection_reason, notes, bucket,
-          custom_label, file_url, created_at,
-          lead:crm_leads(first_name, last_name, email, phone, status)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setDocuments((data as any[]) || []);
+      const result = await nativeAdminCall<{ documents?: Array<Document & { lead_first_name?: string; lead_last_name?: string; lead_email?: string; lead_phone?: string; lead_status?: string }> }>('/v1/admin/documents?scope=all');
+      setDocuments((result.documents || []).map((document) => ({
+        ...document,
+        lead: document.lead || {
+          first_name: document.lead_first_name || '',
+          last_name: document.lead_last_name || '',
+          email: document.lead_email || '',
+          phone: document.lead_phone || '',
+          status: document.lead_status || ''
+        }
+      })));
     } catch (error) {
       console.error('Failed to load documents:', error);
     } finally {
@@ -375,16 +373,14 @@ const AllDocumentsViewer: React.FC = () => {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-                                {doc.file_url && (
-                                  <a
-                                    href={doc.file_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                {doc.file_path && (
+                                  <button
+                                    onClick={() => void nativeAdminDocumentUrl(doc.id).then((url) => window.open(url, '_blank', 'noopener,noreferrer'))}
                                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 text-xs font-medium transition-colors"
                                   >
                                     <Eye className="w-3.5 h-3.5" />
                                     Voir
-                                  </a>
+                                  </button>
                                 )}
                                 <Link
                                   to={`/backoffice/crm/leads/${doc.lead_id}`}

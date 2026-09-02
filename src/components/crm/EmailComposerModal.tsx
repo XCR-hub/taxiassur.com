@@ -15,8 +15,7 @@ import {
   Upload,
   Trash2
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { withTimeout } from '@/lib/promise-timeout';
+import { nativeAdminCall, nativeAdminUploadLeadDocument } from '@/lib/native-admin-data';
 import { clearDeliveryRequestId, getDeliveryRequestId } from '@/lib/delivery-idempotency';
 import { LegalDocumentsSelector } from './LegalDocumentsSelector';
 import { LeadDocumentsSelector } from './LeadDocumentsSelector';
@@ -449,23 +448,16 @@ export function EmailComposerModal({
         prev.map(a => a.id === attachment.id ? { ...a, uploading: true, error: undefined } : a)
       );
 
-      const fileName = `${lead.id}/${Date.now()}-${attachment.file.name}`;
-
-      const { data, error: uploadError } = await supabase.storage
-        .from('email-attachments')
-        .upload(fileName, attachment.file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) throw uploadError;
+      const result = await nativeAdminUploadLeadDocument(lead.id, 'custom', attachment.file, `Piece jointe email - ${attachment.name}`);
+      const uploadedPath = result.document?.file_path || result.path;
+      if (!uploadedPath) throw new Error('upload_failed');
 
       // Mettre à jour l'état uploaded
       setCustomAttachments(prev =>
-        prev.map(a => a.id === attachment.id ? { ...a, uploading: false, uploaded: true, path: data.path } : a)
+        prev.map(a => a.id === attachment.id ? { ...a, uploading: false, uploaded: true, path: uploadedPath } : a)
       );
 
-      return data.path;
+      return uploadedPath;
     } catch (err) {
       console.error('Upload error:', err);
       setCustomAttachments(prev =>
@@ -531,17 +523,19 @@ export function EmailComposerModal({
       const requestId = getDeliveryRequestId('email', deliverySignature);
 
       // 3. Send email
-      const { data: sendResult, error: sendError } = await withTimeout(supabase.functions.invoke('send-crm-email', {
-        body: {
-          to: lead.email,
-          subject,
-          body,
-          lead_id: lead.id,
-          attachments: allAttachments.length > 0 ? allAttachments : undefined,
-          requestId,
+      const sendResult = await nativeAdminCall<{ ok?: boolean; queued?: boolean }>(
+        `/v1/admin/leads/${encodeURIComponent(lead.id)}/commercial-email`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            subject,
+            content: body,
+            attachments: allAttachments.length > 0 ? allAttachments : undefined,
+            request_id: requestId,
+          })
         }
-      }), 45_000);
-      if (sendError || !sendResult?.success) throw new Error("Erreur lors de l'envoi");
+      );
+      if (!sendResult.ok || !sendResult.queued) throw new Error("Erreur lors de l'envoi");
 
 
 

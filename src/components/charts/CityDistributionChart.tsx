@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { MapPin, Loader2 } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { nativeAdminDashboard } from '@/lib/native-admin-data';
 
 interface CityData {
   city: string;
@@ -29,20 +29,17 @@ export function CityDistributionChart() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const { data: leads, error } = await supabase
-          .from('crm_leads')
-          .select('city');
-
-        if (error) throw error;
+        const result = await nativeAdminDashboard() as { leads?: { city?: string | null }[] };
+        const leads = result.leads || [];
 
         const cityCounts: Record<string, number> = {};
-        leads?.forEach(lead => {
+        leads.forEach(lead => {
           const city = lead.city?.trim() || 'Non spécifié';
           const normalizedCity = city.charAt(0).toUpperCase() + city.slice(1).toLowerCase();
           cityCounts[normalizedCity] = (cityCounts[normalizedCity] || 0) + 1;
         });
 
-        const total = leads?.length || 1;
+        const total = leads.length || 1;
         const uniqueCities = Object.keys(cityCounts).length;
         setTotalCities(uniqueCities);
 

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Download, Eye, Trash2, CheckCircle, XCircle, Clock, File, Image, FileCode, Archive, AlertCircle, Calendar, User, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RefreshCw, Filter, Search, Upload, Star, Tag, ExternalLink, Grid2x2 as Grid, List, type LucideIcon } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall, nativeAdminDocumentUrl, nativeAdminDownloadDocument } from '@/lib/native-admin-data';
 import { toast } from '@/lib/toast';
-import { getSecureDocumentUrl } from '@/lib/secure-document-url';
 
 interface Document {
   id: string;
@@ -46,23 +45,11 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
   const loadDocuments = async () => {
     setLoading(true);
     try {
-      let query = supabase
-        .from('prospect_documents')
-        .select('id, file_name, document_type, file_path, file_size, mime_type, status, uploaded_at, verified_at, verified_by, notes, lead_id, metadata')
-        .order('uploaded_at', { ascending: false });
-
-      if (leadId) {
-        query = query.eq('lead_id', leadId);
-      }
-
-      if (filterStatus !== 'all') {
-        query = query.eq('status', filterStatus);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      setDocuments(data || []);
+      const params = new URLSearchParams({ scope: 'all' });
+      if (leadId) params.set('lead_id', leadId);
+      if (filterStatus !== 'all') params.set('status', filterStatus);
+      const result = await nativeAdminCall<{ documents?: Document[] }>(`/v1/admin/documents?${params}`);
+      setDocuments(result.documents || []);
     } catch (error) {
       console.error('Error loading documents:', error);
     } finally {
@@ -136,18 +123,7 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
     }
 
     try {
-      const { data, error } = await supabase.storage
-        .from('prospect-documents')
-        .download(doc.file_path);
-
-      if (error) throw error;
-
-      const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = doc.file_name;
-      a.click();
-      URL.revokeObjectURL(url);
+      await nativeAdminDownloadDocument(doc.id, doc.file_name);
     } catch (error) {
       console.error('Error downloading document:', error);
       toast.error('Erreur lors du téléchargement');
@@ -162,10 +138,7 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
     }
 
     try {
-      const bucket = doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/')
-        ? 'email-attachments'
-        : 'prospect-documents';
-      const signedUrl = await getSecureDocumentUrl({ bucket, path: doc.file_path });
+      const signedUrl = await nativeAdminDocumentUrl(doc.id);
       setPreviewUrl(signedUrl);
     } catch (error) {
       console.error('Error loading preview:', error);

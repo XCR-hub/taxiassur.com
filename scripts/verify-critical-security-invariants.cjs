@@ -49,7 +49,7 @@ for (const file of ['src/backoffice/FreeInvoicing.tsx', 'src/backoffice/LeadInvo
 }
 requireMatch('src/backoffice/FreeInvoicing.tsx', /withTimeout\(supabase\.functions\.invoke\('create-monetico-payment'[\s\S]*45_000/, 'public payment creation can spin forever');
 requireMatch('src/backoffice/LeadInvoicing.tsx', /withTimeout\(nativeAdminCreateMoneticoPayment\([\s\S]*45_000/, 'native admin payment creation can spin forever');
-requireMatch('server/taxiassur-platform-api.mjs', /createAdminMoneticoPayment[\s\S]*verifiedAdminSession\(req\)/, 'native payment creation is not session-authenticated');
+requireMatch('server/taxiassur-platform-api.mjs', /async function adminPaymentCreate[\s\S]{0,500}?verifiedAdminSession\(req\)/, 'native payment creation is not session-authenticated');
 requireMatch('server/taxiassur-platform-api.mjs', /createHmac\('sha1'/, 'native payment creation is not signed');
 requireMatch('server/taxiassur-platform-api.mjs', /collection='monetico_payments'/, 'native payment creation is not persisted');
 forbidMatch('server/taxiassur-platform-api.mjs', /SUPABASE_URL|SUPABASE_SERVICE_ROLE_KEY|supabaseServiceKey/, 'native platform API still depends on Supabase');
@@ -238,10 +238,10 @@ requireMatch(clientAccess, /lead\.access_token/, 'client access email does not u
 requireMatch(clientAccess, /requestId[\s\S]*client_portal_users[\s\S]*ClientPortalPersistenceFailed[\s\S]*functions\/v1\/send-crm-email[\s\S]*AbortSignal\.timeout\(45_000\)[\s\S]*relayResult\?\.success !== true/, 'client access delivery lacks stable retry identity, strict portal persistence, timeout, or relay result validation');
 forbidMatch(clientAccess, /sendEmailSMTP|crm_interactions[\s\S]*clientSpaceLink/, 'client access bypasses the hardened relay or persists its bearer token in interaction history');
 for (const file of ['src/components/crm/ContratSignatureStep.tsx', 'src/components/crm/DocumentValidationComplete.tsx']) {
-  requireMatch(file, /invokeIdempotentDelivery\(supabase, 'email', 'send-client-access'[\s\S]*body: \{ lead_id:/, 'client access UI can hang, duplicate delivery, or override stored recipient identity');
+  requireMatch(file, /nativeAdminCall[\s\S]{0,300}?\/access-email[\s\S]{0,150}?method:\s*['"]POST['"]/, 'client access UI does not use the authenticated native access-email endpoint');
 }
 forbidMatch(clientAccess, /espace-client\/\$\{lead\.id\}/, 'client access email exposes a lead UUID as a login credential');
-requireMatch('src/components/crm/ContratSignatureStep.tsx', /send-client-access[\s\S]*accessError \|\| !accessResult\?\.success/, 'contract finalization builds or ignores an insecure client access email');
+requireMatch('src/components/crm/ContratSignatureStep.tsx', /nativeAdminUpdateLead[\s\S]{0,500}?\/access-email/, 'contract finalization does not activate the client and queue native portal access');
 forbidMatch('src/components/crm/ContratSignatureStep.tsx', /access_token|espace-client\?token=/, 'contract finalization exposes the access token in the browser');
 forbidMatch(clientAccess, /console\.log\([^\n]*(SMTP_PASS|base64Encode)/, 'SMTP credentials can be written to logs');
 requireMatch(clientAccessMigration, /access_token = v_token/, 'public client RPC does not look up the random token');
@@ -321,10 +321,10 @@ requireMatch(documentSigner, /["']contract-documents["'][\s\S]*lead_contract_doc
 requireMatch(privateContractDocumentsMigration, /SET public = false[\s\S]*Public can view contract documents[\s\S]*public lecture contract documents/i, 'contract documents bucket or public read policies remain public');
 forbidMatch('src/components/crm/ContratSignatureStep.tsx', /getPublicUrl|access_token|espace-(?:client|prospect)\?token=/, 'contract signature exposes public documents or portal tokens');
 requireMatch('src/components/crm/ContratSignatureStep.tsx', /SecureDocumentLink[\s\S]*bucket="contract-documents"/, 'contract backoffice preview bypasses the secure signer');
-requireMatch('src/components/crm/ContratSignatureStep.tsx', /remove\(\[uploadData\.path\]\)[\s\S]*storageError/, 'contract document failures leave broken rows or orphan uploads');
+requireMatch('src/lib/native-admin-data.ts', /nativeAdminUploadContractDocument[\s\S]{0,600}?AbortSignal\.timeout\(60_000\)/, 'contract document upload does not use the bounded native endpoint');
 forbidMatch('src/components/crm/PaiementRIBStep.tsx', /getPublicUrl/, 'back-office exposes private RIBs through public URLs');
-requireMatch('src/components/crm/PaiementRIBStep.tsx', /nativeAdminRibUrl\(ribId\)/, 'back-office RIB view does not use the authenticated native download');
-requireMatch('server/taxiassur-platform-api.mjs', /downloadAdminRib[\s\S]*verifiedAdminSession\(req\)/, 'native RIB download is not session protected');
+requireMatch('src/components/crm/PaiementRIBStep.tsx', /nativeAdminRibUrl\(leadId,\s*ribId\)/, 'back-office RIB view does not use the authenticated native download');
+requireMatch('server/taxiassur-platform-api.mjs', /async function adminLeadRibDownload[\s\S]{0,500}?verifiedAdminSession\(req\)/, 'native RIB download is not session protected');
 requireMatch(privateEmailAttachmentMigration, /SET public = false[\s\S]*Public read access to email attachments[\s\S]*Public read access for email attachments/, 'email attachment bucket or public read policies remain public');
 requireMatch(privateEmailAttachmentMigration, /SET download_url = NULL/, 'persisted public email attachment URLs are not cleared');
 for (const emailAttachmentImporter of [

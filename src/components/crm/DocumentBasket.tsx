@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../../lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { getSecureDocumentUrl } from '@/lib/secure-document-url';
 import { useRealtimeDocuments } from '@/hooks/useRealtimeDocuments';
 import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, Eye } from 'lucide-react';
@@ -74,12 +74,10 @@ export default function DocumentBasket({ caseId, onDocumentClassified }: Documen
     try {
       setLoading(true);
 
-      const { data, error } = await supabase
-        .rpc('get_document_basket', { p_case_id: caseId });
-
-      if (error) throw error;
-
-      setAttachments(data || []);
+      const result = await nativeAdminCall<{ attachments?: Attachment[] }>(
+        `/v1/admin/leads/${encodeURIComponent(caseId)}/document-workspace`
+      );
+      setAttachments(result.attachments || []);
     } catch (error) {
       console.error('Error loading basket:', error);
     } finally {
@@ -91,16 +89,12 @@ export default function DocumentBasket({ caseId, onDocumentClassified }: Documen
     try {
       setClassifying(attachmentId);
 
-      const { data, error } = await supabase
-        .rpc('classify_attachment', {
-          p_attachment_id: attachmentId,
-          p_doc_type: docType,
-          p_create_document: true,
-        });
+      const result = await nativeAdminCall<{ success?: boolean }>(
+        `/v1/admin/leads/${encodeURIComponent(caseId)}/document-workspace`,
+        { method: 'POST', body: JSON.stringify({ action: 'classify', attachment_id: attachmentId, document_type: docType }) }
+      );
 
-      if (error) throw error;
-
-      if (data?.success) {
+      if (result.success !== false) {
         await loadBasket();
         onDocumentClassified?.();
       }
@@ -116,21 +110,10 @@ export default function DocumentBasket({ caseId, onDocumentClassified }: Documen
     if (!confirm('Êtes-vous sûr de vouloir refuser ce document ?')) return;
 
     try {
-      // Try email_attachments first
-      const { error: emailError } = await supabase
-        .from('email_attachments')
-        .update({ status: 'rejected' })
-        .eq('id', attachmentId);
-
-      // If not found, try prospect_documents
-      if (emailError) {
-        const { error: prospectError } = await supabase
-          .from('prospect_documents')
-          .update({ status: 'rejected' })
-          .eq('id', attachmentId);
-
-        if (prospectError) throw prospectError;
-      }
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(caseId)}/document-workspace`, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'reject', attachment_id: attachmentId }),
+      });
 
       await loadBasket();
     } catch (error) {
@@ -247,7 +230,7 @@ export default function DocumentBasket({ caseId, onDocumentClassified }: Documen
                     <div className="flex items-center gap-2 mt-3">
                       <button
                         onClick={() => {
-                          const bucket = attachment.source === 'email_attachments' ? 'email-attachments' : attachment.source === 'crm_lead_documents' ? 'crm-documents' : 'prospect-documents';
+                          const bucket = attachment.source === 'email' || attachment.source === 'email_attachments' ? 'email-attachments' : attachment.source === 'crm_lead_documents' ? 'crm-documents' : 'prospect-documents';
                           void getSecureDocumentUrl({ path: attachment.storage_path, bucket })
                             .then((url) => setViewingDoc({ url, fileName: attachment.filename, mimeType: attachment.content_type }))
                             .catch((error) => toast.error(error instanceof Error ? error.message : 'Document indisponible'));

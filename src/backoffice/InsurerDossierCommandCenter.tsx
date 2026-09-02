@@ -21,7 +21,7 @@ import {
   XCircle,
   Zap,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { toast } from '@/lib/toast';
 
 type DossierStatus = 'pending' | 'processing' | 'sent' | 'failed' | 'cancelled' | 'closed' | 'responded';
@@ -183,48 +183,18 @@ export default function InsurerDossierCommandCenter() {
     else setLoading(true);
 
     try {
-      const { data, error } = await supabase
-        .from('insurer_dossier_sends')
-        .select(`
-          id, lead_id, insurance_company_id, contact_id, recipient_email, recipient_name,
-          company_name, subject, message, documents, status, send_type, attempts, max_attempts,
-          followup_step, scheduled_at, sent_at, last_followup_at, next_followup_at,
-          processed_at, last_error, metadata, created_at, updated_at
-        `)
-        .order('created_at', { ascending: false })
-        .limit(200);
-
-      if (error) throw error;
-
-      const rows = ((data || []) as DossierRow[]).map((row) => ({
+      const result = await nativeAdminCall<{
+        dossiers?: DossierRow[];
+        leads?: LeadSummary[];
+        companies?: CompanySummary[];
+      }>('/v1/admin/insurer-dossiers');
+      const rows = (result.dossiers || []).map((row) => ({
         ...row,
         status: (row.status || 'pending') as DossierStatus,
       }));
       setDossiers(rows);
-
-      const leadIds = Array.from(new Set(rows.map((row) => row.lead_id).filter(Boolean)));
-      const companyIds = Array.from(new Set(rows.map((row) => row.insurance_company_id).filter(Boolean))) as string[];
-
-      let leads: LeadSummary[] = [];
-      let companies: CompanySummary[] = [];
-
-      if (leadIds.length > 0) {
-        const { data: leadData, error: leadError } = await supabase
-          .from('crm_leads')
-          .select('id, first_name, last_name, email, phone, city, postal_code, current_stage_key, ai_qualification_score, source, created_at')
-          .in('id', leadIds);
-        if (leadError) throw leadError;
-        leads = (leadData || []) as LeadSummary[];
-      }
-
-      if (companyIds.length > 0) {
-        const { data: companyData, error: companyError } = await supabase
-          .from('insurance_companies')
-          .select('id, name, code, logo_url, is_active')
-          .in('id', companyIds);
-        if (companyError) throw companyError;
-        companies = (companyData || []) as CompanySummary[];
-      }
+      const leads = result.leads || [];
+      const companies = result.companies || [];
 
       setLeadsById(Object.fromEntries(leads.map((lead) => [lead.id, lead])) as Record<string, LeadSummary>);
       setCompaniesById(Object.fromEntries(companies.map((company) => [company.id, company])) as Record<string, CompanySummary>);
@@ -239,14 +209,8 @@ export default function InsurerDossierCommandCenter() {
 
   useEffect(() => {
     loadData();
-    const channel = supabase
-      .channel('insurer_dossier_sends_command_center')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'insurer_dossier_sends' }, () => loadData(true))
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    const refreshTimer = window.setInterval(() => loadData(true), 30_000);
+    return () => window.clearInterval(refreshTimer);
   }, [loadData]);
 
   const metrics = useMemo<Metric[]>(() => {
@@ -334,13 +298,10 @@ export default function InsurerDossierCommandCenter() {
     if (note === null) return;
 
     try {
-      const { data, error } = await supabase.rpc('mark_insurer_dossier_responded', {
-        p_send_id: row.id,
-        p_note: note.trim() || null,
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(row.lead_id)}/insurer-dossier`, {
+        method: 'PATCH',
+        body: JSON.stringify({ send_id: row.id, action: 'mark_responded', note: note.trim() || null }),
       });
-      if (error) throw error;
-      const result = data as { success?: boolean; error?: string } | null;
-      if (result?.success === false) throw new Error(result.error || 'Action refusee');
       toast.success('Reponse assureur marquee');
       await loadData(true);
     } catch (error) {
@@ -351,22 +312,10 @@ export default function InsurerDossierCommandCenter() {
 
   const retryDossier = async (row: DossierRow) => {
     try {
-      const { error } = await supabase
-        .from('insurer_dossier_sends')
-        .update({
-          status: 'pending',
-          attempts: 0,
-          scheduled_at: new Date().toISOString(),
-          processed_at: null,
-          last_error: null,
-          metadata: {
-            ...(row.metadata || {}),
-            retry_requested_at: new Date().toISOString(),
-            retry_requested_from: 'insurer_dossier_command_center',
-          },
-        })
-        .eq('id', row.id);
-      if (error) throw error;
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(row.lead_id)}/insurer-dossier`, {
+        method: 'PATCH',
+        body: JSON.stringify({ send_id: row.id, action: 'retry' }),
+      });
       toast.success('Dossier reprogramme');
       await loadData(true);
     } catch (error) {
@@ -379,20 +328,10 @@ export default function InsurerDossierCommandCenter() {
     if (!window.confirm('Annuler cette demande assureur ?')) return;
 
     try {
-      const { error } = await supabase
-        .from('insurer_dossier_sends')
-        .update({
-          status: 'cancelled',
-          next_followup_at: null,
-          processed_at: new Date().toISOString(),
-          metadata: {
-            ...(row.metadata || {}),
-            cancelled_at: new Date().toISOString(),
-            cancelled_from: 'insurer_dossier_command_center',
-          },
-        })
-        .eq('id', row.id);
-      if (error) throw error;
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(row.lead_id)}/insurer-dossier`, {
+        method: 'PATCH',
+        body: JSON.stringify({ send_id: row.id, action: 'cancel' }),
+      });
       toast.success('Demande annulee');
       await loadData(true);
     } catch (error) {

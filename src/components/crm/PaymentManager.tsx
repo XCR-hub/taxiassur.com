@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CreditCard, Check, X, Calendar, FileText, Lock, Unlock } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { nativeAdminSession } from '@/lib/native-admin-auth';
+import { nativeAdminCall, nativeAdminLead, nativeAdminUpdateLead } from '@/lib/native-admin-data';
 import { toast } from '@/lib/toast';
 
 interface PaymentManagerProps {
@@ -44,13 +43,8 @@ export const PaymentManager: React.FC<PaymentManagerProps> = ({ leadId, onUpdate
 
   const loadPaymentData = async () => {
     try {
-      const { data, error } = await supabase
-        .from('crm_leads')
-        .select('payment_confirmed, payment_method, payment_date, payment_reference, payment_notes, payment_verified_at, payment_verified_by')
-        .eq('id', leadId)
-        .single();
-
-      if (error) throw error;
+      const response = await nativeAdminLead(leadId) as { lead?: PaymentData };
+      const data = response.lead || response as unknown as PaymentData;
 
       setPaymentData(data);
 
@@ -80,18 +74,7 @@ export const PaymentManager: React.FC<PaymentManagerProps> = ({ leadId, onUpdate
     setSaving(true);
 
     try {
-      const { user: adminUser } = await nativeAdminSession();
-
-      const { data, error } = await supabase.rpc('confirm_payment', {
-        p_lead_id: leadId,
-        p_payment_method: form.payment_method,
-        p_payment_date: form.payment_date,
-        p_payment_reference: form.payment_reference || null,
-        p_payment_notes: form.payment_notes || null,
-        p_admin_user_id: adminUser?.id || null
-      });
-
-      if (error) throw error;
+      await nativeAdminUpdateLead(leadId, { payment_confirmed: true, payment_method: form.payment_method, payment_date: form.payment_date, payment_reference: form.payment_reference || null, payment_notes: form.payment_notes || null });
 
       toast.success('✅ Paiement confirmé avec succès');
       setEditing(false);
@@ -109,20 +92,7 @@ export const PaymentManager: React.FC<PaymentManagerProps> = ({ leadId, onUpdate
     if (!confirm('Annuler la confirmation de paiement ?')) return;
 
     try {
-      const { error } = await supabase
-        .from('crm_leads')
-        .update({
-          payment_confirmed: false,
-          payment_method: null,
-          payment_date: null,
-          payment_reference: null,
-          payment_notes: null,
-          payment_verified_by: null,
-          payment_verified_at: null
-        })
-        .eq('id', leadId);
-
-      if (error) throw error;
+      await nativeAdminUpdateLead(leadId, { payment_confirmed: false });
 
       toast.success('✅ Paiement annulé');
       await loadPaymentData();

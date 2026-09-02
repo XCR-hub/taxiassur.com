@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle,
@@ -8,12 +8,8 @@ import {
   Send,
   Upload,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { nativeAdminSession } from "@/lib/native-admin-auth";
-import { invokeIdempotentDelivery } from "@/lib/invoke-idempotent-delivery";
 import { toast } from "@/lib/toast";
-import { getSecureDocumentUrl } from "@/lib/secure-document-url";
-import { withTimeout } from "@/lib/promise-timeout";
 import { Modal, ModalFooter } from "../Modal";
 import { Badge } from "../Badge";
 import { generateAdviceSheetHtml } from "@/lib/advice-sheet-generator";
@@ -21,6 +17,7 @@ import {
   generateNeedsAssessmentHtml,
   type NeedsAssessmentQuote,
 } from "@/lib/needs-assessment-generator";
+import { nativeAdminCall, nativeAdminStoredDocumentUrl, nativeAdminUpdateDocument, nativeAdminUploadLeadDocument, nativeAdminUploadQuoteDocument } from "@/lib/native-admin-data";
 
 interface CompanyLite {
   id: string;
@@ -113,23 +110,10 @@ interface ExistingQuoteExt extends ExistingQuote {
   rc_pro_addon_company_id?: string | null;
 }
 
-const TOKEN_PATTERN = /^[0-9a-f]{64}$/i;
-
-function escapeHtml(value: unknown): string {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
 export function SubmitQuoteModal({
   isOpen,
   onClose,
   leadId,
-  leadEmail,
-  leadFirstName,
-  leadAccessToken,
   company,
   existingQuote,
   onSubmitted,
@@ -167,23 +151,6 @@ export function SubmitQuoteModal({
     file_url: "",
   });
   const [uploadingRcPro, setUploadingRcPro] = useState(false);
-  const pendingUploadPaths = useRef<Set<string>>(new Set());
-
-  useEffect(() => {
-    if (!isOpen) return;
-    return () => {
-      const abandonedPaths = [...pendingUploadPaths.current];
-      pendingUploadPaths.current.clear();
-      if (abandonedPaths.length > 0) {
-        void supabase.storage
-          .from("contract-documents")
-          .remove(abandonedPaths)
-          .then(({ error }) => {
-            if (error) console.error("Abandoned quote cleanup error:", error);
-          });
-      }
-    };
-  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -229,12 +196,9 @@ export function SubmitQuoteModal({
 
   async function openPrivateDocument(path: string, fileName: string) {
     try {
-      const signedUrl = await getSecureDocumentUrl({
-        path,
-        bucket: "contract-documents",
-        fileName,
-      });
-      window.open(signedUrl, "_blank", "noopener,noreferrer");
+      const documentUrl = await nativeAdminStoredDocumentUrl(path, "contract-documents", false, fileName);
+      window.open(documentUrl, "_blank", "noopener,noreferrer");
+      window.setTimeout(() => URL.revokeObjectURL(documentUrl), 60_000);
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -244,331 +208,72 @@ export function SubmitQuoteModal({
     }
   }
   async function loadCompanyDocuments() {
-    const { data } = await supabase
-      .from("company_documents")
-      .select("id, document_name, file_url, description, is_mandatory")
-      .eq("company_id", company.id)
-      .eq("send_with_quote", true);
-    setDocuments(data || []);
+    const result = await nativeAdminCall<{ workspace?: { company_documents?: Array<CompanyDoc & { company_id?: string }> } }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/quotes-workspace`);
+    setDocuments((result.workspace?.company_documents || []).filter(document => String(document.company_id || '') === String(company.id)));
   }
 
   async function handleFileUpload(file: File) {
-    if (
-      !file.name.toLowerCase().endsWith(".pdf") ||
-      (file.type && file.type !== "application/pdf")
-    ) {
-      toast.error("Seuls les fichiers PDF sont acceptés");
-      return;
+    if (!file.name.toLowerCase().endsWith(".pdf") || (file.type && file.type !== "application/pdf")) {
+      toast.error("Seuls les fichiers PDF sont acceptés"); return;
     }
-    if (file.size <= 0 || file.size > 10 * 1024 * 1024) {
-      toast.error("Le fichier dépasse 10 MB");
-      return;
-    }
+    if (file.size <= 0 || file.size > 10 * 1024 * 1024) { toast.error("Le fichier dépasse 10 MB"); return; }
     setUploading(true);
     try {
-      const safeName = file.name
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^\w.\-]+/g, "_")
-        .replace(/_+/g, "_");
-      const filePath = `${leadId}/${company.id}/${crypto.randomUUID()}_${
-        safeName.slice(0, 160)
-      }`;
-      const { error: upErr } = await withTimeout(
-        supabase.storage
-          .from("contract-documents")
-          .upload(filePath, file, {
-            contentType: "application/pdf",
-            upsert: false,
-          }),
-        60_000,
-      );
-      if (upErr) throw upErr;
-      pendingUploadPaths.current.add(filePath);
-      setFormData((prev) => ({ ...prev, quote_file_url: filePath }));
+      const workspace = await nativeAdminCall<{ workspace?: { quotes?: Array<{ id: string; company_id: string }> } }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/quotes-workspace`);
+      const quoteId = existingQuote?.id || workspace.workspace?.quotes?.find(quote => String(quote.company_id) === String(company.id))?.id;
+      if (!quoteId) throw new Error("Devis compagnie introuvable");
+      const result = await nativeAdminUploadQuoteDocument(leadId, quoteId, file, "quote", false) as { path?: string };
+      setFormData(prev => ({ ...prev, quote_file_url: result.path || prev.quote_file_url }));
       toast.success("Devis uploadé");
-    } catch (err: any) {
-      console.error("Upload error:", err);
-      toast.error(`Erreur upload: ${err?.message || err}`);
-    } finally {
-      setUploading(false);
-    }
+    } catch (err) { console.error("Upload error:", err); toast.error(`Erreur upload: ${err instanceof Error ? err.message : err}`); }
+    finally { setUploading(false); }
   }
-
   async function handleRcProFileUpload(file: File) {
-    if (
-      !file.name.toLowerCase().endsWith(".pdf") ||
-      (file.type && file.type !== "application/pdf")
-    ) {
-      toast.error("Seuls les fichiers PDF sont acceptés");
-      return;
+    if (!file.name.toLowerCase().endsWith(".pdf") || (file.type && file.type !== "application/pdf")) {
+      toast.error("Seuls les fichiers PDF sont acceptés"); return;
     }
-    if (file.size <= 0 || file.size > 10 * 1024 * 1024) {
-      toast.error("Le fichier dépasse 10 MB");
-      return;
-    }
+    if (file.size <= 0 || file.size > 10 * 1024 * 1024) { toast.error("Le fichier dépasse 10 MB"); return; }
     setUploadingRcPro(true);
     try {
-      const safeName = file.name
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^\w.\-]+/g, "_")
-        .replace(/_+/g, "_");
-      const filePath = `${leadId}/${company.id}/rcpro_${crypto.randomUUID()}_${
-        safeName.slice(0, 160)
-      }`;
-      const { error: upErr } = await withTimeout(
-        supabase.storage
-          .from("contract-documents")
-          .upload(filePath, file, {
-            contentType: "application/pdf",
-            upsert: false,
-          }),
-        60_000,
-      );
-      if (upErr) throw upErr;
-      pendingUploadPaths.current.add(filePath);
-      setRcProAddon((prev) => ({ ...prev, file_url: filePath }));
+      const workspace = await nativeAdminCall<{ workspace?: { quotes?: Array<{ id: string; company_id: string }> } }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/quotes-workspace`);
+      const quoteId = existingQuote?.id || workspace.workspace?.quotes?.find(quote => String(quote.company_id) === String(company.id))?.id;
+      if (!quoteId) throw new Error("Devis compagnie introuvable");
+      const result = await nativeAdminUploadQuoteDocument(leadId, quoteId, file, "rc_pro", false) as { path?: string };
+      setRcProAddon(prev => ({ ...prev, file_url: result.path || prev.file_url }));
       toast.success("Devis RC Pro uploadé");
-    } catch (err: any) {
-      console.error("RC Pro upload error:", err);
-      toast.error(`Erreur upload RC Pro: ${err?.message || err}`);
-    } finally {
-      setUploadingRcPro(false);
-    }
+    } catch (err) { console.error("RC Pro upload error:", err); toast.error(`Erreur upload RC Pro: ${err instanceof Error ? err.message : err}`); }
+    finally { setUploadingRcPro(false); }
   }
-
   async function generateAdviceSheet() {
-    try {
-      const { data: leadData } = await supabase
-        .from("crm_leads")
-        .select(
-          "first_name, last_name, email, phone, address, postal_code, city, immatriculation, vehicle_type",
-        )
-        .eq("id", leadId)
-        .maybeSingle();
-
-      const { data: companyData } = await supabase
-        .from("insurance_companies")
-        .select("id, name, logo_url, advice_template")
-        .eq("id", company.id)
-        .maybeSingle();
-
-      if (!companyData) return;
-
-      const html = generateAdviceSheetHtml(leadData || {}, companyData as any, {
-        generatedDate: new Date(),
-      });
-      const safeCompany = company.name.normalize("NFD").replace(
-        /[\u0300-\u036f]/g,
-        "",
-      ).replace(/[^\w]+/g, "_");
-      const filePath =
-        `${leadId}/${company.id}/fiche_conseil_${safeCompany}_${Date.now()}.html`;
-      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-
-      const { error: upErr } = await withTimeout(
-        supabase.storage
-          .from("contract-documents")
-          .upload(filePath, blob, {
-            contentType: "text/html;charset=utf-8",
-            upsert: false,
-          }),
-        60_000,
-      );
-      if (upErr) {
-        throw upErr;
-      }
-
-      const { error: documentError } = await supabase.from("crm_lead_documents")
-        .insert({
-          lead_id: leadId,
-          document_type: "fiche_conseil",
-          file_name: `Fiche de conseil - ${company.name}.html`,
-          file_path: filePath,
-          file_url: null,
-          mime_type: "text/html",
-          bucket: "contract-documents",
-          custom_label: `Fiche de conseil ${company.name}`,
-          status: "validated",
-          metadata: {
-            company_id: company.id,
-            company_name: company.name,
-            auto_generated: true,
-          },
-        });
-      if (documentError) {
-        await supabase.storage.from("contract-documents").remove([filePath]);
-        throw documentError;
-      }
-    } catch (err) {
-      console.error("Error generating advice sheet:", err);
-      throw err;
-    }
+    const [leadResult, companiesResult] = await Promise.all([
+      nativeAdminCall<{ lead?: Record<string, unknown> }>(`/v1/admin/leads/${encodeURIComponent(leadId)}`),
+      nativeAdminCall<{ companies?: Array<Record<string, unknown> & { id?: string }> }>("/v1/admin/insurance-companies"),
+    ]);
+    const companyData = companiesResult.companies?.find(candidate => String(candidate.id) === String(company.id));
+    if (!companyData) return;
+    const html = generateAdviceSheetHtml(leadResult.lead || {}, companyData as any, { generatedDate: new Date() });
+    const file = new File([html], `Fiche de conseil - ${company.name}.html`, { type: "text/html" });
+    const uploaded = await nativeAdminUploadLeadDocument(leadId, "custom", file, `Fiche de conseil ${company.name}`) as { document?: { id?: string } };
+    if (uploaded.document?.id) await nativeAdminUpdateDocument(uploaded.document.id, { status: "validated" });
   }
-
   async function generateNeedsAssessment(quoteData: NeedsAssessmentQuote) {
-    try {
-      const { data: leadData } = await supabase
-        .from("crm_leads")
-        .select(
-          "first_name, last_name, email, phone, address, postal_code, city, immatriculation, vehicle_type, date_of_birth, license_number, siret, company_name, profession, notes",
-        )
-        .eq("id", leadId)
-        .maybeSingle();
-
-      const { user } = await nativeAdminSession();
-      const commercialName = user?.full_name || user?.email || null;
-
-      const html = generateNeedsAssessmentHtml(leadData || {}, quoteData, {
-        generatedDate: new Date(),
-        commercialName,
-      });
-      const safeCompany = company.name.normalize("NFD").replace(
-        /[\u0300-\u036f]/g,
-        "",
-      ).replace(/[^\w]+/g, "_");
-      const filePath =
-        `${leadId}/${company.id}/recueil_besoins_${safeCompany}_${Date.now()}.html`;
-      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-
-      const { error: upErr } = await withTimeout(
-        supabase.storage
-          .from("contract-documents")
-          .upload(filePath, blob, {
-            contentType: "text/html;charset=utf-8",
-            upsert: false,
-          }),
-        60_000,
-      );
-      if (upErr) {
-        throw upErr;
-      }
-
-      const { error: documentError } = await supabase.from("crm_lead_documents")
-        .insert({
-          lead_id: leadId,
-          document_type: "recueil_besoins",
-          file_name: `Recueil des besoins - ${company.name}.html`,
-          file_path: filePath,
-          file_url: null,
-          mime_type: "text/html",
-          bucket: "contract-documents",
-          custom_label: `Recueil des besoins ${company.name}`,
-          status: "validated",
-          metadata: {
-            company_id: company.id,
-            company_name: company.name,
-            auto_generated: true,
-            internal_document: true,
-            quote_amount: quoteData.quote_amount,
-            coverage_type: quoteData.coverage_type,
-          },
-        });
-      if (documentError) {
-        await supabase.storage.from("contract-documents").remove([filePath]);
-        throw documentError;
-      }
-    } catch (err) {
-      console.error("Error generating needs assessment:", err);
-      throw err;
-    }
+    const [leadResult, session] = await Promise.all([
+      nativeAdminCall<{ lead?: Record<string, unknown> }>(`/v1/admin/leads/${encodeURIComponent(leadId)}`),
+      nativeAdminSession(),
+    ]);
+    const commercialName = session.user?.full_name || session.user?.email || null;
+    const html = generateNeedsAssessmentHtml(leadResult.lead || {}, quoteData, { generatedDate: new Date(), commercialName });
+    const file = new File([html], `Recueil des besoins - ${company.name}.html`, { type: "text/html" });
+    const uploaded = await nativeAdminUploadLeadDocument(leadId, "custom", file, `Recueil des besoins ${company.name}`) as { document?: { id?: string } };
+    if (uploaded.document?.id) await nativeAdminUpdateDocument(uploaded.document.id, { status: "validated" });
   }
-
   async function sendQuoteEmail() {
-    if (!leadEmail) throw new Error("Adresse e-mail prospect manquante");
-    if (!leadAccessToken || !TOKEN_PATTERN.test(leadAccessToken)) {
-      throw new Error("Accès prospect sécurisé manquant");
-    }
-    const safeCompanyName = escapeHtml(company.name);
-    const safeFirstName = escapeHtml(leadFirstName || "Cher client");
-    const prospectSpaceUrl = `${window.location.origin}/espace-prospect?token=${
-      encodeURIComponent(leadAccessToken)
-    }&tab=devis`;
-
-    const docsListHtml = documents.length > 0
-      ? `
-          <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 25px 0; border-radius: 6px;">
-            <p style="color: #92400e; font-weight: bold; margin: 0 0 10px 0;">Documents contractuels ${safeCompanyName} :</p>
-            <ul style="color: #78350f; margin: 0; padding-left: 20px;">
-              ${
-        documents.map((d) =>
-          `<li style="margin: 6px 0;"><strong>${
-            escapeHtml(d.document_name)
-          }</strong>${
-            d.description
-              ? ` <span style="color: #92400e; font-size: 12px;">- ${
-                escapeHtml(d.description)
-              }</span>`
-              : ""
-          }</li>`
-        ).join("")
-      }
-            </ul>
-          </div>
-        `
-      : "";
-
-    const subject = "Nouveau devis " +
-      company.name.replace(/[\\r\\n]+/g, " ").slice(0, 120) +
-      " disponible - TaxiAssur";
-    const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9fafb; padding: 20px; border-radius: 10px;">
-        <div style="background-color: white; padding: 30px; border-radius: 10px;">
-          <h2 style="color: #16a34a;">Votre devis est prêt !</h2>
-          <p style="color: #374151;">Bonjour ${safeFirstName},</p>
-          <p style="color: #374151;">Votre devis d'assurance taxi <strong>${safeCompanyName}</strong> est disponible dans votre espace personnel.</p>
-          ${
-      formData.quote_amount
-        ? `<p style="color: #374151;"><strong>Prime annuelle :</strong> ${formData.quote_amount} € ${
-          formData.monthly_price
-            ? `(soit ${formData.monthly_price} €/mois)`
-            : ""
-        }</p>`
-        : ""
-    }
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${prospectSpaceUrl}" style="display: inline-block; background: #2563eb; color: white; padding: 16px 40px; text-decoration: none; border-radius: 10px; font-weight: bold;">
-              Voir mon devis
-            </a>
-          </div>
-          ${docsListHtml}
-          <p style="color: #6b7280; font-size: 14px; margin-top: 25px;">
-            Une question ? <strong>01 80 85 57 88</strong> ou <strong>team@taxiassur.com</strong>
-          </p>
-        </div>
-      </div>
-    `;
-
-    const { data: sendResult, error: sendError } =
-      await invokeIdempotentDelivery(supabase, "email", "send-crm-email", {
-        body: { to: leadEmail, subject, content: html, lead_id: leadId },
-      });
-    if (sendError || !sendResult?.success) {
-      throw sendError || new Error("Envoi du devis refusé");
-    }
-
-    const { error: interactionError } = await withTimeout(
-      supabase.from("crm_interactions").insert({
-        lead_id: leadId,
-        type: "quote_submission",
-        channel: "email",
-        subject,
-        body: "Notification de devis envoyée au prospect.",
-        status: "sent",
-        metadata: {
-          company_id: company.id,
-          company_name: company.name,
-          quote_amount: formData.quote_amount,
-        },
-      }),
-      20_000,
-    );
-    if (interactionError) {
-      console.error("Quote email audit insert error:", interactionError);
-    }
+    const workspace = await nativeAdminCall<{ workspace?: { quotes?: Array<{ id: string; company_id: string }> } }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/quotes-workspace`);
+    const quoteId = existingQuote?.id || workspace.workspace?.quotes?.find(quote => String(quote.company_id) === String(company.id))?.id;
+    if (!quoteId) throw new Error("Devis compagnie introuvable");
+    const result = await nativeAdminCall<{ email_queued?: boolean }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/quotes/${encodeURIComponent(quoteId)}/email`, { method: "POST", body: "{}" });
+    if (!result.email_queued) throw new Error("Email non mis en file d'envoi");
   }
-
   async function handleSubmit() {
     if (!formData.quote_file_url) {
       toast.warning("Veuillez uploader le devis");
@@ -605,12 +310,8 @@ export function SubmitQuoteModal({
           setSubmitting(false);
           return;
         }
-        const { data: swisslife } = await supabase
-          .from("insurance_companies")
-          .select("id")
-          .eq("code", "SWISSLIFE_RCPRO")
-          .maybeSingle();
-        rcProAddonCompanyId = swisslife?.id || null;
+        const companiesResult = await nativeAdminCall<{ companies?: Array<{ id: string; code?: string }> }>('/v1/admin/insurance-companies');
+        rcProAddonCompanyId = companiesResult.companies?.find(candidate => candidate.code === 'SWISSLIFE_RCPRO')?.id || null;
         rcProAnnualVal = parseFloat(rcProAddon.annual) || null;
         const rcMonthParsed = parseFloat(rcProAddon.monthly);
         rcProMonthlyVal = !isNaN(rcMonthParsed) && rcMonthParsed > 0
@@ -657,23 +358,10 @@ export function SubmitQuoteModal({
         submitted_at: now,
       };
 
-      if (existingQuote?.id) {
-        const { error } = await supabase
-          .from("lead_company_quotes")
-          .update(payload)
-          .eq("id", existingQuote.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("lead_company_quotes")
-          .upsert(payload, { onConflict: "lead_id,company_id" });
-        if (error) throw error;
-      }
-
-      pendingUploadPaths.current.delete(formData.quote_file_url);
-      if (rcProAddon.file_url) {
-        pendingUploadPaths.current.delete(rcProAddon.file_url);
-      }
+      const workspace = await nativeAdminCall<{ workspace?: { quotes?: Array<{ id: string; company_id: string }> } }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/quotes-workspace`);
+      const quoteId = existingQuote?.id || workspace.workspace?.quotes?.find(quote => String(quote.company_id) === String(company.id))?.id;
+      if (!quoteId) throw new Error('Devis compagnie introuvable');
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/quotes/${encodeURIComponent(quoteId)}`, { method: 'PATCH', body: JSON.stringify(payload) });
 
       await generateAdviceSheet();
       await generateNeedsAssessment({
@@ -696,19 +384,7 @@ export function SubmitQuoteModal({
         rc_pro_addon_monthly: rcProMonthlyVal,
       });
       await sendQuoteEmail();
-      const { error: sentStatusError } = await withTimeout(
-        supabase
-          .from("lead_company_quotes")
-          .update({
-            sent_to_client_at: now,
-            last_sent_at: now,
-            sent_at: now,
-          })
-          .eq("lead_id", leadId)
-          .eq("company_id", company.id),
-        20_000,
-      );
-      if (sentStatusError) throw sentStatusError;
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/quotes/${encodeURIComponent(quoteId)}`, { method: 'PATCH', body: JSON.stringify({ sent_to_client_at: now, last_sent_at: now, sent_at: now }) });
 
       toast.success(`Devis ${company.name} soumis au prospect`);
       onSubmitted?.();

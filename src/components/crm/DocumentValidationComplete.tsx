@@ -1,11 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { supabase } from '../../lib/supabase';
-import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 import { downloadDocument, openDocument } from '../../lib/document-utils';
 import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, XCircle, Check, Upload, GripVertical, Mail, ChevronDown, Eye, ArrowRightLeft, Trash2 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { getRequiredDocuments } from '@/lib/document-requirements';
-import { nativeAdminUploadLeadDocument } from '@/lib/native-admin-data';
+import { nativeAdminCall, nativeAdminDeleteDocument, nativeAdminUpdateDocument, nativeAdminUploadLeadDocument } from '@/lib/native-admin-data';
 
 interface DocumentValidationCompleteProps {
   caseId: string;
@@ -68,14 +66,6 @@ interface UnimportedAttachment {
   storage_bucket: string | null;
 }
 
-function escapeHtml(value: unknown): string {
-  return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
-}
 function buildDocumentCategories(vehicleType?: string | null): DocumentCategory[] {
   return getRequiredDocuments(vehicleType).map(d => ({
     id: d.type,
@@ -146,18 +136,13 @@ export default function DocumentValidationComplete({
   async function loadCustomCategories() {
     try {
       // Charger les documents personnalisés pour ce lead
-      const { data, error } = await supabase
-        .from('crm_lead_documents')
-        .select('custom_label')
-        .eq('lead_id', caseId)
-        .eq('document_type', 'custom')
-        .not('custom_label', 'is', null);
-
-      if (error) throw error;
+      const { documents = [] } = await nativeAdminCall<{ documents?: Array<{ document_type?: string; custom_label?: string }> }>(
+        `/v1/admin/documents?lead_id=${encodeURIComponent(caseId)}&scope=all`
+      );
 
       // Créer des catégories dynamiques pour les documents personnalisés
-      const customCategories: DocumentCategory[] = (data || [])
-        .filter(d => d.custom_label)
+      const customCategories: DocumentCategory[] = documents
+        .filter(d => d.document_type === 'custom' && d.custom_label)
         .map(d => ({
           id: `custom_${d.custom_label}`,
           label: d.custom_label!,
@@ -174,11 +159,10 @@ export default function DocumentValidationComplete({
 
   async function loadBasket() {
     try {
-      const { data, error } = await supabase
-        .rpc('get_document_basket', { p_case_id: caseId });
-
-      if (error) throw error;
-      setAttachments(data || []);
+      const data = await nativeAdminCall<{ attachments?: Attachment[] }>(
+        `/v1/admin/leads/${encodeURIComponent(caseId)}/document-workspace`
+      );
+      setAttachments(data.attachments || []);
     } catch (error) {
       console.error('Error loading basket:', error);
     }
@@ -186,11 +170,10 @@ export default function DocumentValidationComplete({
 
   async function loadUnimportedAttachments() {
     try {
-      const { data, error } = await supabase
-        .rpc('get_unimported_email_attachments', { p_lead_id: caseId });
-
-      if (error) throw error;
-      setUnimportedAttachments(data || []);
+      const data = await nativeAdminCall<{ unimported_attachments?: UnimportedAttachment[] }>(
+        `/v1/admin/leads/${encodeURIComponent(caseId)}/document-workspace`
+      );
+      setUnimportedAttachments(data.unimported_attachments || []);
     } catch (error) {
       console.error('Error loading unimported attachments:', error);
     }
@@ -229,35 +212,10 @@ export default function DocumentValidationComplete({
         return;
       }
 
-      const { data: insertedDoc, error: insertError } = await supabase
-        .from('crm_lead_documents')
-        .insert({
-          lead_id: caseId,
-          document_type: finalDocType,
-          file_name: att.attachment_filename,
-          file_path: resolvedPath,
-          bucket: resolvedBucket,
-          file_size: att.attachment_size,
-          mime_type: mimeType,
-          status: 'pending',
-          custom_label: customLabel || null
-        })
-        .select('id')
-        .maybeSingle();
-
-      if (insertError) throw insertError;
-
-      if (att.email_attachment_id && insertedDoc?.id) {
-        await supabase
-          .from('email_attachments')
-          .update({
-            assigned_document_id: insertedDoc.id,
-            status: 'assigned',
-            proposed_doc_type: finalDocType,
-            classification_method: 'manual',
-          })
-          .eq('id', att.email_attachment_id);
-      }
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(caseId)}/document-workspace`, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'import_reference', document_type: finalDocType, custom_label: customLabel, bucket: resolvedBucket, file_path: resolvedPath, file_name: att.attachment_filename, file_size: att.attachment_size, mime_type: mimeType }),
+      });
 
       toast.success(`"${att.attachment_filename}" classe dans ${categories.find(c => c.id === docType)?.label || docType}`);
       await loadAll();
@@ -273,12 +231,11 @@ export default function DocumentValidationComplete({
 
   async function loadClassifiedDocuments() {
     try {
-      const { data, error } = await supabase
-        .rpc('get_classified_documents_for_lead', { p_lead_id: caseId });
+      const { documents = [] } = await nativeAdminCall<{ documents?: ClassifiedDocument[] }>(
+        `/v1/admin/documents?lead_id=${encodeURIComponent(caseId)}&scope=all`
+      );
 
-      if (error) throw error;
-
-      const mappedDocs = (data || []).map((doc: any) => ({
+      const mappedDocs = documents.map((doc: any) => ({
         ...doc,
         document_type: doc.document_type === 'custom' && doc.custom_label
           ? `custom_${doc.custom_label}`
@@ -304,17 +261,12 @@ export default function DocumentValidationComplete({
         customLabel = docType.replace('custom_', '');
       }
 
-      const { data, error } = await supabase
-        .rpc('classify_attachment', {
-          p_attachment_id: attachmentId,
-          p_doc_type: finalDocType,
-          p_create_document: true,
-          p_custom_label: customLabel
-        });
+      const data = await nativeAdminCall<{ success?: boolean }>(
+        `/v1/admin/leads/${encodeURIComponent(caseId)}/document-workspace`,
+        { method: 'POST', body: JSON.stringify({ action: 'classify', attachment_id: attachmentId, document_type: finalDocType, custom_label: customLabel }) }
+      );
 
-      if (error) throw error;
-
-      if (data?.success) {
+      if (data?.success || data) {
         await loadAll();
         onDocumentClassified?.();
       }
@@ -354,12 +306,10 @@ export default function DocumentValidationComplete({
         updatePayload.validated_by = null;
       }
 
-      const { error } = await supabase
-        .from('crm_lead_documents')
-        .update(updatePayload)
-        .eq('id', docId);
-
-      if (error) throw error;
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(caseId)}/document-workspace`, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'move', document_id: docId, document_type: finalDocType, custom_label: customLabel }),
+      });
 
       const targetLabel = categories.find(c => c.id === newDocType)?.label || newDocType;
       if (wasValidated) {
@@ -384,64 +334,16 @@ export default function DocumentValidationComplete({
     try {
       setProcessing(doc.id);
 
-      // Update document status
-      const { error: updateError } = await supabase
-        .from('crm_lead_documents')
-        .update({
-          status: 'validated',
-          validated_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', doc.id);
+      const validationResult = await nativeAdminUpdateDocument(doc.id, { status: 'validated' }) as { email_queued?: boolean };
 
-      if (updateError) throw updateError;
-
-      // Send validation email
-      let emailSent = false;
-      let emailErrorMsg = '';
-      if (leadEmail) {
-        const documentLabel = categories.find(c => c.id === doc.document_type)?.label || doc.document_type;
-        const { data: emailResult, error: emailError } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
-          body: {
-            to: leadEmail,
-            subject: `Document validé - ${categories.find(c => c.id === doc.document_type)?.label || doc.document_type}`,
-            content: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #16a34a;">✅ Document validé</h2>
-                <p>Bonjour ${escapeHtml(leadFirstName)},</p>
-                <p>Nous avons validé votre document :</p>
-                <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 15px; margin: 20px 0;">
-                  <strong>${escapeHtml(documentLabel)}</strong><br>
-                  <span style="color: #666; font-size: 14px;">${escapeHtml(doc.file_name)}</span>
-                </div>
-                <p>Votre dossier avance bien ! Nous vous tiendrons informé de la suite.</p>
-                <p style="color: #666; font-size: 14px; margin-top: 30px;">
-                  Cordialement,<br>
-                  L'équipe TaxiAssur
-                </p>
-              </div>
-            `,
-            leadId: caseId
-          }
-        });
-
-        // Vérifier l'erreur ET le résultat
-        if (emailError || !emailResult?.success) {
-          emailErrorMsg = emailError?.message || emailResult?.error || 'Erreur inconnue';
-          console.error('Error sending validation email:', emailErrorMsg);
-        } else {
-          emailSent = true;
-        }
-      }
+      const emailSent = validationResult.email_queued === true;
 
       await loadClassifiedDocuments();
       onDocumentClassified?.();
 
       // Vérifier si tous les documents requis sont maintenant validés
-      const { data: allDocs } = await supabase
-        .from('crm_lead_documents')
-        .select('id, status')
-        .eq('lead_id', caseId);
+      const allDocsResponse = await nativeAdminCall<{ documents?: Array<{ id: string; status?: string }> }>(`/v1/admin/documents?lead_id=${encodeURIComponent(caseId)}&scope=all`);
+      const allDocs = allDocsResponse.documents || [];
 
       const totalDocs = allDocs?.length || 0;
       const validatedDocs = allDocs?.filter(d => d.status === 'validated').length || 0;
@@ -450,11 +352,11 @@ export default function DocumentValidationComplete({
       // Si tous les documents sont validés, envoyer l'accès à l'espace client
       if (allDocsValidated && leadEmail && caseId) {
         try {
-          const { data: clientAccessResult, error: clientAccessError } = await invokeIdempotentDelivery(supabase, 'email', 'send-client-access', {
-            body: { lead_id: caseId }
+          const clientAccessResult = await nativeAdminCall<{ email_queued?: boolean }>(`/v1/admin/leads/${encodeURIComponent(caseId)}/access-email`, {
+            method: 'POST',
+            body: '{}',
           });
-
-          if (!clientAccessError && clientAccessResult?.success) {
+          if (clientAccessResult.email_queued) {
             toast.success('✅ Document validé avec succès !\n\n🎉 Tous les documents sont validés !\n\n📧 Un email avec l\'accès à l\'espace client a été envoyé au prospect.');
           } else {
             toast.success('✅ Document validé avec succès !\n\n🎉 Tous les documents sont validés !\n\n⚠️ L\'email d\'accès à l\'espace client n\'a pas pu être envoyé. Envoyez-le manuellement depuis le détail du lead.');
@@ -466,7 +368,7 @@ export default function DocumentValidationComplete({
       } else if (emailSent) {
         toast.success('✅ Document validé avec succès !\n\n📧 Email de confirmation envoyé au prospect.');
       } else if (leadEmail) {
-        toast.error(`✅ Document validé avec succès !\n\n⚠️ Attention : L'email de notification n'a pas pu être envoyé.\nErreur: ${emailErrorMsg}\n\nVeuillez contacter le prospect manuellement.`);
+        toast.warning(`Document validé, mais l'email de notification n'a pas été mis en file d'envoi.`);
       } else {
         toast.success('✅ Document validé avec succès !\n\n⚠️ Aucun email disponible pour ce prospect.');
       }
@@ -488,61 +390,16 @@ export default function DocumentValidationComplete({
     try {
       setProcessing(doc.id);
 
-      // Update document status with rejection reason
-      const { error: updateError } = await supabase
-        .from('crm_lead_documents')
-        .update({
-          status: 'rejected',
-          rejection_reason: rejectionReason,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', doc.id);
+      const rejectionResult = await nativeAdminUpdateDocument(doc.id, { status: 'rejected', rejection_reason: rejectionReason }) as { email_queued?: boolean };
 
-      if (updateError) throw updateError;
-
-      // Send rejection email
-      if (leadEmail) {
-        const documentLabel = categories.find(c => c.id === doc.document_type)?.label || doc.document_type;
-        const { data: emailResult, error: emailError } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
-          body: {
-            to: leadEmail,
-            subject: `Document à renouveler - ${categories.find(c => c.id === doc.document_type)?.label || doc.document_type}`,
-            content: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #dc2626;">⚠️ Document à renouveler</h2>
-                <p>Bonjour ${escapeHtml(leadFirstName)},</p>
-                <p>Nous avons examiné votre document mais nous avons besoin que vous le renouveliez :</p>
-                <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0;">
-                  <strong>${escapeHtml(documentLabel)}</strong><br>
-                  <span style="color: #666; font-size: 14px;">${escapeHtml(doc.file_name)}</span>
-                </div>
-                <div style="background-color: #fffbeb; border: 1px solid #fbbf24; padding: 15px; margin: 20px 0; border-radius: 8px;">
-                  <strong style="color: #92400e;">Motif du refus :</strong><br>
-                  <p style="color: #78350f; margin-top: 10px;">${escapeHtml(rejectionReason)}</p>
-                </div>
-                <p>Merci de déposer un nouveau document en tenant compte de notre retour.</p>
-                <p style="color: #666; font-size: 14px; margin-top: 30px;">
-                  Cordialement,<br>
-                  L'équipe TaxiAssur
-                </p>
-              </div>
-            `,
-            leadId: caseId
-          }
-        });
-
-        if (emailError || !emailResult?.success) {
-          throw emailError || new Error("L'e-mail de refus n'a pas été envoyé");
-        }
-      }
 
       setRejectingDoc(null);
       setRejectionReason('');
       await loadClassifiedDocuments();
       onDocumentClassified?.();
-      toast.success(leadEmail
-        ? 'Document refusé et email envoyé au prospect !'
-        : 'Document refusé. Aucun email n’est disponible pour ce prospect.');
+      toast.success(rejectionResult.email_queued
+        ? 'Document refusé et email mis en file d’envoi au prospect !'
+        : 'Document refusé. Aucun email de notification n’a été mis en file.');
 
     } catch (error) {
       console.error('Error rejecting document:', error);
@@ -556,12 +413,7 @@ export default function DocumentValidationComplete({
     if (!confirm('Supprimer définitivement ce document refusé ?')) return;
 
     try {
-      const { error } = await supabase
-        .from('crm_lead_documents')
-        .delete()
-        .eq('id', docId);
-
-      if (error) throw error;
+      await nativeAdminDeleteDocument(docId);
 
       await loadClassifiedDocuments();
       onDocumentClassified?.();
@@ -577,22 +429,7 @@ export default function DocumentValidationComplete({
     try {
       setProcessing(doc.id);
 
-      const bucket = doc.bucket || 'crm-documents';
-      if (doc.file_path && bucket !== 'email-attachments' && !doc.file_path.startsWith('email_ref/')) {
-        const { error: storageError } = await supabase.storage
-          .from(bucket)
-          .remove([doc.file_path]);
-        if (storageError) {
-          console.warn('Storage delete failed (continuing with DB delete):', storageError);
-        }
-      }
-
-      const { error } = await supabase
-        .from('crm_lead_documents')
-        .delete()
-        .eq('id', doc.id);
-
-      if (error) throw error;
+      await nativeAdminDeleteDocument(doc.id);
 
       toast.success(`Document "${doc.file_name}" supprime`);
       await loadAll();
@@ -605,24 +442,16 @@ export default function DocumentValidationComplete({
     }
   }
 
-  const ALLOWED_MIME_TYPES = [
-    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-  ];
+  const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 
-  const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.webp', '.doc', '.docx'];
+  const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png', '.webp'];
 
   const EXTENSION_TO_MIME: Record<string, string> = {
     '.pdf': 'application/pdf',
     '.jpg': 'image/jpeg',
     '.jpeg': 'image/jpeg',
     '.png': 'image/png',
-    '.gif': 'image/gif',
     '.webp': 'image/webp',
-    '.doc': 'application/msword',
-    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   };
 
   function getFileExtension(filename: string): string {
@@ -667,12 +496,12 @@ export default function DocumentValidationComplete({
     try {
       const { allowed, resolvedMime } = isFileAllowed(file);
       if (!allowed) {
-        toast.error(`Format non accepte (${file.name}). Formats autorises : PDF, images (JPG, PNG), Word (DOC, DOCX)`);
+        toast.error(`Format non accepté (${file.name}). Formats autorisés : PDF, JPG, PNG et WebP`);
         return;
       }
 
-      if (file.size > 50 * 1024 * 1024) {
-        toast.error(`Fichier trop volumineux (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum : 50 MB`);
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`Fichier trop volumineux (${(file.size / 1024 / 1024).toFixed(1)} Mo). Maximum : 10 Mo`);
         return;
       }
 
@@ -692,7 +521,15 @@ export default function DocumentValidationComplete({
       onDocumentClassified?.();
     } catch (error) {
       console.error('Error uploading file:', error);
-      toast.error('Erreur lors de l\'upload du document');
+      const reason = error instanceof Error ? error.message : 'document_upload_failed';
+      const labels: Record<string, string> = {
+        invalid_document_upload: 'Format, taille ou catégorie de document non accepté',
+        scan_failed: 'Le contrôle antivirus du document a échoué',
+        infected_file: 'Le document a été bloqué par le contrôle antivirus',
+        lead_not_found: 'Le dossier du prospect est introuvable',
+        size_mismatch: 'Le transfert du fichier est incomplet',
+      };
+      toast.error(labels[reason] || `Erreur lors de l'upload : ${reason}`);
     } finally {
       setUploading(null);
     }
@@ -701,7 +538,7 @@ export default function DocumentValidationComplete({
   function handleFileSelect(docType: string) {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx';
+    input.accept = '.pdf,.jpg,.jpeg,.png,.webp';
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) uploadFileToCategory(file, docType);
@@ -746,6 +583,12 @@ export default function DocumentValidationComplete({
   function handleCategoryDragEnter(e: React.DragEvent, categoryId: string) {
     e.preventDefault();
     e.stopPropagation();
+    const externalFiles = Array.from(e.dataTransfer.types || []).includes('Files');
+    if (externalFiles) {
+      setIsDraggingExternal(true);
+      setDragOverCategory(categoryId);
+      return;
+    }
     const current = draggedItemRef.current;
     if (current?.type === 'document') {
       const doc = classifiedDocs.find(d => d.id === current.id);
@@ -763,13 +606,15 @@ export default function DocumentValidationComplete({
     setDragOverCategory(null);
     setIsDraggingExternal(false);
 
-    const current = draggedItemRef.current;
-
     const extractedFiles = extractFilesFromDragEvent(e);
-    if (extractedFiles.length > 0 && !current) {
-      uploadFileToCategory(extractedFiles[0], docType);
+    if (extractedFiles.length > 0) {
+      draggedItemRef.current = null;
+      setDraggedItem(null);
+      void uploadFileToCategory(extractedFiles[0], docType);
       return;
     }
+
+    const current = draggedItemRef.current;
 
     if (!current) return;
 
@@ -799,7 +644,7 @@ export default function DocumentValidationComplete({
         toast.error(`Format non accepte (${f.name})`);
         continue;
       }
-      if (f.size > 50 * 1024 * 1024) {
+      if (f.size > 10 * 1024 * 1024) {
         toast.error(`Fichier trop volumineux (${f.name})`);
         continue;
       }
@@ -812,44 +657,14 @@ export default function DocumentValidationComplete({
     try {
       for (let i = 0; i < valid.length; i++) {
         const file = valid[i];
-        const safeName = file.name
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .replace(/[^\w.-]+/g, '_')
-          .replace(/_+/g, '_');
-        const filePath = `${caseId}/unclassified/${Date.now()}_${i}_${safeName}`;
-
-        const { error: uploadError } = await supabase
-          .storage
-          .from('prospect-documents')
-          .upload(filePath, file);
-
-        if (uploadError) {
-          console.error('Upload error:', uploadError);
-          toast.error(`Echec upload : ${file.name}`);
-          continue;
+        try {
+          await nativeAdminUploadLeadDocument(caseId, 'autre', file, undefined, 'unclassified');
+          successCount++;
+        } catch (error) {
+          console.error('Upload error:', error);
+          const reason = error instanceof Error ? error.message : 'document_upload_failed';
+          toast.error(`Échec upload : ${file.name} (${reason})`);
         }
-
-        const { error: insertError } = await supabase
-          .from('prospect_documents')
-          .insert({
-            lead_id: caseId,
-            document_type: 'autre',
-            file_name: file.name,
-            file_path: filePath,
-            file_size: file.size,
-            mime_type: file.type || 'application/octet-stream',
-            status: 'pending',
-            uploaded_by: 'commercial',
-            validated: false
-          });
-
-        if (insertError) {
-          console.error('Insert error:', insertError);
-          toast.error(`Echec enregistrement : ${file.name}`);
-          continue;
-        }
-        successCount++;
       }
 
       if (successCount > 0) {
@@ -903,7 +718,7 @@ export default function DocumentValidationComplete({
     const input = document.createElement('input');
     input.type = 'file';
     input.multiple = true;
-    input.accept = '.pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx';
+    input.accept = '.pdf,.jpg,.jpeg,.png,.webp';
     input.onchange = (e) => {
       const files = (e.target as HTMLInputElement).files;
       if (files && files.length > 0) {

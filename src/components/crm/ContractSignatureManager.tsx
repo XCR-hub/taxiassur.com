@@ -10,9 +10,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { toast } from "@/lib/toast";
-import { withTimeout } from "@/lib/promise-timeout";
 import { SecureDocumentLink } from "./SecureDocumentLink";
 import { nativeAdminCall, nativeAdminUploadContractDocument } from "@/lib/native-admin-data";
 
@@ -93,39 +91,6 @@ export const ContractSignatureManager: React.FC<ContractSignatureManagerProps> =
             signature_status: data.signature_status || "",
             signature_notes: data.signature_notes || "",
           });
-        }
-        return;
-        {
-        const { data, error } = await supabase
-          .from("crm_leads")
-          .select(`
-          contract_signed,
-          signature_method,
-          signature_date,
-          signature_proof_url,
-          signature_status,
-          signature_notes,
-          signature_verified_at,
-          signature_verified_by,
-          contract_url,
-          special_conditions_url
-        `)
-          .eq("id", leadId)
-          .single();
-
-        if (error) throw error;
-
-        setSignatureData(data);
-
-        if (data) {
-          setForm({
-            signature_method: data.signature_method,
-            signature_date: data.signature_date || "",
-            signature_proof_url: data.signature_proof_url || "",
-            signature_status: data.signature_status || "",
-            signature_notes: data.signature_notes || "",
-          });
-        }
         }
       } catch (error) {
         console.error("Erreur chargement signature:", error);

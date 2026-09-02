@@ -7,8 +7,6 @@ import {
   Hash, Star, Tag, CornerDownRight, MailOpen, PhoneCall, PhoneMissed,
   PhoneIncoming, PhoneOutgoing, Inbox
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { NATIVE_ADMIN_TOKEN_KEY } from '@/lib/native-admin-auth';
 import { nativeAdminCall } from '@/lib/native-admin-data';
 import { getSecureDocumentUrl } from '@/lib/secure-document-url';
 import { DocumentViewer } from './index';
@@ -179,42 +177,25 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({ leadId, lead
     setLoading(true);
     try {
       const allEvents: TimelineEvent[] = [];
-      const usesNativeAdmin = Boolean(localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY));
-      let allLeadIds = [leadId];
-      if (leadEmail && !usesNativeAdmin) {
-        const { data: siblings } = await supabase.from('crm_leads').select('id').ilike('email', leadEmail.trim());
-        if (siblings?.length) allLeadIds = [...new Set([leadId, ...siblings.map((l: { id: string }) => l.id)])];
-      }
-
       let emailsRes: { data: unknown[] };
       let interactionsRes: { data: unknown[] };
       let documentsRes: { data: unknown[] };
       let aiRes: { data: unknown[] };
       let notifRes: { data: unknown[] };
 
-      if (usesNativeAdmin) {
-        const response = await nativeAdminCall<{ summary?: {
+      const response = await nativeAdminCall<{ summary?: {
           emails?: unknown[];
           interactions?: unknown[];
           documents?: unknown[];
           ai_decisions?: unknown[];
           notifications?: unknown[];
         } }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/summary`);
-        const summary = response.summary || {};
-        emailsRes = { data: summary.emails || [] };
-        interactionsRes = { data: summary.interactions || [] };
-        documentsRes = { data: summary.documents || [] };
-        aiRes = { data: summary.ai_decisions || [] };
-        notifRes = { data: summary.notifications || [] };
-      } else {
-        [emailsRes, interactionsRes, documentsRes, aiRes, notifRes] = await Promise.all([
-          supabase.from('email_messages').select('*, attachments').in('lead_id', allLeadIds).order('created_at', { ascending: false }),
-          supabase.from('crm_interactions').select('*').in('lead_id', allLeadIds).order('created_at', { ascending: false }),
-          supabase.from('crm_lead_documents').select('*').in('lead_id', allLeadIds).order('uploaded_at', { ascending: false }),
-          supabase.from('crm_ai_decisions').select('*').in('lead_id', allLeadIds).order('created_at', { ascending: false }),
-          supabase.from('crm_event_notifications').select('*').in('lead_id', allLeadIds).order('created_at', { ascending: false }),
-        ]);
-      }
+      const summary = response.summary || {};
+      emailsRes = { data: summary.emails || [] };
+      interactionsRes = { data: summary.interactions || [] };
+      documentsRes = { data: summary.documents || [] };
+      aiRes = { data: summary.ai_decisions || [] };
+      notifRes = { data: summary.notifications || [] };
 
       type EmailRow = { id: string; direction?: string; received_at?: string; created_at?: string; subject?: string; body_text?: string; body_html?: string; from_email?: string; to_emails?: string[] | string; status?: string; attachments?: Array<{ filename?: string; name?: string; contentType?: string; content_type?: string; size?: number; file_size?: number; url?: string; path?: string; storage_path?: string; proposed_doc_type?: string }> };
       (emailsRes.data as EmailRow[] || []).forEach((email) => {
@@ -315,18 +296,10 @@ export const CompleteTimeline: React.FC<CompleteTimelineProps> = ({ leadId, lead
     if (!newNote.trim()) return;
     setSavingNote(true);
     try {
-      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
-        await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/timeline`, {
-          method: 'POST',
-          body: JSON.stringify({ content: newNote.trim() }),
-        });
-      } else {
-        const { error } = await supabase.from('crm_interactions').insert([{
-          lead_id: leadId, type: 'note', channel: 'note', direction: 'outbound',
-          content: newNote.trim(), created_at: new Date().toISOString(),
-        }]);
-        if (error) throw error;
-      }
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/timeline`, {
+        method: 'POST',
+        body: JSON.stringify({ content: newNote.trim() }),
+      });
       setNewNote('');
       setShowNoteComposer(false);
       await loadCompleteTimeline();

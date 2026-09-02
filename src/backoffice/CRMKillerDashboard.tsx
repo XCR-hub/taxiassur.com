@@ -12,7 +12,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { NATIVE_ADMIN_TOKEN_KEY } from '@/lib/native-admin-auth';
-import { nativeAdminDashboard } from '@/lib/native-admin-data';
+import { nativeAdminCrmDashboard } from '@/lib/native-admin-data';
 
 interface DashboardStats {
   total_leads: number;
@@ -123,7 +123,7 @@ const CRMKillerDashboard: React.FC = () => {
       const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
       const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
-      const native = localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY) ? await nativeAdminDashboard() : null;
+      const native = localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY) ? await nativeAdminCrmDashboard() as any : null;
       const [leadsRes, aiDecisionsRes, unreadCount, criticalAlerts, quoteQueue] = native ? [
         { data: native.leads }, { data: native.ai_decisions }, { count: native.unread_messages }, { count: native.critical_alerts }, { count: native.ready_for_quote },
       ] : await Promise.all([
@@ -137,36 +137,37 @@ const CRMKillerDashboard: React.FC = () => {
       const leads = leadsRes.data || [];
       const aiDecisions = aiDecisionsRes.data || [];
 
-      const activeContracts = leads.filter(l =>
+      const summary = native?.lead_stats;
+      const activeContracts = summary ? Number(summary.active_contracts || 0) : leads.filter(l =>
         ['won', 'ACTIVE_CLIENT', 'active_client', 'CLIENT_ACTIF'].includes(l.status) ||
         l.current_stage_key === 'active_client' ||
         (l.metadata && l.metadata.is_active_client === true)
       ).length;
 
-      const newToday = leads.filter(l => new Date(l.created_at) >= today).length;
-      const newThisWeek = leads.filter(l => new Date(l.created_at) >= weekAgo).length;
-      const wonThisMonth = leads.filter(l =>
+      const newToday = summary ? Number(summary.new_today || 0) : leads.filter(l => new Date(l.created_at) >= today).length;
+      const newThisWeek = summary ? Number(summary.new_week || 0) : leads.filter(l => new Date(l.created_at) >= weekAgo).length;
+      const wonThisMonth = summary ? Number(summary.won_month || 0) : leads.filter(l =>
         ['won', 'ACTIVE_CLIENT', 'active_client', 'CLIENT_ACTIF'].includes(l.status) &&
         new Date(l.updated_at) >= monthStart
       ).length;
-      const lostThisMonth = leads.filter(l => l.status === 'lost' && new Date(l.updated_at) >= monthStart).length;
-      const totalClosed = activeContracts + leads.filter(l => l.status === 'lost').length;
+      const lostThisMonth = summary ? Number(summary.lost_month || 0) : leads.filter(l => l.status === 'lost' && new Date(l.updated_at) >= monthStart).length;
+      const totalClosed = activeContracts + (summary ? Number(summary.lost_total || 0) : leads.filter(l => l.status === 'lost').length);
       const conversionRate = totalClosed > 0 ? (activeContracts / totalClosed) * 100 : 0;
       const avgValue = 1450;
 
       setStats({
-        total_leads: leads.length, active_contracts: activeContracts,
-        pending_documents: leads.filter(l => l.current_stage_key === 'document_collection').length,
-        pending_payments: leads.filter(l => l.current_stage_key === 'payment_pending').length,
+        total_leads: summary ? Number(summary.total || 0) : leads.length, active_contracts: activeContracts,
+        pending_documents: summary ? Number(summary.pending_documents || 0) : leads.filter(l => l.current_stage_key === 'document_collection').length,
+        pending_payments: summary ? Number(summary.pending_payments || 0) : leads.filter(l => l.current_stage_key === 'payment_pending').length,
         unread_messages: unreadCount.count || 0,
         ai_decisions_pending: aiDecisions.filter(d => d.status === 'pending').length,
         at_risk_clients: criticalAlerts.count || 0,
-        renewal_opportunities: leads.filter(l => l.status === 'CROSS_SELLING').length,
+        renewal_opportunities: summary ? Number(summary.renewal_opportunities || 0) : leads.filter(l => l.status === 'CROSS_SELLING').length,
         new_leads_today: newToday, new_leads_week: newThisWeek,
         conversion_rate: Math.round(conversionRate), avg_deal_value: avgValue,
         total_revenue: activeContracts * avgValue,
         ready_for_quote: quoteQueue.count || 0,
-        quote_pending: leads.filter(l => l.current_stage_key === 'quote_pending').length,
+        quote_pending: summary ? Number(summary.quote_pending || 0) : leads.filter(l => l.current_stage_key === 'quote_pending').length,
         won_this_month: wonThisMonth, lost_this_month: lostThisMonth,
       });
 

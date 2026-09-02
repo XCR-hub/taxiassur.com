@@ -15,13 +15,12 @@ import {
   Upload,
   XCircle,
 } from "lucide-react";
-import { supabase } from "../lib/supabase";
 import { Modal, ModalFooter } from "../components/Modal";
 import { Badge } from "../components/Badge";
 import { Progress } from "../components/Progress";
 import { SecureDocumentLink } from "../components/crm/SecureDocumentLink";
 import { nativeAdminCall } from "../lib/native-admin-data";
-import { NATIVE_ADMIN_TOKEN_KEY } from "../lib/native-admin-auth";
+import { companyVisualStyle } from "../lib/company-visual-style";
 
 interface Lead {
   id: string;
@@ -85,7 +84,6 @@ interface Props {
 }
 
 export default function LeadCompanyQuotes({ leadId }: Props) {
-  const usesNativeAdmin = Boolean(localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY));
   const [lead, setLead] = useState<Lead | null>(null);
   const [quotes, setQuotes] = useState<CompanyQuote[]>([]);
   const [documents, setDocuments] = useState<CompanyDocument[]>([]);
@@ -121,155 +119,45 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
 
   useEffect(() => {
     loadData();
-    loadRefusalReasons();
     // Reload only when the selected lead changes; loaders are intentionally local.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leadId]);
 
   const loadData = async () => {
     try {
-      if (usesNativeAdmin) {
-        const result = await nativeAdminCall<{
-          workspace: {
-            lead: Record<string, any>;
-            quotes: CompanyQuote[];
-            refusal_reasons: RefusalReason[];
-            company_documents: CompanyDocument[];
-            all_mandatory_processed: boolean;
-          };
-        }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/quotes-workspace`);
-        const workspace = result.workspace;
-        const nativeLead = workspace.lead;
-        setLead({
-          id: String(nativeLead.id),
-          name: `${nativeLead.first_name || ""} ${nativeLead.last_name || ""}`.trim() || String(nativeLead.email || ""),
-          email: String(nativeLead.email || ""),
-          phone: String(nativeLead.phone || ""),
-          city: String(nativeLead.city || ""),
-          access_token: nativeLead.access_token || null,
-        });
-        setQuotes(workspace.quotes || []);
-        setRefusalReasons(workspace.refusal_reasons || []);
-        setDocuments(workspace.company_documents || []);
-        setAllMandatoryProcessed(Boolean(workspace.all_mandatory_processed));
-        return;
-      }
-      const [leadRes, quotesRes, companiesRes] = await Promise.all([
-        supabase.from("crm_leads").select("*").eq("id", leadId).maybeSingle(),
-        supabase
-          .from("lead_company_quotes")
-          .select(`
-            *,
-            company:insurance_companies!lead_company_quotes_company_id_fkey(*)
-          `)
-          .eq("lead_id", leadId)
-          .order("created_at", { ascending: true }),
-        supabase
-          .from("insurance_companies")
-          .select("*")
-          .eq("is_mandatory", true)
-          .eq("is_active", true)
-          .order("priority_order", { ascending: true }),
-      ]);
-
-      if (leadRes.error && leadRes.error.code !== "PGRST116") {
-        console.error("Erreur chargement lead:", leadRes.error);
-      }
-
-      if (leadRes.data) {
-        setLead({
-          id: leadRes.data.id,
-          name:
-            `${leadRes.data.first_name || ""} ${leadRes.data.last_name || ""}`
-              .trim() || leadRes.data.email,
-          email: leadRes.data.email,
-          phone: leadRes.data.phone,
-          city: leadRes.data.city || "",
-        });
-      }
-
-      if (quotesRes.error) throw quotesRes.error;
-      if (companiesRes.error) throw companiesRes.error;
-
-      let currentQuotes = quotesRes.data || [];
-      const mandatoryCompanies = companiesRes.data || [];
-      const existingCompanyIds = new Set(
-        currentQuotes.map((q: CompanyQuote) => q.company_id),
-      );
-      const missingCompanies = mandatoryCompanies.filter((c) =>
-        !existingCompanyIds.has(c.id)
-      );
-
-      if (missingCompanies.length > 0) {
-        const rowsToInsert = missingCompanies.map((c) => ({
-          lead_id: leadId,
-          company_id: c.id,
-          status: "pending",
-        }));
-        const { error: insertError } = await supabase
-          .from("lead_company_quotes")
-          .insert(rowsToInsert);
-        if (insertError) {
-          console.error(
-            "Erreur création lignes compagnies obligatoires:",
-            insertError,
-          );
-        } else {
-          const { data: refreshed, error: refreshError } = await supabase
-            .from("lead_company_quotes")
-            .select(
-              `*, company:insurance_companies!lead_company_quotes_company_id_fkey(*)`,
-            )
-            .eq("lead_id", leadId)
-            .order("created_at", { ascending: true });
-          if (!refreshError && refreshed) currentQuotes = refreshed;
-        }
-      }
-
-      setQuotes(currentQuotes);
-
-      const mandatoryCheckRes = await supabase.rpc(
-        "check_all_mandatory_companies_processed",
-        { p_lead_id: leadId },
-      );
-      setAllMandatoryProcessed(mandatoryCheckRes.data || false);
+      const result = await nativeAdminCall<{
+        workspace: {
+          lead: Record<string, any>;
+          quotes: CompanyQuote[];
+          refusal_reasons: RefusalReason[];
+          company_documents: CompanyDocument[];
+          all_mandatory_processed: boolean;
+        };
+      }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/quotes-workspace`);
+      const workspace = result.workspace;
+      const nativeLead = workspace.lead;
+      setLead({
+        id: String(nativeLead.id),
+        name: `${nativeLead.first_name || ""} ${nativeLead.last_name || ""}`.trim() || String(nativeLead.email || ""),
+        email: String(nativeLead.email || ""),
+        phone: String(nativeLead.phone || ""),
+        city: String(nativeLead.city || ""),
+        access_token: nativeLead.access_token || null,
+      });
+      setQuotes(workspace.quotes || []);
+      setRefusalReasons(workspace.refusal_reasons || []);
+      setDocuments(workspace.company_documents || []);
+      setAllMandatoryProcessed(Boolean(workspace.all_mandatory_processed));
     } catch (error) {
       console.error("Erreur chargement:", error);
     } finally {
       setLoading(false);
     }
   };
-
-  const loadRefusalReasons = async () => {
-    if (usesNativeAdmin) return;
-    try {
-      const { data, error } = await supabase
-        .from("company_quote_refusal_reasons")
-        .select("*")
-        .eq("is_active", true)
-        .order("display_order", { ascending: true });
-
-      if (error) throw error;
-      setRefusalReasons(data || []);
-    } catch (error) {
-      console.error("Erreur chargement motifs refus:", error);
-    }
-  };
-
   const loadCompanyDocuments = async (companyId: string) => {
-    if (usesNativeAdmin) {
-      setDocuments((current) => current.filter((document) => !document.company_id || document.company_id === companyId));
-      return;
-    }
     try {
-      const { data, error } = await supabase
-        .from("company_documents")
-        .select("*")
-        .eq("company_id", companyId)
-        .eq("send_with_quote", true);
-
-      if (error) throw error;
-      setDocuments(data || []);
+      const result = await nativeAdminCall<{ workspace?: { company_documents?: CompanyDocument[] } }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/quotes-workspace`);
+      setDocuments((result.workspace?.company_documents || []).filter(document => !document.company_id || document.company_id === companyId));
     } catch (error) {
       console.error("Erreur chargement documents:", error);
     }
@@ -353,16 +241,10 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
           notes: quoteFormData.notes,
           submitted_at: new Date().toISOString(),
         };
-      if (usesNativeAdmin) {
-        await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/quotes/${encodeURIComponent(selectedQuote.id)}`, {
-          method: "PATCH",
-          body: JSON.stringify(updates),
-        });
-      } else {
-        const { data: { user } } = await supabase.auth.getUser();
-        const { error } = await supabase.from("lead_company_quotes").update({ ...updates, submitted_by: user?.id }).eq("id", selectedQuote.id);
-        if (error) throw error;
-      }
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/quotes/${encodeURIComponent(selectedQuote.id)}`, {
+        method: "PATCH",
+        body: JSON.stringify(updates),
+      });
 
       await loadData();
       setIsQuoteModalOpen(false);
@@ -399,16 +281,10 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
           notes: refusalFormData.notes,
           submitted_at: new Date().toISOString(),
         };
-      if (usesNativeAdmin) {
-        await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/quotes/${encodeURIComponent(selectedQuote.id)}`, {
-          method: "PATCH",
-          body: JSON.stringify(updates),
-        });
-      } else {
-        const { data: { user } } = await supabase.auth.getUser();
-        const { error } = await supabase.from("lead_company_quotes").update({ ...updates, submitted_by: user?.id }).eq("id", selectedQuote.id);
-        if (error) throw error;
-      }
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/quotes/${encodeURIComponent(selectedQuote.id)}`, {
+        method: "PATCH",
+        body: JSON.stringify(updates),
+      });
 
       await loadData();
       setIsRefusalModalOpen(false);
@@ -487,33 +363,11 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
 
     setSendingEmail(true);
     try {
-      if (usesNativeAdmin) {
-        await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/access-email`, {
-          method: "POST",
-          body: "{}",
-        });
-        toast.success("Email d'accès espace prospect mis en file d'envoi");
-        return;
-      }
-      const { error } = await supabase.functions.invoke(
-        "send-email-universal",
-        {
-          body: {
-            to: lead.email,
-            subject: "Accès à votre espace prospect TaxiAssur",
-            template: "prospect_access",
-            variables: {
-              first_name: lead.name.split(" ")[0] || "Prospect",
-              last_name: lead.name.split(" ").slice(1).join(" ") || "",
-              access_link:
-                `${window.location.origin}/espace-prospect/${lead.access_token}`,
-            },
-          },
-        },
-      );
-
-      if (error) throw error;
-      toast.success("✅ Email d'accès espace prospect envoyé avec succès !");
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/access-email`, {
+        method: "POST",
+        body: "{}",
+      });
+      toast.success("Email d'accès espace prospect mis en file d'envoi");
     } catch (err) {
       console.error("Error sending email:", err);
       toast.error("❌ Erreur lors de l'envoi de l'email");
@@ -540,7 +394,8 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gray-900 rounded-xl border border-gray-800 p-6">
+      <div className="relative overflow-hidden bg-gradient-to-r from-slate-950 via-gray-900 to-amber-950/70 rounded-2xl border border-amber-500/30 p-6 shadow-xl shadow-black/20">
+        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-500 via-yellow-300 to-sky-500" />
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-white mb-2">
@@ -638,21 +493,28 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
-        {quotes.map((quote) => (
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
+        {quotes.map((quote) => {
+          const companyStyle = companyVisualStyle(quote.company?.id || quote.company?.name || quote.company_id);
+          return (
           <div
             key={quote.id}
             className={`
-              bg-gray-900 rounded-xl border p-6
+              relative overflow-hidden ${companyStyle.surface} rounded-2xl border border-white/10 border-l-4 ${companyStyle.border} p-6 shadow-lg shadow-black/25 transition-all hover:-translate-y-0.5 hover:border-white/20 hover:shadow-xl
               ${
               quote.status === "pending"
                 ? "border-yellow-500/30"
                 : "border-gray-800"
             }
-              ${quote.status === "validated" ? "border-green-500/30" : ""}
+              ${quote.status === "validated" ? "border-2 !border-green-400 ring-4 ring-green-500/25 shadow-xl shadow-green-900/40" : ""}
               ${quote.status === "refused" ? "border-red-500/30" : ""}
             `}
           >
+            {quote.status === "validated" && (
+              <div className="-mx-6 -mt-6 mb-5 rounded-t-xl bg-green-600 text-white px-4 py-3 text-center font-black tracking-wide flex items-center justify-center gap-2">
+                <CheckCircle className="w-5 h-5" /> CHOIX VALIDÉ PAR LE CLIENT
+              </div>
+            )}
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
@@ -664,8 +526,10 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
                         className="w-10 h-10 object-contain"
                       />
                     )
+                    : (quote.company.name.toLowerCase().includes("axa") || quote.company.code.toLowerCase().includes("axa"))
+                    ? <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-blue-900 font-black text-sm">AXA</div>
                     : <Building2 className="w-8 h-8 text-gray-600" />}
-                  <h3 className="text-xl font-bold text-white">
+                  <h3 className={`text-xl font-bold px-2.5 py-1 rounded-lg ${companyStyle.accent}`}>
                     {quote.company.name}
                   </h3>
                   {getStatusBadge(quote.status)}
@@ -698,12 +562,12 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
             )}
 
             {quote.status === "quote_submitted" && (
-              <div className="bg-gray-950 rounded-lg p-4 border border-gray-800">
+              <div className="bg-black/30 rounded-xl p-4 border border-white/10 shadow-inner">
                 <div className="grid grid-cols-2 gap-4 mb-3">
                   {quote.quote_amount && (
                     <div>
                       <div className="text-gray-400 text-sm">Montant</div>
-                      <div className="text-white font-bold text-lg">
+                      <div className="text-amber-300 font-black text-2xl">
                         {quote.quote_amount} €
                       </div>
                     </div>
@@ -725,7 +589,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
                     fileName="Devis.pdf"
                     showText
                     customText="Voir le devis"
-                    className="inline-flex items-center gap-2 text-blue-500 hover:text-blue-400"
+                    className="inline-flex items-center gap-2 rounded-lg bg-sky-500/15 px-3 py-2 font-semibold text-sky-300 ring-1 ring-sky-400/30 hover:bg-sky-500/25 hover:text-sky-200"
                     iconSize={16}
                   />
                 )}
@@ -739,7 +603,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
             )}
 
             {quote.status === "refused" && (
-              <div className="bg-red-950/20 rounded-lg p-4 border border-red-800/30">
+              <div className="bg-red-950/55 rounded-xl p-4 border border-red-500/40 shadow-inner shadow-red-950/40">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-1" />
                   <div className="flex-1">
@@ -785,7 +649,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
             )}
 
             {quote.status === "validated" && (
-              <div className="bg-green-950/20 rounded-lg p-4 border border-green-800/30">
+              <div className="bg-emerald-950/65 rounded-xl p-5 border-2 border-emerald-400/50 shadow-lg shadow-emerald-950/40">
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-1" />
                   <div className="flex-1">
@@ -810,7 +674,7 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
                       </div>
                     )}
                     {quote.quote_amount && (
-                      <div className="text-green-400 font-bold text-lg mt-2">
+                      <div className="inline-flex mt-3 rounded-lg bg-emerald-400 px-4 py-2 text-emerald-950 font-black text-xl shadow-md shadow-emerald-950/40">
                         Montant : {quote.quote_amount} € / an
                       </div>
                     )}
@@ -831,7 +695,8 @@ export default function LeadCompanyQuotes({ leadId }: Props) {
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <Modal

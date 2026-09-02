@@ -90,10 +90,12 @@ export async function updateClientPlatformConsent(token: string, update: Record<
 }
 
 export async function uploadClientPlatformDocument(token: string, file: File, documentType = 'autre') {
+  const extension = file.name.toLowerCase().split('.').pop() || '';
+  const inferredMime = extension === 'pdf' ? 'application/pdf' : ['jpg', 'jpeg'].includes(extension) ? 'image/jpeg' : extension === 'png' ? 'image/png' : extension === 'webp' ? 'image/webp' : 'application/octet-stream';
   const response = await clientRequest('/v1/prospect/documents', token, {
     method: 'POST',
     headers: {
-      'Content-Type': file.type,
+      'Content-Type': file.type || inferredMime,
       'X-Document-Type': documentType,
       'X-File-Name': encodeURIComponent(file.name),
     },

@@ -216,7 +216,10 @@ function proxyPlatformRequest(req, res, url) {
     res.writeHead(upstreamResponse.statusCode || 502, upstreamResponse.headers);
     upstreamResponse.pipe(res);
   });
-  upstream.setTimeout(70000, () => upstream.destroy(new Error('platform_api_timeout')));
+  // Document uploads include an on-server ClamAV scan. Loading the signature
+  // database can take more than 70 seconds on this host, so the reverse proxy
+  // must outlive the platform API scan timeout.
+  upstream.setTimeout(150000, () => upstream.destroy(new Error('platform_api_timeout')));
   upstream.on('error', () => {
     if (!res.headersSent) sendJson(res, '', 503, { ok: false, error: 'platform_api_unavailable' });
     else res.destroy();

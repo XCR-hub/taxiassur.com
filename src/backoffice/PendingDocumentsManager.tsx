@@ -8,9 +8,6 @@ import {
   Info, X, CheckSquare, Square, Search, Inbox,
   ChevronLeft,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { getSecureDocumentUrl } from '@/lib/secure-document-url';
-import { NATIVE_ADMIN_TOKEN_KEY } from '@/lib/native-admin-auth';
 import { nativeAdminDocumentUrl, nativeAdminDocuments, nativeAdminDownloadDocument, nativeAdminUpdateDocument } from '@/lib/native-admin-data';
 
 /* ─── Types ──────────────────────────────────────────────── */
@@ -95,12 +92,6 @@ function formatSize(bytes: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
 }
 
-function getDocumentBucket(doc: PendingDocument): 'email-attachments' | 'prospect-documents' {
-  return doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/')
-    ? 'email-attachments'
-    : 'prospect-documents';
-}
-
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const h = Math.floor(diff / 3600000);
@@ -121,31 +112,21 @@ function PreviewThumb({ doc }: { doc: PendingDocument }) {
   const [err, setErr] = useState(false);
   const [url, setUrl] = useState('');
   const mime = doc.mime_type || '';
-  const bucket = getDocumentBucket(doc);
   useEffect(() => {
     let active = true;
     let objectUrl = '';
     setErr(false);
     setUrl('');
     if (!mime.startsWith('image/')) return;
-    if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
-      void nativeAdminDocumentUrl(doc.id)
-        .then((localUrl) => {
-          objectUrl = localUrl;
-          if (active) setUrl(localUrl);
-          else URL.revokeObjectURL(localUrl);
-        })
-        .catch(() => { if (active) setErr(true); });
-      return () => {
-        active = false;
-        if (objectUrl) URL.revokeObjectURL(objectUrl);
-      };
-    }
-    void getSecureDocumentUrl({ bucket, path: doc.file_path })
-      .then((signedUrl) => { if (active) setUrl(signedUrl); })
+    void nativeAdminDocumentUrl(doc.id)
+      .then((localUrl) => {
+        objectUrl = localUrl;
+        if (active) setUrl(localUrl);
+        else URL.revokeObjectURL(localUrl);
+      })
       .catch(() => { if (active) setErr(true); });
-    return () => { active = false; };
-  }, [bucket, doc.file_path, doc.id, mime]);
+    return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [doc.id, mime]);
 
   if (mime.startsWith('image/') && !err && url) {
     return (
@@ -174,12 +155,8 @@ function PreviewThumb({ doc }: { doc: PendingDocument }) {
 function SecureDocumentActions({ doc }: { doc: PendingDocument }) {
   const open = async (download: boolean) => {
     try {
-      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
-        if (download) return void await nativeAdminDownloadDocument(doc.id, doc.file_name);
-        const localUrl=await nativeAdminDocumentUrl(doc.id); window.open(localUrl,'_blank','noopener,noreferrer'); setTimeout(()=>URL.revokeObjectURL(localUrl),60000); return;
-      }
-      const url = await getSecureDocumentUrl({ bucket: getDocumentBucket(doc), path: doc.file_path, download, fileName: doc.file_name });
-      window.open(url, '_blank', 'noopener,noreferrer');
+      if (download) return void await nativeAdminDownloadDocument(doc.id, doc.file_name);
+      const localUrl=await nativeAdminDocumentUrl(doc.id); window.open(localUrl,'_blank','noopener,noreferrer'); setTimeout(()=>URL.revokeObjectURL(localUrl),60000);
     } catch (error) { console.error('Document unavailable', error); }
   };
   return <>
@@ -277,41 +254,9 @@ export default function PendingDocumentsManager() {
   const loadDocuments = useCallback(async () => {
     setLoading(true);
     try {
-      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
-        const result=await nativeAdminDocuments('pending'); const formatted=result.documents as PendingDocument[]; setAllDocs(formatted); setExpandedLeads(new Set(formatted.filter(d=>!isSuspectDocument(d)).map(d=>d.lead_id))); return;
-      }
-      const { data, error } = await supabase
-        .from('prospect_documents')
-        .select(`
-          id, lead_id, document_type, file_name, file_path,
-          file_size, mime_type, uploaded_at, status, metadata, uploaded_by,
-          crm_leads ( email, first_name, last_name, phone )
-        `)
-        .eq('status', 'pending')
-        .order('uploaded_at', { ascending: false });
-
-      if (error) throw error;
-
-      const formatted: PendingDocument[] = (data as Array<{ id: string; lead_id: string; document_type: string; file_name: string; file_path: string; file_size?: number; [key: string]: unknown }> || []).map((d) => ({
-        id: d.id,
-        lead_id: d.lead_id,
-        document_type: d.document_type,
-        file_name: d.file_name,
-        file_path: d.file_path,
-        file_size: d.file_size,
-        mime_type: d.mime_type,
-        uploaded_at: d.uploaded_at,
-        status: d.status,
-        metadata: d.metadata,
-        uploaded_by: d.uploaded_by,
-        lead_email: d.crm_leads?.email,
-        lead_first_name: d.crm_leads?.first_name,
-        lead_last_name: d.crm_leads?.last_name,
-        lead_phone: d.crm_leads?.phone,
-      }));
-
+      const result=await nativeAdminDocuments('pending');
+      const formatted=result.documents as PendingDocument[];
       setAllDocs(formatted);
-
       const leadsWithReal = new Set(
         formatted.filter(d => !isSuspectDocument(d)).map(d => d.lead_id)
       );
@@ -397,14 +342,7 @@ export default function PendingDocumentsManager() {
   const handleValidate = async (docId: string) => {
     setProcessing(prev => new Set(prev).add(docId));
     try {
-      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
-        await nativeAdminUpdateDocument(docId,{status:'validated'}); setAllDocs(prev=>prev.filter(d=>d.id!==docId)); setSelectedIds(prev=>{const s=new Set(prev);s.delete(docId);return s;}); return;
-      }
-      const { error } = await supabase
-        .from('prospect_documents')
-        .update({ status: 'validated', validated_at: new Date().toISOString() })
-        .eq('id', docId);
-      if (error) throw error;
+      await nativeAdminUpdateDocument(docId,{status:'validated'});
       setAllDocs(prev => prev.filter(d => d.id !== docId));
       setSelectedIds(prev => { const s = new Set(prev); s.delete(docId); return s; });
     } catch (err) {
@@ -415,12 +353,13 @@ export default function PendingDocumentsManager() {
   };
 
   const sendRejectionEmail = async (doc: PendingDocument, reason: string) => {
+    /* L'API native de rejet met deja l'email prospect en file de maniere auditee.
     if (!doc.lead_email) return;
     const firstName = doc.lead_first_name || 'Prospect';
     const lastName = doc.lead_last_name || '';
     const docLabel = DOC_TYPE_LABELS[doc.document_type] || doc.document_type;
     try {
-      await supabase.functions.invoke('send-email-universal', {
+      Ancien envoi direct desactive : l'API native gere maintenant cette notification.
         body: {
           to: doc.lead_email,
           toName: `${firstName} ${lastName}`.trim(),
@@ -466,6 +405,7 @@ Acceder a mon espace
     } catch (err) {
       console.error('Erreur envoi email rejet:', err);
     }
+    */
   };
 
   const handleRejectConfirm = async (docId: string, reason: string) => {
@@ -473,29 +413,13 @@ Acceder a mon espace
 
     if (docId === '__BATCH__') {
       const ids = Array.from(selectedIds);
-      const docsToReject = allDocs.filter(d => ids.includes(d.id));
       for (const id of ids) {
         setProcessing(prev => new Set(prev).add(id));
       }
       try {
-        if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
-          await Promise.all(ids.map(id=>nativeAdminUpdateDocument(id,{status:'rejected',rejection_reason:reason})));
-          setAllDocs(prev=>prev.filter(d=>!ids.includes(d.id)));setSelectedIds(new Set());return;
-        }
-        const { error } = await supabase
-          .from('prospect_documents')
-          .update({ status: 'rejected', rejection_reason: reason })
-          .in('id', ids);
-        if (error) throw error;
+        await Promise.all(ids.map(id=>nativeAdminUpdateDocument(id,{status:'rejected',rejection_reason:reason})));
         setAllDocs(prev => prev.filter(d => !ids.includes(d.id)));
         setSelectedIds(new Set());
-        const uniqueLeads = new Map<string, PendingDocument>();
-        for (const doc of docsToReject) {
-          if (!uniqueLeads.has(doc.lead_id)) uniqueLeads.set(doc.lead_id, doc);
-        }
-        for (const doc of uniqueLeads.values()) {
-          await sendRejectionEmail(doc, reason);
-        }
       } catch (err) {
         console.error('Erreur rejet groupé:', err);
       } finally {
@@ -508,18 +432,9 @@ Acceder a mon espace
 
     setProcessing(prev => new Set(prev).add(docId));
     try {
-      const doc = allDocs.find(d => d.id === docId);
-      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
-        await nativeAdminUpdateDocument(docId,{status:'rejected',rejection_reason:reason}); setAllDocs(prev=>prev.filter(d=>d.id!==docId));setSelectedIds(prev=>{const s=new Set(prev);s.delete(docId);return s;});if(doc)await sendRejectionEmail(doc,reason);return;
-      }
-      const { error } = await supabase
-        .from('prospect_documents')
-        .update({ status: 'rejected', rejection_reason: reason })
-        .eq('id', docId);
-      if (error) throw error;
+      await nativeAdminUpdateDocument(docId,{status:'rejected',rejection_reason:reason});
       setAllDocs(prev => prev.filter(d => d.id !== docId));
       setSelectedIds(prev => { const s = new Set(prev); s.delete(docId); return s; });
-      if (doc) await sendRejectionEmail(doc, reason);
     } catch (err) {
       console.error('Erreur rejet:', err);
     } finally {

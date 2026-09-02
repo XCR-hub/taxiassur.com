@@ -11,8 +11,7 @@ import {
   FolderOpen,
   FileSignature
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { getSecureDocumentUrl } from '@/lib/secure-document-url';
+import { nativeAdminCall, nativeAdminDocumentUrl, nativeAdminStoredDocumentUrl } from '@/lib/native-admin-data';
 
 interface LeadDocument {
   id: string;
@@ -106,6 +105,45 @@ export function LeadDocumentsSelector({
       setLoading(true);
       const allDocs: LeadDocument[] = [];
 
+      const result = await nativeAdminCall<{ summary?: { documents?: any[]; quotes?: any[]; contracts?: any[] } }>(
+        `/v1/admin/leads/${encodeURIComponent(leadId)}/summary`
+      );
+      const summary = result.summary || {};
+      allDocs.push(...(summary.documents || [])
+        .filter((doc) => ['validated', 'verified'].includes(String(doc.status)) || doc.validated === true)
+        .map((doc) => ({
+          id: `document-${doc.id}`,
+          name: doc.file_name || DOC_TYPE_LABELS[doc.document_type] || doc.document_type,
+          file_path: doc.file_path,
+          bucket: (doc.bucket === 'crm-documents' ? 'crm-documents' : 'prospect-documents') as LeadDocument['bucket'],
+          document_type: doc.document_type,
+          category: 'document' as const,
+          uploaded_at: doc.uploaded_at || doc.created_at,
+          file_size: doc.file_size
+        })));
+      allDocs.push(...(summary.quotes || [])
+        .filter((quote) => quote.quote_file_url || quote.quote_pdf_url)
+        .map((quote) => ({
+          id: `quote-${quote.id}`,
+          name: `Devis ${quote.company_name || 'Compagnie'}${quote.quote_amount ? ` - ${quote.quote_amount} EUR` : ''}`,
+          file_url: quote.quote_file_url || quote.quote_pdf_url,
+          document_type: 'quote',
+          category: 'quote' as const,
+          uploaded_at: quote.submitted_at || new Date().toISOString()
+        })));
+      allDocs.push(...(summary.contracts || [])
+        .filter((contract) => contract.contract_file_url)
+        .map((contract) => ({
+          id: `contract-${contract.id}`,
+          name: `${DOC_TYPE_LABELS[contract.contract_type] || 'Contrat'} ${contract.signed_at ? '(signe)' : ''}`,
+          file_url: contract.contract_file_url,
+          document_type: contract.contract_type || 'contract',
+          category: 'contract' as const,
+          uploaded_at: contract.signed_at || contract.created_at
+        })));
+
+      /* Anciennes requetes directes desactivees apres migration API native.
+
       // 1. Charger les documents du prospect
       const { data: prospectDocs, error: prospectError } = await supabase
         .from('prospect_documents')
@@ -189,6 +227,7 @@ export function LeadDocumentsSelector({
         })));
       }
 
+      */
       setDocuments(allDocs);
     } catch (err) {
       console.error('Error loading documents:', err);
@@ -202,9 +241,11 @@ export function LeadDocumentsSelector({
   }, [loadDocuments]);
 
   const openDocument = async (doc: LeadDocument, download = false) => {
-    const url = doc.file_path && doc.bucket
-      ? await getSecureDocumentUrl({ bucket: doc.bucket, path: doc.file_path, download, fileName: doc.name })
-      : doc.file_url;
+    const url = doc.id.startsWith('document-')
+      ? await nativeAdminDocumentUrl(doc.id.slice('document-'.length))
+      : doc.file_url
+        ? await nativeAdminStoredDocumentUrl(doc.file_url, 'contract-documents', download, doc.name)
+        : undefined;
     if (!url) return;
     window.open(url, "_blank", "noopener,noreferrer");
   };

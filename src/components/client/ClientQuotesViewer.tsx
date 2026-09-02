@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   AlertCircle,
   Building2,
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { downloadProspectCompanyDocument, loadProspectPlatformSession, openProspectQuote, updateProspectQuote } from "@/lib/platform-api";
+import { companyVisualStyle } from "@/lib/company-visual-style";
 
 interface InsuranceCompany {
   id: string;
@@ -114,7 +116,7 @@ interface Quote {
   company_code?: string;
   company_name?: string;
   company_logo_url?: string | null;
-  quote_file_url: string;
+  quote_file_url?: string | null;
   quote_amount?: number;
   monthly_price?: number;
   coverage_type?: string;
@@ -259,6 +261,11 @@ export default function ClientQuotesViewer({ token }: Props) {
     }
   };
 
+  const openValidationConfirmation = (quoteId: string) => {
+    setShowConfirmModal(quoteId);
+    window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+  };
+
   const handleRefuseQuote = async (quoteId: string, companyName: string) => {
     if (!token) {
       toast.error("❌ Erreur de configuration. Veuillez recharger la page.");
@@ -380,6 +387,7 @@ export default function ClientQuotesViewer({ token }: Props) {
 
       <div className="grid gap-6">
         {companies.map((company) => {
+          const companyStyle = companyVisualStyle(company.id || company.name);
           const companyQuotes = quotesByCompany[company.id] || [];
           if (companyQuotes.length === 0) return null;
 
@@ -432,7 +440,7 @@ export default function ClientQuotesViewer({ token }: Props) {
           return (
             <div
               key={company.id}
-              className={`${statusStyles.bg} border ${statusStyles.border} ${statusStyles.ring} rounded-xl p-6 transition-all shadow-lg`}
+              className={`${statusStyles.bg} ${companyStyle.surface} border ${statusStyles.border} ${statusStyles.ring} border-l-4 ${companyStyle.border} rounded-xl p-6 transition-all shadow-lg`}
             >
               <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
                 <div className="flex items-center gap-4">
@@ -457,9 +465,11 @@ export default function ClientQuotesViewer({ token }: Props) {
                         />
                       </div>
                     )
+                    : company.name.toLowerCase().includes("axa") || company.code.toLowerCase().includes("axa")
+                    ? <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center text-blue-900 font-black text-xl shadow-md">AXA</div>
                     : <Building2 className="w-12 h-12 text-amber-500" />}
                   <div>
-                    <h4 className="font-bold text-2xl text-white">
+                    <h4 className={`font-bold text-2xl px-2.5 py-1 rounded-lg ${companyStyle.accent}`}>
                       {company.name}
                     </h4>
                     <p className="text-sm text-gray-300 mt-1">
@@ -478,9 +488,11 @@ export default function ClientQuotesViewer({ token }: Props) {
 
               <div className="space-y-4">
                 {companyQuotes.map((quote) => {
-                  const filePath = quote.quote_file_url;
-                  const fileName = filePath.split("/").pop()?.split("?")[0] ||
-                    "Devis.pdf";
+                  const filePath = String(quote.quote_file_url || "").trim();
+                  const hasQuoteFile = filePath.length > 0;
+                  const fileName = hasQuoteFile
+                    ? filePath.split("/").pop()?.split("?")[0] || "Devis.pdf"
+                    : "Devis en préparation";
 
                   return (
                     <div
@@ -771,6 +783,13 @@ export default function ClientQuotesViewer({ token }: Props) {
                       )}
 
                       <div className="flex flex-wrap items-center gap-3">
+                        {!hasQuoteFile && (
+                          <div className="w-full rounded-lg border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                            Le devis est enregistré, mais son document PDF n'est pas encore disponible. Votre conseiller finalise sa préparation.
+                          </div>
+                        )}
+                        {hasQuoteFile && (
+                          <>
                         <button
                           type="button"
                           onClick={() => openQuoteDocument(quote.id, fileName)}
@@ -798,8 +817,10 @@ export default function ClientQuotesViewer({ token }: Props) {
                           <Printer className="w-4 h-4" />
                           Imprimer
                         </button>
+                          </>
+                        )}
 
-                        {quote.status !== "validated" &&
+                        {hasQuoteFile && quote.status !== "validated" &&
                           quote.status !== "refused" &&
                           ((company.name || "").toLowerCase().includes(
                             "solly",
@@ -815,7 +836,7 @@ export default function ClientQuotesViewer({ token }: Props) {
                         )}
 
                         {/* Boutons Valider et Refuser */}
-                        {quote.status !== "validated" &&
+                        {hasQuoteFile && quote.status !== "validated" &&
                           quote.status !== "refused" && (
                           <>
                             <button
@@ -834,7 +855,7 @@ export default function ClientQuotesViewer({ token }: Props) {
                               Refuser
                             </button>
                             <button
-                              onClick={() => setShowConfirmModal(quote.id)}
+                              onClick={() => openValidationConfirmation(quote.id)}
                               disabled={validating !== null ||
                                 refusing !== null}
                               className="flex items-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
@@ -961,7 +982,7 @@ export default function ClientQuotesViewer({ token }: Props) {
       </div>
 
       {/* Modal de confirmation */}
-      {showConfirmModal && (
+      {showConfirmModal && createPortal((
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
           <div className="bg-gray-900 border border-gray-700 rounded-2xl p-8 max-w-md w-full">
             <div className="text-center mb-6">
@@ -1016,7 +1037,7 @@ export default function ClientQuotesViewer({ token }: Props) {
             </div>
           </div>
         </div>
-      )}
+      ), document.body)}
 
       {/* Modal de demande de modification (Solly Azar) */}
       {modifyingQuoteId && (() => {

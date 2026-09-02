@@ -116,8 +116,10 @@ export async function loadProspectPlatformSession(token: string): Promise<Prospe
 }
 
 export async function uploadProspectPlatformDocument(token: string, documentType: string, file: File, requestId?: string) {
+  const extension=file.name.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1]||'';
+  const inferredMime:Record<string,string>={pdf:'application/pdf',jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'};
   const headers: Record<string, string> = {
-    'Content-Type': file.type,
+    'Content-Type': file.type || inferredMime[extension] || 'application/octet-stream',
     'X-Document-Type': documentType,
     'X-File-Name': encodeURIComponent(file.name),
   };

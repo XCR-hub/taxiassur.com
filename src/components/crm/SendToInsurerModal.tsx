@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { X, Send, Loader2, Paperclip, Check, AlertCircle, Mail } from 'lucide-react';
 import { toast } from '@/lib/toast';
 
@@ -11,19 +11,6 @@ interface InsurerContact {
   position?: string;
   company_name?: string;
 }
-interface InsuranceCompanyJoin {
-  name?: string | null;
-}
-
-interface InsurerContactRow {
-  id: string;
-  company_id: string;
-  full_name: string;
-  email: string;
-  position?: string | null;
-  insurance_companies?: InsuranceCompanyJoin | InsuranceCompanyJoin[] | null;
-}
-
 interface DocumentItem {
   id: string;
   file_name: string;
@@ -40,20 +27,6 @@ interface SendToInsurerModalProps {
   leadName: string;
   leadEmail?: string;
   leadPhone?: string;
-}
-
-function getDocumentContentType(fileName?: string) {
-  const lower = (fileName || '').toLowerCase();
-  if (lower.endsWith('.pdf')) return 'application/pdf';
-  if (lower.endsWith('.png')) return 'image/png';
-  if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
-  if (lower.endsWith('.webp')) return 'image/webp';
-  return 'application/octet-stream';
-}
-
-function getCompanyNameFromJoin(join?: InsuranceCompanyJoin | InsuranceCompanyJoin[] | null) {
-  if (Array.isArray(join)) return join[0]?.name || '';
-  return join?.name || '';
 }
 
 function getErrorMessage(error: unknown) {
@@ -87,22 +60,10 @@ export default function SendToInsurerModal({
   async function loadContacts() {
     setLoadingContacts(true);
     try {
-      const { data, error } = await supabase
-        .from('insurance_company_contacts')
-        .select('id, company_id, full_name, email, position, insurance_companies(name)')
-        .eq('is_active', true)
-        .order('full_name');
-
-      if (error) throw error;
-
-      const mapped = ((data || []) as InsurerContactRow[]).map((c) => ({
-        id: c.id,
-        company_id: c.company_id,
-        full_name: c.full_name,
-        email: c.email,
-        position: c.position || undefined,
-        company_name: getCompanyNameFromJoin(c.insurance_companies)
-      }));
+      const result = await nativeAdminCall<{ workspace?: { contacts?: InsurerContact[] } }>(
+        `/v1/admin/leads/${encodeURIComponent(leadId)}/insurer-dossier`
+      );
+      const mapped = result.workspace?.contacts || [];
       setContacts(mapped);
 
       if (mapped.length > 0) {
@@ -118,36 +79,10 @@ export default function SendToInsurerModal({
   async function loadDocuments() {
     setLoadingDocs(true);
     try {
-      const [prospectRes, crmRes] = await Promise.all([
-        supabase
-          .from('prospect_documents')
-          .select('id, file_name, file_path, mime_type, document_type')
-          .eq('lead_id', leadId)
-          .not('file_path', 'is', null),
-        supabase
-          .from('crm_lead_documents')
-          .select('id, file_name, file_path, mime_type, document_type')
-          .eq('lead_id', leadId)
-          .not('file_path', 'is', null)
-      ]);
-
-      const allDocs: DocumentItem[] = [];
-
-      if (prospectRes.data) {
-        for (const d of prospectRes.data) {
-          if (d.file_path) {
-            allDocs.push({ ...d, source: 'prospect' });
-          }
-        }
-      }
-
-      if (crmRes.data) {
-        for (const d of crmRes.data) {
-          if (d.file_path) {
-            allDocs.push({ ...d, source: 'crm' });
-          }
-        }
-      }
+      const result = await nativeAdminCall<{ workspace?: { documents?: DocumentItem[] } }>(
+        `/v1/admin/leads/${encodeURIComponent(leadId)}/insurer-dossier`
+      );
+      const allDocs = (result.workspace?.documents || []).filter((document) => document.file_path);
 
       setDocuments(allDocs);
       setSelectedDocs(new Set(allDocs.map(d => d.id)));
@@ -201,34 +136,25 @@ export default function SendToInsurerModal({
 
     setSending(true);
     try {
-      const docsToSend = documents.filter(d => selectedDocs.has(d.id));
-      const docsPayload = docsToSend.map(d => ({
-        id: d.id,
-        file_name: d.file_name || 'document.pdf',
-        file_path: d.file_path,
-        bucket: d.source === 'prospect' ? 'prospect-documents' : 'crm-documents',
-        document_type: d.document_type || 'document',
-        source: d.source,
-        contentType: d.mime_type || getDocumentContentType(d.file_name)
-      }));
+      const result = await nativeAdminCall<{ ok?: boolean; send_id?: string; email_queued?: boolean }>(
+        `/v1/admin/leads/${encodeURIComponent(leadId)}/insurer-dossier`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            recipient_email: recipientEmail,
+            recipient_name: recipientName || null,
+            company_name: companyName,
+            company_id: useCustom ? null : contact?.company_id || null,
+            contact_id: useCustom ? null : selectedContactId || null,
+            subject: `Demande de saisie devis - ${leadName || 'Prospect'}`,
+            message: additionalMessage.trim() || null,
+            document_ids: [...selectedDocs]
+          })
+        }
+      );
 
-      const { data, error } = await supabase.rpc('create_insurer_dossier_send', {
-        p_lead_id: leadId,
-        p_company_id: useCustom ? null : contact?.company_id || null,
-        p_contact_id: useCustom ? null : selectedContactId || null,
-        p_recipient_email: recipientEmail,
-        p_recipient_name: recipientName || null,
-        p_company_name: companyName,
-        p_subject: `Demande de saisie devis - ${leadName || 'Prospect'}`,
-        p_message: additionalMessage.trim() || null,
-        p_documents: docsPayload
-      });
-
-      if (error) throw error;
-
-      const result = data as { success?: boolean; send_id?: string; error?: string } | null;
-      if (!result?.success) {
-        throw new Error(result?.error || 'Mise en file refusee');
+      if (!result.ok || !result.email_queued) {
+        throw new Error('Mise en file refusee');
       }
 
       toast.success(`Dossier mis en file pour ${recipientName || recipientEmail} - Relances J+2/J+5 activees`);

@@ -14,8 +14,8 @@ import {
   PhoneOutgoing,
   Loader2
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { nativeAdminSession } from '@/lib/native-admin-auth';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { logger } from '@/lib/logger';
 import { telephonyService, TelephonyStatus } from '@/lib/telephony-service';
 
@@ -148,8 +148,7 @@ export const CallDialog: React.FC<CallDialogProps> = ({
       const { user } = await nativeAdminSession();
       if (!user) throw new Error('User not authenticated');
 
-      const { error: interactionError } = await supabase.from('crm_interactions').insert({
-        lead_id: leadId,
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/timeline`, { method: 'POST', body: JSON.stringify({
         type: 'call_outgoing',
         channel: 'phone',
         direction: 'outbound',
@@ -163,9 +162,7 @@ export const CallDialog: React.FC<CallDialogProps> = ({
           talk_time: callDuration,
           via: 'webrtc',
         },
-      });
-
-      if (interactionError) throw interactionError;
+      }) });
 
       toast.success('Appel enregistre avec succes');
       onCallCompleted?.();

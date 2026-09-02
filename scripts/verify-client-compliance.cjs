@@ -9,12 +9,25 @@ const requiredChecks = [
   {
     label: 'client app access is created after contract signature',
     file: 'src/components/crm/ContratSignatureStep.tsx',
-    patterns: ['ensure_client_app_access', 'send-client-access'],
+    patterns: [
+      "nativeAdminUpdateLead(leadId,{status:'CLIENT_ACTIF'",
+      '/access-email',
+    ],
   },
   {
     label: 'client access email fallback exists after document validation',
     file: 'src/components/crm/DocumentValidationComplete.tsx',
-    patterns: ['send-client-access'],
+    patterns: ['/access-email', 'email_queued'],
+  },
+  {
+    label: 'native platform queues authenticated client access emails',
+    file: 'server/taxiassur-platform-api.mjs',
+    patterns: [
+      'adminLeadAccessEmailMatch',
+      'verifiedAdminSession(req)',
+      "collection='native_email_outbox'",
+      'prospect_access_email_queued',
+    ],
   },
   {
     label: 'client referral route is registered',

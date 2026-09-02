@@ -12,7 +12,7 @@ import AdminSessionKeepAlive from '../components/AdminSessionKeepAlive';
 import AdminLogin from '../components/AdminLogin';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { logger } from '@/lib/logger';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall, nativeAdminDashboard } from '@/lib/native-admin-data';
 import { useTheme } from '@/contexts/ThemeContext';
 import { toast } from '@/lib/toast';
 
@@ -133,26 +133,21 @@ const Dashboard: React.FC = () => {
     try {
       // Compter les edge functions déployées
       // Compter les cron jobs
-      const { count: cronCount } = await supabase
-        .from('automation_status')
-        .select('*', { count: 'exact', head: true });
+      const dashboard = await nativeAdminDashboard(true) as { system_stats?: { cronJobs?: number; apiCalls?: number; storageUsed?: string; databaseSize?: string } };
+      const cronCount = dashboard.system_stats?.cronJobs || 0;
 
       // Compter les appels API aujourd'hui (estimation via ai_decisions)
-      const today = new Date().toISOString().split('T')[0];
-      const { count: apiCalls } = await supabase
-        .from('ai_decisions')
-        .select('id', { count: 'exact', head: true })
-        .gte('created_at', today);
+      const apiCalls = dashboard.system_stats?.apiCalls || 0;
 
       // Utilisation storage
-      const { data: storage } = await supabase.storage.getBucket('crm-documents');
+      const storage = dashboard.system_stats?.storageUsed;
 
       setSystemStats({
-        databaseSize: '45 MB', // Estimation
-        storageUsed: storage ? '12 MB' : '0 MB',
-        apiCalls: apiCalls || 0,
-        edgeFunctions: 42, // Nombre de fonctions edge
-        cronJobs: cronCount || 0,
+        databaseSize: dashboard.system_stats?.databaseSize || 'PostgreSQL natif',
+        storageUsed: storage || 'Stockage natif',
+        apiCalls,
+        edgeFunctions: 0,
+        cronJobs: cronCount,
         activeUsers: 1,
         avgResponseTime: '180ms',
         errorRate: '0.2%',
@@ -168,73 +163,39 @@ const Dashboard: React.FC = () => {
   const loadAIData = useCallback(async () => {
     try {
       // 1. AI Master Status
-      const { data: masterStatus } = await supabase
-        .from('ai_master_status')
-        .select('*')
-        .limit(1)
-        .maybeSingle();
+      const dashboard = await nativeAdminDashboard(true) as any;
+      const masterStatus = dashboard.ai_master_status;
 
       if (masterStatus) {
         setAiMasterStatus(masterStatus);
       }
 
       // 2. Automations Status
-      const { data: autoStatus } = await supabase
-        .from('automation_status')
-        .select('*')
-        .order('name');
+      const autoStatus = dashboard.automations;
 
       if (autoStatus) {
         setAutomations(autoStatus);
       }
 
       // 3. AI Metrics (décisions aujourd'hui)
-      const today = new Date().toISOString().split('T')[0];
 
-      const [decisionsRes, actionsRes, emailsRes, learningRes] = await Promise.all([
-        supabase
-          .from('ai_decisions')
-          .select('id', { count: 'exact', head: true })
-          .gte('created_at', today),
-        supabase
-          .from('ai_autonomous_actions')
-          .select('id', { count: 'exact', head: true })
-          .gte('created_at', today),
-        supabase
-          .from('email_responses')
-          .select('id', { count: 'exact', head: true })
-          .gte('sent_at', today),
-        supabase
-          .from('ai_learning_events')
-          .select('id', { count: 'exact', head: true })
-          .gte('created_at', today)
-      ]);
+      const metrics = dashboard.ai_metrics || {};
 
       // Compter le contenu généré aujourd'hui
-      const [blogPostsTodayRes, blogPostsTotalRes, newsTodayRes, newsTotalRes, socialPostsTodayRes, socialPostsTotalRes, citypagesTotalRes, faqTotalRes] = await Promise.all([
-        supabase.from('blog_posts').select('id', { count: 'exact', head: true }).gte('created_at', today),
-        supabase.from('blog_posts').select('id', { count: 'exact', head: true }),
-        supabase.from('news_articles').select('id', { count: 'exact', head: true }).gte('created_at', today),
-        supabase.from('news_articles').select('id', { count: 'exact', head: true }),
-        supabase.from('social_posts').select('id', { count: 'exact', head: true }).gte('created_at', today),
-        supabase.from('social_posts').select('id', { count: 'exact', head: true }),
-        supabase.from('city_pages').select('id', { count: 'exact', head: true }),
-        supabase.from('faq_items').select('id', { count: 'exact', head: true })
-      ]);
-
-      const blogPostsToday = blogPostsTodayRes.count || 0;
-      const blogPostsTotal = blogPostsTotalRes.count || 0;
-      const newsToday = newsTodayRes.count || 0;
-      const newsTotal = newsTotalRes.count || 0;
-      const socialPostsToday = socialPostsTodayRes.count || 0;
-      const socialPostsTotal = socialPostsTotalRes.count || 0;
+      const publications = dashboard.publication_stats || {};
+      const blogPostsToday = publications.blogPostsToday || 0;
+      const blogPostsTotal = publications.blogPostsTotal || 0;
+      const newsToday = publications.newsToday || 0;
+      const newsTotal = publications.newsTotal || 0;
+      const socialPostsToday = publications.socialPostsToday || 0;
+      const socialPostsTotal = publications.socialPostsTotal || 0;
 
       setAiMetrics({
-        decisionsToday: decisionsRes.count || 0,
-        autonomousActions: actionsRes.count || 0,
-        emailsProcessed: emailsRes.count || 0,
+        decisionsToday: metrics.decisionsToday || 0,
+        autonomousActions: metrics.autonomousActions || 0,
+        emailsProcessed: metrics.emailsProcessed || 0,
         contentGenerated: blogPostsToday + newsToday + socialPostsToday,
-        learningEvents: learningRes.count || 0,
+        learningEvents: metrics.learningEvents || 0,
         councilDebates: 0
       });
 
@@ -245,18 +206,13 @@ const Dashboard: React.FC = () => {
         newsTotal,
         socialPostsToday,
         socialPostsTotal,
-        citypagesTotal: citypagesTotalRes.count || 0,
-        faqTotal: faqTotalRes.count || 0,
+        citypagesTotal: publications.citypagesTotal || 0,
+        faqTotal: publications.faqTotal || 0,
         autoPublishEnabled: true
       });
 
       // 4. Recent AI Logs (dernières 10 erreurs)
-      const { data: cronHistory } = await supabase
-        .from('cron_execution_history')
-        .select('*')
-        .eq('status', 'failed')
-        .order('created_at', { ascending: false })
-        .limit(10);
+      const cronHistory = dashboard.ai_logs || [];
 
       if (cronHistory) {
         const logs = cronHistory.map(log => ({
@@ -425,24 +381,11 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    const channel = supabase
-      .channel('dashboard_leads_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'crm_leads'
-        },
-        () => {
-          console.log('Lead updated, refreshing stats...');
-          loadDashboardData(false);
-        }
-      )
-      .subscribe();
+    const refresh = () => document.visibilityState === 'visible' && loadDashboardData(false);
+    document.addEventListener('visibilitychange', refresh);
 
     return () => {
-      supabase.removeChannel(channel);
+      document.removeEventListener('visibilitychange', refresh);
     };
   }, [isAuthenticated, loadDashboardData]);
 
@@ -493,15 +436,12 @@ const Dashboard: React.FC = () => {
   const toggleAIMaster = async () => {
     try {
       const newStatus = !aiMasterStatus.is_active;
-      const { error } = await supabase
-        .from('ai_master_status')
-        .update({
-          is_active: newStatus,
-          last_update: new Date().toISOString()
-        })
-        .eq('id', '308b0757-77e6-4425-b5c0-2cf2dae48eba');
+      await nativeAdminCall('/v1/admin/dashboard', {
+        method: 'PATCH',
+        body: JSON.stringify({ action: 'toggle_ai_master', enabled: newStatus })
+      });
 
-      if (!error) {
+      {
         setAiMasterStatus(prev => ({ ...prev, is_active: newStatus }));
         toast.success(newStatus ? 'IA Master ACTIVÉE ✅' : 'IA Master DÉSACTIVÉE ⚠️');
       }
@@ -513,15 +453,12 @@ const Dashboard: React.FC = () => {
   // Toggle Automation individuelle
   const toggleAutomation = async (id: string, currentStatus: boolean) => {
     try {
-      const { error } = await supabase
-        .from('automation_status')
-        .update({
-          enabled: !currentStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id);
+      await nativeAdminCall('/v1/admin/dashboard', {
+        method: 'PATCH',
+        body: JSON.stringify({ action: 'toggle_automation', id, enabled: !currentStatus })
+      });
 
-      if (!error) {
+      {
         setAutomations(prev =>
           prev.map(auto =>
             auto.id === id ? { ...auto, enabled: !currentStatus } : auto

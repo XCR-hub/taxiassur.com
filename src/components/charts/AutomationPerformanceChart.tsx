@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Zap, Loader2, Mail, MessageSquare, Bell, CheckCircle } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { nativeAdminDashboard } from '@/lib/native-admin-data';
 
 interface AutomationData {
   type: string;
@@ -19,16 +19,15 @@ export function AutomationPerformanceChart() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [emailsResult, interactionsResult, leadsResult] = await Promise.all([
-          supabase.from('email_messages').select('id, direction').eq('direction', 'outbound'),
-          supabase.from('crm_interactions').select('id, type'),
-          supabase.from('crm_leads').select('id, needs_followup, ai_recommended_action'),
-        ]);
-
-        const emailsSent = emailsResult.data?.length || 0;
-        const totalInteractions = interactionsResult.data?.length || 0;
-        const followupsNeeded = leadsResult.data?.filter(l => l.needs_followup).length || 0;
-        const aiRecommendations = leadsResult.data?.filter(l => l.ai_recommended_action).length || 0;
+        const result = await nativeAdminDashboard() as {
+          leads?: { needs_followup?: boolean; ai_recommended_action?: string | null }[];
+          automation_metrics?: { emails_sent?: number; interactions?: number };
+        };
+        const leads = result.leads || [];
+        const emailsSent = Number(result.automation_metrics?.emails_sent || 0);
+        const totalInteractions = Number(result.automation_metrics?.interactions || 0);
+        const followupsNeeded = leads.filter(l => l.needs_followup).length;
+        const aiRecommendations = leads.filter(l => l.ai_recommended_action).length;
 
         const automationData: AutomationData[] = [
           {
