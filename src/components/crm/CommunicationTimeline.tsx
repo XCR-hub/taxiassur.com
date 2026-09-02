@@ -14,7 +14,7 @@ import {
   Image as ImageIcon,
   File
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminLeadSummary } from '@/lib/native-admin-data';
 import { SecureDocumentLink } from './SecureDocumentLink';
 
 interface Attachment {
@@ -75,27 +75,14 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
 
       console.log('[CommunicationTimeline] Loading timeline for lead:', leadId);
 
-      const { data: emails, error: emailError } = await supabase
-        .from('email_messages')
-        .select(`
-          id,
-          subject,
-          body_text,
-          body_html,
-          from_email,
-          from_name,
-          to_emails,
-          received_at,
-          direction,
-          status,
-          created_at,
-          attachments
-        `)
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: false })
-        .limit(50);
+      const { summary = {} } = await nativeAdminLeadSummary(leadId) as {
+        summary?: { emails?: any[]; interactions?: any[] };
+      };
+      const emails = (summary.emails || [])
+        .sort((a, b) => Date.parse(b.created_at || b.received_at || '') - Date.parse(a.created_at || a.received_at || ''))
+        .slice(0, 50);
 
-      console.log('[CommunicationTimeline] Emails query result:', { emails, emailError, count: emails?.length || 0 });
+      console.log('[CommunicationTimeline] Native emails loaded:', emails.length);
 
       if (emails) {
         for (const email of emails) {
@@ -165,12 +152,9 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
         }
       }
 
-      const { data: interactions } = await supabase
-        .from('crm_interactions')
-        .select('*')
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: false })
-        .limit(50);
+      const interactions = (summary.interactions || [])
+        .sort((a, b) => Date.parse(b.created_at || '') - Date.parse(a.created_at || ''))
+        .slice(0, 50);
 
       if (interactions) {
         interactions.forEach((interaction) => {

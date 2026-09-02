@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MessageSquare, Maximize2, X, Mail, Phone as PhoneIcon, MessageCircle, ArrowDownLeft, ArrowUpRight, Clock } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminLeadSummary } from '@/lib/native-admin-data';
 import CommunicationTimeline from './CommunicationTimeline';
 
 interface TimelineCardProps {
@@ -46,12 +46,12 @@ const TimelineCard: React.FC<TimelineCardProps> = ({
       const events: QuickEvent[] = [];
 
       // Charger les 3 derniers emails
-      const { data: emails } = await supabase
-        .from('email_messages')
-        .select('id, subject, body_text, direction, received_at, created_at')
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: false })
-        .limit(5);
+      const { summary = {} } = await nativeAdminLeadSummary(leadId) as {
+        summary?: { emails?: any[]; interactions?: any[] };
+      };
+      const emails = (summary.emails || [])
+        .sort((a, b) => Date.parse(b.created_at || b.received_at || '') - Date.parse(a.created_at || a.received_at || ''))
+        .slice(0, 5);
 
       if (emails) {
         emails.forEach(email => {
@@ -67,12 +67,9 @@ const TimelineCard: React.FC<TimelineCardProps> = ({
       }
 
       // Charger les 3 dernières interactions
-      const { data: interactions } = await supabase
-        .from('crm_interactions')
-        .select('id, channel, direction, subject, content, notes, created_at')
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: false })
-        .limit(5);
+      const interactions = (summary.interactions || [])
+        .sort((a, b) => Date.parse(b.created_at || '') - Date.parse(a.created_at || ''))
+        .slice(0, 5);
 
       if (interactions) {
         interactions.forEach(int => {
