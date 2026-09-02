@@ -146,8 +146,8 @@ requireMatch(crmEmail, /url\.protocol !== "https:"[\s\S]*allowedHosts\.has[\s\S]
 requireMatch(crmEmail, /validateAttachmentOwnership[\s\S]*\.eq\("lead_id", leadId\)[\s\S]*AttachmentOwnershipMismatch/, 'CRM email attachments are not rebound to their lead');
 requireMatch(crmEmail, /status: 'processing'[\s\S]*rejected \? 'failed' : 'delivery_uncertain'[\s\S]*status: 'sent'/, 'CRM email audit has no reliable failure or uncertain-delivery transition');
 forbidMatch('src/components/crm/EmailComposerModal.tsx', /getPublicUrl|VITE_SUPABASE_ANON_KEY|crm_interactions'\)\.insert/, 'CRM composer exposes private attachments or bypasses authenticated delivery audit');
-requireMatch('src/components/crm/EmailComposerModal.tsx', /customPaths[\s\S]*sendError \|\| !sendResult\?\.success/, 'CRM composer can omit a fresh attachment or report false success');
-requireMatch('src/components/crm/LeadDocumentsSelector.tsx', /file_path[\s\S]*getSecureDocumentUrl/, 'CRM document selector still depends on public document URLs');
+requireMatch('src/components/crm/EmailComposerModal.tsx', /customPaths[\s\S]*customPaths\.some[\s\S]*nativeAdminCall[\s\S]*!sendResult\.ok \|\| !sendResult\.queued/, 'CRM composer can omit a fresh attachment or report false success');
+requireMatch('src/components/crm/LeadDocumentsSelector.tsx', /file_path[\s\S]*nativeAdminDocumentUrl[\s\S]*nativeAdminStoredDocumentUrl/, 'CRM document selector still depends on public document URLs');
 forbidMatch('src/backoffice/CRMCommercial.tsx', /functions\/v1\/send-crm-email[\s\S]{0,300}VITE_SUPABASE_ANON_KEY/, 'CRMCommercial still calls the email relay anonymously');
 requireMatch(crmEmail, /escapeHtml\(to_name[\s\S]*escapeHtml\(a\.filename\)/, 'CRM email inserts unescaped display names or attachment names');
 requireMatch(crmEmail, /new URL\(url\)[\s\S]*\["https:", "http:"\]/, 'CRM click tracking accepts unsafe URL schemes');
@@ -367,18 +367,18 @@ requireMatch('server/taxiassur-platform-api.mjs', /downloadProspectQuote[\s\S]*l
 forbidMatch('src/components/client/ClientQuotesViewer.tsx', /href=\{(?:fileUrl|quote\.rc_pro_addon_file_url)\}|window\.open\(fileUrl/, 'prospect quotes still expose stored document URLs directly');
 const submitQuoteModal = 'src/components/crm/SubmitQuoteModal.tsx';
 forbidMatch(submitQuoteModal, /getPublicUrl|href=\{formData\.quote_file_url\}|upsert:\s*true|body:\s*html,/, 'quote submission exposes private files, overwrites objects, or stores a portal token in audit HTML');
-requireMatch(submitQuoteModal, /getSecureDocumentUrl[\s\S]*bucket:\s*["']contract-documents["']/, 'staff quote preview bypasses short-lived document signing');
-requireCount(submitQuoteModal, /withTimeout\([\s\S]{0,350}?\.upload\(/g, 4, 'not every quote document upload has a deadline');
-requireMatch(submitQuoteModal, /pendingUploadPaths[\s\S]*remove\(abandonedPaths\)[\s\S]*pendingUploadPaths\.current\.delete/, 'abandoned quote uploads are not cleaned safely');
-requireCount(submitQuoteModal, /file_url:\s*null/g, 2, 'generated quote documents still persist public URLs');
-requireMatch(submitQuoteModal, /TOKEN_PATTERN[\s\S]*Accès prospect sécurisé manquant[\s\S]*escapeHtml\(d\.document_name\)/, 'quote e-mail accepts a missing token or injects unescaped document metadata');
+requireMatch(submitQuoteModal, /nativeAdminStoredDocumentUrl[\s\S]*["']contract-documents["']/, 'staff quote preview bypasses authenticated native document delivery');
+requireMatch('src/lib/native-admin-data.ts', /nativeAdminUploadQuoteDocument[\s\S]{0,700}?AbortSignal\.timeout\(60_000\)/, 'quote document upload does not have a native deadline');
+requireMatch('server/taxiassur-platform-api.mjs', /adminLeadQuoteDocumentUpload[\s\S]*scanFile\(temporaryPath\)[\s\S]*safeUnlink\(finalPath\)/, 'native quote upload lacks antivirus scanning or orphan cleanup');
+requireMatch(submitQuoteModal, /nativeAdminUploadQuoteDocument[\s\S]*result\.path/, 'quote documents are not persisted as private native paths');
+requireMatch('server/taxiassur-platform-api.mjs', /adminLeadQuoteEmail[\s\S]*context\.lead\.email[\s\S]*context\.lead\.access_token[\s\S]*native_email_outbox/, 'quote e-mail does not use the stored recipient and prospect access token');
 requireMatch(submitQuoteModal, /await sendQuoteEmail\(\)[\s\S]*sent_to_client_at:[\s\S]*sent_at:/, 'quote is marked sent before delivery succeeds');
 const signedQuoteStep = 'src/components/crm/SignatureDevisStep.tsx';
 forbidMatch(signedQuoteStep, /getPublicUrl|href=\{uploadedFile\.file_url\}|file_url:\s*publicUrl/, 'signed quote remains publicly accessible');
-requireMatch(signedQuoteStep, /crypto\.randomUUID\(\)[\s\S]*withTimeout\([\s\S]*\.upload\([\s\S]*60_000/, 'signed quote upload is predictable or unbounded');
-requireMatch(signedQuoteStep, /file_url:\s*null[\s\S]*bucket:\s*["']contract-documents["'][\s\S]*remove\(\[fileName\]\)/, 'signed quote metadata is public or orphan cleanup is missing');
+requireMatch(signedQuoteStep, /nativeAdminUploadContractDocument\(leadId,\s*["']devis_signe["']/, 'signed quote upload bypasses the bounded native document API');
+requireMatch('server/taxiassur-platform-api.mjs', /uploadAdminContractDocument[\s\S]*randomUUID\(\)[\s\S]*scanFile\(temporaryPath\)[\s\S]*safeUnlink\(finalPath\)/, 'signed quote metadata is public or orphan cleanup is missing');
 requireMatch(signedQuoteStep, /SecureDocumentLink[\s\S]*filePath=\{uploadedFile\.file_path\}[\s\S]*bucket="contract-documents"/, 'signed quote preview bypasses secure signing');
-requireMatch(signedQuoteStep, /remove\(\[filePath\]\)[\s\S]*20_000/, 'signed quote deletion leaves the storage object behind');
+requireMatch(signedQuoteStep, /nativeAdminDeleteDocument\(uploadedFile\.id\)/, 'signed quote deletion bypasses native object cleanup');
 const pipelineCard = 'src/components/crm/PipelineCard.tsx';
 forbidMatch(pipelineCard, /getPublicUrl|quote_pdf_url:\s*publicUrl|sent_at:\s*new Date/, 'Kanban quote upload exposes a public URL or claims delivery prematurely');
 requireMatch(pipelineCard, /application\/pdf[\s\S]*10 \* 1024 \* 1024[\s\S]*crypto\.randomUUID\(\)/, 'Kanban quote validation or unpredictable naming is missing');
@@ -569,7 +569,7 @@ for (const caller of ['src/backoffice/AutomationLayout.tsx', 'src/backoffice/Cit
 requireMatch('supabase/functions/generate-seo-content/index.ts', /isInternalRequest[\s\S]*Unauthorized/, 'SEO content generator accepts anonymous privileged requests');
 requireMatch('scripts/deploy-critical-supabase-security.ps1', /'generate-seo-content'/, 'SEO content generator security fix is missing from controlled deployment');
 for (const caller of ['src/backoffice/BacklinkReports.tsx', 'src/backoffice/TestAutomationButton.tsx', 'src/backoffice/TestAutomations.tsx', 'src/backoffice/AIContentGeneratorUnified.tsx', 'src/backoffice/CampaignLauncher.tsx']) {
-  requireMatch(caller, /internalFunctionHeaders/, 'remaining backoffice Edge caller does not require a staff session');
+  requireMatch(caller, /internalFunctionHeaders|nativeAdminCall/, 'remaining backoffice privileged caller does not require a staff session');
   forbidMatch(caller, /VITE_SUPABASE_ANON_KEY/, 'remaining backoffice Edge caller falls back to the public anon key');
 }
 requireMatch('supabase/functions/indexnow-ping/index.ts', /isInternalRequest[\s\S]*INDEXNOW_KEY[\s\S]*taxiassur\.com[\s\S]*api\.indexnow\.org/, 'IndexNow endpoint is missing authentication, key validation, host validation, or upstream submission');
@@ -590,7 +590,7 @@ for (const functionName of ['ai-social-scraper', 'news-aggregator-master', 'ai-v
 requireMatch('supabase/functions/ai-social-scraper/index.ts', /max_results[\s\S]*news-aggregator-master[\s\S]*news_articles[\s\S]*articles/, 'news scraper adapter lacks bounds, aggregation, persistence readback, or frontend response contract');
 requireMatch('supabase/functions/ai-viral-content-generator/index.ts', /allowedPlatforms[\s\S]*auto_publish[\s\S]*OPENAI_API_KEY[\s\S]*posts[\s\S]*humanization_score/, 'viral content generator lacks platform validation, safe draft-only behavior, provider configuration, or frontend response contract');
 requireMatch('supabase/functions/auto-seo-notifier/index.ts', /isInternalRequest[\s\S]*indexnow-ping[\s\S]*submitted/, 'automatic SEO notifier lacks authentication, IndexNow delegation, or frontend response contract');
-requireMatch('src/lib/feeds.ts', /internalFunctionHeaders/, 'feed regeneration does not require a staff session');
+requireMatch('src/lib/feeds.ts', /internalFunctionHeaders|nativeAdminCall/, 'feed regeneration does not require a staff session');
 forbidMatch('src/lib/feeds.ts', /getSupabaseAnonKey|VITE_SUPABASE_ANON_KEY/, 'feed regeneration falls back to the public anon key');
 requireMatch('scripts/deploy-critical-supabase-security.ps1', /'auto-seo-notifier'/, 'automatic SEO notifier is missing from controlled deployment');
 forbidMatch('src/router.tsx', /AuthCallback(?:Twitter|Youtube|Pinterest)|\/auth\/callback\/(?:twitter|youtube|pinterest)/i, 'retired Supabase social OAuth callback is still publicly routable');
@@ -623,7 +623,6 @@ for (const file of ['src/pages/EspaceProspect.tsx', 'src/pages/ProspectDocuments
 }
 forbidMatch(portalTimeout, /timeoutMs = (?:2\d|[3-9]\d|\d{3,})_000/, 'portal timeout exceeds 20 seconds');
 for (const [file, endpoint] of [
-  ['src/components/crm/EmailComposerModal.tsx', 'send-crm-email'],
   ['src/backoffice/WhatsAppManager.tsx', 'send-whatsapp'],
 ]) {
   requireMatch(file, new RegExp(`withTimeout\\([\\s\\S]*${endpoint}[\\s\\S]*45_000`), `${endpoint} manual send can spin forever`);
@@ -634,14 +633,15 @@ requireMatch(idempotentDeliveryCaller, /getDeliveryRequestId\(channel, signature
 requireMatch(idempotentDeliveryCaller, /withTimeout\([\s\S]*client\.functions\.invoke[\s\S]*timeoutMs/, 'shared frontend delivery caller lacks an invocation timeout');
 requireMatch(idempotentDeliveryCaller, /body: \{ \.\.\.body, requestId \}/, 'shared frontend delivery caller does not inject requestId');
 requireMatch(idempotentDeliveryCaller, /result\.data\?\.success === true\) clearDeliveryRequestId/, 'shared frontend delivery caller clears idempotence before confirmed success');
-for (const file of [
-  'src/components/crm/CollecteDocumentsStep.tsx',
-  'src/components/crm/DocumentReminderPanel.tsx',
-  'src/components/crm/ValidationDevisStep.tsx',
-]) {
+for (const file of ['src/components/crm/DocumentReminderPanel.tsx']) {
   for (const channel of ['email', 'sms', 'whatsapp']) {
     requireMatch(file, new RegExp(`invokeIdempotentDelivery[^]{0,100}["'']${channel}["'']`), `${file} still bypasses idempotent ${channel} delivery`);
   }
+}
+for (const file of ['src/components/crm/CollecteDocumentsStep.tsx', 'src/components/crm/ValidationDevisStep.tsx']) {
+  requireMatch(file, /getDeliveryRequestId[\s\S]*request_id[\s\S]*clearDeliveryRequestId/, `${file} lacks stable native delivery request IDs or success cleanup`);
+  requireMatch(file, /\/sms/, `${file} does not route SMS through an authenticated native endpoint`);
+  requireMatch(file, /\/whatsapp/, `${file} does not route WhatsApp through an authenticated native endpoint`);
 }
 const directDeliveryAllowlist = new Set([
   'src/components/crm/EmailComposerModal.tsx',
@@ -677,7 +677,7 @@ for (const file of [...directDeliveryAllowlist].filter((file) => ![
   'src/components/crm/SMSSendModal.tsx',
   'src/components/crm/SMSConversationPanel.tsx',
 ].includes(file))) {
-  requireMatch(file, /getDeliveryRequestId[\s\S]*requestId[\s\S]*withTimeout[\s\S]*45_000[\s\S]*clearDeliveryRequestId/, 'allowlisted direct delivery lacks stable request ID, timeout, or success cleanup');
+  requireMatch(file, /getDeliveryRequestId[\s\S]*requestId[\s\S]*(?:withTimeout[\s\S]*45_000|nativeAdminCall)[\s\S]*clearDeliveryRequestId/, 'allowlisted direct delivery lacks stable request ID, timeout, or success cleanup');
 }
 requireMatch('src/lib/client-platform-api.ts', /uploadClientPlatformDocument[\s\S]*60_000/, 'native client document upload can spin forever');
 for (const file of ['src/components/crm/SMSSendModal.tsx', 'src/components/crm/SMSConversationPanel.tsx']) {

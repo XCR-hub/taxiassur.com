@@ -19,6 +19,7 @@ import { Badge } from "../Badge";
 import { Modal, ModalFooter } from "../Modal";
 import { SecureDocumentLink } from "./SecureDocumentLink";
 import { nativeAdminCall } from "@/lib/native-admin-data";
+import { clearDeliveryRequestId, getDeliveryRequestId } from "@/lib/delivery-idempotency";
 
 interface ValidationDevisStepProps {
   leadId: string;
@@ -368,11 +369,14 @@ export default function ValidationDevisStep({
         </div>
       `;
 
+      const emailSignature = JSON.stringify({ leadId, channel: "email", subject, content: html, context: "quote_reminder" });
+      const emailRequestId = getDeliveryRequestId("email", emailSignature);
       const sendResult = await nativeAdminCall<{ email_queued?: boolean }>(
         `/v1/admin/leads/${encodeURIComponent(leadId)}/access-email`,
-        { method: "POST", body: JSON.stringify({ subject, content: html, context: "quote_reminder" }) },
+        { method: "POST", body: JSON.stringify({ subject, content: html, context: "quote_reminder", request_id: emailRequestId }) },
       );
       if (!sendResult.email_queued) throw new Error("Email non mis en file d'envoi");
+      clearDeliveryRequestId("email", emailSignature);
 
       toast.success("✅ Email de relance envoyé avec succès !");
     } catch (error) {
@@ -409,11 +413,14 @@ Des questions ? Contactez-nous au 01 80 85 57 88
 
 L'équipe TaxiAssur`;
 
+      const whatsappSignature = JSON.stringify({ leadId, channel: "whatsapp", message });
+      const whatsappRequestId = getDeliveryRequestId("whatsapp", whatsappSignature);
       const sendResult = await nativeAdminCall<{ success?: boolean }>(
         `/v1/admin/leads/${encodeURIComponent(leadId)}/whatsapp`,
-        { method: "POST", body: JSON.stringify({ content: message }) },
+        { method: "POST", body: JSON.stringify({ content: message, request_id: whatsappRequestId }) },
       );
       if (!sendResult.success) throw new Error("WhatsApp non envoyé");
+      clearDeliveryRequestId("whatsapp", whatsappSignature);
 
       toast.success("✅ Message WhatsApp envoyé avec succès !");
     } catch (error) {
@@ -439,11 +446,14 @@ L'équipe TaxiAssur`;
         leadFirstName || "Bonjour"
       }, vos 5 devis d'assurance taxi sont prêts ! Consultez-les : ${prospectUrl} - TaxiAssur`;
 
+      const smsSignature = JSON.stringify({ leadId, channel: "sms", message });
+      const smsRequestId = getDeliveryRequestId("sms", smsSignature);
       const data = await nativeAdminCall<{ ok?: boolean }>(
         `/v1/admin/leads/${encodeURIComponent(leadId)}/sms`,
-        { method: "POST", body: JSON.stringify({ action: "send", content: message, request_id: crypto.randomUUID() }) },
+        { method: "POST", body: JSON.stringify({ action: "send", content: message, request_id: smsRequestId }) },
       );
       if (!data.ok) throw new Error("SMS non envoyé");
+      clearDeliveryRequestId("sms", smsSignature);
 
       toast.success("✅ SMS envoyé avec succès !");
     } catch (error) {

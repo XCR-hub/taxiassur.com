@@ -4,6 +4,7 @@ import DocumentValidationComplete from './DocumentValidationComplete';
 import { toast } from '@/lib/toast';
 import { getRequiredDocuments } from '@/lib/document-requirements';
 import { nativeAdminCall } from '@/lib/native-admin-data';
+import { clearDeliveryRequestId, getDeliveryRequestId } from '@/lib/delivery-idempotency';
 
 interface CollecteDocumentsStepProps {
   leadId: string;
@@ -268,6 +269,8 @@ export default function CollecteDocumentsStep({
     try {
       const messageContent = editableBody;
       const subject = editableSubject;
+      const deliverySignature = JSON.stringify({ leadId, channel: template.channel, subject, messageContent, templateKey: template.template_key });
+      const requestId = getDeliveryRequestId(template.channel, deliverySignature);
 
       if (template.channel === 'email') {
         const emailResult = await nativeAdminCall<{ ok?: boolean; email_queued?: boolean }>(
@@ -278,6 +281,7 @@ export default function CollecteDocumentsStep({
               subject: subject || 'Documents necessaires - TaxiAssur',
               message: messageContent,
               template_key: template.template_key,
+              request_id: requestId,
             }),
           }
         );
@@ -293,7 +297,7 @@ export default function CollecteDocumentsStep({
             body: JSON.stringify({
               action: 'send',
               content: messageContent,
-              request_id: crypto.randomUUID(),
+              request_id: requestId,
             }),
           }
         );
@@ -304,13 +308,14 @@ export default function CollecteDocumentsStep({
         const waResult = await nativeAdminCall<{ success?: boolean }>(
           `/v1/admin/leads/${encodeURIComponent(leadId)}/whatsapp`, {
             method: 'POST',
-            body: JSON.stringify({ content: messageContent, template_key: template.template_key }),
+            body: JSON.stringify({ content: messageContent, template_key: template.template_key, request_id: requestId }),
           }
         );
         if (!waResult.success) throw new Error('WhatsApp non envoyé');
       }
 
       toast.success(`✅ ${template.channel.toUpperCase()} envoyé avec succès !`);
+      clearDeliveryRequestId(template.channel, deliverySignature);
       setSelectedTemplate(null);
 
     } catch (error) {

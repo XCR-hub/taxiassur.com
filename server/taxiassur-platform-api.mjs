@@ -1169,8 +1169,19 @@ async function adminLeadsList(req, res, origin, requestId, url) {
   const filters = [`COALESCE(data->>'deleted_at','')=''`];
   if (status) filters.push(`COALESCE(data->>'status',data->>'pipeline_stage')=${quoteLiteral(status)}`);
   if (search) filters.push(`lower(concat_ws(' ',data->>'first_name',data->>'last_name',data->>'email',data->>'phone')) LIKE ${quoteLiteral(`%${search}%`)}`);
-  const result = parseJsonLine(await runPsql(`WITH filtered AS (
-    SELECT data || jsonb_build_object('id',record_id) AS data FROM taxiassur.records WHERE collection='crm_leads' AND ${filters.join(' AND ')}
+  const result = parseJsonLine(await runPsql(`WITH lead_sources AS (
+    SELECT data || jsonb_build_object('id',record_id) AS data
+      FROM taxiassur.records WHERE collection='crm_leads'
+    UNION ALL
+    SELECT legacy.data
+      FROM supabase_rest.crm_leads legacy
+     WHERE NOT EXISTS (
+       SELECT 1 FROM taxiassur.records native
+        WHERE native.collection='crm_leads'
+          AND native.record_id=legacy.data->>'id'
+     )
+  ), filtered AS (
+    SELECT data FROM lead_sources WHERE ${filters.join(' AND ')}
   ), page_rows AS (
     SELECT data FROM filtered ORDER BY COALESCE(data->>'updated_at',data->>'created_at','') DESC LIMIT ${pageSize} OFFSET ${offset}
   ) SELECT jsonb_build_object('leads',COALESCE((SELECT jsonb_agg(data) FROM page_rows),'[]'::jsonb),'total',(SELECT count(*) FROM filtered))::text;`)) || {};
