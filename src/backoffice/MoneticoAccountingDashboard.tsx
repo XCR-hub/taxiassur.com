@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
 import { toast } from '@/lib/toast';
+import { nativeAdminDeletePayment, nativeAdminInvoicing, nativeAdminQueuePaymentReport, nativeAdminUpdatePayment } from '@/lib/native-admin-data';
 import {
   DollarSign,
   Download,
@@ -117,20 +117,16 @@ export default function MoneticoAccountingDashboard() {
   async function loadData() {
     try {
       setLoading(true);
-      let query = supabase
-        .from('monetico_payments')
-        .select(`*, lead:crm_leads(first_name, last_name, phone)`)
-        .order('created_at', { ascending: false });
-
-      if (filterStatus !== 'all') query = query.eq('status', filterStatus);
-      if (startDate) query = query.gte('created_at', startDate);
-      if (endDate) query = query.lte('created_at', endDate + 'T23:59:59');
-
-      const { data, error } = await query;
-      if (error) throw error;
-      setPayments(data || []);
-      calculateStats(data || []);
-      calculateDailyData(data || []);
+      const response = await nativeAdminInvoicing() as { payments?: MoneticoPayment[] };
+      const data = (response.payments || []).filter(payment => {
+        if (filterStatus !== 'all' && payment.status !== filterStatus) return false;
+        if (startDate && payment.created_at < startDate) return false;
+        if (endDate && payment.created_at > endDate + 'T23:59:59') return false;
+        return true;
+      });
+      setPayments(data);
+      calculateStats(data);
+      calculateDailyData(data);
     } catch (error) {
       console.error('Erreur chargement paiements:', error);
       toast.error('Erreur de chargement');
@@ -142,11 +138,7 @@ export default function MoneticoAccountingDashboard() {
   async function cancelPayment(payment: MoneticoPayment) {
     try {
       setActionLoading(true);
-      const { error } = await supabase
-        .from('monetico_payments')
-        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-        .eq('id', payment.id);
-      if (error) throw error;
+      await nativeAdminUpdatePayment(payment.id, 'cancelled');
       toast.success('Demande de paiement annulée');
       setConfirmModal(null);
       setExpandedRow(null);
@@ -162,11 +154,7 @@ export default function MoneticoAccountingDashboard() {
   async function deletePayment(payment: MoneticoPayment) {
     try {
       setActionLoading(true);
-      const { error } = await supabase
-        .from('monetico_payments')
-        .delete()
-        .eq('id', payment.id);
-      if (error) throw error;
+      await nativeAdminDeletePayment(payment.id);
       toast.success('Paiement supprimé définitivement');
       setConfirmModal(null);
       setExpandedRow(null);
@@ -235,7 +223,8 @@ export default function MoneticoAccountingDashboard() {
       setSendingReport(true);
       const month = new Date().getMonth() + 1;
       const year = new Date().getFullYear();
-      const { error } = await supabase.functions.invoke('send-email-universal', {
+      const { error } = await nativeAdminQueuePaymentReport().then(() => ({ error: null }), error => ({ error }));
+      void ({
         body: {
           to: 'comptabilite@taxiassur.fr',
           subject: `Rapport Monético ${month}/${year} — CA ${stats?.total_ca.toFixed(2)} €`,

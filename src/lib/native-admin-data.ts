@@ -55,6 +55,9 @@ export const nativeAdminCreateMoneticoPayment=(body:{leadId?:string|null;lead_id
 export const nativeAdminLeadPayments=async(leadId:string)=>{const data:any=await call('/v1/admin/payments');return {...data,payments:(data.payments||[]).filter((payment:{lead_id?:string})=>String(payment.lead_id||'')===String(leadId))};};
 export const nativeAdminLeadRibs=(leadId:string)=>call(`/v1/admin/leads/${encodeURIComponent(leadId)}/ribs`);
 export const nativeAdminQueuePaymentEmail=(paymentId:string)=>call(`/v1/admin/payments/${encodeURIComponent(paymentId)}/email`,{method:'POST',body:'{}'});
+export const nativeAdminUpdatePayment=(paymentId:string,status:'pending'|'sent'|'cancelled'|'failed')=>call(`/v1/admin/payments/${encodeURIComponent(paymentId)}`,{method:'PATCH',body:JSON.stringify({status})});
+export const nativeAdminDeletePayment=(paymentId:string)=>call(`/v1/admin/payments/${encodeURIComponent(paymentId)}`,{method:'DELETE'});
+export const nativeAdminQueuePaymentReport=(recipient='comptabilite@taxiassur.fr')=>call('/v1/admin/payments/report-email',{method:'POST',body:JSON.stringify({recipient})});
 export const nativeAdminConfigureDownPayment=(contractId:string,body:{leadId:string;paymentId:string;paymentPath:string;amount:number})=>call(`/v1/admin/contracts/${encodeURIComponent(contractId)}/down-payment`,{method:'PATCH',body:JSON.stringify(body)});
 export const nativeAdminUpdateRib=(leadId:string,ribId:string,updates:Record<string,unknown>)=>call(`/v1/admin/leads/${encodeURIComponent(leadId)}/ribs/${encodeURIComponent(ribId)}`,{method:'PATCH',body:JSON.stringify(updates)});
 export const nativeAdminDeleteRib=(leadId:string,ribId:string)=>call(`/v1/admin/leads/${encodeURIComponent(leadId)}/ribs/${encodeURIComponent(ribId)}`,{method:'DELETE'});
