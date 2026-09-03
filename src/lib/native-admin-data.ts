@@ -13,7 +13,7 @@ export async function nativeAdminDashboard(compact=false){
   return promise;
 }
 export const nativeAdminCrmDashboard=()=>call('/v1/admin/dashboard?crm_summary=1');
-export const nativeAdminInvoicing=()=>call('/v1/admin/payments');
+export const nativeAdminInvoicing=async()=>{const [paymentData,leadData]:any[]=await Promise.all([call('/v1/admin/payments'),nativeAdminLeads()]);return {...paymentData,leads:leadData.leads||[]};};
 export async function nativeAdminLeads(search='',status=''){
   const query=`search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}&page_size=500`;
   const first:any=await call(`/v1/admin/leads?${query}&page=1`);

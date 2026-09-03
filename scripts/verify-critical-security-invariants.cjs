@@ -107,7 +107,6 @@ for (const file of [
   'src/components/client/ClientMoneticoPayment.tsx',
   'src/components/crm/DownPaymentManager.tsx',
   'src/components/crm/MoneticoPaymentManager.tsx',
-  'src/backoffice/LeadInvoicing.tsx',
 ]) {
   forbidMatch(file, /document\.write|htmlForm/, 'uses server-generated HTML for payment submission');
   requireMatch(file, /p\.monetico-services\.com/, 'does not pin the payment destination hostname');
@@ -240,6 +239,7 @@ forbidMatch(clientAccess, /sendEmailSMTP|crm_interactions[\s\S]*clientSpaceLink/
 for (const file of ['src/components/crm/ContratSignatureStep.tsx', 'src/components/crm/DocumentValidationComplete.tsx']) {
   requireMatch(file, /nativeAdminCall[\s\S]{0,300}?\/access-email[\s\S]{0,150}?method:\s*['"]POST['"]/, 'client access UI does not use the authenticated native access-email endpoint');
 }
+requireMatch('src/backoffice/LeadInvoicing.tsx', /paymentAccessToken[\s\S]*action\.hostname !== window\.location\.hostname[\s\S]*action\.pathname\.startsWith\('\/paiement\/'\)/, 'lead invoicing does not pin the native payment URL and strong access token');
 forbidMatch(clientAccess, /espace-client\/\$\{lead\.id\}/, 'client access email exposes a lead UUID as a login credential');
 requireMatch('src/components/crm/ContratSignatureStep.tsx', /nativeAdminUpdateLead[\s\S]{0,500}?\/access-email/, 'contract finalization does not activate the client and queue native portal access');
 forbidMatch('src/components/crm/ContratSignatureStep.tsx', /access_token|espace-client\?token=/, 'contract finalization exposes the access token in the browser');

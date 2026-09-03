@@ -122,26 +122,13 @@ const LeadInvoicing: React.FC = () => {
         requestId: paymentRequestId
       }), 45_000);
 
-      if (data?.success && data?.actionUrl && data?.formData) {
+      if (data?.ok && data?.paymentUrl && /^[0-9a-f]{64}$/i.test(data.paymentAccessToken || '')) {
         clearPaymentRequestId(paymentSignature);
-        const action = new URL(data.actionUrl);
-        if (action.protocol !== 'https:' || action.hostname !== 'p.monetico-services.com') {
+        const action = new URL(data.paymentUrl, window.location.origin);
+        if (action.protocol !== 'https:' || action.hostname !== window.location.hostname || !action.pathname.startsWith('/paiement/')) {
           throw new Error('Adresse de paiement invalide');
         }
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = action.toString();
-        form.target = '_blank';
-        Object.entries(data.formData as Record<string, string>).forEach(([name, value]) => {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = name;
-          input.value = String(value);
-          form.appendChild(input);
-        });
-        document.body.appendChild(form);
-        form.submit();
-        form.remove();
+        window.open(action.toString(), '_blank', 'noopener,noreferrer');
         setPaymentSuccess(true);
         setAmount('');
         setDescription('');
