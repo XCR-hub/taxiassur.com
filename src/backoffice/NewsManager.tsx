@@ -8,6 +8,7 @@ import Card from '../components/Card';
 import TestAutomationButton from './TestAutomationButton';
 import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
+import { nativeAdminNews, nativeAdminNewsAction } from '@/lib/native-admin-data';
 
 const NewsManager: React.FC = () => {
   const navigate = useNavigate();
@@ -30,17 +31,11 @@ const NewsManager: React.FC = () => {
     setLoading(true);
     try {
       // Charger depuis Supabase d'abord
-      const { supabase } = await import('../lib/supabase');
+      const { items: nativeNews = [] } = await nativeAdminNews() as { items?: Array<{ id: string; title: string; content: string; summary?: string; category?: string; tags?: string[]; published_at?: string; created_at: string; updated_at?: string; author?: string; status?: string }> };
 
-      const { data: supabaseNews, error: supabaseError } = await supabase
-        .from('news_articles')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (!supabaseError && supabaseNews && supabaseNews.length > 0) {
+      if (nativeNews.length > 0) {
         // Convertir les données Supabase au format attendu
-        const formattedNews = (supabaseNews as Array<{ id: string; title: string; content: string; summary?: string; category?: string; tags?: string[]; published_at?: string; created_at: string; author?: string; status?: string }>).map((article) => ({
+        const formattedNews = nativeNews.slice(0, 20).map((article) => ({
           id: article.id,
           originalTitle: article.title,
           synthesizedTitle: article.title,
@@ -113,14 +108,7 @@ const NewsManager: React.FC = () => {
   const publishNews = async (newsId: string) => {
     try {
       // Publier l'actualité dans Supabase
-      const { supabase } = await import('../lib/supabase');
-
-      const { error } = await supabase
-        .from('news_articles')
-        .update({ status: 'published', published_at: new Date().toISOString() })
-        .eq('id', newsId);
-
-      if (error) throw error;
+      await nativeAdminNewsAction('publish', newsId);
 
       toast.success('✅ Actualité publiée avec succès !');
       await loadProcessedNews();
@@ -137,18 +125,8 @@ const NewsManager: React.FC = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clean-news-excerpts`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': (await internalFunctionHeaders()).Authorization
-          }
-        }
-      );
-
-      const result = await response.json();
+      const result = await nativeAdminNewsAction('clean_excerpts') as { ok?: boolean; success?: boolean; message?: string; totalArticles?: number; cleanedCount?: number; error?: string };
+      result.success = result.ok === true;
 
       if (result.success) {
         toast.success(`✅ ${result.message}\n\nTotal: ${result.totalArticles} articles\nNettoyés: ${result.cleanedCount} articles`);

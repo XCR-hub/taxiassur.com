@@ -818,10 +818,9 @@ async function adminContent(req,res,origin,requestId,url){
   const kind=String(url.searchParams.get('kind')||'');const collections={blog:'blog_posts',news:'news_articles',faq:'faqs',leads:'crm_leads'};
   const collection=collections[kind];if(!collection)return json(res,origin,400,{ok:false,error:'invalid_content_kind'},requestId);
   const limit=Math.min(200,Math.max(1,Number(url.searchParams.get('limit'))||50));const offset=Math.max(0,Number(url.searchParams.get('offset'))||0);
-  const filters=[`collection=${quoteLiteral(collection)}`];const category=String(url.searchParams.get('category')||'').trim();const status=String(url.searchParams.get('status')||'').trim();
-  if(category)filters.push(`data->>'category'=${quoteLiteral(category)}`);if(status)filters.push(`data->>'status'=${quoteLiteral(status)}`);
-  const sql=`SELECT COALESCE(jsonb_agg(data ORDER BY COALESCE(data->>'published_at',data->>'created_at','') DESC),'[]'::jsonb)::text FROM (SELECT data FROM taxiassur.records WHERE ${filters.join(' AND ')} ORDER BY COALESCE(data->>'published_at',data->>'created_at','') DESC LIMIT ${limit} OFFSET ${offset}) rows;`;
-  return json(res,origin,200,{ok:true,items:parseJsonLine(await runPsql(sql))||[]},requestId);
+  const category=String(url.searchParams.get('category')||'').trim(),status=String(url.searchParams.get('status')||'').trim();
+  let items=await recordsAllWithMirror(collection);items=items.filter(item=>(!category||String(item.category||'')===category)&&(!status||String(item.status||'')===status)).sort((a,b)=>String(b.published_at||b.created_at||'').localeCompare(String(a.published_at||a.created_at||'')));
+  return json(res,origin,200,{ok:true,items:items.slice(offset,offset+limit),total:items.length},requestId);
 }
 
 async function adminQrCodes(req,res,origin,requestId){
@@ -896,7 +895,7 @@ async function adminNews(req,res,origin,requestId,url){
   if(!await verifiedAdminSession(req))return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
   if(req.method==='GET'){url.searchParams.set('kind','news');return adminContent(req,res,origin,requestId,url);}
   const body=await readJsonBody(req),action=String(body.action||'');
-  if(action==='publish'){const id=String(body.id||'');if(!uuidPattern.test(id))return json(res,origin,400,{ok:false,error:'invalid_id'},requestId);const item=parseJsonLine(await runPsql(`UPDATE taxiassur.records SET data=data||jsonb_build_object('status','published','published',true,'published_at',now()::text,'updated_at',now()::text),updated_at=now(),revision=revision+1 WHERE collection='news_articles' AND record_id=${quoteLiteral(id)} RETURNING data::text;`));return item?json(res,origin,200,{ok:true,item},requestId):json(res,origin,404,{ok:false,error:'not_found'},requestId);}
+  if(action==='publish'){const id=String(body.id||'');if(!uuidPattern.test(id))return json(res,origin,400,{ok:false,error:'invalid_id'},requestId);let item=parseJsonLine(await runPsql(`UPDATE taxiassur.records SET data=data||jsonb_build_object('status','published','published',true,'published_at',now()::text,'updated_at',now()::text),updated_at=now(),revision=revision+1 WHERE collection='news_articles' AND record_id=${quoteLiteral(id)} RETURNING data::text;`));if(!item){const archived=(await recordsAllWithMirror('news_articles')).find(row=>String(row.id)===id);if(archived){const now=new Date().toISOString();item={...archived,status:'published',published:true,published_at:now,updated_at:now};await runPsql(`INSERT INTO taxiassur.records(collection,record_id,data,origin)VALUES('news_articles',${quoteLiteral(id)},${quoteLiteral(JSON.stringify(item))}::jsonb,'admin-archive-restore');`);}}return item?json(res,origin,200,{ok:true,item},requestId):json(res,origin,404,{ok:false,error:'not_found'},requestId);}
   if(action==='clean_excerpts'){const count=Number(parseJsonLine(await runPsql(`WITH changed AS (UPDATE taxiassur.records SET data=jsonb_set(jsonb_set(data,'{summary}',to_jsonb(regexp_replace(COALESCE(data->>'summary',''),'<[^>]+>','','g'))),'{excerpt}',to_jsonb(regexp_replace(COALESCE(data->>'excerpt',''),'<[^>]+>','','g'))),updated_at=now(),revision=revision+1 WHERE collection='news_articles' AND (COALESCE(data->>'summary','')~'<[^>]+>' OR COALESCE(data->>'excerpt','')~'<[^>]+>') RETURNING 1) SELECT count(*)::text FROM changed;`)))||0;return json(res,origin,200,{ok:true,cleanedCount:count,totalArticles:count,message:`${count} résumé(s) nettoyé(s)`},requestId);}
   return json(res,origin,400,{ok:false,error:'invalid_action'},requestId);
 }
