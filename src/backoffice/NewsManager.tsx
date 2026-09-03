@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { useNavigate } from 'react-router-dom';
 import { Play, Pause, RefreshCw, Eye, Settings, TrendingUp, Clock, Zap, Globe, Home, Sparkles } from 'lucide-react';
 import { useNewsSystem } from '../lib/newsAggregator';
@@ -74,27 +73,7 @@ const NewsManager: React.FC = () => {
     try {
       setLoading(true);
 
-      // Appeler l'Edge Function Supabase pour agréger les actualités
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-social-scraper`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': (await internalFunctionHeaders()).Authorization
-          },
-          body: JSON.stringify({
-            keywords: ['assurance taxi', 'taxi professionnel', 'réglementation taxi'],
-            max_results: settings.maxNewsPerDay
-          })
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Échec de l\'agrégation des actualités');
-      }
-
-      const result = await response.json();
+      const result = await nativeAdminNewsAction('refresh', '', { max_results: settings.maxNewsPerDay }) as { articles?: unknown[] };
       toast.success(`✅ ${result.articles?.length || 0} actualités récupérées et traitées !`);
       await loadProcessedNews();
     } catch (error) {

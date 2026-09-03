@@ -563,7 +563,7 @@ for (const functionName of ['llm-council-chat', 'clean-news-excerpts', 'send-new
   requireMatch('scripts/deploy-critical-supabase-security.ps1', new RegExp("'" + functionName + "'"), functionName + ' security fix is missing from controlled deployment');
 }
 for (const caller of ['src/backoffice/AutomationLayout.tsx', 'src/backoffice/CityPageGenerator.tsx', 'src/backoffice/LLMCouncilDashboard.tsx', 'src/backoffice/NewsManager.tsx', 'src/backoffice/NewsletterDashboard.tsx', 'src/backoffice/SeoTools.tsx', 'src/backoffice/SocialMediaManager.tsx']) {
-  requireMatch(caller, /internalFunctionHeaders|nativeAdminCall/, 'backoffice privileged call does not require a staff session');
+  requireMatch(caller, /internalFunctionHeaders|nativeAdmin[A-Z]/, 'backoffice privileged call does not require a staff session');
   forbidMatch(caller, /VITE_SUPABASE_ANON_KEY/, 'backoffice privileged call falls back to the public anon key');
 }
 requireMatch('supabase/functions/generate-seo-content/index.ts', /isInternalRequest[\s\S]*Unauthorized/, 'SEO content generator accepts anonymous privileged requests');

@@ -15,7 +15,7 @@ export async function nativeAdminDashboard(compact=false){
 export const nativeAdminCrmDashboard=()=>call('/v1/admin/dashboard?crm_summary=1');
 export const nativeAdminCrmAnalytics=(days:number)=>call(`/v1/admin/crm-analytics?days=${encodeURIComponent(String(days))}`);
 export const nativeAdminNews=()=>call('/v1/admin/news?limit=100');
-export const nativeAdminNewsAction=(action:'publish'|'clean_excerpts',id='')=>call('/v1/admin/news',{method:'PATCH',body:JSON.stringify({action,id})});
+export const nativeAdminNewsAction=(action:'publish'|'clean_excerpts'|'refresh',id='',extra:Record<string,unknown>={})=>call('/v1/admin/news',{method:'PATCH',body:JSON.stringify({action,id,...extra}),signal:AbortSignal.timeout(45_000)});
 export const nativeAdminInvoicing=async()=>{const [paymentData,leadData]:any[]=await Promise.all([call('/v1/admin/payments'),nativeAdminLeads()]);return {...paymentData,leads:leadData.leads||[]};};
 export async function nativeAdminLeads(search='',status=''){
   const query=`search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}&page_size=500`;
