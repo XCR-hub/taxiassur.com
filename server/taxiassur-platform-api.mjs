@@ -135,6 +135,7 @@ const server = createServer(async (req, res) => {
     if (req.method === 'POST' && url.pathname === '/v1/auth/request-password-reset') return await requestAdminPasswordReset(req, res, origin, requestId);
     if (req.method === 'POST' && url.pathname === '/v1/auth/reset-password') return await resetAdminPassword(req, res, origin, requestId);
     if (['GET','PATCH'].includes(req.method) && url.pathname === '/v1/admin/dashboard') return await adminDashboard(req, res, origin, requestId, url);
+    if (req.method === 'GET' && url.pathname === '/v1/admin/crm-analytics') return await adminCrmAnalytics(req, res, origin, requestId, url);
     if (req.method === 'GET' && url.pathname === '/v1/admin/conversion-analytics') return await adminConversionAnalytics(req, res, origin, requestId, url);
     if (req.method === 'GET' && url.pathname === '/v1/admin/content') return await adminContent(req, res, origin, requestId, url);
     if (url.pathname === '/v1/admin/content-editor' && ['POST','PUT','DELETE'].includes(req.method)) return await adminContentEditor(req,res,origin,requestId,url);
@@ -792,6 +793,19 @@ async function adminConversionAnalytics(req, res, origin, requestId, url) {
     'landingPages',COALESCE((SELECT jsonb_agg(jsonb_build_object('page',landing_page,'leads',leads)) FROM landing_rows),'[]'::jsonb)
   )::text;`;
   return json(res, origin, 200, { ok: true, analytics: parseJsonLine(await runPsql(sql)) }, requestId);
+}
+async function adminCrmAnalytics(req,res,origin,requestId,url){
+  if(!await verifiedAdminSession(req))return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
+  const days=Math.min(365,Math.max(1,Number.parseInt(url.searchParams.get('days')||'30',10)||30));
+  const now=Date.now(),periodStart=now-days*86400000,previousStart=now-days*2*86400000;
+  const [leads,interactions]=await Promise.all([recordsAllWithMirror('crm_leads'),recordsAllWithMirror('crm_interactions')]);
+  const timestamp=row=>{const value=Date.parse(String(row.created_at||''));return Number.isFinite(value)?value:0;};
+  const currentLeads=leads.filter(row=>timestamp(row)>=periodStart).length;
+  const previousLeads=leads.filter(row=>timestamp(row)>=previousStart&&timestamp(row)<periodStart).length;
+  const currentInteractions=interactions.filter(row=>timestamp(row)>=periodStart).length;
+  const previousInteractions=interactions.filter(row=>timestamp(row)>=previousStart&&timestamp(row)<periodStart).length;
+  const statusCounts={};for(const lead of leads){const status=String(lead.status||'NOUVEAU_LEAD');statusCounts[status]=(statusCounts[status]||0)+1;}
+  return json(res,origin,200,{ok:true,analytics:{currentLeads,previousLeads,currentInteractions,previousInteractions,totalLeads:leads.length,statusCounts,periodDays:days}},requestId);
 }
 async function adminContentEditor(req,res,origin,requestId,url){
   if(!await verifiedAdminSession(req))return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);const body=await readJsonBody(req),kind=String(body.kind||url.searchParams.get('kind')||''),collection=kind==='blog'?'blog_posts':kind==='faq'?'faqs':'';if(!collection)return json(res,origin,400,{ok:false,error:'invalid_kind'},requestId);const id=String(body.id||url.searchParams.get('id')||'');

@@ -7,7 +7,7 @@ import {
   AutomationPerformanceChart,
   AIDecisionsChart,
 } from '../components/charts';
-import { supabase } from '../lib/supabase';
+import { nativeAdminCrmAnalytics } from '@/lib/native-admin-data';
 
 interface DashboardMetrics {
   totalLeads: number;
@@ -115,37 +115,14 @@ export default function AnalyticsDashboard() {
     setLoading(true);
     try {
       const days = getDaysBack(period);
-      const periodStart = new Date();
-      periodStart.setDate(periodStart.getDate() - days);
-      const prevStart = new Date();
-      prevStart.setDate(prevStart.getDate() - days * 2);
-
-      const [
-        currentLeadsResult,
-        previousLeadsResult,
-        currentInteractionsResult,
-        previousInteractionsResult,
-        allLeadsResult,
-      ] = await Promise.all([
-        supabase.from('crm_leads').select('id', { count: 'exact' }).gte('created_at', periodStart.toISOString()),
-        supabase.from('crm_leads').select('id', { count: 'exact' }).gte('created_at', prevStart.toISOString()).lt('created_at', periodStart.toISOString()),
-        supabase.from('crm_interactions').select('id', { count: 'exact' }).gte('created_at', periodStart.toISOString()),
-        supabase.from('crm_interactions').select('id', { count: 'exact' }).gte('created_at', prevStart.toISOString()).lt('created_at', periodStart.toISOString()),
-        supabase.from('crm_leads').select('status'),
-      ]);
-
-      const currentLeads = currentLeadsResult.count || 0;
-      const previousLeads = previousLeadsResult.count || 1;
-      const currentInteractions = currentInteractionsResult.count || 0;
-      const previousInteractions = previousInteractionsResult.count || 1;
-
-      const statusCounts: Record<string, number> = {};
-      allLeadsResult.data?.forEach((lead) => {
-        const s = lead.status || 'NOUVEAU_LEAD';
-        statusCounts[s] = (statusCounts[s] || 0) + 1;
-      });
-
-      const totalLeads = allLeadsResult.data?.length || 0;
+      const response = await nativeAdminCrmAnalytics(days) as { analytics?: { currentLeads?: number; previousLeads?: number; currentInteractions?: number; previousInteractions?: number; totalLeads?: number; statusCounts?: Record<string, number> } };
+      const analytics = response.analytics || {};
+      const currentLeads = analytics.currentLeads || 0;
+      const previousLeads = analytics.previousLeads || 0;
+      const currentInteractions = analytics.currentInteractions || 0;
+      const previousInteractions = analytics.previousInteractions || 0;
+      const statusCounts = analytics.statusCounts || {};
+      const totalLeads = analytics.totalLeads || 0;
       const convertedLeads =
         (statusCounts['ACTIVE_CLIENT'] || 0) +
         (statusCounts['QUOTE_ACCEPTED'] || 0) +
