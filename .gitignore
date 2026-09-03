@@ -37,6 +37,8 @@ cloudflare/d1/generated/
 
 # Generated local reports
 reports/
+test-results/
+playwright-report/
 
 # Private payment-provider key material
 supabase/functions/**/config/*.key
