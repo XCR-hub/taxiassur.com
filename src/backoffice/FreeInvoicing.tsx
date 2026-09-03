@@ -7,7 +7,7 @@ import {
   Banknote, Hash, Layers, Zap, ChevronDown, ChevronUp,
   ExternalLink, AlertTriangle,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCreateMoneticoPayment, nativeAdminInvoicing, nativeAdminLeads, nativeAdminQueuePaymentEmail } from '@/lib/native-admin-data';
 import { withTimeout } from '@/lib/promise-timeout';
 import { clearPaymentRequestId, getPaymentRequestId } from '@/lib/payment-idempotency';
 import { Link } from 'react-router-dom';
@@ -169,12 +169,8 @@ export default function FreeInvoicing() {
   const loadPayments = useCallback(async () => {
     setHistLoading(true);
     try {
-      const { data } = await supabase
-        .from('monetico_payments')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100);
-      if (data) setPayments(data as Payment[]);
+      const { payments = [] } = await nativeAdminInvoicing() as any;
+      setPayments(payments.slice(0, 100) as Payment[]);
     } finally {
       setHistLoading(false);
     }
@@ -183,17 +179,11 @@ export default function FreeInvoicing() {
   const loadAdvancedLeads = useCallback(async () => {
     setLeadsLoading(true);
     try {
-      const { data } = await supabase
-        .from('crm_leads')
-        .select('id, first_name, last_name, email, phone, status, pipeline_stage, city, company_name, created_at')
-        .or(
-          ADVANCED_STATUSES.map(s => `status.eq.${s}`).join(',') + ',' +
-          ADVANCED_PIPELINE.map(s => `pipeline_stage.eq.${s}`).join(',')
-        )
-        .is('deleted_at', null)
-        .order('updated_at', { ascending: false })
-        .limit(200);
-      if (data) setAdvancedLeads(data as AdvancedLead[]);
+      const { leads = [] } = await nativeAdminLeads() as any;
+      const data = leads.filter((lead: any) => !lead.deleted_at && (ADVANCED_STATUSES.includes(lead.status) || ADVANCED_PIPELINE.includes(lead.pipeline_stage)))
+        .sort((a: any, b: any) => Date.parse(b.updated_at || b.created_at || '') - Date.parse(a.updated_at || a.created_at || ''))
+        .slice(0, 200);
+      setAdvancedLeads(data as AdvancedLead[]);
     } finally {
       setLeadsLoading(false);
     }
@@ -265,27 +255,21 @@ export default function FreeInvoicing() {
     try {
       const paymentSignature = JSON.stringify({ leadId: form.leadId, amount: amount.toFixed(2), email: form.email.trim().toLowerCase(), description: form.description.trim() });
       const paymentRequestId = getPaymentRequestId(paymentSignature);
-      const { data, error } = await withTimeout(supabase.functions.invoke('create-monetico-payment', {
-        body: {
+      const data = await withTimeout(nativeAdminCreateMoneticoPayment({
           amount, lead_id: form.leadId ?? undefined,
           description: form.description || `Paiement ${form.firstName} ${form.lastName}`,
           customerEmail: form.email, customerFirstName: form.firstName,
           customerLastName: form.lastName, customerPhone: form.phone,
-          customReference: form.reference || undefined, requestId: paymentRequestId,
-        },
-      }), 45_000);
-      if (error) throw new Error(error.message);
-      if (data?.success && data?.reference && /^[0-9a-f]{64}$/i.test(data.paymentAccessToken || '')) {
+          requestId: paymentRequestId,
+      }), 45_000) as any;
+      if (data?.ok && data?.reference && /^[0-9a-f]{64}$/i.test(data.paymentAccessToken || '')) {
         const url = `${window.location.origin}/paiement/${encodeURIComponent(data.reference)}?token=${encodeURIComponent(data.paymentAccessToken)}`;
         clearPaymentRequestId(paymentSignature);
         setPaymentLink(url);
         setLastClientEmail(form.email);
         if (sendEmail && form.email) {
           try {
-            const { error: emailError } = await withTimeout(supabase.functions.invoke('send-payment-link-email', {
-              body: { lead_id: form.leadId ?? null, payment_url: url, amount, email: form.email, first_name: form.firstName, last_name: form.lastName },
-            }), 45_000);
-            if (emailError) throw emailError;
+            await nativeAdminQueuePaymentEmail(data.payment.id);
             setEmailSent(true);
           } catch {
             setFormError("Lien créé, mais l'email n'a pas pu être envoyé. Copiez le lien.");
@@ -309,25 +293,19 @@ export default function FreeInvoicing() {
     try {
       const paymentSignature = JSON.stringify({ leadId: lead.id, amount: amount.toFixed(2), description: leadPayDesc.trim() });
       const paymentRequestId = getPaymentRequestId(paymentSignature);
-      const { data, error } = await withTimeout(supabase.functions.invoke('create-monetico-payment', {
-        body: {
+      const data = await withTimeout(nativeAdminCreateMoneticoPayment({
           amount, lead_id: lead.id,
           description: leadPayDesc || `Paiement assurance taxi - ${leadName(lead)}`,
           customerEmail: lead.email,
           customerFirstName: lead.first_name ?? '',
           customerLastName: lead.last_name ?? '',
           customerPhone: lead.phone ?? '', requestId: paymentRequestId,
-        },
-      }), 45_000);
-      if (error) throw error;
-      if (data?.success && data?.reference && /^[0-9a-f]{64}$/i.test(data.paymentAccessToken || '')) {
+      }), 45_000) as any;
+      if (data?.ok && data?.reference && /^[0-9a-f]{64}$/i.test(data.paymentAccessToken || '')) {
         const url = `${window.location.origin}/paiement/${encodeURIComponent(data.reference)}?token=${encodeURIComponent(data.paymentAccessToken)}`;
         clearPaymentRequestId(paymentSignature);
         if (sendEmail && lead.email) {
-          const { error: emailError } = await withTimeout(supabase.functions.invoke('send-payment-link-email', {
-            body: { lead_id: lead.id, payment_url: url, amount, email: lead.email, first_name: lead.first_name, last_name: lead.last_name },
-          }), 45_000);
-          if (emailError) throw emailError;
+          await nativeAdminQueuePaymentEmail(data.payment.id);
         }
         setLeadPaySuccess({ leadId: lead.id, url });
         setLeadPayAmount('');

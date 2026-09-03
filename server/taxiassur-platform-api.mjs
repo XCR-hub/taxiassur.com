@@ -1837,8 +1837,8 @@ async function publicPaymentWebhook(req,res,origin,requestId){
 
 async function adminPaymentsList(req,res,origin,requestId,url){
   const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
-  const status=String(url.searchParams.get('status')||'');let payments=await recordsAll('monetico_payments');if(status)payments=payments.filter(row=>String(row.status)===status);payments.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
-  const leads=await recordsAll('crm_leads');payments=payments.map(payment=>({...payment,lead:leads.find(lead=>String(lead.id)===String(payment.lead_id))||null}));return json(res,origin,200,{ok:true,payments},requestId);
+  const status=String(url.searchParams.get('status')||'');let payments=await recordsAllWithMirror('monetico_payments');if(status)payments=payments.filter(row=>String(row.status)===status);payments.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+  const leads=await recordsAllWithMirror('crm_leads');payments=payments.map(payment=>({...payment,lead:leads.find(lead=>String(lead.id)===String(payment.lead_id))||null}));return json(res,origin,200,{ok:true,payments},requestId);
 }
 async function adminPaymentCreate(req,res,origin,requestId){
   const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);const body=await readJsonBody(req),amount=Number(body.amount),leadId=String(body.lead_id||body.leadId||'').trim(),requestKey=String(body.request_id||body.requestId||'').trim();

@@ -47,7 +47,7 @@ for (const file of ['src/backoffice/FreeInvoicing.tsx', 'src/backoffice/LeadInvo
   requireMatch(file, /requestId: paymentRequestId/, 'payment UI does not send its idempotency key');
   requireMatch(file, /clearPaymentRequestId\(paymentSignature\)/, 'payment UI does not clear a successful request key');
 }
-requireMatch('src/backoffice/FreeInvoicing.tsx', /withTimeout\(supabase\.functions\.invoke\('create-monetico-payment'[\s\S]*45_000/, 'public payment creation can spin forever');
+requireMatch('src/backoffice/FreeInvoicing.tsx', /withTimeout\(nativeAdminCreateMoneticoPayment\([\s\S]*45_000/, 'native free payment creation can spin forever');
 requireMatch('src/backoffice/LeadInvoicing.tsx', /withTimeout\(nativeAdminCreateMoneticoPayment\([\s\S]*45_000/, 'native admin payment creation can spin forever');
 requireMatch('server/taxiassur-platform-api.mjs', /async function adminPaymentCreate[\s\S]{0,500}?verifiedAdminSession\(req\)/, 'native payment creation is not session-authenticated');
 requireMatch('server/taxiassur-platform-api.mjs', /createHmac\('sha1'/, 'native payment creation is not signed');
