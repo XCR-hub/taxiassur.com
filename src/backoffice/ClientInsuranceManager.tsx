@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
 import { nativeAdminCall } from '@/lib/native-admin-data';
 import { ArrowLeft, User, FileText, AlertCircle, DollarSign, CheckSquare, Clock, Phone, Mail, MapPin, CreditCard as Edit, Save, X, Plus, Trash2, Eye, Activity, Bell, AlertTriangle, Loader2, RefreshCw, FolderOpen, Copy, Check, MessageSquare, Calendar } from 'lucide-react';
 import DocumentsViewer from './DocumentsViewer';
@@ -259,158 +258,21 @@ export default function ClientInsuranceManager() {
     }
   }
 
-  async function loadClient() {
-    const { data, error } = await supabase
-      .from('crm_leads')
-      .select('*')
-      .eq('id', leadId)
-      .single();
-
-    if (!error && data) {
-      setClient(data);
-    }
-  }
-
-  async function loadTaxiProfile() {
-    const { data, error } = await supabase
-      .from('client_taxi_profiles')
-      .select('*')
-      .eq('lead_id', leadId)
-      .maybeSingle();
-
-    if (!error) {
-      setTaxiProfile(data || {});
-      setEditedProfile(data || {});
-    }
-  }
-
-  async function loadContracts() {
-    const { data, error } = await supabase
-      .from('insurance_contracts')
-      .select('*')
-      .eq('lead_id', leadId)
-      .order('created_at', { ascending: false });
-
-    if (!error) {
-      setContracts(data || []);
-    }
-  }
-
-  async function loadCrmDocs() {
-    const { data, error } = await supabase
-      .from('crm_lead_documents')
-      .select('id, file_name, document_type, status, created_at, file_url')
-      .eq('lead_id', leadId)
-      .order('created_at', { ascending: false });
-
-    if (!error) {
-      setCrmDocs(data || []);
-    }
-  }
-
-  async function loadClaims() {
-    const { data, error } = await supabase
-      .from('insurance_claims')
-      .select('*')
-      .eq('lead_id', leadId)
-      .order('claim_date', { ascending: false });
-
-    if (!error) {
-      setClaims(data || []);
-    }
-  }
-
-  async function loadTasks() {
-    const { data, error } = await supabase
-      .from('client_tasks')
-      .select('*')
-      .eq('lead_id', leadId)
-      .neq('status', 'completed')
-      .order('due_date', { ascending: true });
-
-    if (!error) {
-      setTasks(data || []);
-    }
-  }
-
-  async function loadAlerts() {
-    const { data, error } = await supabase
-      .from('client_alerts')
-      .select('*')
-      .eq('lead_id', leadId)
-      .eq('dismissed', false)
-      .order('trigger_date', { ascending: true });
-
-    if (!error) {
-      setAlerts(data || []);
-    }
-  }
-
-  async function loadPayments() {
-    const { data } = await supabase
-      .from('monetico_payments')
-      .select('id, amount, currency, status, payment_date, created_at, reference, description, payment_method')
-      .eq('lead_id', leadId)
-      .order('created_at', { ascending: false });
-    setPayments(data || []);
-  }
-
-  async function loadHistory() {
-    const [interactionsRes, notificationsRes] = await Promise.all([
-      supabase
-        .from('crm_interactions')
-        .select('id, type, direction, subject, content, created_at, metadata')
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: false })
-        .limit(50),
-      supabase
-        .from('crm_event_notifications')
-        .select('id, event_type, title, message, created_at')
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: false })
-        .limit(50)
-    ]);
-
-    const events: HistoryEvent[] = [
-      ...(interactionsRes.data || []).map((i: Interaction) => ({
-        id: i.id,
-        kind: 'interaction' as const,
-        type: i.type,
-        subject: i.subject,
-        content: i.content,
-        direction: i.direction,
-        created_at: i.created_at
-      })),
-      ...(notificationsRes.data as Array<{ id: string; event_type?: string; title?: string; message?: string; created_at: string }> || []).map((n) => ({
-        id: n.id,
-        kind: 'notification' as const,
-        type: n.event_type,
-        title: n.title,
-        message: n.message,
-        created_at: n.created_at
-      }))
-    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-    setHistory(events);
-  }
-
   async function createTask() {
     if (!taskForm.title.trim()) return;
     setSavingTask(true);
     try {
-      const { error } = await supabase.from('client_tasks').insert({
-        lead_id: leadId,
+      await nativeAdminCall(`/v1/admin/clients/${encodeURIComponent(leadId!)}/tasks`, { method: 'POST', body: JSON.stringify({
         title: taskForm.title.trim(),
         description: taskForm.description.trim() || null,
         task_type: taskForm.task_type,
         priority: taskForm.priority,
         due_date: taskForm.due_date || null,
         status: 'pending'
-      });
-      if (error) throw error;
+      }) });
       setTaskForm(defaultTaskForm);
       setShowTaskForm(false);
-      await loadTasks();
+      await loadAllData();
     } catch (err) {
       toast.error('Erreur: ' + err.message);
     } finally {
@@ -419,14 +281,14 @@ export default function ClientInsuranceManager() {
   }
 
   async function completeTask(taskId: string) {
-    await supabase.from('client_tasks').update({ status: 'completed' }).eq('id', taskId);
-    await loadTasks();
+    await nativeAdminCall(`/v1/admin/clients/${encodeURIComponent(leadId!)}/tasks/${encodeURIComponent(taskId)}`, { method: 'PATCH', body: JSON.stringify({ status: 'completed' }) });
+    await loadAllData();
   }
 
   async function deleteTask(taskId: string) {
     if (!confirm('Supprimer cette tâche ?')) return;
-    await supabase.from('client_tasks').delete().eq('id', taskId);
-    await loadTasks();
+    await nativeAdminCall(`/v1/admin/clients/${encodeURIComponent(leadId!)}/tasks/${encodeURIComponent(taskId)}`, { method: 'DELETE' });
+    await loadAllData();
   }
 
   function copyPortalLink() {
@@ -441,24 +303,8 @@ export default function ClientInsuranceManager() {
 
   async function saveTaxiProfile() {
     try {
-      if (taxiProfile && Object.keys(taxiProfile).length > 0) {
-        // Update existing
-        const { error } = await supabase
-          .from('client_taxi_profiles')
-          .update(editedProfile)
-          .eq('lead_id', leadId);
-
-        if (error) throw error;
-      } else {
-        // Insert new
-        const { error } = await supabase
-          .from('client_taxi_profiles')
-          .insert({ ...editedProfile, lead_id: leadId });
-
-        if (error) throw error;
-      }
-
-      await loadTaxiProfile();
+      await nativeAdminCall(`/v1/admin/clients/${encodeURIComponent(leadId!)}/profile`, { method: 'PUT', body: JSON.stringify(editedProfile) });
+      await loadAllData();
       setEditingProfile(false);
     } catch (error) {
       toast.error('Erreur lors de la sauvegarde: ' + error.message);
@@ -530,19 +376,12 @@ export default function ClientInsuranceManager() {
       };
 
       if (editingContractId) {
-        const { error } = await supabase
-          .from('insurance_contracts')
-          .update(payload)
-          .eq('id', editingContractId);
-        if (error) throw error;
+        await nativeAdminCall(`/v1/admin/clients/${encodeURIComponent(leadId!)}/contracts/${encodeURIComponent(editingContractId)}`, { method: 'PATCH', body: JSON.stringify(payload) });
       } else {
-        const { error } = await supabase
-          .from('insurance_contracts')
-          .insert(payload);
-        if (error) throw error;
+        await nativeAdminCall(`/v1/admin/clients/${encodeURIComponent(leadId!)}/contracts`, { method: 'POST', body: JSON.stringify(payload) });
       }
 
-      await loadContracts();
+      await loadAllData();
       setShowContractForm(false);
       setEditingContractId(null);
       setContractForm(defaultContractForm);
@@ -555,8 +394,8 @@ export default function ClientInsuranceManager() {
 
   async function deleteContract(contractId: string) {
     if (!confirm("Supprimer ce contrat ?")) return;
-    const { error } = await supabase.from('insurance_contracts').delete().eq('id', contractId);
-    if (!error) await loadContracts();
+    await nativeAdminCall(`/v1/admin/clients/${encodeURIComponent(leadId!)}/contracts/${encodeURIComponent(contractId)}`, { method: 'DELETE' });
+    await loadAllData();
   }
 
   function openNewClaimForm() {
@@ -612,19 +451,12 @@ export default function ClientInsuranceManager() {
       };
 
       if (editingClaimId) {
-        const { error } = await supabase
-          .from('insurance_claims')
-          .update(payload)
-          .eq('id', editingClaimId);
-        if (error) throw error;
+        await nativeAdminCall(`/v1/admin/clients/${encodeURIComponent(leadId!)}/claims/${encodeURIComponent(editingClaimId)}`, { method: 'PATCH', body: JSON.stringify(payload) });
       } else {
-        const { error } = await supabase
-          .from('insurance_claims')
-          .insert(payload);
-        if (error) throw error;
+        await nativeAdminCall(`/v1/admin/clients/${encodeURIComponent(leadId!)}/claims`, { method: 'POST', body: JSON.stringify(payload) });
       }
 
-      await loadClaims();
+      await loadAllData();
       setShowClaimForm(false);
       setEditingClaimId(null);
       setClaimForm(defaultClaimForm);
@@ -637,8 +469,8 @@ export default function ClientInsuranceManager() {
 
   async function deleteClaim(claimId: string) {
     if (!confirm("Supprimer ce sinistre ?")) return;
-    const { error } = await supabase.from('insurance_claims').delete().eq('id', claimId);
-    if (!error) await loadClaims();
+    await nativeAdminCall(`/v1/admin/clients/${encodeURIComponent(leadId!)}/claims/${encodeURIComponent(claimId)}`, { method: 'DELETE' });
+    await loadAllData();
   }
 
   const getClaimTypeLabel = (type: string) => {
@@ -829,11 +661,8 @@ export default function ClientInsuranceManager() {
               </div>
               <button
                 onClick={async () => {
-                  await supabase
-                    .from('client_alerts')
-                    .update({ dismissed: true })
-                    .eq('id', alert.id);
-                  loadAlerts();
+                  await nativeAdminCall(`/v1/admin/clients/${encodeURIComponent(leadId!)}/alerts/${encodeURIComponent(alert.id)}`, { method: 'PATCH', body: JSON.stringify({ dismissed: true }) });
+                  loadAllData();
                 }}
                 className="p-1 hover:bg-white/50 rounded"
               >
