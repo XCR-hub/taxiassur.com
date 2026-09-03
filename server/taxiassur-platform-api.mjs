@@ -1190,7 +1190,11 @@ async function adminLeadsList(req, res, origin, requestId, url) {
   const page = Math.max(1, Math.min(100, Number.parseInt(String(url.searchParams.get('page') || '1'), 10) || 1));
   const pageSize = Math.max(50, Math.min(500, Number.parseInt(String(url.searchParams.get('page_size') || '500'), 10) || 500));
   const offset = (page - 1) * pageSize;
-  const filters = [`COALESCE(data->>'deleted_at','')=''`];
+  const filters = [
+    `lower(COALESCE(data->>'status','')) NOT IN ('archived','anonymized')`,
+    `COALESCE(data->>'merged_into','')=''`,
+    `COALESCE(data->>'deletion_reason','') NOT ILIKE '%leads crees automatiquement depuis les emails%'`
+  ];
   if (status) filters.push(`COALESCE(data->>'status',data->>'pipeline_stage')=${quoteLiteral(status)}`);
   if (search) filters.push(`lower(concat_ws(' ',data->>'first_name',data->>'last_name',data->>'email',data->>'phone')) LIKE ${quoteLiteral(`%${search}%`)}`);
   const result = parseJsonLine(await runPsql(`WITH lead_sources AS (
