@@ -389,11 +389,11 @@ async function adminQuotesList(req,res,origin,requestId){
 async function adminClientDetail(req,res,origin,requestId,leadId){
   const session=await verifiedAdminSession(req);
   if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
-  const client=parseJsonLine(await runPsql(`SELECT data::text FROM taxiassur.records WHERE collection='crm_leads' AND record_id=${quoteLiteral(leadId)} LIMIT 1;`));
+  const client=(await recordsAllWithMirror('crm_leads')).find(row=>String(row.id)===String(leadId));
   if(!client)return json(res,origin,404,{ok:false,error:'not_found'},requestId);
   const names=['client_taxi_profiles','insurance_contracts','crm_lead_documents','insurance_claims','client_tasks','client_alerts','monetico_payments','crm_interactions','crm_event_notifications'];
   const rows={};
-  await Promise.all(names.map(async function(name){rows[name]=await recordsWhere(name,'lead_id',leadId);}));
+  await Promise.all(names.map(async function(name){rows[name]=await recordsWhereWithMirror(name,'lead_id',leadId);}));
   const sortDesc=function(items,key){return items.sort(function(a,b){return String(b[key]||b.created_at||'').localeCompare(String(a[key]||a.created_at||''));});};
   const tasks=rows.client_tasks.filter(function(row){return row.status!=='completed';}).sort(function(a,b){return String(a.due_date||'9999').localeCompare(String(b.due_date||'9999'));});
   const alerts=rows.client_alerts.filter(function(row){return row.dismissed!==true;}).sort(function(a,b){return String(a.trigger_date||'').localeCompare(String(b.trigger_date||''));});

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { ArrowLeft, User, FileText, AlertCircle, DollarSign, CheckSquare, Clock, Phone, Mail, MapPin, CreditCard as Edit, Save, X, Plus, Trash2, Eye, Activity, Bell, AlertTriangle, Loader2, RefreshCw, FolderOpen, Copy, Check, MessageSquare, Calendar } from 'lucide-react';
 import DocumentsViewer from './DocumentsViewer';
 import { toast } from '@/lib/toast';
@@ -236,17 +237,21 @@ export default function ClientInsuranceManager() {
   async function loadAllData() {
     try {
       setLoading(true);
-      await Promise.all([
-        loadClient(),
-        loadTaxiProfile(),
-        loadContracts(),
-        loadCrmDocs(),
-        loadClaims(),
-        loadTasks(),
-        loadAlerts(),
-        loadPayments(),
-        loadHistory()
-      ]);
+      const { detail } = await nativeAdminCall(`/v1/admin/clients/${encodeURIComponent(leadId!)}/detail`) as any;
+      setClient(detail.client || null);
+      setTaxiProfile(detail.taxi_profile || {});
+      setEditedProfile(detail.taxi_profile || {});
+      setContracts(detail.contracts || []);
+      setCrmDocs(detail.documents || []);
+      setClaims(detail.claims || []);
+      setTasks(detail.tasks || []);
+      setAlerts(detail.alerts || []);
+      setPayments(detail.payments || []);
+      const events: HistoryEvent[] = [
+        ...(detail.interactions || []).map((i: Interaction) => ({ id: i.id, kind: 'interaction' as const, type: i.type, subject: i.subject, content: i.content, direction: i.direction, created_at: i.created_at })),
+        ...(detail.notifications || []).map((n: any) => ({ id: n.id, kind: 'notification' as const, type: n.event_type, title: n.title, message: n.message, created_at: n.created_at })),
+      ].sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+      setHistory(events);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
