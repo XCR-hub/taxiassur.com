@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Settings, Users, Bell, Shield, Database, Zap, Mail, MessageSquare, Bot, Save, CheckCircle, X, UserPlus, Trash2, Lock, Eye, CreditCard as Edit, AlertTriangle, Send, Key } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
-import { supabaseRestJson } from '@/lib/supabase-rest';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 interface CRMSettings {
   company_name: string;
@@ -201,8 +201,8 @@ const CRMAdminSettings: React.FC = () => {
   const loadUsers = async () => {
     setLoadingUsers(true);
     try {
-      const usersData = await supabaseRestJson<AdminUser[]>('/rest/v1/admin_users?select=*&order=created_at.desc');
-      setUsers(usersData || []);
+      const result = await nativeAdminCall<{ users?: AdminUser[] }>('/v1/admin/users');
+      setUsers(result.users || []);
     } catch (error) {
       console.error('Erreur chargement utilisateurs:', error);
     } finally {
@@ -229,16 +229,12 @@ const CRMAdminSettings: React.FC = () => {
 
     setInviting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('invite-admin-user', {
-        body: { email: inviteForm.email, full_name: inviteForm.full_name, role: inviteForm.role }
+      await nativeAdminCall('/v1/admin/users', {
+        method: 'POST',
+        body: JSON.stringify({ email: inviteForm.email, full_name: inviteForm.full_name, role: inviteForm.role }),
       });
 
-      if (error || !data?.success) {
-        showToast('error', data?.error || error?.message || "Erreur lors de l'invitation");
-        return;
-      }
-
-      showToast('success', `Invitation envoyee a ${inviteForm.email}`);
+      showToast('success', `Invitation envoyée à ${inviteForm.email}`);
       setShowInviteModal(false);
       setInviteForm({ email: '', full_name: '', role: 'collaborator' });
       loadUsers();
@@ -252,20 +248,13 @@ const CRMAdminSettings: React.FC = () => {
   const resendInvite = async (user: AdminUser) => {
     setActionUser(user);
     try {
-      const { data, error } = await supabase.functions.invoke('invite-admin-user', {
-        body: { email: user.email, full_name: user.full_name, role: user.role, permissions: [], force_resend: true }
+      await nativeAdminCall(`/v1/admin/users/${encodeURIComponent(user.id)}/invite`, {
+        method: 'POST',
+        body: '{}',
       });
 
-      if (error || !data?.success) {
-        showToast('error', data?.error || error?.message || 'Erreur inconnue');
-        return;
-      }
-
-      if (data.email_sent === false && data.action_link) {
-        setFallbackLink({ email: user.email, link: data.action_link });
-      } else {
-        showToast('success', `Email d'invitation envoye a ${user.email}`);
-      }
+      setFallbackLink(null);
+      showToast('success', `E-mail d'invitation envoyé à ${user.email}`);
     } catch (err) {
       showToast('error', err.message || "Erreur lors du renvoi");
     } finally {
@@ -277,16 +266,11 @@ const CRMAdminSettings: React.FC = () => {
     if (!userToDelete) return;
     setDeleting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('invite-admin-user', {
-        body: { action: 'delete', user_id: userToDelete.id, email: userToDelete.email }
+      await nativeAdminCall(`/v1/admin/users/${encodeURIComponent(userToDelete.id)}`, {
+        method: 'DELETE',
       });
 
-      if (error || !data?.success) {
-        showToast('error', data?.error || error?.message || 'Erreur lors de la suppression');
-        return;
-      }
-
-      showToast('success', `${userToDelete.full_name || userToDelete.email} supprime`);
+      showToast('success', `${userToDelete.full_name || userToDelete.email} supprimé`);
       setUserToDelete(null);
       loadUsers();
     } catch (error) {

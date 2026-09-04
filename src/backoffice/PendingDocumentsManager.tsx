@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FileCheck, CheckCircle, XCircle, Eye,
@@ -244,6 +244,10 @@ export default function PendingDocumentsManager() {
   const [expandedLeads, setExpandedLeads] = useState<Set<string>>(new Set());
   const [rejectModal, setRejectModal] = useState<RejectModalState>({ open: false, docId: null, reason: '', custom: '' });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const refreshInFlightRef = useRef(false);
+  const interactionBusyRef = useRef(false);
+
+  interactionBusyRef.current = processing.size > 0 || rejectModal.open;
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -251,8 +255,10 @@ export default function PendingDocumentsManager() {
   const [filterTypes, setFilterTypes] = useState<Set<string>>(new Set());
   const [filterUrgentOnly, setFilterUrgentOnly] = useState(false);
 
-  const loadDocuments = useCallback(async () => {
-    setLoading(true);
+  const loadDocuments = useCallback(async (showLoader = false) => {
+    if (refreshInFlightRef.current) return;
+    refreshInFlightRef.current = true;
+    if (showLoader) setLoading(true);
     try {
       const result=await nativeAdminDocuments('pending');
       const formatted=result.documents as PendingDocument[];
@@ -264,11 +270,27 @@ export default function PendingDocumentsManager() {
     } catch (err) {
       console.error('Erreur chargement documents:', err);
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
+      refreshInFlightRef.current = false;
     }
   }, []);
 
-  useEffect(() => { loadDocuments(); }, [loadDocuments]);
+  useEffect(() => {
+    void loadDocuments(true);
+
+    const refreshDocuments = () => {
+      if (document.visibilityState === 'visible' && !interactionBusyRef.current) {
+        void loadDocuments(false);
+      }
+    };
+    const intervalId = window.setInterval(refreshDocuments, 10_000);
+    document.addEventListener('visibilitychange', refreshDocuments);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', refreshDocuments);
+    };
+  }, [loadDocuments]);
 
   const { realDocs, suspectDocs } = useMemo(() => ({
     realDocs: allDocs.filter(d => !isSuspectDocument(d)),
@@ -640,7 +662,7 @@ Acceder a mon espace
         {!sidebarCollapsed && (
           <div className="p-3 border-t border-gray-800">
             <button
-              onClick={loadDocuments}
+              onClick={() => void loadDocuments(true)}
               disabled={loading}
               className="w-full flex items-center justify-center gap-2 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded-xl text-sm transition-colors"
             >

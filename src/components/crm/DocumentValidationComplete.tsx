@@ -104,9 +104,28 @@ export default function DocumentValidationComplete({
   const [isUnclassifiedDragOver, setIsUnclassifiedDragOver] = useState(false);
   const [uploadingUnclassified, setUploadingUnclassified] = useState(false);
   const unclassifiedDragCounter = useRef(0);
+  const refreshInFlightRef = useRef(false);
+  const interactionBusyRef = useRef(false);
+
+  interactionBusyRef.current = Boolean(
+    classifying || rejectingDoc || processing || uploading || importingFile || uploadingUnclassified || draggedItem
+  );
 
   useEffect(() => {
-    loadAll();
+    void loadAll(true);
+
+    const refreshDocuments = () => {
+      if (document.visibilityState === 'visible' && !interactionBusyRef.current) {
+        void loadAll(false);
+      }
+    };
+    const intervalId = window.setInterval(refreshDocuments, 10_000);
+    document.addEventListener('visibilitychange', refreshDocuments);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', refreshDocuments);
+    };
   }, [caseId, vehicleType]);
 
   useEffect(() => {
@@ -117,9 +136,11 @@ export default function DocumentValidationComplete({
     });
   }, [vehicleType]);
 
-  async function loadAll() {
+  async function loadAll(showLoader = false) {
+    if (refreshInFlightRef.current) return;
+    refreshInFlightRef.current = true;
     try {
-      setLoading(true);
+      if (showLoader) setLoading(true);
       await Promise.all([
         loadBasket(),
         loadClassifiedDocuments(),
@@ -129,7 +150,8 @@ export default function DocumentValidationComplete({
     } catch (error) {
       console.error('Error loading documents:', error);
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
+      refreshInFlightRef.current = false;
     }
   }
 
@@ -774,7 +796,7 @@ export default function DocumentValidationComplete({
           )}
         </h3>
         <button
-          onClick={loadAll}
+          onClick={() => void loadAll(true)}
           className="text-sm text-blue-600 hover:text-blue-700 font-medium"
         >
           Actualiser
