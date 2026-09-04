@@ -74,9 +74,9 @@ const CRMLeadDetail: React.FC = () => {
   // Toast pour les notifications
   const { toasts, showToast, removeToast } = useDocumentToast();
 
-  const loadLeadData = async () => {
+  const loadLeadData = async (showLoader = false) => {
     try {
-      setLoading(true);
+      if (showLoader) setLoading(true);
       if (!leadId) return;
       const native = await nativeAdminLead(leadId);
       setLead(native.lead);
@@ -84,7 +84,7 @@ const CRMLeadDetail: React.FC = () => {
       logger.error('Error:', err);
       setError('Une erreur est survenue');
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
     }
   };
 
@@ -167,10 +167,13 @@ const CRMLeadDetail: React.FC = () => {
   };
   useEffect(() => {
     if (leadId) {
-      void loadLeadData();
+      void loadLeadData(true);
       void loadStats();
       const refreshTimer = window.setInterval(() => {
-        void loadLeadData();
+        // Keep the lead current without replacing the whole page with its
+        // loading screen or interrupting a commercial who is editing it.
+        if (document.visibilityState !== 'visible') return;
+        void loadLeadData(false);
         void loadStats();
       }, 30_000);
       return () => window.clearInterval(refreshTimer);

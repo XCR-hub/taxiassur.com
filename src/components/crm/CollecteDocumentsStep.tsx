@@ -229,7 +229,7 @@ export default function CollecteDocumentsStep({
       ? missingDocLabels.map(l => `- ${l}`).join('\n')
       : '- Tous les documents sont valides';
 
-    const defaultDocList = '- Licence de taxi\n- Permis de conduire\n- Carte grise du véhicule\n- Releve d\'information\n- RIB\n- Carte professionnelle';
+    const defaultDocList = '- Licence de taxi\n- Permis de conduire\n- Carte grise du véhicule\n- Relevé d\'informations\n- RIB\n- Carte professionnelle';
 
     let body = selectedTemplate.body_text
       .replace(/\{\{first_name\}\}/g, firstName)
@@ -241,13 +241,19 @@ export default function CollecteDocumentsStep({
       body = body.replace(/- Licence de taxi[\s\S]*?- Carte professionnelle/g, docList);
     }
 
+    // Older saved templates used the singular form. Normalize the customer-facing
+    // wording even before those persisted templates have been migrated.
+    body = body
+      .replace(/Releve d'information/gi, "Relevé d'informations")
+      .replace(/Relevé d'information(?!s)/gi, "Relevé d'informations");
+
     body = body.replace(/\bassurance taxi\b/gi, `assurance ${vehicleLabel}`);
     body = body.replace(/\btaxi\b/gi, vehicleLabel);
 
     setEditableBody(body);
 
     let subject = selectedTemplate.subject?.replace(/\{\{first_name\}\}/g, firstName)
-      || `Documents necessaires - TaxiAssur`;
+      || `Documents nécessaires - TaxiAssur`;
     subject = subject.replace(/\bassurance taxi\b/gi, `assurance ${vehicleLabel}`);
     subject = subject.replace(/\btaxi\b/gi, vehicleLabel);
     setEditableSubject(subject);
@@ -278,7 +284,7 @@ export default function CollecteDocumentsStep({
             method: 'POST',
             body: JSON.stringify({
               action: 'send_email',
-              subject: subject || 'Documents necessaires - TaxiAssur',
+              subject: subject || 'Documents nécessaires - TaxiAssur',
               message: messageContent,
               template_key: template.template_key,
               request_id: requestId,

@@ -1983,7 +1983,15 @@ async function adminDocumentCollection(req,res,origin,requestId,leadId){
   if(!lead)return json(res,origin,404,{ok:false,error:'lead_not_found'},requestId);
   if(req.method==='GET'){
     const documents=await recordsWhere('crm_lead_documents','lead_id',leadId);
-    const templates=(await recordsAll('crm_communication_templates')).filter((row)=>String(row.stage)==='collecte_documents'&&row.is_active!==false&&['email','sms','whatsapp'].includes(String(row.channel)));
+    const templates=(await recordsAll('crm_communication_templates'))
+      .filter((row)=>String(row.stage)==='collecte_documents'&&row.is_active!==false&&['email','sms','whatsapp'].includes(String(row.channel)))
+      .map((row)=>({
+        ...row,
+        subject:String(row.subject||'').replace(/Documents necessaires/gi,'Documents nécessaires'),
+        body_text:String(row.body_text||'')
+          .replace(/Releve d'information/gi,"Relevé d'informations")
+          .replace(/Relevé d'information(?!s)/gi,"Relevé d'informations"),
+      }));
     if(!templates.some(row=>String(row.channel)==='sms'))templates.push({id:'native-document-request-sms',template_key:'documents_request_sms',template_name:'Demande de pièces par SMS',channel:'sms',body_text:'Bonjour {{first_name}}, pour finaliser votre dossier TaxiAssur, merci de déposer les pièces demandées dans votre espace sécurisé : {{prospect_space_url}}',variables:['first_name','prospect_space_url'],stage:'collecte_documents',is_active:true});
     return json(res,origin,200,{ok:true,lead,documents,templates},requestId);
   }
@@ -2006,7 +2014,7 @@ async function adminDocumentCollection(req,res,origin,requestId,leadId){
   }
   if(action==='send_email'){
     const recipient=String(lead.email||'').trim().toLowerCase();
-    const subject=String(body.subject||'Documents necessaires - TaxiAssur').normalize('NFKC').trim().slice(0,200);
+    const subject=String(body.subject||'Documents nécessaires - TaxiAssur').normalize('NFKC').trim().slice(0,200);
     const message=String(body.message||'').normalize('NFKC').trim().slice(0,12000);
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)||!subject||!message)return json(res,origin,400,{ok:false,error:'invalid_email_request'},requestId);
     const mailId=randomUUID(),interactionId=randomUUID(),now=new Date().toISOString();
