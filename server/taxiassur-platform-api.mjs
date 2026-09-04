@@ -1332,7 +1332,7 @@ async function adminDocumentOpen(req,res,origin,requestId){
   }
   const storagePath=storageObjectPath(requestedPath,bucket);
   if(!storagePath)return json(res,origin,400,{ok:false,error:'invalid_path'},requestId);
-  const nativePath=safeStoragePath(storagePath),legacyPath=safeLegacyStoragePath(bucket,storagePath),filePath=existsSync(nativePath)?nativePath:legacyPath;
+  const nativePath=safeStoragePath(storagePath),legacyPath=resolveExistingLegacyPath(requestedPath,[bucket,'prospect-documents','crm-documents','email-attachments']),filePath=existsSync(nativePath)?nativePath:legacyPath;
   if(!existsSync(filePath))return json(res,origin,404,{ok:false,error:'file_missing'},requestId);
   const extension=path.extname(filePath).toLowerCase();
   const mimeType={'.pdf':'application/pdf','.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.webp':'image/webp','.txt':'text/plain'}[extension]||'application/octet-stream';
@@ -1425,7 +1425,7 @@ async function adminDocumentDownload(req,res,origin,requestId,documentId){
   if(!await verifiedAdminSession(req))return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
   const stored=parseJsonLine(await runPsql(`SELECT jsonb_build_object('collection',collection,'data',data)::text FROM taxiassur.records WHERE collection IN ('prospect_documents','crm_lead_documents') AND record_id=${quoteLiteral(documentId)} LIMIT 1;`));if(!stored?.data)return json(res,origin,404,{ok:false,error:'not_found'},requestId);const row=stored.data;
   let filePath;const local=parseJsonLine(await runPsql(`SELECT json_build_object('storage_path',storage_path,'mime_type',mime_type,'original_name',original_name)::text FROM taxiassur.file_objects WHERE id=${quoteLiteral(documentId)}::uuid LIMIT 1;`));
-  if(local){filePath=safeStoragePath(local.storage_path);}else{const declared=String(row.bucket||'').toLowerCase(),bucket=declared==='email-attachments'||String(row.file_path||'').startsWith('00000000-0000-0000-0000-000000000001/')?'email-attachments':declared==='prospect-documents'?'prospect-documents':declared==='crm-documents'?'crm-documents':stored.collection==='crm_lead_documents'?'crm-documents':'prospect-documents';filePath=safeLegacyStoragePath(bucket,row.file_path);}
+  if(local){filePath=safeStoragePath(local.storage_path);}else{const declared=String(row.bucket||'').toLowerCase(),bucket=declared==='email-attachments'||String(row.file_path||'').startsWith('00000000-0000-0000-0000-000000000001/')?'email-attachments':declared==='prospect-documents'?'prospect-documents':declared==='crm-documents'?'crm-documents':stored.collection==='crm_lead_documents'?'crm-documents':'prospect-documents';filePath=resolveExistingLegacyPath(row.file_path,[bucket,'prospect-documents','crm-documents','email-attachments']);}
   if(!existsSync(filePath))return json(res,origin,404,{ok:false,error:'file_missing'},requestId);const size=statSync(filePath).size;const name=local?.original_name||row.file_name||row.document_name||'document';const mime=local?.mime_type||row.mime_type||'application/octet-stream';res.writeHead(200,responseHeaders(origin,requestId,{'Content-Type':mime,'Content-Length':String(size),'Content-Disposition':`attachment; filename*=UTF-8''${encodeURIComponent(name)}`}));createReadStream(filePath).pipe(res);
 }
 async function adminContentOpportunities(req,res,origin,requestId){
@@ -2190,7 +2190,7 @@ async function downloadProspectFinalDocument(req, res, origin, requestId, docume
   const legacyBucket = ['email-attachments', 'prospect-documents', 'crm-documents'].includes(declaredBucket) ? declaredBucket : 'crm-documents';
   const filePath = local?.storage_path
     ? safeStoragePath(local.storage_path)
-    : safeLegacyStoragePath(legacyBucket, row.storage_path);
+    : resolveExistingLegacyPath(row.storage_path, [legacyBucket, 'prospect-documents', 'crm-documents', 'email-attachments']);
   if (!existsSync(filePath)) return json(res, origin, 404, { ok: false, error: 'file_missing' }, requestId);
   const size = Number(local?.size_bytes || statSync(filePath).size);
   const mimeType = String(local?.mime_type || row.mime_type);
@@ -2489,6 +2489,7 @@ function brandedEmailHtml({title,name,intro,ctaLabel,ctaUrl,details=[]}) {
 }
 function safeStoragePath(relative) { const root = path.resolve(config.documentRoot); const target = path.resolve(root, relative); if (!target.startsWith(`${root}${path.sep}`)) throw publicError(400, 'invalid_path'); return target; }
 function safeLegacyStoragePath(bucket, relative) { const root = path.resolve(config.legacyDocumentRoot, bucket); const target = path.resolve(root, relative); if (!target.startsWith(`${root}${path.sep}`)) throw publicError(400, 'invalid_path'); return target; }
+function resolveExistingLegacyPath(relative, buckets) { const ordered=[...new Set(buckets.filter(Boolean))]; for(const bucket of ordered){const objectPath=storageObjectPath(relative,bucket);if(!objectPath)continue;const candidate=safeLegacyStoragePath(bucket,objectPath);if(existsSync(candidate))return candidate;}const fallbackBucket=ordered[0]||'crm-documents';return safeLegacyStoragePath(fallbackBucket,storageObjectPath(relative,fallbackBucket)||relative); }
 function storageObjectPath(value, bucket) { const raw=String(value||'').trim(); if(!raw)return ''; try{const parsed=new URL(raw); const marker=`/${bucket}/`; const index=parsed.pathname.indexOf(marker); return index>=0?decodeURIComponent(parsed.pathname.slice(index+marker.length)):'';}catch{ return raw.replace(new RegExp(`^/?${bucket}/`),'').replace(/^\/+/, ''); } }
 function safeUnlink(file) { try { unlinkSync(file); } catch {} }
 function originAllowed(origin) { return !origin || config.allowedOrigins.has(origin); }
