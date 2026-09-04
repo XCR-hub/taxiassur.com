@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   Mail, RefreshCw, Star, User, Paperclip, Search,
   ExternalLink, CheckCircle, Send, Archive, AlertCircle,
@@ -223,20 +223,30 @@ const CRMInboxMulticanal: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [markingAllRead, setMarkingAllRead] = useState(false);
   const [showEmailBody, setShowEmailBody] = useState<'html' | 'text'>('html');
+  const messageRequestSequence = useRef(0);
 
   const showToast = (msg: string, type: 'success' | 'error' | 'info' = 'info') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   };
 
-  const loadMessages = async () => {
-    setLoading(true);
+  const loadMessages = async (showLoader = false) => {
+    const requestSequence = ++messageRequestSequence.current;
+    if (showLoader) setLoading(true);
     try {
       const result = await nativeAdminInbox(filter, searchQuery) as { messages?: EmailMessage[]; stats?: typeof stats; lead_folders?: LeadMailFolder[] };
+      if (requestSequence !== messageRequestSequence.current) return;
       setMessages(result.messages || []);
       if (result.stats) setStats(result.stats);
       setLeadMailFolders(result.lead_folders || []);
-    } catch (err) { console.error(err); showToast('Impossible de charger la boite de reception', 'error'); } finally { setLoading(false); }
+    } catch (err) {
+      console.error(err);
+      if (showLoader && requestSequence === messageRequestSequence.current) {
+        showToast('Impossible de charger la boîte de réception', 'error');
+      }
+    } finally {
+      if (showLoader && requestSequence === messageRequestSequence.current) setLoading(false);
+    }
   };
 
   const syncEmails = async () => {
@@ -484,8 +494,10 @@ const CRMInboxMulticanal: React.FC = () => {
   }, [selectedMessage]);
 
   useEffect(() => {
-    loadMessages();
-    const interval = setInterval(loadMessages, 30000);
+    void loadMessages(true);
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') void loadMessages(false);
+    }, 30000);
     return () => clearInterval(interval);
   }, [filter, searchQuery]);
 
@@ -494,7 +506,7 @@ const CRMInboxMulticanal: React.FC = () => {
     const synchronize = async () => {
       try {
         await nativeAdminInboxSync();
-        if (active) await loadMessages();
+        if (active) await loadMessages(false);
       } catch (error) {
         console.error('[crm-inbox-auto-sync]', error);
       }
