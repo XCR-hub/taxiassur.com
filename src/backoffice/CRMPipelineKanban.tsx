@@ -7,9 +7,8 @@ import { PipelineCard } from '@/components/crm/PipelineCard';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { NATIVE_ADMIN_TOKEN_KEY } from '@/lib/native-admin-auth';
-import { nativeAdminPipelineNotifications } from '@/lib/native-admin-data';
+import { nativeAdminInboxSync, nativeAdminPipelineNotifications } from '@/lib/native-admin-data';
 interface ColumnNotifications {
   newEmails: number;
   newDocuments: number;
@@ -408,56 +407,15 @@ const CRMPipelineKanban: React.FC = () => {
     setError(null);
 
     try {
-      // 1. Synchroniser tous les emails avec la fonction complète
-      const syncResponse = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-all-emails-complete`,
-        {
-          method: 'POST',
-          headers: {
-            ...(await internalFunctionHeaders()),
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ limit: 50 })
-        }
-      );
+      const syncData = await nativeAdminInboxSync() as {
+        stats?: { emails_retrieved?: number; emails_imported?: number; leads_created?: number; emails_linked?: number };
+      };
 
-      if (!syncResponse.ok) {
-        const errorText = await syncResponse.text();
-        console.error('Erreur sync response:', errorText);
-        throw new Error(`Erreur HTTP ${syncResponse.status}: ${errorText.substring(0, 100)}`);
-      }
-
-      const syncData = await syncResponse.json();
-      console.log('✅ Emails synchronisés:', syncData);
-
-      // 2. Créer automatiquement les leads depuis les nouveaux emails
-      const createLeadsResponse = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-create-leads-from-emails`,
-        {
-          method: 'POST',
-          headers: {
-            ...(await internalFunctionHeaders()),
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({})
-        }
-      );
-
-      if (!createLeadsResponse.ok) {
-        const errorText = await createLeadsResponse.text();
-        console.error('Erreur create leads response:', errorText);
-        throw new Error(`Erreur création leads: ${errorText.substring(0, 100)}`);
-      }
-
-      const createData = await createLeadsResponse.json();
-      console.log('✅ Leads créés:', createData);
-
-      // 3. Rafraîchir le pipeline
       await loadKanbanData(false);
 
-      const emailsSynced = syncData.emails_synced || syncData.total_synced || 0;
-      const leadsCreated = createData.summary?.leads_created || createData.leads_created || 0;
-      const emailsLinked = createData.summary?.emails_linked || createData.emails_linked || 0;
+      const emailsSynced = syncData.stats?.emails_imported ?? syncData.stats?.emails_retrieved ?? 0;
+      const leadsCreated = syncData.stats?.leads_created ?? 0;
+      const emailsLinked = syncData.stats?.emails_linked ?? 0;
 
       setSyncMessage(
         `✅ Synchronisation terminée ! ${emailsSynced} emails sync, ${leadsCreated} leads créés, ${emailsLinked} emails liés`
@@ -466,7 +424,7 @@ const CRMPipelineKanban: React.FC = () => {
       setTimeout(() => setSyncMessage(null), 7000);
     } catch (error) {
       console.error('❌ Erreur synchronisation:', error);
-      const errorMsg = error.message || 'Erreur inconnue';
+      const errorMsg = error instanceof Error ? error.message : 'Erreur inconnue';
       setSyncMessage(`❌ ${errorMsg}`);
       setError(errorMsg);
       setTimeout(() => {
