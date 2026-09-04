@@ -114,11 +114,9 @@ const CRMCommercial: React.FC = () => {
     }
 
     const interval = setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
       loadStats();
       loadNotifications();
-      if (selectedLead) {
-        loadLeadDetails(selectedLead.id);
-      }
     }, 30000);
 
     return () => {
@@ -127,10 +125,13 @@ const CRMCommercial: React.FC = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    if (selectedLead) {
-      loadLeadDetails(selectedLead.id);
-    }
-  }, [selectedLead]);
+    if (!selectedLead) return;
+    loadLeadDetails(selectedLead.id);
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') loadLeadDetails(selectedLead.id);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [selectedLead?.id]);
 
   const loadStats = async () => {
     const { leads: leadsData = [] } = await nativeAdminLeads() as any;

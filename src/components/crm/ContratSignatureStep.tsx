@@ -30,7 +30,7 @@ const REQUIRED_DOCS = [
   { type: 'memo_vehicule', label: 'Mémo du Véhicule', icon: '🚗' }
 ];
 
-export default function ContratSignatureStep({ leadId }: ContratSignatureStepProps) {
+export default function ContratSignatureStep({ leadId, onComplete }: ContratSignatureStepProps) {
   const [documents, setDocuments] = useState<ContractDocument[]>([]);
   const [signature, setSignature] = useState<SignatureHistory | null>(null);
   const [uploading, setUploading] = useState<string | null>(null);
@@ -154,7 +154,8 @@ export default function ContratSignatureStep({ leadId }: ContratSignatureStepPro
       await nativeAdminUpdateLead(leadId,{status:'CLIENT_ACTIF',lead_status:'CLIENT_ACTIF',pipeline_stage:'client_actif',current_stage_key:'client_active'});
       await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/access-email`,{method:'POST',body:'{}'});
       toast.success('Contrat finalisé ! Le prospect est maintenant client.');
-      window.location.reload();
+      await Promise.all([loadDocuments(), loadSignature()]);
+      onComplete?.();
     } catch (error) {
       console.error('Error transforming to client:', error);
       toast.error('Erreur lors de la finalisation : ' + (error as Error).message);

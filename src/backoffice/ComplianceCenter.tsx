@@ -89,16 +89,18 @@ const ComplianceCenter: React.FC = () => {
     setTimeout(() => setToast(null), 3500);
   };
 
-  useEffect(() => { loadComplianceData(); }, []);
+  useEffect(() => { loadComplianceData(false); }, []);
 
   useEffect(() => {
     if (!liveMode) return;
-    const interval = setInterval(loadComplianceData, 30000);
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') loadComplianceData(true);
+    }, 30000);
     return () => clearInterval(interval);
   }, [liveMode]);
 
-  const loadComplianceData = async () => {
-    setLoading(true);
+  const loadComplianceData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [consentsRes, dsrRes, reportRes] = await Promise.all([
         supabase.from('gdpr_consents').select('*').order('collected_at', { ascending: false }),
@@ -112,7 +114,7 @@ const ComplianceCenter: React.FC = () => {
       logger.error('Failed to load compliance data:', error);
       showToast('error', 'Erreur lors du chargement des donnees');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 

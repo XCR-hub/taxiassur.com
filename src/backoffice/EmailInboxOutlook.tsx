@@ -55,15 +55,15 @@ const EmailInboxOutlook: React.FC = () => {
   const [replyContent, setReplyContent] = useState('');
 
   useEffect(() => {
-    loadMessages();
+    loadMessages(false);
     const interval = setInterval(() => {
-      loadMessages();
+      if (document.visibilityState === 'visible') loadMessages(true);
     }, 30000);
     return () => clearInterval(interval);
   }, [selectedFolder, searchQuery]);
 
-  const loadMessages = async () => {
-    setLoading(true);
+  const loadMessages = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const serverFilter = selectedFolder === 'starred' ? 'starred' : selectedFolder === 'leads' ? 'leads' : 'all';
       const data = await nativeAdminInbox(serverFilter, searchQuery) as {
@@ -87,7 +87,7 @@ const EmailInboxOutlook: React.FC = () => {
     } catch (error) {
       console.error('Failed to load messages:', error);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
