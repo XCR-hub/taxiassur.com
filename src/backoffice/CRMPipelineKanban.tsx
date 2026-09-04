@@ -2,12 +2,9 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, RefreshCw, AlertCircle, TrendingUp, Clock, FileText, Building2, Euro, PenTool, AlertTriangle, Mail, Phone, FileCheck, Users, User } from 'lucide-react';
 import { pipelineService, PIPELINE_STATUSES, PipelineStatus, CRMLead, AdminUser, normalizePipelineStatus } from '@/lib/crm-pipeline';
-import RealtimeNotifications from '@/components/crm/RealtimeNotifications';
 import { PipelineCard } from '@/components/crm/PipelineCard';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/lib/supabase';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { NATIVE_ADMIN_TOKEN_KEY } from '@/lib/native-admin-auth';
 import { nativeAdminInboxSync, nativeAdminPipelineNotifications } from '@/lib/native-admin-data';
 interface ColumnNotifications {
   newEmails: number;
@@ -140,22 +137,21 @@ const CRMPipelineKanban: React.FC = () => {
   const { user } = useAdminAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [kanbanData, setKanbanData] = useState<Record<PipelineStatus, CRMLead[]>>({} as any);
-  const [columnNotifications, setColumnNotifications] = useState<Record<PipelineStatus, ColumnNotifications>>({} as any);
+  const [kanbanData, setKanbanData] = useState<Record<PipelineStatus, CRMLead[]>>({} as Record<PipelineStatus, CRMLead[]>);
+  const [columnNotifications, setColumnNotifications] = useState<Record<PipelineStatus, ColumnNotifications>>({} as Record<PipelineStatus, ColumnNotifications>);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [draggedLead, setDraggedLead] = useState<CRMLead | null>(null);
   const [dragOverStatus, setDragOverStatus] = useState<PipelineStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
-  const [updateCount, setUpdateCount] = useState(0);
   const [newLeadNotification, setNewLeadNotification] = useState<string | null>(null);
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
   const [viewFilter, setViewFilter] = useState<'all' | 'mine' | 'unassigned'>('all');
   const [selectedCollaborator, setSelectedCollaborator] = useState<string | null>(null);
   const autoRefreshInterval = useRef<NodeJS.Timeout | null>(null);
-  const previousLeadCount = useRef<number>(0);
+  const previousLeadIds = useRef<Set<string> | null>(null);
   const moveInProgressRef = useRef(false);
 
   const adminUsersMap = useMemo(() => {
@@ -180,99 +176,25 @@ const CRMPipelineKanban: React.FC = () => {
   // Load column notifications (emails, documents, calls, SMS)
   const loadColumnNotifications = useCallback(async () => {
     try {
-      const notifications: Record<PipelineStatus, ColumnNotifications> = {} as any;
-
-      if (localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)) {
-        const result = await nativeAdminPipelineNotifications() as { notifications?: Record<string, ColumnNotifications> };
-        for (const [rawStatus, counts] of Object.entries(result.notifications || {})) {
-          const status = normalizePipelineStatus({ status: rawStatus });
-          const current = notifications[status] || { newEmails: 0, newDocuments: 0, missedCalls: 0, newSMS: 0, pendingSignatures: 0, paymentDue: 0 };
-          notifications[status] = {
-            newEmails: current.newEmails + (counts.newEmails || 0),
-            newDocuments: current.newDocuments + (counts.newDocuments || 0),
-            missedCalls: current.missedCalls + (counts.missedCalls || 0),
-            newSMS: current.newSMS + (counts.newSMS || 0),
-            pendingSignatures: current.pendingSignatures + (counts.pendingSignatures || 0),
-            paymentDue: current.paymentDue + (counts.paymentDue || 0),
-          };
-        }
-        setColumnNotifications(notifications);
-        return;
-      }
-
-      for (const status of Object.keys(kanbanData) as PipelineStatus[]) {
-        const leadIds = kanbanData[status]?.map(l => l.id) || [];
-
-        if (leadIds.length === 0) {
-          notifications[status] = {
-            newEmails: 0,
-            newDocuments: 0,
-            missedCalls: 0,
-            newSMS: 0,
-            pendingSignatures: 0,
-            paymentDue: 0
-          };
-          continue;
-        }
-
-        const [emailsResult, documentsResult, interactionsResult, contractsResult] = await Promise.allSettled([
-          // Nouveaux emails non lus - Limiter à 20 IDs max pour éviter erreur 400
-          leadIds.length <= 20
-            ? supabase
-                .from('email_messages')
-                .select('id', { count: 'exact', head: true })
-                .in('lead_id', leadIds)
-                .eq('direction', 'inbound')
-                .gte('received_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-            : Promise.resolve({ count: 0, data: [] }),
-
-          // Nouveaux documents uploadés (dernières 24h)
-          leadIds.length <= 20
-            ? supabase
-                .from('crm_lead_documents')
-                .select('id', { count: 'exact', head: true })
-                .in('lead_id', leadIds)
-                .eq('status', 'pending_validation')
-                .gte('uploaded_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-            : Promise.resolve({ count: 0, data: [] }),
-
-          // Appels + SMS récents
-          leadIds.length <= 20
-            ? supabase
-                .from('crm_interactions')
-                .select('channel', { count: 'exact' })
-                .in('lead_id', leadIds)
-                .in('channel', ['phone', 'sms'])
-                .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-            : Promise.resolve({ count: 0, data: [] }),
-
-          // Signatures en attente + paiements dus
-          leadIds.length <= 20
-            ? supabase
-                .from('lead_contracts')
-                .select('status, down_payment_status', { count: 'exact' })
-                .in('lead_id', leadIds)
-            : Promise.resolve({ count: 0, data: [] })
-        ]);
-
-        const interactions = (interactionsResult.status === 'fulfilled' ? interactionsResult.value.data : null) || [];
-        const contracts = (contractsResult.status === 'fulfilled' ? contractsResult.value.data : null) || [];
-
+      const notifications = {} as Record<PipelineStatus, ColumnNotifications>;
+      const result = await nativeAdminPipelineNotifications() as { notifications?: Record<string, ColumnNotifications> };
+      for (const [rawStatus, counts] of Object.entries(result.notifications || {})) {
+        const status = normalizePipelineStatus({ status: rawStatus });
+        const current = notifications[status] || { newEmails: 0, newDocuments: 0, missedCalls: 0, newSMS: 0, pendingSignatures: 0, paymentDue: 0 };
         notifications[status] = {
-          newEmails: (emailsResult.status === 'fulfilled' ? emailsResult.value.count : null) || 0,
-          newDocuments: (documentsResult.status === 'fulfilled' ? documentsResult.value.count : null) || 0,
-          missedCalls: interactions.filter(i => i.channel === 'phone').length,
-          newSMS: interactions.filter(i => i.channel === 'sms').length,
-          pendingSignatures: contracts.filter(c => c.status === 'pending' || c.status === 'sent').length,
-          paymentDue: contracts.filter(c => c.down_payment_status === 'pending' || c.down_payment_status === 'required').length
+          newEmails: current.newEmails + (counts.newEmails || 0),
+          newDocuments: current.newDocuments + (counts.newDocuments || 0),
+          missedCalls: current.missedCalls + (counts.missedCalls || 0),
+          newSMS: current.newSMS + (counts.newSMS || 0),
+          pendingSignatures: current.pendingSignatures + (counts.pendingSignatures || 0),
+          paymentDue: current.paymentDue + (counts.paymentDue || 0),
         };
       }
-
       setColumnNotifications(notifications);
     } catch (error) {
       console.error('Failed to load notifications:', error);
     }
-  }, [kanbanData]);
+  }, []);
 
   // Load kanban data
   const loadKanbanData = useCallback(async (showLoader = true) => {
@@ -283,17 +205,21 @@ const CRMPipelineKanban: React.FC = () => {
     try {
       const data = await pipelineService.getKanbanData();
 
-      // Détecter les nouveaux leads
-      const currentLeadCount = Object.values(data).reduce((sum, leads) => sum + leads.length, 0);
-      if (previousLeadCount.current > 0 && currentLeadCount > previousLeadCount.current) {
-        const newLeadsCount = currentLeadCount - previousLeadCount.current;
-        console.log(`🆕 ${newLeadsCount} nouveau(x) lead(s) détecté(s)`);
+      const leads = Object.values(data).flat();
+      const currentLeadIds = new Set(leads.map(lead => lead.id));
+      if (previousLeadIds.current) {
+        const added = leads.filter(lead => !previousLeadIds.current?.has(lead.id));
+        if (added.length > 0) {
+          const first = added[0];
+          const name = `${first.first_name || ''} ${first.last_name || ''}`.trim() || first.email || 'Nouveau prospect';
+          setNewLeadNotification(added.length === 1 ? `Nouveau lead : ${name}` : `${added.length} nouveaux leads reçus`);
+          window.setTimeout(() => setNewLeadNotification(null), 7000);
+        }
       }
-      previousLeadCount.current = currentLeadCount;
+      previousLeadIds.current = currentLeadIds;
 
       setKanbanData(data);
       setLastUpdate(new Date());
-      setUpdateCount(prev => prev + 1);
     } catch (error) {
       console.error('Failed to load kanban:', error);
       setError('Erreur lors du chargement des données. Veuillez réessayer.');
@@ -330,69 +256,6 @@ const CRMPipelineKanban: React.FC = () => {
     };
   }, [loadKanbanData, autoRefreshEnabled]);
 
-  /* Legacy Supabase realtime subscription disabled: native API polling is authoritative.
-  // Realtime subscription avec notification des nouveaux leads
-  useEffect(() => {
-    realtimeChannel.current = supabase
-      .channel('crm_leads_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'crm_leads'
-        },
-        (payload) => {
-          console.log('🆕 Nouveau lead détecté:', payload.new);
-          const newLead = payload.new as any;
-
-          // Afficher notification
-          const leadName = `${newLead.first_name || ''} ${newLead.last_name || ''}`.trim() || newLead.email;
-          setNewLeadNotification(`🆕 Nouveau lead : ${leadName}`);
-
-          // Masquer après 5 secondes
-          setTimeout(() => setNewLeadNotification(null), 5000);
-
-          // Rafraîchir immédiatement
-          loadKanbanData(false);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'crm_leads'
-        },
-        (payload) => {
-          console.log('📝 Lead mis à jour:', payload.new);
-          loadKanbanData(false);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'crm_leads'
-        },
-        (payload) => {
-          console.log('🗑️ Lead supprimé:', payload.old);
-          loadKanbanData(false);
-        }
-      )
-      .subscribe((status) => {
-        console.log('📡 Realtime status:', status);
-      });
-
-    return () => {
-      if (realtimeChannel.current) {
-        supabase.removeChannel(realtimeChannel.current);
-      }
-    };
-  }, [loadKanbanData]);
-
-  */
   const [syncingEmails, setSyncingEmails] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
@@ -520,7 +383,7 @@ const CRMPipelineKanban: React.FC = () => {
   }, [draggedLead, loadKanbanData]);
 
   const filteredKanbanData = useMemo(() => {
-    const filtered: Record<PipelineStatus, CRMLead[]> = {} as any;
+    const filtered = {} as Record<PipelineStatus, CRMLead[]>;
     const searchLower = debouncedSearch.toLowerCase();
 
     Object.entries(kanbanData).forEach(([status, leads]) => {
@@ -672,9 +535,6 @@ const CRMPipelineKanban: React.FC = () => {
                 Nouveau Lead
               </button>
 
-              <div className="ml-1 pl-2 border-l border-white/[0.08]">
-                {window.location.hostname === '__legacy-supabase-disabled__' && <RealtimeNotifications />}
-              </div>
             </div>
           </div>
 
@@ -991,7 +851,7 @@ const CRMPipelineKanban: React.FC = () => {
                         onDragEnd={handleDragEnd}
                         isDragging={draggedLead?.id === lead.id}
                         assigneeName={lead.assigned_to ? adminUsersMap[lead.assigned_to] : undefined}
-                        onStatusChange={(_leadId, _newStatus) => loadKanbanData(false)}
+                        onStatusChange={() => loadKanbanData(false)}
                       />
                     ))
                   )}
