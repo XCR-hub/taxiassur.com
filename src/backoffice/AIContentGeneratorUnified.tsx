@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { internalFunctionHeaders } from '@/lib/internal-function-auth';
 import { Sparkles, Loader2, Copy, Check, Home, Save, FileText, MapPin, HelpCircle, Image as ImageIcon, Tag, Clock } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { logger } from '@/lib/logger';
 
 interface UnifiedContent {
@@ -105,30 +104,17 @@ export default function AIContentGeneratorUnified() {
     setGeneratedContent(null);
 
     try {
-      // Utiliser Edge Function Supabase au lieu de PHP
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const response = await fetch(`${supabaseUrl}/functions/v1/generate-seo-content`, {
+      // Utiliser l'API native authentifiée du back-office.
+      const data = await nativeAdminCall<{ success: boolean; content: UnifiedContent; error?: string }>('/v1/admin/ai-content', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': (await internalFunctionHeaders()).Authorization,
-        },
         body: JSON.stringify({
+          action: 'generate',
           keyword: keyword.trim(),
           city: city.trim(),
           secondaryKeywords: secondaryKeywords.split(',').map(k => k.trim()).filter(Boolean),
-          imagePrompt: imagePrompt.trim() || undefined,
-          type: 'unified', // Mode unifié : génère TOUT
-          mode: 'unified'
+          imagePrompt: imagePrompt.trim() || undefined
         }),
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Erreur lors de la génération');
-      }
-
-      const data = await response.json();
 
       if (!data.success) {
         throw new Error(data.error || 'Erreur lors de la génération');
@@ -195,18 +181,14 @@ ${(generatedContent.faq || []).map(f => `**${f?.question ?? 'Q'}**\n${f?.answer 
     setSuccess('');
 
     try {
-      logger.log('📤 Envoi du contenu vers Edge Function...');
+      logger.log('📤 Envoi du contenu vers l\'API native...');
 
-      const { data, error } = await supabase.functions.invoke('publish-unified-content', {
-        body: { content: generatedContent }
+      const data = await nativeAdminCall<{ success: boolean; results: { faq?: string[]; errors?: string[] }; error?: string }>('/v1/admin/ai-content', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'publish', content: generatedContent })
       });
 
-      if (error) {
-        logger.error('❌ Erreur Edge Function:', error);
-        throw new Error(`Erreur lors de la publication: ${error.message}`);
-      }
-
-      logger.log('✅ Réponse Edge Function:', data);
+      logger.log('✅ Réponse API native:', data);
 
       if (!data.success) {
         throw new Error(data.error || 'Erreur lors de la publication');

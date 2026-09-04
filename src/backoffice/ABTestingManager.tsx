@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { Beaker, Play, CheckCircle, TrendingUp, Plus, Trash2 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 
@@ -45,86 +45,33 @@ export default function ABTestingManager() {
   });
 
   useEffect(() => {
-    loadTests();
-    const interval = setInterval(loadTests, 30000); // Refresh toutes les 30s
+    void loadTests();
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void loadTests(true);
+    }, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  const loadTests = async () => {
-    const { data } = await supabase
-      .from('email_ab_tests')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (data) {
-      setTests(data);
-      await loadStats(data);
+  const loadTests = async (silent = false) => {
+    try {
+      const data = await nativeAdminCall<{ tests?: ABTest[]; stats?: Record<string, TestStats> }>('/v1/admin/ab-tests');
+      setTests(data.tests || []);
+      setStats(data.stats || {});
+    } catch (error) {
+      if (!silent) toast.error(`Erreur : ${error instanceof Error ? error.message : 'chargement impossible'}`);
+    } finally {
+      if (!silent) setLoading(false);
     }
-    setLoading(false);
-  };
-
-  const loadStats = async (tests: ABTest[]) => {
-    const newStats: Record<string, TestStats> = {};
-
-    for (const test of tests) {
-      const { data: variants } = await supabase
-        .from('email_ab_variants')
-        .select('variant, email_send_id')
-        .eq('ab_test_id', test.id);
-
-      let variant_a_sent = 0;
-      let variant_b_sent = 0;
-      let variant_a_opens = 0;
-      let variant_b_opens = 0;
-      let variant_a_clicks = 0;
-      let variant_b_clicks = 0;
-
-      if (variants) {
-        for (const variant of variants) {
-          if (variant.variant === 'A') variant_a_sent++;
-          else variant_b_sent++;
-
-          const { count: opens } = await supabase
-            .from('email_opens')
-            .select('*', { count: 'exact', head: true })
-            .eq('email_send_id', variant.email_send_id);
-
-          const { count: clicks } = await supabase
-            .from('email_clicks')
-            .select('*', { count: 'exact', head: true })
-            .eq('email_send_id', variant.email_send_id);
-
-          if (variant.variant === 'A') {
-            variant_a_opens += opens || 0;
-            variant_a_clicks += clicks || 0;
-          } else {
-            variant_b_opens += opens || 0;
-            variant_b_clicks += clicks || 0;
-          }
-        }
-      }
-
-      newStats[test.id] = {
-        variant_a_sent,
-        variant_b_sent,
-        variant_a_opens,
-        variant_b_opens,
-        variant_a_clicks,
-        variant_b_clicks
-      };
-    }
-
-    setStats(newStats);
   };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { error } = await supabase
-      .from('email_ab_tests')
-      .insert([{ ...formData, status: 'draft' }]);
-
-    if (!error) {
+    try {
+      await nativeAdminCall('/v1/admin/ab-tests', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'create', ...formData })
+      });
       toast.success('Test A/B créé ! Vous pouvez maintenant le lancer.');
       setFormData({
         name: '',
@@ -136,9 +83,9 @@ export default function ABTestingManager() {
         sample_size: 100
       });
       setShowCreateForm(false);
-      loadTests();
-    } else {
-      toast.error('Erreur : ' + error.message);
+      void loadTests();
+    } catch (error) {
+      toast.error(`Erreur : ${error instanceof Error ? error.message : 'création impossible'}`);
     }
   };
 
@@ -146,48 +93,47 @@ export default function ABTestingManager() {
     if (!confirm('Lancer ce test A/B maintenant ?')) return;
 
     try {
-      const response = await supabase.functions.invoke('send-ab-test-email', {
-        body: { ab_test_id: testId }
+      const response = await nativeAdminCall<{ success?: boolean; sent_a?: number; sent_b?: number }>('/v1/admin/ab-tests', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'launch', id: testId })
       });
 
-      if (response.data?.success) {
-        toast.success(`✅ Test lancé ! ${response.data.sent_a} variante A, ${response.data.sent_b} variante B envoyés.`);
-        loadTests();
+      if (response.success) {
+        toast.success(`Test lancé ! ${response.sent_a} variante A, ${response.sent_b} variante B envoyés.`);
+        void loadTests();
       } else {
-        toast.error('Erreur lors du lancement : ' + (response.error?.message || 'Erreur inconnue'));
+        toast.error('Erreur lors du lancement');
       }
     } catch (error) {
-      toast.error('Erreur : ' + error.message);
+      toast.error(`Erreur : ${error instanceof Error ? error.message : 'lancement impossible'}`);
     }
   };
 
   const handleComplete = async (testId: string, winner: string) => {
-    const { error } = await supabase
-      .from('email_ab_tests')
-      .update({
-        status: 'completed',
-        winner_variant: winner,
-        ended_at: new Date().toISOString()
-      })
-      .eq('id', testId);
-
-    if (!error) {
+    try {
+      await nativeAdminCall('/v1/admin/ab-tests', {
+        method: 'PATCH',
+        body: JSON.stringify({ action: 'complete', id: testId, winner })
+      });
       toast.success(`Test terminé ! Variante ${winner} déclarée gagnante.`);
-      loadTests();
+      void loadTests();
+    } catch (error) {
+      toast.error(`Erreur : ${error instanceof Error ? error.message : 'mise à jour impossible'}`);
     }
   };
 
   const handleDelete = async (testId: string) => {
     if (!confirm('Supprimer ce test ? Cette action est irréversible.')) return;
 
-    const { error } = await supabase
-      .from('email_ab_tests')
-      .delete()
-      .eq('id', testId);
-
-    if (!error) {
+    try {
+      await nativeAdminCall('/v1/admin/ab-tests', {
+        method: 'DELETE',
+        body: JSON.stringify({ id: testId })
+      });
       toast.success('Test supprimé !');
-      loadTests();
+      void loadTests();
+    } catch (error) {
+      toast.error(`Erreur : ${error instanceof Error ? error.message : 'suppression impossible'}`);
     }
   };
 
