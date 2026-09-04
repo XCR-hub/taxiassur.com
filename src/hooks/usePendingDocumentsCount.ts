@@ -27,14 +27,16 @@ export function usePendingDocumentsCount(enabled = true) {
       }
     };
 
-    fetchCount();
+    void fetchCount();
 
-    const interval = setInterval(fetchCount, 120000);
+    const interval = window.setInterval(fetchCount, 10000);
     window.addEventListener('focus', fetchCount);
+    document.addEventListener('visibilitychange', fetchCount);
 
     return () => {
-      clearInterval(interval);
+      window.clearInterval(interval);
       window.removeEventListener('focus', fetchCount);
+      document.removeEventListener('visibilitychange', fetchCount);
     };
   }, [enabled]);
 

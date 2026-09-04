@@ -8,7 +8,6 @@ import {
   Package, Send,
 } from 'lucide-react';
 import { useAdminAuth } from '../hooks/useAdminAuth';
-import { usePendingDocumentsCount } from '../hooks/usePendingDocumentsCount';
 import { useState, useEffect, useCallback } from 'react';
 
 interface NavLink {
@@ -29,6 +28,7 @@ interface SectionDef {
 
 interface NavigationMenuProps {
   excludeSections?: string[];
+  pendingDocsCount?: number;
 }
 
 function SectionGroup({
@@ -312,11 +312,10 @@ function useUserPermissions(userId: string | undefined, isMaster: boolean) {
 
   return check;
 }
-export default function NavigationMenu({ excludeSections = [] }: NavigationMenuProps) {
+export default function NavigationMenu({ excludeSections = [], pendingDocsCount = 0 }: NavigationMenuProps) {
   const { user: currentUser } = useAdminAuth();
   const isMaster = currentUser?.role === 'master';
   const { pathname } = useLocation();
-  const { count: pendingDocsCount } = usePendingDocumentsCount();
   const checkPerm = useUserPermissions(currentUser?.id, !!isMaster);
 
   const canViewCRM           = isMaster || checkPerm('crm_leads');

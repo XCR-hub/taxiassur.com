@@ -260,7 +260,7 @@ const CRMLayout: React.FC = () => {
 
               <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)', margin: '0 8px 8px' }} />
 
-              <NavigationMenu />
+              <NavigationMenu pendingDocsCount={pendingDocsCount} />
             </>
           )}
 

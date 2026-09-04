@@ -262,7 +262,7 @@ function verifySourceGuards() {
   addCheck('set-password is noindex', setPassword.includes('noindex, nofollow'), {
     file: 'src/pages/SetPassword.tsx',
   });
-  addCheck('authenticated backoffice mounts persistent CRM sidebar', crmLayout.includes('<NavigationMenu />') && crmLayout.includes('crm-sidebar'), {
+  addCheck('authenticated backoffice mounts persistent CRM sidebar', crmLayout.includes('<NavigationMenu') && crmLayout.includes('crm-sidebar'), {
     file: 'src/backoffice/CRMLayout.tsx',
   });
   addCheck('production health probes native platform API', productionHealth.includes('native-platform-health'), {
