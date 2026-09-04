@@ -266,7 +266,7 @@ export default function PendingDocumentsManager() {
       const leadsWithReal = new Set(
         formatted.filter(d => !isSuspectDocument(d)).map(d => d.lead_id)
       );
-      setExpandedLeads(leadsWithReal);
+      if (showLoader) setExpandedLeads(leadsWithReal);
     } catch (err) {
       console.error('Erreur chargement documents:', err);
     } finally {

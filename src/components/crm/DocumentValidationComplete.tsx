@@ -42,6 +42,7 @@ interface ClassifiedDocument {
   uploaded_at: string;
   validated_at?: string;
   validated_by?: string;
+  custom_label?: string;
 }
 
 interface DocumentCategory {
@@ -141,63 +142,40 @@ export default function DocumentValidationComplete({
     refreshInFlightRef.current = true;
     try {
       if (showLoader) setLoading(true);
-      await Promise.all([
-        loadBasket(),
-        loadClassifiedDocuments(),
-        loadCustomCategories(),
-        loadUnimportedAttachments()
+      const [workspace, documentResult] = await Promise.all([
+        nativeAdminCall<{ attachments?: Attachment[]; unimported_attachments?: UnimportedAttachment[] }>(
+          `/v1/admin/leads/${encodeURIComponent(caseId)}/document-workspace`
+        ),
+        nativeAdminCall<{ documents?: ClassifiedDocument[] }>(
+          `/v1/admin/documents?lead_id=${encodeURIComponent(caseId)}&scope=all`
+        )
+      ]);
+
+      const documents = documentResult.documents || [];
+      setAttachments(workspace.attachments || []);
+      setUnimportedAttachments(workspace.unimported_attachments || []);
+      setClassifiedDocs(documents.map(doc => ({
+        ...doc,
+        document_type: doc.document_type === 'custom' && doc.custom_label
+          ? `custom_${doc.custom_label}`
+          : doc.document_type
+      })));
+      setCategories([
+        ...DOCUMENT_CATEGORIES,
+        ...documents
+          .filter(doc => doc.document_type === 'custom' && doc.custom_label)
+          .map(doc => ({
+            id: `custom_${doc.custom_label}`,
+            label: doc.custom_label!,
+            icon: '📎',
+            required: false
+          }))
       ]);
     } catch (error) {
       console.error('Error loading documents:', error);
     } finally {
       if (showLoader) setLoading(false);
       refreshInFlightRef.current = false;
-    }
-  }
-
-  async function loadCustomCategories() {
-    try {
-      // Charger les documents personnalisés pour ce lead
-      const { documents = [] } = await nativeAdminCall<{ documents?: Array<{ document_type?: string; custom_label?: string }> }>(
-        `/v1/admin/documents?lead_id=${encodeURIComponent(caseId)}&scope=all`
-      );
-
-      // Créer des catégories dynamiques pour les documents personnalisés
-      const customCategories: DocumentCategory[] = documents
-        .filter(d => d.document_type === 'custom' && d.custom_label)
-        .map(d => ({
-          id: `custom_${d.custom_label}`,
-          label: d.custom_label!,
-          icon: '📎',
-          required: false
-        }));
-
-      // Fusionner avec les catégories par défaut
-      setCategories([...DOCUMENT_CATEGORIES, ...customCategories]);
-    } catch (error) {
-      console.error('Error loading custom categories:', error);
-    }
-  }
-
-  async function loadBasket() {
-    try {
-      const data = await nativeAdminCall<{ attachments?: Attachment[] }>(
-        `/v1/admin/leads/${encodeURIComponent(caseId)}/document-workspace`
-      );
-      setAttachments(data.attachments || []);
-    } catch (error) {
-      console.error('Error loading basket:', error);
-    }
-  }
-
-  async function loadUnimportedAttachments() {
-    try {
-      const data = await nativeAdminCall<{ unimported_attachments?: UnimportedAttachment[] }>(
-        `/v1/admin/leads/${encodeURIComponent(caseId)}/document-workspace`
-      );
-      setUnimportedAttachments(data.unimported_attachments || []);
-    } catch (error) {
-      console.error('Error loading unimported attachments:', error);
     }
   }
 
@@ -248,25 +226,6 @@ export default function DocumentValidationComplete({
     } finally {
       setImportingFile(null);
       setImportMenuOpen(null);
-    }
-  }
-
-  async function loadClassifiedDocuments() {
-    try {
-      const { documents = [] } = await nativeAdminCall<{ documents?: ClassifiedDocument[] }>(
-        `/v1/admin/documents?lead_id=${encodeURIComponent(caseId)}&scope=all`
-      );
-
-      const mappedDocs = documents.map((doc: any) => ({
-        ...doc,
-        document_type: doc.document_type === 'custom' && doc.custom_label
-          ? `custom_${doc.custom_label}`
-          : doc.document_type
-      }));
-
-      setClassifiedDocs(mappedDocs);
-    } catch (error) {
-      console.error('Error loading classified documents:', error);
     }
   }
 
