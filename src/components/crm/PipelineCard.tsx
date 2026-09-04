@@ -20,7 +20,7 @@ import {
   User,
   X,
 } from "lucide-react";
-import { CRMLead, PIPELINE_STATUSES, PipelineStatus } from "@/lib/crm-pipeline";
+import { CRMLead, PIPELINE_STATUSES, PipelineStatus, pipelineService } from "@/lib/crm-pipeline";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/lib/toast";
@@ -482,16 +482,13 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
     if (movingToNew) return;
     setMovingToNew(true);
     try {
-      await supabase
-        .from("crm_leads")
-        .update({
-          status: "NOUVEAU_LEAD",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", lead.id);
+      const result = await pipelineService.updateLeadStatus(lead.id, "NOUVEAU_LEAD");
+      if (!result.success) throw new Error(result.message);
       onStatusChange?.(lead.id, "NOUVEAU_LEAD");
-    } catch (err) {
+      toast.success("Lead remis en Nouveau Lead");
+    } catch (err: unknown) {
       console.error("Erreur passage nouveau lead:", err);
+      toast.error(err instanceof Error ? err.message : "Impossible de remettre le lead en Nouveau Lead");
     } finally {
       setMovingToNew(false);
     }
