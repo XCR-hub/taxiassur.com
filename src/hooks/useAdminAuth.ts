@@ -44,7 +44,11 @@ function cachedAuthState(): AdminAuthState {
   try {
     const user = JSON.parse(localStorage.getItem('taxiassur_user') || 'null') as AdminUser | null;
     const permissions = JSON.parse(localStorage.getItem('taxiassur_permissions') || '[]') as Permission[];
-    if (user?.id && user.email) return { user, permissions: Array.isArray(permissions) ? permissions : [], loading: true, isAuthenticated: false };
+    // Render a previously authenticated back-office immediately while the
+    // native API revalidates the token in the background. Every data endpoint
+    // still verifies that token server-side, so this removes the full-screen
+    // spinner without weakening access control.
+    if (user?.id && user.email) return { user, permissions: Array.isArray(permissions) ? permissions : [], loading: false, isAuthenticated: true };
   } catch { /* invalid cache is handled by the live session check */ }
   return { user: null, permissions: [], loading: true, isAuthenticated: false };
 }
