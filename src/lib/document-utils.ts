@@ -2,7 +2,9 @@ import { toast } from './toast';
 import { nativeAdminStoredDocumentUrl } from './native-admin-data';
 
 function resolveBucket(filePath: string, bucket?: string): string {
-  if (bucket) return bucket;
+  // Native documents live directly below TAXIASSUR_DOCUMENT_ROOT. The API still
+  // expects a logical legacy bucket, but probes the native root first.
+  if (bucket && bucket !== 'native') return bucket;
   if (filePath.startsWith('prospect-documents/')) return 'prospect-documents';
   if (filePath.startsWith('email-attachments/')) return 'email-attachments';
   return 'crm-documents';
@@ -20,14 +22,23 @@ async function resolveStoredDocument(
 }
 
 export async function openDocument(filePath: string, bucket?: string) {
+  const popup = window.open('about:blank', '_blank');
   const resolved = await resolveStoredDocument(filePath, bucket);
-  if (!resolved) return;
+  if (!resolved) {
+    popup?.close();
+    return;
+  }
   try {
     const documentUrl = await nativeAdminStoredDocumentUrl(resolved.path, resolved.bucket);
-    const popup = window.open(documentUrl, '_blank', 'noopener,noreferrer');
-    if (!popup) window.location.assign(documentUrl);
+    if (popup) {
+      popup.opener = null;
+      popup.location.replace(documentUrl);
+    } else {
+      window.location.assign(documentUrl);
+    }
     window.setTimeout(() => URL.revokeObjectURL(documentUrl), 60_000);
   } catch (error: unknown) {
+    popup?.close();
     console.error('Document open failure', error instanceof Error ? error.name : 'unknown');
     toast.error("Impossible d'ouvrir ce document.");
   }

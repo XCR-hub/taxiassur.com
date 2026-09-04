@@ -108,20 +108,31 @@ export async function openClientPlatformDocument(token: string, downloadPath: st
   if (!/^\/v1\/prospect\/(documents|final-documents)\/[0-9a-f-]{36}\/download$/i.test(downloadPath)) {
     throw new Error('invalid_document_path');
   }
-  const response = await clientRequest(downloadPath, token);
-  const url = URL.createObjectURL(await response.blob());
-  if (!download) {
-    window.open(url, '_blank', 'noopener,noreferrer');
-    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    return;
+  const popup = download ? null : window.open('about:blank', '_blank');
+  try {
+    const response = await clientRequest(downloadPath, token);
+    const url = URL.createObjectURL(await response.blob());
+    if (!download) {
+      if (popup) {
+        popup.opener = null;
+        popup.location.replace(url);
+      } else {
+        window.location.assign(url);
+      }
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      return;
+    }
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName || 'document';
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    popup?.close();
+    throw error;
   }
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = fileName || 'document';
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
 }
 
 export async function saveClientPlatformSubscription(token: string, subscription: Record<string, unknown>) {

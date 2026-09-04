@@ -2182,13 +2182,18 @@ async function downloadProspectFinalDocument(req, res, origin, requestId, docume
   const token = prospectToken(req) || clientToken(req);
   const lead = token ? await leadByToken(token) : null;
   if (!lead) return json(res, origin, 403, { ok: false, error: 'invalid_access' }, requestId);
-  const sql = `SELECT jsonb_build_object('storage_path', data ->> 'file_path', 'original_name', COALESCE(data ->> 'file_name', 'document'), 'mime_type', COALESCE(data ->> 'mime_type', 'application/octet-stream'))::text FROM taxiassur.records WHERE collection = 'crm_lead_documents' AND record_id = ${quoteLiteral(documentId)} AND data ->> 'lead_id' = ${quoteLiteral(String(lead.id))} AND data ->> 'status' = 'validated' AND data ->> 'document_type' IN ('contrat_signe','attestation_assurance','memo_vehicule') LIMIT 1;`;
+  const sql = `SELECT jsonb_build_object('storage_path', data ->> 'file_path', 'original_name', COALESCE(data ->> 'file_name', data ->> 'document_name', 'document'), 'mime_type', COALESCE(data ->> 'mime_type', 'application/octet-stream'), 'bucket', COALESCE(data ->> 'bucket', ''))::text FROM taxiassur.records WHERE collection = 'crm_lead_documents' AND record_id = ${quoteLiteral(documentId)} AND data ->> 'lead_id' = ${quoteLiteral(String(lead.id))} AND (data ->> 'status' = 'validated' OR data ->> 'validated' = 'true') LIMIT 1;`;
   const row = parseJsonLine(await runPsql(sql));
   if (!row?.storage_path) return json(res, origin, 404, { ok: false, error: 'not_found' }, requestId);
-  const filePath = safeLegacyStoragePath('crm-documents', row.storage_path);
+  const local = parseJsonLine(await runPsql(`SELECT jsonb_build_object('storage_path', storage_path, 'original_name', original_name, 'mime_type', mime_type, 'size_bytes', size_bytes)::text FROM taxiassur.file_objects WHERE id = ${quoteLiteral(documentId)}::uuid AND scan_status = 'clean' LIMIT 1;`));
+  const filePath = local?.storage_path
+    ? safeStoragePath(local.storage_path)
+    : safeLegacyStoragePath(String(row.bucket || '').toLowerCase() === 'email-attachments' ? 'email-attachments' : 'crm-documents', row.storage_path);
   if (!existsSync(filePath)) return json(res, origin, 404, { ok: false, error: 'file_missing' }, requestId);
-  const size = statSync(filePath).size;
-  res.writeHead(200, responseHeaders(origin, requestId, { 'Content-Type': row.mime_type, 'Content-Length': String(size), 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(row.original_name)}`, 'Cache-Control': 'private, no-store' }));
+  const size = Number(local?.size_bytes || statSync(filePath).size);
+  const mimeType = String(local?.mime_type || row.mime_type);
+  const originalName = String(local?.original_name || row.original_name);
+  res.writeHead(200, responseHeaders(origin, requestId, { 'Content-Type': mimeType, 'Content-Length': String(size), 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(originalName)}`, 'Cache-Control': 'private, no-store' }));
   createReadStream(filePath).pipe(res);
 }
 
