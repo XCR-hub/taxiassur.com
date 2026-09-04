@@ -189,6 +189,7 @@ export default function WhatsAppManager() {
       const requestId = getDeliveryRequestId('whatsapp', deliverySignature);
       const sendResult = await nativeAdminCall<{ success?: boolean }>('/v1/admin/whatsapp', {
         method: 'POST',
+        signal: AbortSignal.timeout(45_000),
         body: JSON.stringify({ action: 'send', conversation_id: selectedConversation.id, body: messageText, request_id: requestId }),
       });
       if (sendResult?.success !== true) throw new Error('WhatsApp non envoyé');
@@ -213,6 +214,7 @@ export default function WhatsAppManager() {
       const requestId = getDeliveryRequestId('whatsapp', deliverySignature);
       const sendResult = await nativeAdminCall<{ success?: boolean }>('/v1/admin/whatsapp', {
         method: 'POST',
+        signal: AbortSignal.timeout(45_000),
         body: JSON.stringify({
           action: 'send',
           conversation_id: selectedConversation.id,

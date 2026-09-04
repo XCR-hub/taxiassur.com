@@ -53,6 +53,8 @@ requireMatch('server/taxiassur-platform-api.mjs', /async function adminPaymentCr
 requireMatch('server/taxiassur-platform-api.mjs', /createHmac\('sha1'/, 'native payment creation is not signed');
 requireMatch('server/taxiassur-platform-api.mjs', /collection='monetico_payments'/, 'native payment creation is not persisted');
 forbidMatch('server/taxiassur-platform-api.mjs', /SUPABASE_URL|SUPABASE_SERVICE_ROLE_KEY|supabaseServiceKey/, 'native platform API still depends on Supabase');
+forbidMatch('server/taxiassur-platform-api.mjs', /VALUES\('crm_leads',[\s\S]{0,500}?'inbox-auto'\)/, 'native inbox can still create CRM leads automatically');
+requireMatch('server/taxiassur-platform-api.mjs', /action==='create_lead'\)return json\(res,origin,403,[\s\S]{0,120}?use_new_lead_form/, 'inbox can bypass the explicit new-lead form');
 requireMatch(createPayment, /MAC:\s*payment\.mac_sent/, 'signed payment form does not include its persisted MAC');
 requireMatch(createPayment, /if\s*\(!await isAuthorized/, 'payment creation is not staff-authorized');
 forbidMatch(createPayment, /htmlForm|document\.write/, 'server still returns injectable payment HTML');
@@ -181,8 +183,8 @@ requireMatch('supabase/functions/send-whatsapp/index.ts', /body, message, to, le
 requireMatch('supabase/functions/send-whatsapp/index.ts', /requestedLeadId[\s\S]*crm_leads[\s\S]*phone = normalizePhone\(lead\.phone\)/, 'lead WhatsApp delivery trusts the supplied phone instead of stored lead data');
 requireMatch('supabase/functions/send-whatsapp/index.ts', /wa_contacts[\s\S]*upsert[\s\S]*wa_conversations[\s\S]*resolvedConversationId/, 'legacy WhatsApp delivery cannot resolve or create a conversation safely');
 requireMatch('supabase/functions/send-whatsapp/index.ts', /normalizePhone[\s\S]*\+33\$\{phone\.slice\(1\)\}/, 'French WhatsApp numbers are not normalized to E.164');
-requireMatch('src/backoffice/WhatsAppManager.tsx', /error: sendError[\s\S]*sendResult\?\.success !== true[\s\S]*setMessageText\(''\)/, 'WhatsApp manager clears messages after failed Edge calls');
-requireMatch('src/backoffice/WhatsAppManager.tsx', /templateVariables[\s\S]*sendResult\?\.success !== true[\s\S]*setShowTemplates\(false\)/, 'WhatsApp manager closes templates after failed Edge calls');
+requireMatch('src/backoffice/WhatsAppManager.tsx', /nativeAdminCall[\s\S]*sendResult\?\.success !== true[\s\S]*clearDeliveryRequestId[\s\S]*setMessageText\(''\)/, 'WhatsApp manager clears messages before native delivery is confirmed');
+requireMatch('src/backoffice/WhatsAppManager.tsx', /templateVariables[\s\S]*sendResult\?\.success !== true[\s\S]*clearDeliveryRequestId[\s\S]*setShowTemplates\(false\)/, 'WhatsApp manager closes templates before native delivery is confirmed');
 requireMatch('supabase/functions/send-sms-brevo/index.ts', /lead_id[\s\S]*crm_leads[\s\S]*to = lead\.phone/, 'lead SMS delivery trusts the supplied phone instead of stored lead data');
 requireMatch('supabase/functions/send-sms-brevo/index.ts', /AbortSignal\.timeout\(15000\)/, 'Brevo SMS requests can hang without a provider timeout');
 const deliveryLedgerMigration = 'supabase/migrations/20260810040000_create_communication_delivery_idempotency.sql';
@@ -622,11 +624,7 @@ for (const file of ['src/pages/EspaceProspect.tsx', 'src/pages/ProspectDocuments
   requireMatch('src/lib/platform-api.ts', /uploadProspectPlatformDocument[\s\S]*platformRequest\([\s\S]*60_000/, 'prospect document upload can spin forever');
 }
 forbidMatch(portalTimeout, /timeoutMs = (?:2\d|[3-9]\d|\d{3,})_000/, 'portal timeout exceeds 20 seconds');
-for (const [file, endpoint] of [
-  ['src/backoffice/WhatsAppManager.tsx', 'send-whatsapp'],
-]) {
-  requireMatch(file, new RegExp(`withTimeout\\([\\s\\S]*${endpoint}[\\s\\S]*45_000`), `${endpoint} manual send can spin forever`);
-}
+requireMatch('src/backoffice/WhatsAppManager.tsx', /nativeAdminCall[\s\S]*\/v1\/admin\/whatsapp[\s\S]*AbortSignal\.timeout\(45_000\)/, 'native WhatsApp manual send can spin forever');
 const idempotentDeliveryCaller = 'src/lib/invoke-idempotent-delivery.ts';
 requireMatch(idempotentDeliveryCaller, /function canonicalize[\s\S]*\.sort\(/, 'shared frontend delivery caller lacks canonical signatures');
 requireMatch(idempotentDeliveryCaller, /getDeliveryRequestId\(channel, signature\)/, 'shared frontend delivery caller lacks stable request IDs');

@@ -408,17 +408,16 @@ const CRMPipelineKanban: React.FC = () => {
 
     try {
       const syncData = await nativeAdminInboxSync() as {
-        stats?: { emails_retrieved?: number; emails_imported?: number; leads_created?: number; emails_linked?: number };
+        stats?: { emails_retrieved?: number; emails_imported?: number; emails_linked?: number };
       };
 
       await loadKanbanData(false);
 
       const emailsSynced = syncData.stats?.emails_imported ?? syncData.stats?.emails_retrieved ?? 0;
-      const leadsCreated = syncData.stats?.leads_created ?? 0;
       const emailsLinked = syncData.stats?.emails_linked ?? 0;
 
       setSyncMessage(
-        `✅ Synchronisation terminée ! ${emailsSynced} emails sync, ${leadsCreated} leads créés, ${emailsLinked} emails liés`
+        `✅ Synchronisation terminée ! ${emailsSynced} emails synchronisés, ${emailsLinked} emails rattachés aux leads existants`
       );
 
       setTimeout(() => setSyncMessage(null), 7000);
