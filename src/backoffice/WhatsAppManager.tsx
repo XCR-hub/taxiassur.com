@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
-import { nativeAdminSession } from '@/lib/native-admin-auth';
-import { withTimeout } from '@/lib/promise-timeout';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { clearDeliveryRequestId, getDeliveryRequestId } from '@/lib/delivery-idempotency';
 import {
   MessageSquare,
@@ -139,16 +137,19 @@ export default function WhatsAppManager() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    loadConversations();
-    loadTemplates();
-    const interval = setInterval(loadConversations, 5000);
+    void loadConversations();
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') void loadConversations();
+    }, 5000);
     return () => clearInterval(interval);
   }, [filter]);
 
   useEffect(() => {
     if (selectedConversation) {
-      loadMessages(selectedConversation.id);
-      const interval = setInterval(() => loadMessages(selectedConversation.id), 3000);
+      void loadMessages(selectedConversation.id);
+      const interval = setInterval(() => {
+        if (document.visibilityState === 'visible') void loadMessages(selectedConversation.id);
+      }, 3000);
       return () => clearInterval(interval);
     }
   }, [selectedConversation]);
@@ -158,32 +159,26 @@ export default function WhatsAppManager() {
   }, [messages]);
 
   const loadConversations = async () => {
-    let query = supabase
-      .from('wa_conversations')
-      .select('*, wa_contacts(*)')
-      .order('last_message_at', { ascending: false });
-    if (filter === 'unread') query = query.gt('unread_count', 0);
-    else if (filter === 'assigned') query = query.not('assigned_to_user_id', 'is', null);
-    const { data, error } = await query;
-    if (!error && data) setConversations(data);
+    try {
+      const result = await nativeAdminCall<{ conversations?: Conversation[]; templates?: Template[] }>(
+        `/v1/admin/whatsapp?filter=${encodeURIComponent(filter)}`
+      );
+      setConversations(result.conversations || []);
+      setTemplates(result.templates || []);
+    } catch (error) {
+      logger.error('Error loading WhatsApp conversations:', error);
+    }
   };
 
   const loadMessages = async (conversationId: string) => {
-    const { data, error } = await supabase
-      .from('wa_messages')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
-    if (!error && data) setMessages(data);
-  };
-
-  const loadTemplates = async () => {
-    const { data } = await supabase
-      .from('wa_templates')
-      .select('*')
-      .eq('approved', true)
-      .order('name');
-    if (data) setTemplates(data);
+    try {
+      const result = await nativeAdminCall<{ messages?: Message[] }>(
+        `/v1/admin/whatsapp?conversation_id=${encodeURIComponent(conversationId)}`
+      );
+      setMessages(result.messages || []);
+    } catch (error) {
+      logger.error('Error loading WhatsApp messages:', error);
+    }
   };
 
   const sendMessage = async () => {
@@ -192,10 +187,11 @@ export default function WhatsAppManager() {
     try {
       const deliverySignature = JSON.stringify({ conversationId: selectedConversation.id, body: messageText.trim() });
       const requestId = getDeliveryRequestId('whatsapp', deliverySignature);
-      const { data: sendResult, error: sendError } = await withTimeout(supabase.functions.invoke('send-whatsapp', {
-        body: { conversationId: selectedConversation.id, body: messageText, requestId },
-      }), 45_000);
-      if (sendError || sendResult?.success !== true) throw sendError || new Error('WhatsApp non envoyé');
+      const sendResult = await nativeAdminCall<{ success?: boolean }>('/v1/admin/whatsapp', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'send', conversation_id: selectedConversation.id, body: messageText, request_id: requestId }),
+      });
+      if (sendResult?.success !== true) throw new Error('WhatsApp non envoyé');
       clearDeliveryRequestId('whatsapp', deliverySignature);
       setMessageText('');
       if (textareaRef.current) textareaRef.current.style.height = 'auto';
@@ -215,15 +211,17 @@ export default function WhatsAppManager() {
     try {
       const deliverySignature = JSON.stringify({ conversationId: selectedConversation.id, templateName: selectedTemplate.name, templateVariables: templateVars });
       const requestId = getDeliveryRequestId('whatsapp', deliverySignature);
-      const { data: sendResult, error: sendError } = await withTimeout(supabase.functions.invoke('send-whatsapp', {
-        body: {
-          conversationId: selectedConversation.id,
-          templateName: selectedTemplate.name,
-          templateVariables: templateVars,
-          requestId,
-        },
-      }), 45_000);
-      if (sendError || sendResult?.success !== true) throw sendError || new Error('WhatsApp non envoyé');
+      const sendResult = await nativeAdminCall<{ success?: boolean }>('/v1/admin/whatsapp', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'send',
+          conversation_id: selectedConversation.id,
+          template_name: selectedTemplate.name,
+          template_variables: templateVars,
+          request_id: requestId,
+        }),
+      });
+      if (sendResult?.success !== true) throw new Error('WhatsApp non envoyé');
       clearDeliveryRequestId('whatsapp', deliverySignature);
       setShowTemplates(false);
       setSelectedTemplate(null);
@@ -240,18 +238,19 @@ export default function WhatsAppManager() {
 
   const markAsRead = async () => {
     if (!selectedConversation) return;
-    await supabase.from('wa_conversations').update({ unread_count: 0 }).eq('id', selectedConversation.id);
+    await nativeAdminCall('/v1/admin/whatsapp', {
+      method: 'PATCH',
+      body: JSON.stringify({ action: 'read', conversation_id: selectedConversation.id }),
+    });
     await loadConversations();
   };
 
   const assignToMe = async () => {
     if (!selectedConversation) return;
-    const { user } = await nativeAdminSession().catch(() => ({ user: null }));
-    if (!user) return;
-    await supabase
-      .from('wa_conversations')
-      .update({ assigned_to_user_id: user.id })
-      .eq('id', selectedConversation.id);
+    await nativeAdminCall('/v1/admin/whatsapp', {
+      method: 'PATCH',
+      body: JSON.stringify({ action: 'assign', conversation_id: selectedConversation.id }),
+    });
     await loadConversations();
   };
 
