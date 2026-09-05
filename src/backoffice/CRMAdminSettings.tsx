@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, Users, Bell, Shield, Database, Zap, Mail, MessageSquare, Bot, Save, CheckCircle, X, UserPlus, Trash2, Lock, Eye, CreditCard as Edit, AlertTriangle, Send, Key } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
 import { nativeAdminCall } from '@/lib/native-admin-data';
 
@@ -68,8 +67,16 @@ interface UserPermission {
   can_assign: boolean;
 }
 
+interface NativeIntegration {
+  configured: boolean;
+  fields: Record<string, string>;
+  secret_masked: string;
+}
+
+type SettingsTab = 'general' | 'users' | 'permissions' | 'notifications' | 'integrations' | 'ai';
+
 const CRMAdminSettings: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'general' | 'users' | 'permissions' | 'notifications' | 'integrations' | 'ai'>('general');
+  const [activeTab, setActiveTab] = useState<SettingsTab>('general');
   const [settings, setSettings] = useState<CRMSettings>({
     company_name: 'TaxiAssur',
     primary_email: 'team@taxiassur.com',
@@ -115,8 +122,7 @@ const CRMAdminSettings: React.FC = () => {
   const [integrationSettings, setIntegrationSettings] = useState({
     brevo: { api_key: '', sender_email: '', sender_name: '' },
     whatsapp: { account_sid: '', auth_token: '', phone_number: '' },
-    supabase: { url: '', anon_key: '', service_key: '' },
-    stripe: { secret_key: '', publishable_key: '', webhook_secret: '' }
+    stripe: { secret_key: '', publishable_key: '' }
   });
 
   // États pour l'onglet Permissions
@@ -137,29 +143,8 @@ const CRMAdminSettings: React.FC = () => {
 
   const loadSettings = async () => {
     try {
-      const { data, error } = await supabase
-        .from('crm_settings')
-        .select('*')
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Erreur chargement paramètres:', error);
-        return;
-      }
-
-      if (data) {
-        setSettings({
-          company_name: data.company_name,
-          primary_email: data.primary_email,
-          timezone: data.timezone,
-          auto_assign_leads: data.auto_assign_leads,
-          ai_auto_decisions: data.ai_auto_decisions,
-          ai_autonomy_level: data.ai_autonomy_level,
-          ai_confidence_threshold: data.ai_confidence_threshold,
-          ai_agents: data.ai_agents,
-          notifications: data.notifications
-        });
-      }
+      const result = await nativeAdminCall<{ settings?: CRMSettings }>('/v1/admin/crm-settings');
+      if (result.settings) setSettings(result.settings);
     } catch (error) {
       console.error('Erreur:', error);
     }
@@ -170,23 +155,11 @@ const CRMAdminSettings: React.FC = () => {
     setSaveSuccess(false);
 
     try {
-      const { error } = await supabase
-        .from('crm_settings')
-        .update({
-          company_name: settings.company_name,
-          primary_email: settings.primary_email,
-          timezone: settings.timezone,
-          auto_assign_leads: settings.auto_assign_leads,
-          ai_auto_decisions: settings.ai_auto_decisions,
-          ai_autonomy_level: settings.ai_autonomy_level,
-          ai_confidence_threshold: settings.ai_confidence_threshold,
-          ai_agents: settings.ai_agents,
-          notifications: settings.notifications,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', '00000000-0000-0000-0000-000000000001');
-
-      if (error) throw error;
+      const result = await nativeAdminCall<{ settings?: CRMSettings }>('/v1/admin/crm-settings', {
+        method: 'PUT',
+        body: JSON.stringify({ settings }),
+      });
+      if (result.settings) setSettings(result.settings);
 
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -282,17 +255,24 @@ const CRMAdminSettings: React.FC = () => {
 
   const loadIntegrationSettings = async () => {
     try {
-      const { data } = await supabase
-        .from('crm_settings')
-        .select('integration_configs')
-        .single();
-
-      if (data?.integration_configs) {
-        setIntegrationSettings(prev => ({
-          ...prev,
-          ...data.integration_configs
-        }));
-      }
+      const result = await nativeAdminCall<{ integrations?: Record<string, NativeIntegration> }>('/v1/admin/integrations');
+      const integrations = result.integrations || {};
+      setIntegrationSettings(prev => ({
+        brevo: {
+          api_key: integrations.brevo?.secret_masked || '',
+          sender_email: integrations.brevo?.fields.sender_email || prev.brevo.sender_email,
+          sender_name: integrations.brevo?.fields.sender_name || prev.brevo.sender_name,
+        },
+        whatsapp: {
+          account_sid: integrations.whatsapp?.fields.account_sid || prev.whatsapp.account_sid,
+          auth_token: integrations.whatsapp?.secret_masked || '',
+          phone_number: integrations.whatsapp?.fields.phone_number || prev.whatsapp.phone_number,
+        },
+        stripe: {
+          secret_key: integrations.stripe?.secret_masked || '',
+          publishable_key: integrations.stripe?.fields.publishable_key || prev.stripe.publishable_key,
+        },
+      }));
     } catch (error) {
       console.error('Erreur chargement intégrations:', error);
     }
@@ -300,28 +280,23 @@ const CRMAdminSettings: React.FC = () => {
 
   const saveIntegration = async (integration: string) => {
     try {
-      const { data: currentSettings } = await supabase
-        .from('crm_settings')
-        .select('integration_configs')
-        .single();
-
-      const updatedConfigs = {
-        ...(currentSettings?.integration_configs || {}),
-        [integration]: integrationSettings[integration as keyof typeof integrationSettings]
-      };
-
-      const { error } = await supabase
-        .from('crm_settings')
-        .update({
-          integration_configs: updatedConfigs,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', '00000000-0000-0000-0000-000000000001');
-
-      if (error) throw error;
+      if (!(integration in integrationSettings)) throw new Error('Intégration non prise en charge');
+      const secret = integration === 'brevo' ? integrationSettings.brevo.api_key
+        : integration === 'whatsapp' ? integrationSettings.whatsapp.auth_token
+        : integrationSettings.stripe.secret_key;
+      const fields = integration === 'brevo'
+        ? { sender_email: integrationSettings.brevo.sender_email, sender_name: integrationSettings.brevo.sender_name }
+        : integration === 'whatsapp'
+          ? { account_sid: integrationSettings.whatsapp.account_sid, phone_number: integrationSettings.whatsapp.phone_number }
+          : { publishable_key: integrationSettings.stripe.publishable_key };
+      await nativeAdminCall('/v1/admin/integrations', {
+        method: 'PUT',
+        body: JSON.stringify({ integration, fields, secret: secret === '************' ? '' : secret }),
+      });
 
       toast.success(`Configuration ${integration} sauvegardée avec succès`);
       setShowIntegrationModal(null);
+      void loadIntegrationSettings();
     } catch (error) {
       console.error('Erreur sauvegarde intégration:', error);
       toast.error('Erreur lors de la sauvegarde');
@@ -330,14 +305,9 @@ const CRMAdminSettings: React.FC = () => {
 
   const loadModules = async () => {
     try {
-      const { data, error } = await supabase
-        .from('system_modules')
-        .select('slug, name, icon, description')
-        .eq('is_active', true)
-        .order('display_order');
-
-      if (error) throw error;
-      setModules(data || []);
+      const result = await nativeAdminCall<{ modules?: SystemModule[]; role_permissions?: RolePermission[] }>('/v1/admin/access-control');
+      setModules(result.modules || []);
+      setRolePermissions(result.role_permissions || []);
     } catch (error) {
       console.error('Erreur chargement modules:', error);
     }
@@ -345,13 +315,8 @@ const CRMAdminSettings: React.FC = () => {
 
   const loadRolePermissions = async () => {
     try {
-      const { data, error } = await supabase
-        .from('role_permissions')
-        .select('*')
-        .order('role, module_slug');
-
-      if (error) throw error;
-      setRolePermissions(data || []);
+      const result = await nativeAdminCall<{ role_permissions?: RolePermission[] }>('/v1/admin/access-control');
+      setRolePermissions(result.role_permissions || []);
     } catch (error) {
       console.error('Erreur chargement permissions rôles:', error);
     }
@@ -362,13 +327,8 @@ const CRMAdminSettings: React.FC = () => {
 
     setLoadingPermissions(true);
     try {
-      const { data, error } = await supabase
-        .from('user_custom_permissions')
-        .select('*')
-        .eq('user_id', userId);
-
-      if (error) throw error;
-      setUserPermissions(data || []);
+      const result = await nativeAdminCall<{ user_permissions?: UserPermission[] }>(`/v1/admin/access-control?user_id=${encodeURIComponent(userId)}`);
+      setUserPermissions(result.user_permissions || []);
     } catch (error) {
       console.error('Erreur chargement permissions utilisateur:', error);
     } finally {
@@ -380,31 +340,20 @@ const CRMAdminSettings: React.FC = () => {
     try {
       const existingPerm = userPermissions.find(p => p.user_id === userId && p.module_slug === moduleSlug);
 
-      if (existingPerm) {
-        const { error } = await supabase
-          .from('user_custom_permissions')
-          .update({ [permissionType]: value })
-          .eq('user_id', userId)
-          .eq('module_slug', moduleSlug);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('user_custom_permissions')
-          .insert({
-            user_id: userId,
-            module_slug: moduleSlug,
-            [permissionType]: value,
-            can_read: permissionType === 'can_read' ? value : false,
-            can_write: permissionType === 'can_write' ? value : false,
-            can_delete: permissionType === 'can_delete' ? value : false,
-            can_export: permissionType === 'can_export' ? value : false,
-            can_validate: permissionType === 'can_validate' ? value : false,
-            can_assign: permissionType === 'can_assign' ? value : false
-          });
-
-        if (error) throw error;
-      }
+      const permission = existingPerm || {
+        user_id: userId,
+        module_slug: moduleSlug,
+        can_read: false,
+        can_write: false,
+        can_delete: false,
+        can_export: false,
+        can_validate: false,
+        can_assign: false,
+      };
+      await nativeAdminCall('/v1/admin/access-control/user', {
+        method: 'PUT',
+        body: JSON.stringify({ ...permission, [permissionType]: value }),
+      });
 
       loadUserPermissions(userId);
     } catch (error) {
@@ -413,7 +362,7 @@ const CRMAdminSettings: React.FC = () => {
     }
   };
 
-  const tabs = [
+  const tabs: Array<{ id: SettingsTab; label: string; icon: React.ElementType }> = [
     { id: 'general', label: 'Général', icon: Settings },
     { id: 'users', label: 'Utilisateurs', icon: Users },
     { id: 'permissions', label: 'Permissions', icon: Lock },
@@ -528,7 +477,7 @@ const CRMAdminSettings: React.FC = () => {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
                     activeTab === tab.id
                       ? 'bg-blue-600 text-white shadow-lg'
@@ -1028,21 +977,15 @@ const CRMAdminSettings: React.FC = () => {
                     </button>
                   </div>
 
-                  <div className="border-2 border-gray-200 rounded-lg p-6">
+                  <div className="border-2 border-emerald-200 bg-emerald-50 rounded-lg p-6">
                     <div className="flex items-center gap-3 mb-4">
-                      <Database size={32} className="text-purple-600" />
+                      <Database size={32} className="text-emerald-700" />
                       <div>
-                        <h3 className="font-bold text-gray-900">Supabase</h3>
-                        <div className="text-sm text-green-600 font-medium">Connecté</div>
+                        <h3 className="font-bold text-gray-900">PostgreSQL XCR</h3>
+                        <div className="text-sm text-emerald-700 font-medium">Base native active</div>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-600 mb-4">Base de données</p>
-                    <button
-                      onClick={() => setShowIntegrationModal('supabase')}
-                      className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                      Configurer
-                    </button>
+                    <p className="text-sm text-gray-600">Données CRM et historique centralisés sur l'infrastructure XCR.</p>
                   </div>
 
                   <div className="border-2 border-gray-200 rounded-lg p-6">
@@ -1273,56 +1216,6 @@ const CRMAdminSettings: React.FC = () => {
                 </>
               )}
 
-              {showIntegrationModal === 'supabase' && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      URL Supabase
-                    </label>
-                    <input
-                      type="url"
-                      value={integrationSettings.supabase.url}
-                      onChange={(e) => setIntegrationSettings({
-                        ...integrationSettings,
-                        supabase: { ...integrationSettings.supabase, url: e.target.value }
-                      })}
-                      placeholder="https://taxiassur.com/api/platform"
-                      className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Clé anonyme (anon)
-                    </label>
-                    <input
-                      type="password"
-                      value={integrationSettings.supabase.anon_key}
-                      onChange={(e) => setIntegrationSettings({
-                        ...integrationSettings,
-                        supabase: { ...integrationSettings.supabase, anon_key: e.target.value }
-                      })}
-                      placeholder="eyJ..."
-                      className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Clé service (service_role)
-                    </label>
-                    <input
-                      type="password"
-                      value={integrationSettings.supabase.service_key}
-                      onChange={(e) => setIntegrationSettings({
-                        ...integrationSettings,
-                        supabase: { ...integrationSettings.supabase, service_key: e.target.value }
-                      })}
-                      placeholder="eyJ..."
-                      className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </>
-              )}
-
               {showIntegrationModal === 'stripe' && (
                 <>
                   <div>
@@ -1352,21 +1245,6 @@ const CRMAdminSettings: React.FC = () => {
                         stripe: { ...integrationSettings.stripe, publishable_key: e.target.value }
                       })}
                       placeholder="pk_..."
-                      className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Secret Webhook
-                    </label>
-                    <input
-                      type="password"
-                      value={integrationSettings.stripe.webhook_secret}
-                      onChange={(e) => setIntegrationSettings({
-                        ...integrationSettings,
-                        stripe: { ...integrationSettings.stripe, webhook_secret: e.target.value }
-                      })}
-                      placeholder="whsec_..."
                       className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>

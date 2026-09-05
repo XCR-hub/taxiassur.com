@@ -285,6 +285,7 @@ requireMatch('src/backoffice/ClaimsManager.tsx', /nativeAdminClaims\(filterStatu
 forbidMatch('src/backoffice/InsuranceCompaniesStats.tsx', /supabase|lead_company_quotes/i, 'insurance company statistics still query Supabase');
 requireMatch('src/backoffice/InsuranceCompaniesStats.tsx', /nativeAdminQuotes\(\)[\s\S]*nativeAdminInsuranceCompanies\(\)/, 'insurance company statistics do not use native XCR data');
 forbidMatch('src/backoffice/InsuranceCompaniesManager.tsx', /from ['"]@\/lib\/supabase['"]|\bsupabase\./, 'insurance companies manager still uses Supabase');
+forbidMatch('src/backoffice/CRMAdminSettings.tsx', /from ['"]@\/lib\/supabase['"]|\bsupabase\.|service_role|service_key/i, 'CRM settings still expose or depend on Supabase credentials');
 requireMatch('src/backoffice/InsuranceCompaniesManager.tsx', /nativeAdminInsuranceCompanies[\s\S]*nativeAdminUploadInsuranceCompanyFile/, 'insurance companies manager does not use native XCR API');
 requireMatch('src/lib/crm-pipeline.ts', /getLeads[\s\S]*nativeAdminLeads\(/, 'CRM Kanban lead loading does not use the dedicated native XCR endpoint');
 requireMatch('server/taxiassur-platform-api.mjs', /adminLeadsList[\s\S]*taxiassur\.records WHERE collection='crm_leads'[\s\S]*jsonb_build_object\('id',record_id\)/, 'native Kanban endpoint does not read migrated PostgreSQL leads');
