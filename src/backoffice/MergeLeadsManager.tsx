@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall, nativeAdminLeads } from '@/lib/native-admin-data';
 import {
   GitMerge, Search, AlertTriangle, Loader2, ArrowRight, CheckCircle,
   User, Mail, Phone, MapPin, Calendar, X, FileText, MessageSquare
@@ -108,34 +108,31 @@ function LeadPicker({
       setResults([]);
       return;
     }
+    let cancelled = false;
     const timer = setTimeout(async () => {
       setLoading(true);
       const term = query.trim();
-      const orFilter = [
-        `email.ilike.%${term}%`,
-        `first_name.ilike.%${term}%`,
-        `last_name.ilike.%${term}%`,
-        `phone.ilike.%${term}%`,
-        `city.ilike.%${term}%`,
-        `immatriculation.ilike.%${term}%`,
-      ].join(',');
-
-      const { data, error } = await supabase
-        .from('crm_leads')
-        .select('id, first_name, last_name, email, phone, city, status, created_at, immatriculation, company_name')
-        .or(orFilter)
-        .neq('status', 'archived')
-        .order('created_at', { ascending: false })
-        .limit(15);
-
-      if (!error && data) {
-        setResults(excludeId ? data.filter(l => l.id !== excludeId) : data);
+      try {
+        const response = await nativeAdminLeads(term);
+        if (cancelled) return;
+        const leads = ((response as { leads?: Lead[] }).leads || []).slice(0, 15);
+        setResults(excludeId ? leads.filter(lead => lead.id !== excludeId) : leads);
+        setOpen(true);
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Erreur recherche leads:', error);
+          setResults([]);
+          setOpen(true);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      setLoading(false);
-      setOpen(true);
     }, 300);
 
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [query, excludeId]);
 
   return (
@@ -210,26 +207,23 @@ export default function MergeLeadsManager() {
     setResult(null);
     setConfirmOpen(false);
 
-    const { data, error: rpcError } = await supabase.rpc('merge_two_leads_manual', {
-      p_source_id: source.id,
-      p_target_id: target.id,
-    });
-
-    setMerging(false);
-
-    if (rpcError) {
-      setError(rpcError.message);
-      return;
+    try {
+      const res = await nativeAdminCall<MergeResult>('/v1/admin/leads/merge', {
+        method: 'POST',
+        body: JSON.stringify({ source_id: source.id, target_id: target.id }),
+      });
+      if (!res?.success) {
+        setError(res?.error || 'Échec de la fusion');
+        return;
+      }
+      setResult(res);
+      setSource(null);
+      setTarget(null);
+    } catch (mergeError) {
+      setError(mergeError instanceof Error ? mergeError.message : 'Échec de la fusion');
+    } finally {
+      setMerging(false);
     }
-
-    const res = data as MergeResult;
-    if (!res?.success) {
-      setError(res?.error || 'Échec de la fusion');
-      return;
-    }
-    setResult(res);
-    setSource(null);
-    setTarget(null);
   };
 
   return (
