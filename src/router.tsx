@@ -108,8 +108,6 @@ const CRMCommercial = lazy(() => import('./backoffice/CRMCommercial'));
 const InboxIntelligent = lazy(() => import('./backoffice/InboxIntelligent'));
 const LeadManager = lazy(() => import('./backoffice/LeadManager'));
 const ManualLeadCreation = lazy(() => import('./backoffice/ManualLeadCreation'));
-const PartnerPortal = lazy(() => import('./backoffice/PartnerPortal'));
-const PartnerAuth = lazy(() => import('./backoffice/PartnerAuth'));
 const SocialMediaManager = lazy(() => import('./backoffice/SocialMediaManager'));
 const AutomationDashboard = lazy(() => import('./backoffice/AutomationDashboard'));
 const AutomationLayout = lazy(() => import('./backoffice/AutomationLayout'));
@@ -654,8 +652,8 @@ export const router = createBrowserRouter([
       { path: 'lead-invoicing', element: <LeadInvoicing /> },
 
       /* ── Partners ── */
-      { path: 'partner-portal', element: <PartnerPortal /> },
-      { path: 'partner-auth', element: <PartnerAuth /> },
+      { path: 'partner-portal', element: <Navigate to="/backoffice/partners" replace /> },
+      { path: 'partner-auth', element: <Navigate to="/backoffice/partners" replace /> },
       { path: 'partners', element: <PartnerManager /> },
       { path: 'lead-marketplace', element: <LeadMarketplace /> },
 
