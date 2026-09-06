@@ -108,7 +108,6 @@ const CRMCommercial = lazy(() => import('./backoffice/CRMCommercial'));
 const InboxIntelligent = lazy(() => import('./backoffice/InboxIntelligent'));
 const LeadManager = lazy(() => import('./backoffice/LeadManager'));
 const ManualLeadCreation = lazy(() => import('./backoffice/ManualLeadCreation'));
-const SocialMediaManager = lazy(() => import('./backoffice/SocialMediaManager'));
 const AutomationDashboard = lazy(() => import('./backoffice/AutomationDashboard'));
 const AutomationLayout = lazy(() => import('./backoffice/AutomationLayout'));
 const AnalyticsDashboard = lazy(() => import('./backoffice/AnalyticsDashboard'));
@@ -519,7 +518,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/auth/callback/linkedin',
-    element: <Navigate to="/backoffice/social-media" replace />,
+    element: <Navigate to="/backoffice/marketing-templates" replace />,
   },
   {
     path: '/auth/set-password',
@@ -656,8 +655,8 @@ export const router = createBrowserRouter([
       { path: 'lead-marketplace', element: <Navigate to="/backoffice/lead-manager" replace /> },
 
       /* ── Social ── */
-      { path: 'social-media', element: <SocialMediaManager /> },
-      { path: 'social-connections', element: <SocialMediaManager /> },
+      { path: 'social-media', element: <Navigate to="/backoffice/marketing-templates" replace /> },
+      { path: 'social-connections', element: <Navigate to="/backoffice/marketing-templates" replace /> },
 
       /* ── Email Marketing — secondary inner sidebar ── */
       {

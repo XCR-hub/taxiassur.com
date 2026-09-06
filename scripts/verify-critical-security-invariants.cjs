@@ -278,7 +278,7 @@ requireMatch('src/router.tsx', /path:\s*['"]\/prospect\/documents['"][\s\S]{0,10
 forbidMatch('src/router.tsx', /AdminDashboard/, 'legacy Supabase admin dashboard is still bundled');
 requireMatch('src/router.tsx', /path:\s*['"]\/old-admin['"][\s\S]{0,100}<Navigate\s+to=['"]\/backoffice['"]/, 'legacy admin URL does not redirect to the native XCR backoffice');
 forbidMatch('src/router.tsx', /AuthCallbackLinkedin/, 'insecure browser-side LinkedIn OAuth callback is still bundled');
-requireMatch('src/router.tsx', /path:\s*['"]\/auth\/callback\/linkedin['"][\s\S]{0,120}<Navigate\s+to=['"]\/backoffice\/social-media['"]/, 'retired LinkedIn callback does not return staff to social settings');
+requireMatch('src/router.tsx', /path:\s*['"]\/auth\/callback\/linkedin['"][\s\S]{0,120}<Navigate\s+to=['"]\/backoffice\/marketing-templates['"]/, 'retired LinkedIn callback does not return staff to the maintained marketing workspace');
 forbidMatch('src/backoffice/SocialMediaManager.tsx', /LinkedInOAuthButton/, 'social manager still exposes the insecure Supabase LinkedIn OAuth flow');
 forbidMatch('src/backoffice/ClaimsManager.tsx', /supabase|get_all_claims_for_admin|update_claim_tracking/i, 'claims manager still depends on Supabase RPCs');
 requireMatch('src/backoffice/ClaimsManager.tsx', /nativeAdminClaims\(filterStatus\)[\s\S]*nativeAdminUpdateClaim\(claimId/, 'claims manager does not use the native XCR claims endpoints');
@@ -300,6 +300,8 @@ requireMatch('server/taxiassur-platform-api.mjs', /adminWhatsapp[\s\S]{0,800}rec
 forbidMatch('src/router.tsx', /import\(['"]\.\/backoffice\/WhatsAppSettings['"]\)|<WhatsAppSettings\s*\/>/, 'obsolete WhatsApp settings still exposes frontend credentials or Supabase webhook');
 requireMatch('src/router.tsx', /path:\s*['"]whatsapp-settings['"][\s\S]{0,160}crm-killer\/settings\?tab=integrations/, 'WhatsApp settings does not redirect to encrypted native integrations');
 forbidMatch('src/backoffice/WhatsAppLayout.tsx', /whatsapp-(?:contacts|templates|analytics|webhook)/, 'WhatsApp navigation still exposes unimplemented routes');
+forbidMatch('src/router.tsx', /import\(['"]\.\/backoffice\/SocialMediaManager['"]\)|<SocialMediaManager\s*\/>/, 'obsolete Supabase social manager still bundles plaintext connector configuration');
+requireMatch('src/router.tsx', /path:\s*['"]social-media['"][\s\S]{0,140}Navigate to="\/backoffice\/marketing-templates"/, 'legacy social manager does not redirect to the maintained marketing workspace');
 requireMatch('src/backoffice/InsuranceCompaniesManager.tsx', /nativeAdminInsuranceCompanies[\s\S]*nativeAdminUploadInsuranceCompanyFile/, 'insurance companies manager does not use native XCR API');
 requireMatch('src/lib/crm-pipeline.ts', /getLeads[\s\S]*nativeAdminLeads\(/, 'CRM Kanban lead loading does not use the dedicated native XCR endpoint');
 requireMatch('server/taxiassur-platform-api.mjs', /adminLeadsList[\s\S]*taxiassur\.records WHERE collection='crm_leads'[\s\S]*jsonb_build_object\('id',record_id\)/, 'native Kanban endpoint does not read migrated PostgreSQL leads');
