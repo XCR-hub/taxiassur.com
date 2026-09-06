@@ -2,14 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   MessageSquare,
-  Users,
-  FileText,
   Settings,
   ChevronLeft,
   ChevronRight,
   ArrowLeft,
-  BarChart2,
-  Wifi,
 } from 'lucide-react';
 import { nativeAdminCall } from '@/lib/native-admin-data';
 
@@ -47,14 +43,10 @@ const WhatsAppLayout: React.FC = () => {
 
   const navItems: NavItem[] = [
     { id: 'conversations', label: 'Conversations', icon: MessageSquare, path: '/backoffice/whatsapp', group: 'Principal', badge: unreadCount },
-    { id: 'contacts', label: 'Contacts', icon: Users, path: '/backoffice/whatsapp-contacts', group: 'Gestion' },
-    { id: 'templates', label: 'Templates', icon: FileText, path: '/backoffice/whatsapp-templates', group: 'Gestion' },
-    { id: 'analytics', label: 'Statistiques', icon: BarChart2, path: '/backoffice/whatsapp-analytics', group: 'Analyse' },
     { id: 'settings', label: 'Paramètres', icon: Settings, path: '/backoffice/whatsapp-settings', group: 'Configuration' },
-    { id: 'webhook', label: 'Webhook', icon: Wifi, path: '/backoffice/whatsapp-webhook', group: 'Configuration' },
   ];
 
-  const groups = ['Principal', 'Gestion', 'Analyse', 'Configuration'];
+  const groups = ['Principal', 'Configuration'];
 
   const isActive = (path: string) => {
     if (path === '/backoffice/whatsapp') {

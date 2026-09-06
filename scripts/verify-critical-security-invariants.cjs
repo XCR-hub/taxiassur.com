@@ -297,6 +297,9 @@ forbidMatch('src/backoffice/SecurityDashboard.tsx', /from ['"]@\/lib\/supabase['
 requireMatch('server/taxiassur-platform-api.mjs', /adminSecurityDashboard[\s\S]{0,500}verifiedAdminSession[\s\S]{0,500}recordsAllWithMirror\('security_logs'\)/, 'native security dashboard does not preserve migrated logs behind admin authentication');
 forbidMatch('src/backoffice/WhatsAppLayout.tsx', /from ['"]@\/lib\/supabase['"]|supabase\./, 'WhatsApp navigation still reads Supabase directly');
 requireMatch('server/taxiassur-platform-api.mjs', /adminWhatsapp[\s\S]{0,800}recordsAllWithMirror\('wa_conversations'\)[\s\S]{0,1200}whatsapp_configured/, 'native WhatsApp endpoint does not preserve migrated conversations or report real configuration');
+forbidMatch('src/router.tsx', /import\(['"]\.\/backoffice\/WhatsAppSettings['"]\)|<WhatsAppSettings\s*\/>/, 'obsolete WhatsApp settings still exposes frontend credentials or Supabase webhook');
+requireMatch('src/router.tsx', /path:\s*['"]whatsapp-settings['"][\s\S]{0,160}crm-killer\/settings\?tab=integrations/, 'WhatsApp settings does not redirect to encrypted native integrations');
+forbidMatch('src/backoffice/WhatsAppLayout.tsx', /whatsapp-(?:contacts|templates|analytics|webhook)/, 'WhatsApp navigation still exposes unimplemented routes');
 requireMatch('src/backoffice/InsuranceCompaniesManager.tsx', /nativeAdminInsuranceCompanies[\s\S]*nativeAdminUploadInsuranceCompanyFile/, 'insurance companies manager does not use native XCR API');
 requireMatch('src/lib/crm-pipeline.ts', /getLeads[\s\S]*nativeAdminLeads\(/, 'CRM Kanban lead loading does not use the dedicated native XCR endpoint');
 requireMatch('server/taxiassur-platform-api.mjs', /adminLeadsList[\s\S]*taxiassur\.records WHERE collection='crm_leads'[\s\S]*jsonb_build_object\('id',record_id\)/, 'native Kanban endpoint does not read migrated PostgreSQL leads');

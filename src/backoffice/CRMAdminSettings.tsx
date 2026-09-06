@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Settings, Users, Bell, Shield, Database, Zap, Mail, MessageSquare, Bot, Save, CheckCircle, X, UserPlus, Trash2, Lock, Eye, CreditCard as Edit, AlertTriangle, Send, Key } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { nativeAdminCall } from '@/lib/native-admin-data';
+import { useSearchParams } from 'react-router-dom';
 
 interface CRMSettings {
   company_name: string;
@@ -76,7 +77,8 @@ interface NativeIntegration {
 type SettingsTab = 'general' | 'users' | 'permissions' | 'notifications' | 'integrations' | 'ai';
 
 const CRMAdminSettings: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<SettingsTab>('general');
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<SettingsTab>(searchParams.get('tab') === 'integrations' ? 'integrations' : 'general');
   const [settings, setSettings] = useState<CRMSettings>({
     company_name: 'TaxiAssur',
     primary_email: 'team@taxiassur.com',

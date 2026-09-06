@@ -114,7 +114,6 @@ const AutomationLayout = lazy(() => import('./backoffice/AutomationLayout'));
 const AnalyticsDashboard = lazy(() => import('./backoffice/AnalyticsDashboard'));
 const WhatsAppManager = lazy(() => import('./backoffice/WhatsAppManager'));
 const WhatsAppLayout = lazy(() => import('./backoffice/WhatsAppLayout'));
-const WhatsAppSettings = lazy(() => import('./backoffice/WhatsAppSettings'));
 const EmailMarketingHub = lazy(() => import('./backoffice/EmailMarketingHub'));
 const DuplicateLeadsManager = lazy(() => import('./backoffice/DuplicateLeadsManager'));
 const MergeLeadsManager = lazy(() => import('./backoffice/MergeLeadsManager'));
@@ -717,8 +716,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'whatsapp-settings',
-        element: <WhatsAppLayout />,
-        children: [{ index: true, element: <WhatsAppSettings /> }],
+        element: <Navigate to="/backoffice/crm-killer/settings?tab=integrations" replace />,
       },
 
       /* ── Automations — secondary inner sidebar ── */
