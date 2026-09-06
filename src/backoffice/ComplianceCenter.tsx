@@ -6,8 +6,8 @@ import {
   Clock, Building2, X, Search, ChevronDown, ChevronRight,
   Database, Lock, UserCheck, BarChart3, AlertCircle, Loader2
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import NavigationMenu from './NavigationMenu';
 
 interface GDPRConsent {
@@ -48,7 +48,7 @@ interface ComplianceReport {
 const DSR_TYPES = [
   { value: 'access', label: "Acces aux donnees (export JSON)" },
   { value: 'rectification', label: "Rectification" },
-  { value: 'erasure', label: "Effacement (suppression definitive)" },
+  { value: 'erasure', label: "Effacement (anonymisation irreversible)" },
   { value: 'portability', label: "Portabilite" },
   { value: 'restriction', label: "Limitation du traitement" },
 ];
@@ -102,14 +102,10 @@ const ComplianceCenter: React.FC = () => {
   const loadComplianceData = async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const [consentsRes, dsrRes, reportRes] = await Promise.all([
-        supabase.from('gdpr_consents').select('*').order('collected_at', { ascending: false }),
-        supabase.from('gdpr_data_requests').select('*').order('requested_at', { ascending: false }).limit(50),
-        supabase.rpc('generate_compliance_report'),
-      ]);
-      if (consentsRes.data) setConsents(consentsRes.data);
-      if (dsrRes.data) setDsrRequests(dsrRes.data);
-      if (reportRes.data) setReport(reportRes.data);
+      const result = await nativeAdminCall<{ consents?: GDPRConsent[]; requests?: DSRRequest[]; report?: ComplianceReport }>('/v1/admin/compliance');
+      setConsents(result.consents || []);
+      setDsrRequests(result.requests || []);
+      setReport(result.report || null);
     } catch (error) {
       logger.error('Failed to load compliance data:', error);
       showToast('error', 'Erreur lors du chargement des donnees');
@@ -123,8 +119,8 @@ const ComplianceCenter: React.FC = () => {
     setProcessingDSR(true);
     try {
       if (dsrType === 'access') {
-        const { data, error } = await supabase.rpc('export_personal_data', { p_email: dsrEmail });
-        if (error) throw error;
+        const result = await nativeAdminCall<{ data?: unknown }>('/v1/admin/compliance', { method: 'POST', body: JSON.stringify({ action: 'export', email: dsrEmail }) });
+        const data = result.data || {};
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -132,17 +128,15 @@ const ComplianceCenter: React.FC = () => {
         a.download = `taxiassur-data-${dsrEmail}-${new Date().toISOString().split('T')[0]}.json`;
         a.click();
         URL.revokeObjectURL(url);
-        await supabase.rpc('create_dsr_request', { p_email: dsrEmail, p_request_type: 'access', p_notes: dsrNotes || 'Data export completed' });
+        await nativeAdminCall('/v1/admin/compliance', { method: 'POST', body: JSON.stringify({ action: 'access', email: dsrEmail, notes: dsrNotes || 'Data export completed' }) });
         showToast('success', 'Donnees exportees avec succes');
       } else if (dsrType === 'erasure') {
-        if (!confirm(`Confirmer la suppression definitive de toutes les donnees pour ${dsrEmail} ?`)) return;
-        const { error } = await supabase.rpc('delete_personal_data', { p_email: dsrEmail });
-        if (error) throw error;
-        await supabase.rpc('create_dsr_request', { p_email: dsrEmail, p_request_type: 'erasure', p_notes: dsrNotes || 'Data deleted' });
-        showToast('success', 'Donnees supprimees avec succes');
+        if (!confirm(`Confirmer l'anonymisation irreversible des donnees pour ${dsrEmail} ?`)) return;
+        await nativeAdminCall('/v1/admin/compliance', { method: 'POST', body: JSON.stringify({ action: 'erasure', email: dsrEmail, notes: dsrNotes || 'Data anonymized' }) });
+        showToast('success', 'Donnees anonymisees avec succes');
         loadComplianceData();
       } else {
-        await supabase.rpc('create_dsr_request', { p_email: dsrEmail, p_request_type: dsrType, p_notes: dsrNotes });
+        await nativeAdminCall('/v1/admin/compliance', { method: 'POST', body: JSON.stringify({ action: dsrType, email: dsrEmail, notes: dsrNotes }) });
         showToast('success', 'Demande enregistree avec succes');
         loadComplianceData();
       }
@@ -160,7 +154,7 @@ const ComplianceCenter: React.FC = () => {
   const handleOptOut = async (email: string) => {
     if (!confirm(`Confirmer l'opt-out pour ${email} ?`)) return;
     try {
-      await supabase.rpc('process_opt_out', { p_email: email });
+      await nativeAdminCall('/v1/admin/compliance', { method: 'POST', body: JSON.stringify({ action: 'opt_out', email }) });
       showToast('success', 'Opt-out enregistre');
       loadComplianceData();
     } catch {
