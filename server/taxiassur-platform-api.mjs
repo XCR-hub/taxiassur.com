@@ -168,6 +168,7 @@ const server = createServer(async (req, res) => {
     if (req.method === 'PUT' && url.pathname === '/v1/admin/access-control/user') return await adminUserUiPermissionPut(req, res, origin, requestId);
     if (req.method === 'GET' && url.pathname === '/v1/admin/integrations') return await adminIntegrationsGet(req, res, origin, requestId);
     if (req.method === 'PUT' && url.pathname === '/v1/admin/integrations') return await adminIntegrationsPut(req, res, origin, requestId);
+    if (req.method === 'GET' && url.pathname === '/v1/admin/security') return await adminSecurityDashboard(req, res, origin, requestId, url);
     if (url.pathname === '/v1/admin/gsc-autonomous' && ['GET','POST'].includes(req.method)) return await adminGscAutonomous(req,res,origin,requestId);
     if (req.method === 'GET' && url.pathname === '/v1/admin/gsc') return await adminGscData(req, res, origin, requestId, url);
     if (req.method === 'POST' && url.pathname === '/v1/admin/gsc/sync') return await adminGscSync(req, res, origin, requestId);
@@ -2506,6 +2507,17 @@ function responseHeaders(origin, requestId, extra = {}) { return { 'X-Content-Ty
 function send(res, origin, status, body, headers, requestId) { res.writeHead(status, responseHeaders(origin, requestId, headers)); res.end(body); }
 function json(res, origin, status, body, requestId) { send(res, origin, status, JSON.stringify(body), { 'Content-Type': 'application/json; charset=utf-8' }, requestId); }
 function drainAndJson(req, res, origin, status, body, requestId) { req.resume(); return json(res, origin, status, body, requestId); }
+async function adminSecurityDashboard(req,res,origin,requestId,url){
+  if(!await verifiedAdminSession(req))return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
+  const range=String(url.searchParams.get('range')||'24h'),durations={"1h":3600000,"24h":86400000,"7d":604800000,"30d":2592000000};
+  if(!durations[range])return json(res,origin,400,{ok:false,error:'invalid_range'},requestId);
+  const cutoff=Date.now()-durations[range];
+  const [allLogs,allLeads]=await Promise.all([recordsAllWithMirror('security_logs'),recordsAllWithMirror('crm_leads')]);
+  const timestamp=row=>Date.parse(String(row.created_at||row.timestamp||''));
+  const logs=allLogs.filter(row=>timestamp(row)>=cutoff).sort((a,b)=>timestamp(b)-timestamp(a)).slice(0,50);
+  const validLeads=allLeads.filter(row=>timestamp(row)>=cutoff&&!row.deleted_at).length;
+  return json(res,origin,200,{ok:true,range,logs,valid_leads:validLeads},requestId);
+}
 async function adminWebImport(req,res,origin,requestId){
   const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
   if(req.method==='GET'){const [credentials,jobs,clientsLegacy,leads]=await Promise.all([recordsAll('insurance_web_credentials'),recordsAll('web_import_jobs'),recordsAll('crm_clients'),recordsAll('crm_leads')]),publicCredentials=credentials.map(({password_encrypted,secret_encrypted,...row})=>({...row,password_configured:Boolean(password_encrypted||secret_encrypted)})),credentialNames=new Map(credentials.map(row=>[String(row.id),String(row.company_name||'')])),clients=[...clientsLegacy,...leads.filter(row=>['active_client','client_actif','signed'].includes(String(row.current_stage_key||row.status||'').toLowerCase()))].filter((row,index,all)=>all.findIndex(item=>String(item.id)===String(row.id))===index).map(row=>({id:row.id,prenom:row.prenom||row.first_name||'',nom:row.nom||row.last_name||row.name||'',email:row.email||'',contract_number:row.contract_number||row.policy_number||''}));return json(res,origin,200,{ok:true,credentials:publicCredentials.sort((a,b)=>String(a.company_name).localeCompare(String(b.company_name),'fr')),jobs:jobs.sort((a,b)=>Date.parse(String(b.created_at||''))-Date.parse(String(a.created_at||''))).slice(0,50).map(row=>({...row,insurance_web_credentials:{company_name:credentialNames.get(String(row.credential_id))||''}})),clients},requestId);}

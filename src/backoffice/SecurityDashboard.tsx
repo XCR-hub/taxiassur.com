@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, AlertTriangle, Activity, Lock, Eye, TrendingUp, Users, Globe, Home, RefreshCw, Download, BarChart3, Clock, CheckCircle, XCircle } from 'lucide-react';
 import Card from '../components/Card';
-import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { nativeAdminSecurity } from '@/lib/native-admin-data';
 
 interface SecurityLog {
   id: string;
@@ -62,53 +62,14 @@ const SecurityDashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, [timeRange, liveMode]);
 
-  const getTimeRangeQuery = () => {
-    const now = new Date();
-    const timeAgo = new Date();
-
-    switch (timeRange) {
-      case '1h':
-        timeAgo.setHours(now.getHours() - 1);
-        break;
-      case '24h':
-        timeAgo.setHours(now.getHours() - 24);
-        break;
-      case '7d':
-        timeAgo.setDate(now.getDate() - 7);
-        break;
-      case '30d':
-        timeAgo.setDate(now.getDate() - 30);
-        break;
-      default:
-        timeAgo.setHours(now.getHours() - 24);
-    }
-
-    return timeAgo.toISOString();
-  };
-
   const loadSecurityData = async () => {
     try {
-      const timeAgo = getTimeRangeQuery();
-
-      // Charger les logs de sécurité
-      const { data: logs, error: logsError } = await supabase
-        .from('security_logs')
-        .select('*')
-        .gte('created_at', timeAgo)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (logsError) {
-        logger.error('Error loading security logs:', logsError);
-      } else {
-        setSecurityLogs(logs || []);
-      }
-
-      // Charger les leads pour valider
-      const { data: leads } = await supabase
-        .from('crm_leads')
-        .select('id, created_at, status')
-        .gte('created_at', timeAgo);
+      const data = await nativeAdminSecurity(timeRange as '1h' | '24h' | '7d' | '30d') as {
+        logs?: SecurityLog[];
+        valid_leads?: number;
+      };
+      const logs = data.logs || [];
+      setSecurityLogs(logs);
 
       // Calculer les statistiques
       const totalRequests = logs?.length || 0;
@@ -161,7 +122,7 @@ const SecurityDashboard: React.FC = () => {
         totalRequests,
         blockedRequests,
         spamAttempts: logs?.filter(l => l.threat_type?.includes('spam')).length || 0,
-        validLeads: leads?.length || 0,
+        validLeads: data.valid_leads || 0,
         uniqueIPs,
         avgResponseTime: 0, // À calculer si disponible
         topThreats,
