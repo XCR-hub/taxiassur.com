@@ -173,7 +173,6 @@ const QRCodeGenerator = lazy(() => import('./backoffice/QRCodeGenerator'));
 const Dashboard = lazy(() => import('./backoffice/Dashboard'));
 const ConversionAnalytics = lazy(() => import('./backoffice/ConversionAnalytics'));
 const AnalyticsLayout = lazy(() => import('./backoffice/AnalyticsLayout'));
-const LeadMarketplace = lazy(() => import('./backoffice/LeadMarketplace'));
 const UserManagement = lazy(() => import('./backoffice/UserManagement'));
 const SecurityDashboard = lazy(() => import('./backoffice/SecurityDashboard'));
 const ComplianceCenter = lazy(() => import('./backoffice/ComplianceCenter'));
@@ -655,7 +654,7 @@ export const router = createBrowserRouter([
       { path: 'partner-portal', element: <Navigate to="/backoffice/partners" replace /> },
       { path: 'partner-auth', element: <Navigate to="/backoffice/partners" replace /> },
       { path: 'partners', element: <PartnerManager /> },
-      { path: 'lead-marketplace', element: <LeadMarketplace /> },
+      { path: 'lead-marketplace', element: <Navigate to="/backoffice/lead-manager" replace /> },
 
       /* ── Social ── */
       { path: 'social-media', element: <SocialMediaManager /> },

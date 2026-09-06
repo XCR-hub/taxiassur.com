@@ -291,6 +291,8 @@ forbidMatch('src/backoffice/WebImportManager.tsx', /from ['"]@\/lib\/supabase['"
 requireMatch('server/taxiassur-platform-api.mjs', /adminWebImport[\s\S]*action==='add_credential'[\s\S]*session\.role!=='master'[\s\S]*secret_encrypted:encryptPrivateValue\(password\)/, 'insurer portal credentials are not restricted to master admins and encrypted server-side');
 forbidMatch('src/router.tsx', /import\(['"]\.\/backoffice\/Partner(?:Auth|Portal)['"]\)|<Partner(?:Auth|Portal)\s*\/>/, 'obsolete Supabase partner portal or fake partner data is still bundled');
 requireMatch('src/router.tsx', /path:\s*['"]partner-portal['"][\s\S]{0,120}Navigate to="\/backoffice\/partners"/, 'legacy partner portal route does not redirect to the native partner manager');
+forbidMatch('src/router.tsx', /import\(['"]\.\/backoffice\/LeadMarketplace['"]\)|<LeadMarketplace\s*\/>/, 'simulated Supabase lead marketplace is still bundled');
+requireMatch('src/router.tsx', /path:\s*['"]lead-marketplace['"][\s\S]{0,120}Navigate to="\/backoffice\/lead-manager"/, 'legacy lead marketplace route does not redirect to the native lead manager');
 requireMatch('src/backoffice/InsuranceCompaniesManager.tsx', /nativeAdminInsuranceCompanies[\s\S]*nativeAdminUploadInsuranceCompanyFile/, 'insurance companies manager does not use native XCR API');
 requireMatch('src/lib/crm-pipeline.ts', /getLeads[\s\S]*nativeAdminLeads\(/, 'CRM Kanban lead loading does not use the dedicated native XCR endpoint');
 requireMatch('server/taxiassur-platform-api.mjs', /adminLeadsList[\s\S]*taxiassur\.records WHERE collection='crm_leads'[\s\S]*jsonb_build_object\('id',record_id\)/, 'native Kanban endpoint does not read migrated PostgreSQL leads');
