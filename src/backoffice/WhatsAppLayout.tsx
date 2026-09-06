@@ -11,7 +11,7 @@ import {
   BarChart2,
   Wifi,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 interface NavItem {
   id: string;
@@ -27,16 +27,17 @@ const WhatsAppLayout: React.FC = () => {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [whatsappConfigured, setWhatsappConfigured] = useState<boolean | null>(null);
 
   useEffect(() => {
     const fetchUnread = async () => {
-      const { data } = await supabase
-        .from('wa_conversations')
-        .select('unread_count')
-        .gt('unread_count', 0);
-      if (data) {
-        const total = data.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+      try {
+        const data = await nativeAdminCall<{ conversations?: Array<{ unread_count?: number }>; whatsapp_configured?: boolean }>('/v1/admin/whatsapp?filter=unread');
+        const total = (data.conversations || []).reduce((sum, conversation) => sum + Number(conversation.unread_count || 0), 0);
         setUnreadCount(total);
+        setWhatsappConfigured(data.whatsapp_configured === true);
+      } catch {
+        setWhatsappConfigured(false);
       }
     };
     fetchUnread();
@@ -155,10 +156,12 @@ const WhatsAppLayout: React.FC = () => {
 
         {/* Connection status */}
         {!collapsed && (
-          <div className="mx-2 mb-2 px-2 py-1.5 bg-green-500/10 border border-green-500/20 rounded-lg">
+          <div className={`mx-2 mb-2 px-2 py-1.5 rounded-lg border ${whatsappConfigured ? 'bg-green-500/10 border-green-500/20' : 'bg-amber-500/10 border-amber-500/20'}`}>
             <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-              <span className="text-[10px] text-green-400 font-medium">Twilio connecté</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${whatsappConfigured ? 'bg-green-400 animate-pulse' : 'bg-amber-400'}`} />
+              <span className={`text-[10px] font-medium ${whatsappConfigured ? 'text-green-400' : 'text-amber-400'}`}>
+                {whatsappConfigured === null ? 'Vérification…' : whatsappConfigured ? 'Configuration active' : 'Configuration requise'}
+              </span>
             </div>
           </div>
         )}
