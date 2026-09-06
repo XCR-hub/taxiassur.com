@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Download, Settings, Play, Clock, CheckCircle, XCircle, Eye, Loader2, FileText, Database, Key } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { nativeAdminSession } from '@/lib/native-admin-auth';
+import { Download, Settings, Play, Clock, CheckCircle, XCircle, Loader2, FileText, Database, Key } from 'lucide-react';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { toast } from '@/lib/toast';
 
 interface Credential {
@@ -24,7 +23,7 @@ interface ImportJob {
   total_documents: number;
   imported_documents: number;
   error_message: string | null;
-  logs: any[];
+  logs: unknown[];
   created_at: string;
   completed_at: string | null;
   insurance_web_credentials?: {
@@ -38,6 +37,12 @@ interface Client {
   nom: string;
   email: string;
   contract_number: string;
+}
+
+interface WebImportData {
+  credentials?: Credential[];
+  jobs?: ImportJob[];
+  clients?: Client[];
 }
 
 const companyLogos: Record<string, string> = {
@@ -79,7 +84,10 @@ const WebImportManager: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      await Promise.all([loadCredentials(), loadJobs(), loadClients()]);
+      const data = await nativeAdminCall<WebImportData>('/v1/admin/web-import');
+      setCredentials(data.credentials || []);
+      setJobs(data.jobs || []);
+      setClients(data.clients || []);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -88,39 +96,16 @@ const WebImportManager: React.FC = () => {
   };
 
   const loadCredentials = async () => {
-    const { data, error } = await supabase
-      .from('insurance_web_credentials')
-      .select('*')
-      .order('company_name');
-
-    if (!error && data) {
-      setCredentials(data);
-    }
+    const data = await nativeAdminCall<WebImportData>('/v1/admin/web-import');
+    setCredentials(data.credentials || []);
   };
 
   const loadJobs = async () => {
-    const { data, error } = await supabase
-      .from('web_import_jobs')
-      .select(`
-        *,
-        insurance_web_credentials(company_name)
-      `)
-      .order('created_at', { ascending: false })
-      .limit(50);
-
-    if (!error && data) {
-      setJobs(data);
-    }
-  };
-
-  const loadClients = async () => {
-    const { data, error } = await supabase
-      .from('crm_clients')
-      .select('id, prenom, nom, email, contract_number')
-      .order('nom');
-
-    if (!error && data) {
-      setClients(data);
+    try {
+      const data = await nativeAdminCall<WebImportData>('/v1/admin/web-import');
+      setJobs(data.jobs || []);
+    } catch (error) {
+      console.error('Error refreshing import jobs:', error);
     }
   };
 
@@ -131,38 +116,16 @@ const WebImportManager: React.FC = () => {
     }
 
     try {
-      // Vérifier l'authentification
-      const { user } = await nativeAdminSession().catch(() => ({ user: null }));
-
-      if (!user) {
-        toast.info('Vous devez être connecté pour ajouter des identifiants');
-        return;
-      }
-
-      const { error } = await supabase
-        .from('insurance_web_credentials')
-        .insert({
+      await nativeAdminCall('/v1/admin/web-import', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'add_credential',
           company_name: selectedCompany,
           portal_url: getPortalUrl(selectedCompany),
           username: portalUsername,
-          password_encrypted: portalPassword,
-          status: 'active',
-          created_by: user.id
-        });
-
-      if (error) {
-        console.error('Supabase error:', error);
-
-        // Messages d'erreur personnalisés
-        if (error.code === '42501') {
-          toast.info('Permission refusée. Vous devez être administrateur pour ajouter des identifiants.');
-        } else if (error.message.includes('violates')) {
-          toast.error('Erreur de contrainte: ' + error.message);
-        } else {
-          toast.error('Erreur lors de l\'ajout: ' + error.message);
-        }
-        return;
-      }
+          password: portalPassword,
+        }),
+      });
 
       toast.success('Identifiants ajoutés avec succès!');
       setSelectedCompany('');
@@ -171,7 +134,7 @@ const WebImportManager: React.FC = () => {
       loadCredentials();
     } catch (error) {
       console.error('Error adding credential:', error);
-      toast.error('Erreur inattendue: ' + (error?.message || 'Erreur inconnue'));
+      toast.error('Erreur inattendue: ' + (error instanceof Error ? error.message : 'Erreur inconnue'));
     }
   };
 
@@ -188,15 +151,17 @@ const WebImportManager: React.FC = () => {
     }
 
     try {
-      const { data, error } = await supabase.rpc('start_web_import', {
-        p_credential_id: selectedCredential,
-        p_client_id: selectedClient,
-        p_contract_number: client.contract_number
+      await nativeAdminCall('/v1/admin/web-import', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'start',
+          credential_id: selectedCredential,
+          client_id: selectedClient,
+          contract_number: client.contract_number,
+        }),
       });
 
-      if (error) throw error;
-
-      toast.success('Import démarré avec succès!');
+      toast.success('Demande d’import sécurisée créée');
       setActiveTab('jobs');
       loadJobs();
     } catch (error) {
@@ -224,7 +189,7 @@ const WebImportManager: React.FC = () => {
       failed: 'bg-red-100 text-red-700',
     };
 
-    const icons: Record<string, any> = {
+    const icons: Record<string, React.ElementType> = {
       pending: Clock,
       running: Loader2,
       completed: CheckCircle,
@@ -542,10 +507,10 @@ const WebImportManager: React.FC = () => {
               <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <h3 className="font-semibold text-blue-900 mb-2">ℹ️ Comment ça marche ?</h3>
                 <ul className="text-sm text-blue-800 space-y-1">
-                  <li>✓ Connexion automatique au portail assureur</li>
-                  <li>✓ Récupération des informations du contrat</li>
-                  <li>✓ Téléchargement de tous les documents (attestations, avenants, factures)</li>
-                  <li>✓ Import dans l'espace client</li>
+                  <li>✓ Identifiants chiffrés côté serveur</li>
+                  <li>✓ Demande rattachée au client et au contrat</li>
+                  <li>✓ Validation humaine requise avant connexion au portail assureur</li>
+                  <li>✓ Journal d'import conservé dans PostgreSQL XCR</li>
                 </ul>
               </div>
             </div>
