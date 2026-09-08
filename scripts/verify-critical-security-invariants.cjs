@@ -304,6 +304,8 @@ forbidMatch('src/router.tsx', /import\(['"]\.\/backoffice\/SocialMediaManager['"
 requireMatch('src/router.tsx', /path:\s*['"]social-media['"][\s\S]{0,140}Navigate to="\/backoffice\/marketing-templates"/, 'legacy social manager does not redirect to the maintained marketing workspace');
 forbidMatch('src/backoffice/ComplianceCenter.tsx', /from ['"]@\/lib\/supabase['"]|supabase\./, 'GDPR compliance center still performs privileged operations through Supabase');
 requireMatch('src/backoffice/ComplianceCenter.tsx', /nativeAdminCall[\s\S]*\/v1\/admin\/compliance[\s\S]*anonymisation irreversible/, 'GDPR compliance center does not use the audited native anonymisation workflow');
+forbidMatch('src/backoffice/TrendAnalyzer.tsx', /from ['"]@\/lib\/supabase['"]|supabase\.|analyzeContentOpportunities|saveContentOpportunities/, 'SEO trend screen still depends on Supabase or randomized analysis');
+requireMatch('src/backoffice/TrendAnalyzer.tsx', /\/v1\/admin\/content-opportunities[\s\S]*sans métriques inventées/, 'SEO opportunity screen does not use transparent native analysis');
 requireMatch('src/backoffice/InsuranceCompaniesManager.tsx', /nativeAdminInsuranceCompanies[\s\S]*nativeAdminUploadInsuranceCompanyFile/, 'insurance companies manager does not use native XCR API');
 requireMatch('src/lib/crm-pipeline.ts', /getLeads[\s\S]*nativeAdminLeads\(/, 'CRM Kanban lead loading does not use the dedicated native XCR endpoint');
 requireMatch('server/taxiassur-platform-api.mjs', /adminLeadsList[\s\S]*taxiassur\.records WHERE collection='crm_leads'[\s\S]*jsonb_build_object\('id',record_id\)/, 'native Kanban endpoint does not read migrated PostgreSQL leads');

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { TrendingUp, Search, Zap, Target, BarChart3, Lightbulb, RefreshCw, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { analyzeContentOpportunities, saveContentOpportunities, ContentOpportunity } from '../lib/trendAnalyzer';
-import { supabase } from '@/lib/supabase';
+import type { ContentOpportunity } from '../lib/trendAnalyzer';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
 
@@ -13,37 +13,26 @@ export default function TrendAnalyzer() {
   const [filter, setFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const [loading, setLoading] = useState(true);
 
+  const mapOpportunity = (item: Record<string, unknown>): ContentOpportunity => ({
+    keyword: String(item.keyword || ''),
+    priority: (['high', 'medium', 'low'].includes(String(item.priority)) ? item.priority : 'low') as ContentOpportunity['priority'],
+    searchVolume: Number(item.search_volume || 0),
+    competition: String(item.competition || 'unknown'),
+    trend: String(item.trend || 'editorial'),
+    suggestedTitle: String(item.suggested_title || ''),
+    suggestedQuestions: Array.isArray(item.suggested_questions) ? item.suggested_questions.map(String) : [],
+    estimatedTraffic: Number(item.estimated_traffic || 0),
+    difficulty: Number(item.difficulty || 0),
+  });
+
   useEffect(() => {
     loadOpportunities();
   }, []);
 
   const loadOpportunities = async () => {
     try {
-      const { data, error } = await supabase
-        .from('content_opportunities')
-        .select('*')
-        .order('estimated_traffic', { ascending: false });
-
-      if (error) {
-        logger.error('Supabase error:', error);
-        throw error;
-      }
-
-      logger.log('Opportunités chargées depuis Supabase:', data?.length || 0);
-
-      setOpportunities(
-        (data || []).map(d => ({
-          keyword: d.keyword,
-          priority: d.priority,
-          searchVolume: d.search_volume,
-          competition: d.competition,
-          trend: d.trend,
-          suggestedTitle: d.suggested_title,
-          suggestedQuestions: d.suggested_questions || [],
-          estimatedTraffic: d.estimated_traffic,
-          difficulty: d.difficulty
-        }))
-      );
+      const result = await nativeAdminCall<{ items?: Record<string, unknown>[] }>('/v1/admin/content-opportunities');
+      setOpportunities((result.items || []).map(mapOpportunity));
     } catch (err) {
       logger.error('Error loading opportunities:', err);
     } finally {
@@ -67,14 +56,17 @@ export default function TrendAnalyzer() {
         'meilleure assurance taxi'
       ];
 
-      const newOpportunities = await analyzeContentOpportunities(baseKeywords);
-      await saveContentOpportunities(newOpportunities);
-      await loadOpportunities();
+      const result = await nativeAdminCall<{ items?: Record<string, unknown>[] }>('/v1/admin/content-opportunities', {
+        method: 'POST',
+        body: JSON.stringify({ keywords: baseKeywords }),
+      });
+      const newOpportunities = (result.items || []).map(mapOpportunity);
+      setOpportunities(newOpportunities);
 
       toast.success(`✅ ${newOpportunities.length} opportunités découvertes !`);
     } catch (err) {
       logger.error('Analysis error:', err);
-      toast.error('Erreur lors de l\'analyse. Vérifiez les clés API.');
+      toast.error('Erreur lors de l\'analyse éditoriale native.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -150,7 +142,7 @@ export default function TrendAnalyzer() {
           <div>
             <h3 className="text-lg font-bold text-slate-800 mb-2">Analyse Automatique</h3>
             <p className="text-sm text-slate-600">
-              Utilise Google Trends, Suggest et d'autres APIs pour trouver les meilleurs sujets
+              Analyse éditoriale interne des sujets prioritaires, sans métriques inventées
             </p>
           </div>
 
@@ -286,12 +278,10 @@ export default function TrendAnalyzer() {
           Comment ça marche ?
         </h3>
         <ul className="space-y-2 text-sm text-slate-700">
-          <li>✅ <strong>Google Trends</strong> : Analyse les tendances de recherche en temps réel</li>
-          <li>✅ <strong>Google Suggest</strong> : Récupère les suggestions populaires</li>
-          <li>✅ <strong>Patterns de questions</strong> : Génère automatiquement les FAQ populaires</li>
-          <li>✅ <strong>Estimation de trafic</strong> : Calcule le potentiel de visiteurs</li>
-          <li>✅ <strong>Score de difficulté</strong> : Évalue la facilité de ranking</li>
-          <li>✅ <strong>Prioritisation</strong> : Classe automatiquement les opportunités</li>
+          <li>✅ <strong>Analyse native</strong> : les opportunités sont enregistrées dans PostgreSQL</li>
+          <li>✅ <strong>Questions éditoriales</strong> : propose les points utiles à traiter</li>
+          <li>✅ <strong>Transparence</strong> : les métriques externes indisponibles restent à zéro</li>
+          <li>✅ <strong>Priorisation</strong> : classe les sujets selon leur ordre métier</li>
         </ul>
       </div>
     </div>
