@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { internalFunctionHeaders } from '@/lib/internal-function-auth';
-import { withTimeout } from '@/lib/promise-timeout';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   Zap,
@@ -18,7 +17,6 @@ import {
   FlaskConical,
   SlidersHorizontal,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 
 interface NavItem {
   id: string;
@@ -50,12 +48,16 @@ const AutomationLayout: React.FC = () => {
 
   useEffect(() => {
     const fetchStats = async () => {
-      const [cronData, taskData] = await Promise.all([
-        supabase.from('cron_jobs_config').select('is_active').eq('is_active', true),
-        supabase.from('ai_autonomous_tasks').select('status').eq('status', 'pending'),
-      ]);
-      setActiveCrons(cronData.data?.length || 0);
-      setPendingTasks(taskData.data?.length || 0);
+      try {
+        const data = await nativeAdminCall<{
+          crons?: Array<{ is_active?: boolean; is_enabled?: boolean; active?: boolean }>;
+          tasks?: Array<{ status?: string }>;
+        }>('/v1/admin/automation-dashboard');
+        setActiveCrons((data.crons || []).filter(cron => Boolean(cron.is_active ?? cron.is_enabled ?? cron.active)).length);
+        setPendingTasks((data.tasks || []).filter(task => task.status === 'pending').length);
+      } catch (error) {
+        console.error('Automation stats loading failed', error);
+      }
     };
     fetchStats();
     const interval = setInterval(fetchStats, 30000);
@@ -194,16 +196,10 @@ const AutomationLayout: React.FC = () => {
             <button
               onClick={async () => {
                 try {
-                  const headers = await internalFunctionHeaders();
-                  const response = await withTimeout(fetch(
-                    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crm-automation-engine`,
-                    {
-                      method: 'POST',
-                      headers: { Authorization: headers.Authorization, 'Content-Type': 'application/json' },
-                      body: JSON.stringify({}),
-                    },
-                  ), 30_000);
-                  if (!response.ok) throw new Error(`Automation HTTP ${response.status}`);
+                  await nativeAdminCall('/v1/admin/automation-dashboard', {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'diagnostic', name: 'crm-automation-engine' }),
+                  });
                 } catch (error) {
                   console.error('CRM automation execution failed', error);
                 }

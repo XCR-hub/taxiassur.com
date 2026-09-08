@@ -722,6 +722,8 @@ forbidMatch('src/backoffice/EmailComposer.tsx', /supabase|ia-auto-executor|crm_i
 requireMatch('src/backoffice/AutoOptimizer.tsx', /nativeAdminCall[\s\S]*\/v1\/admin\/automation-center[\s\S]*toggle_all/, 'automation center does not use the native administration API');
 forbidMatch('src/backoffice/AutoOptimizer.tsx', /supabase|execute_sql|get_automations_with_stats|run_cron_job_now|toggle_automation/i, 'automation center still exposes Supabase RPC or arbitrary SQL execution');
 requireMatch('server/taxiassur-platform-api.mjs', /adminAutomationCenter[\s\S]*COALESCE\(data->>'name',data->>'job_name',record_id\)/, 'native automation center does not support migrated cron job names');
+requireMatch('src/backoffice/AutomationLayout.tsx', /nativeAdminCall[\s\S]*\/v1\/admin\/automation-dashboard[\s\S]*name: 'crm-automation-engine'/, 'automation layout does not use the native dashboard and diagnostic');
+forbidMatch('src/backoffice/AutomationLayout.tsx', /supabase|VITE_SUPABASE_URL|internalFunctionHeaders/i, 'automation layout still depends on Supabase');
 requireMatch('src/backoffice/AutoOptimizer.tsx', /nativeAdminCall[\s\S]*\/v1\/admin\/automation-center[\s\S]*toggle_all/, 'auto optimizer does not use the authenticated native automation center');
 forbidMatch('src/backoffice/AutoOptimizer.tsx', /supabase|execute_sql|get_automations_with_stats|toggle_automation|run_cron_job_now/i, 'auto optimizer still exposes legacy Supabase automation RPCs or browser-side SQL');
 requireMatch('server/taxiassur-platform-api.mjs', /adminLeadSms[\s\S]*request_id[\s\S]*AbortSignal\.timeout\(15_000\)/, 'native SMS delivery lacks idempotency or provider timeout');
