@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { X, Send, Mail, Sparkles, FileText, Loader2, CheckCircle } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { nativeAdminSession } from '@/lib/native-admin-auth';
+import { nativeAdminCommercialEmail } from '@/lib/native-admin-data';
 import { logger } from '@/lib/logger';
 
 interface EmailComposerProps {
@@ -64,33 +63,8 @@ const EmailComposer: React.FC<EmailComposerProps> = ({ contact, onClose, onSent 
     setError(null);
 
     try {
-      const { user } = await nativeAdminSession().catch(() => ({ user: null }));
-
-      const { data, error: sendError } = await supabase.functions.invoke('ia-auto-executor', {
-        body: {
-          action: 'send_email',
-          data: {
-            lead_id: contact.id,
-            to: contact.email,
-            to_name: `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || contact.email,
-            subject: subject,
-            html_content: content.replace(/\n/g, '<br>')
-          }
-        }
-      });
-
-      if (sendError) throw sendError;
-
-      await supabase.from('crm_interactions').insert({
-        lead_id: contact.id,
-        type: 'email',
-        direction: 'outbound',
-        subject: subject,
-        content: content,
-        to_email: contact.email,
-        from_email: 'contact@taxiassur.com',
-        created_by: user?.id
-      });
+      const response = await nativeAdminCommercialEmail(contact.id, subject.trim(), content.trim()) as { ok?: boolean; queued?: boolean };
+      if (!response.ok && !response.queued) throw new Error('email_not_queued');
 
       setSent(true);
       setTimeout(() => {

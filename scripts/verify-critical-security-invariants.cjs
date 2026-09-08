@@ -717,6 +717,8 @@ requireMatch('src/backoffice/EmailTrendline.tsx', /nativeAdminInbox[\s\S]*lead:\
 forbidMatch('src/backoffice/EmailTrendline.tsx', /supabase|crm_interactions/i, 'email trendline still reads its history from Supabase');
 requireMatch('src/backoffice/EmailInboxManager.tsx', /nativeAdminInbox[\s\S]*nativeAdminInboxAction[\s\S]*nativeAdminInboxSync[\s\S]*nativeAdminInboxWorkflow/, 'legacy inbox manager does not use the native inbox workflow');
 forbidMatch('src/backoffice/EmailInboxManager.tsx', /supabase|sync-all-emails-complete|send-email-universal|createLeadFromEmail|bulkCreateLeads/i, 'legacy inbox manager still uses Supabase or creates leads from received emails');
+requireMatch('src/backoffice/EmailComposer.tsx', /nativeAdminCommercialEmail\(contact\.id, subject\.trim\(\), content\.trim\(\)\)/, 'CRM master email composer does not use the native commercial outbox');
+forbidMatch('src/backoffice/EmailComposer.tsx', /supabase|ia-auto-executor|crm_interactions|nativeAdminSession/i, 'CRM master email composer still uses the split Supabase delivery flow');
 requireMatch('server/taxiassur-platform-api.mjs', /adminLeadSms[\s\S]*request_id[\s\S]*AbortSignal\.timeout\(15_000\)/, 'native SMS delivery lacks idempotency or provider timeout');
 const criticalDeploy = 'scripts/deploy-critical-supabase-security.ps1';
 requireMatch(criticalDeploy, /ConfirmCriticalMigrationsApplied[\s\S]*20260810033000_add_monetico_creation_idempotency[\s\S]*20260810040000_create_communication_delivery_idempotency[\s\S]*20260810043000_harden_monetico_email_delivery_status[\s\S]*20260810050000_harden_client_claim_creation[\s\S]*Deployment aborted/, 'critical deployment does not fail closed before required migrations');
