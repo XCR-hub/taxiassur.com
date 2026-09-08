@@ -707,6 +707,9 @@ for (const file of ['src/components/crm/SMSSendModal.tsx', 'src/components/crm/S
 requireMatch('src/lib/native-admin-data.ts', /nativeAdminCall[\s\S]*AbortSignal\.timeout\(45_000\)/, 'native admin calls can spin forever');
 requireMatch('src/backoffice/CityPageGenerator.tsx', /nativeAdminCall[\s\S]*\/v1\/admin\/ai-content[\s\S]*action: 'publish'/, 'city page generation does not use the authenticated native publication API');
 forbidMatch('src/backoffice/CityPageGenerator.tsx', /supabase|VITE_SUPABASE|generate-city-complete|internalFunctionHeaders/i, 'city page generation still depends on Supabase or its retired Edge Function');
+requireMatch('src/backoffice/EmailAccountSettings.tsx', /nativeAdminCall[\s\S]*\/v1\/admin\/email-account[\s\S]*nativeAdminInboxSync/, 'email account settings do not use the native mailbox API');
+forbidMatch('src/backoffice/EmailAccountSettings.tsx', /supabase|VITE_SUPABASE|sync-ionos-imap|imap_password_encrypted/i, 'email account settings expose or persist mailbox credentials through Supabase');
+requireMatch('server/taxiassur-platform-api.mjs', /adminEmailAccount[\s\S]*password_configured:Boolean\(config\.imapPassword\)/, 'native mailbox settings do not keep the IMAP password server-side');
 requireMatch('server/taxiassur-platform-api.mjs', /adminLeadSms[\s\S]*request_id[\s\S]*AbortSignal\.timeout\(15_000\)/, 'native SMS delivery lacks idempotency or provider timeout');
 const criticalDeploy = 'scripts/deploy-critical-supabase-security.ps1';
 requireMatch(criticalDeploy, /ConfirmCriticalMigrationsApplied[\s\S]*20260810033000_add_monetico_creation_idempotency[\s\S]*20260810040000_create_communication_delivery_idempotency[\s\S]*20260810043000_harden_monetico_email_delivery_status[\s\S]*20260810050000_harden_client_claim_creation[\s\S]*Deployment aborted/, 'critical deployment does not fail closed before required migrations');
