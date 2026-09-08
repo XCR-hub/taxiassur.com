@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { internalFunctionHeaders } from '@/lib/internal-function-auth';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { Play, CheckCircle, XCircle, Loader, RefreshCw, Zap, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,8 +15,6 @@ export default function TestAutomations() {
   const navigate = useNavigate();
   const [results, setResults] = useState<Record<string, TestResult>>({});
   const [isTestingAll, setIsTestingAll] = useState(false);
-
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
   const automations = [
     {
@@ -98,17 +96,13 @@ export default function TestAutomations() {
     }));
 
     try {
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/${functionId}`, {
+      const data = await nativeAdminCall<{ success?: boolean; message?: string; error?: string }>('/v1/admin/automation-dashboard', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': (await internalFunctionHeaders()).Authorization
-        },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ action: 'diagnostic', name: functionId })
       });
 
       const duration = Date.now() - startTime;
-      const data = await response.json();
+      const response = { ok: true };
 
       if (response.ok || data.success) {
         setResults(prev => ({
@@ -140,7 +134,7 @@ export default function TestAutomations() {
         [functionId]: {
           function: functionId,
           status: 'error',
-          message: error.message,
+          message: error instanceof Error ? error.message : 'Erreur inconnue',
           duration
         }
       }));
@@ -182,7 +176,7 @@ export default function TestAutomations() {
             Test des Automatisations
           </h1>
           <p className="text-gray-400 mt-2">
-            Testez manuellement toutes les Edge Functions et automatisations
+            Contrôlez les automatisations natives sans déclencher d'envoi réel
           </p>
         </div>
 
@@ -346,11 +340,11 @@ export default function TestAutomations() {
       <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-6">
         <h3 className="text-yellow-400 font-bold text-lg mb-3">ℹ️ Informations</h3>
         <ul className="space-y-2 text-gray-300 text-sm">
-          <li>• Les tests appellent directement les Edge Functions Supabase</li>
-          <li>• Certaines fonctions peuvent prendre plusieurs secondes à répondre</li>
-          <li>• Les erreurs affichées peuvent être normales (ex: pas de données à traiter)</li>
+          <li>• Les tests passent par l'API native TaxiAssur authentifiée</li>
+          <li>• Ils valident la disponibilité sans déclencher d'envoi réel</li>
+          <li>• Une erreur indique une automatisation inconnue ou indisponible</li>
           <li>• Les cron jobs automatiques s'exécutent selon leur planning configuré</li>
-          <li>• Pour voir les logs complets : Supabase Dashboard → Edge Functions → Logs</li>
+          <li>• Les résultats sont conservés dans l'historique PostgreSQL natif</li>
         </ul>
       </div>
     </div>

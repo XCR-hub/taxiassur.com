@@ -724,6 +724,9 @@ forbidMatch('src/backoffice/AutoOptimizer.tsx', /supabase|execute_sql|get_automa
 requireMatch('server/taxiassur-platform-api.mjs', /adminAutomationCenter[\s\S]*COALESCE\(data->>'name',data->>'job_name',record_id\)/, 'native automation center does not support migrated cron job names');
 requireMatch('src/backoffice/AutomationLayout.tsx', /nativeAdminCall[\s\S]*\/v1\/admin\/automation-dashboard[\s\S]*name: 'crm-automation-engine'/, 'automation layout does not use the native dashboard and diagnostic');
 forbidMatch('src/backoffice/AutomationLayout.tsx', /supabase|VITE_SUPABASE_URL|internalFunctionHeaders/i, 'automation layout still depends on Supabase');
+requireMatch('src/backoffice/TestAutomations.tsx', /nativeAdminCall[\s\S]*\/v1\/admin\/automation-dashboard[\s\S]*action: 'diagnostic'/, 'automation tests do not use safe native diagnostics');
+forbidMatch('src/backoffice/TestAutomations.tsx', /supabase|VITE_SUPABASE_URL|internalFunctionHeaders|functions\/v1/i, 'automation tests still invoke legacy Edge Functions directly');
+requireMatch('server/taxiassur-platform-api.mjs', /adminAutomationDashboard[\s\S]*social-media-publisher[\s\S]*aucun envoi reel declenche/, 'native automation diagnostics do not cover the test catalog safely');
 requireMatch('src/backoffice/PipelineCRMDashboard.tsx', /nativeAdminCall[\s\S]*\/v1\/admin\/pipeline-dashboard\?lead_id=/, 'pipeline CRM dashboard does not use the native PostgreSQL endpoint');
 forbidMatch('src/backoffice/PipelineCRMDashboard.tsx', /supabase|get_leads_with_pipeline_status|get_pipeline_statistics|lead_communications|lead_documents/i, 'pipeline CRM dashboard still depends on legacy Supabase data paths');
 requireMatch('server/taxiassur-platform-api.mjs', /adminPipelineDashboard[\s\S]*recordsAll\('crm_leads'\)[\s\S]*!x\.deleted_at&&x\.is_archived!==true/, 'native pipeline dashboard does not return every active migrated lead');
