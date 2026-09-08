@@ -719,6 +719,11 @@ requireMatch('src/backoffice/EmailInboxManager.tsx', /nativeAdminInbox[\s\S]*nat
 forbidMatch('src/backoffice/EmailInboxManager.tsx', /supabase|sync-all-emails-complete|send-email-universal|createLeadFromEmail|bulkCreateLeads/i, 'legacy inbox manager still uses Supabase or creates leads from received emails');
 requireMatch('src/backoffice/EmailComposer.tsx', /nativeAdminCommercialEmail\(contact\.id, subject\.trim\(\), content\.trim\(\)\)/, 'CRM master email composer does not use the native commercial outbox');
 forbidMatch('src/backoffice/EmailComposer.tsx', /supabase|ia-auto-executor|crm_interactions|nativeAdminSession/i, 'CRM master email composer still uses the split Supabase delivery flow');
+requireMatch('src/backoffice/AutoOptimizer.tsx', /nativeAdminCall[\s\S]*\/v1\/admin\/automation-center[\s\S]*toggle_all/, 'automation center does not use the native administration API');
+forbidMatch('src/backoffice/AutoOptimizer.tsx', /supabase|execute_sql|get_automations_with_stats|run_cron_job_now|toggle_automation/i, 'automation center still exposes Supabase RPC or arbitrary SQL execution');
+requireMatch('server/taxiassur-platform-api.mjs', /adminAutomationCenter[\s\S]*COALESCE\(data->>'name',data->>'job_name',record_id\)/, 'native automation center does not support migrated cron job names');
+requireMatch('src/backoffice/AutoOptimizer.tsx', /nativeAdminCall[\s\S]*\/v1\/admin\/automation-center[\s\S]*toggle_all/, 'auto optimizer does not use the authenticated native automation center');
+forbidMatch('src/backoffice/AutoOptimizer.tsx', /supabase|execute_sql|get_automations_with_stats|toggle_automation|run_cron_job_now/i, 'auto optimizer still exposes legacy Supabase automation RPCs or browser-side SQL');
 requireMatch('server/taxiassur-platform-api.mjs', /adminLeadSms[\s\S]*request_id[\s\S]*AbortSignal\.timeout\(15_000\)/, 'native SMS delivery lacks idempotency or provider timeout');
 const criticalDeploy = 'scripts/deploy-critical-supabase-security.ps1';
 requireMatch(criticalDeploy, /ConfirmCriticalMigrationsApplied[\s\S]*20260810033000_add_monetico_creation_idempotency[\s\S]*20260810040000_create_communication_delivery_idempotency[\s\S]*20260810043000_harden_monetico_email_delivery_status[\s\S]*20260810050000_harden_client_claim_creation[\s\S]*Deployment aborted/, 'critical deployment does not fail closed before required migrations');

@@ -6,7 +6,7 @@ import {
   AlertTriangle, TrendingUp, BarChart3, Target, Sparkles,
   Clock, Activity, TestTube, Eye, AlertCircle
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 interface Automation {
   id: string;
@@ -21,6 +21,7 @@ interface Automation {
   last_run_at: string | null;
   last_error: string | null;
   next_run_at: string | null;
+  job_name?: string;
 }
 
 interface AutomationLog {
@@ -115,14 +116,11 @@ export default function AutoOptimizer() {
 
   const loadAutomations = async () => {
     try {
-      const { data, error } = await supabase
-        .rpc('get_automations_with_stats');
-
-      if (!error && data) {
-        setAutomations(data);
-      } else if (error) {
-        logger.error('Error loading automations:', error);
-      }
+      const data = await nativeAdminCall<{ automations?: Automation[] }>('/v1/admin/automation-center');
+      setAutomations((data.automations || []).map(automation => ({
+        ...automation,
+        name: automation.name || automation.job_name || automation.id,
+      })));
     } catch (error) {
       logger.error('Error loading automations:', error);
     }
@@ -130,14 +128,9 @@ export default function AutoOptimizer() {
 
   const loadLogs = async () => {
     try {
-      const { data, error } = await supabase
-        .from('automation_logs')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (!error && data) {
-        setLogs(data.map(log => ({
+      const data = await nativeAdminCall<{ logs?: Array<AutomationLog & { job_name?: string }> }>('/v1/admin/automation-center');
+      if (data.logs) {
+        setLogs(data.logs.map(log => ({
           id: log.id,
           automation_name: log.automation_name || log.job_name,
           status: log.status,
@@ -154,12 +147,10 @@ export default function AutoOptimizer() {
     try {
       const newStatus = !automation.is_enabled;
 
-      const { error } = await supabase.rpc('toggle_automation', {
-        automation_name: automation.name,
-        enabled: newStatus
+      await nativeAdminCall('/v1/admin/automation-center', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'toggle', name: automation.name, enabled: newStatus })
       });
-
-      if (error) throw error;
 
       // Forcer le rafraîchissement
       await loadAutomations();
@@ -177,13 +168,10 @@ export default function AutoOptimizer() {
     setTesting(automation.id);
 
     try {
-      const { data, error } = await supabase.rpc('run_cron_job_now', {
-        p_name: automation.name,
+      const result = await nativeAdminCall<{ success?: boolean; error?: string; duration_ms?: number }>('/v1/admin/automation-center', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'test', name: automation.name })
       });
-
-      if (error) throw error;
-
-      const result = (data || {}) as { success?: boolean; error?: string; duration_ms?: number };
 
       if (result.success) {
         toast.success(
@@ -209,12 +197,10 @@ export default function AutoOptimizer() {
     }
 
     try {
-      // Activer tous les cron jobs via une requête SQL
-      const { error } = await supabase.rpc('execute_sql', {
-        sql_query: 'UPDATE cron.job SET active = true'
+      await nativeAdminCall('/v1/admin/automation-center', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'toggle_all', enabled: true })
       });
-
-      if (error) throw error;
 
       await loadAutomations();
       toast.success('✅ Toutes les automatisations sont maintenant actives !\n\nLes processus vont démarrer selon leur fréquence configurée.');
@@ -230,12 +216,10 @@ export default function AutoOptimizer() {
     }
 
     try {
-      // Désactiver tous les cron jobs via une requête SQL
-      const { error } = await supabase.rpc('execute_sql', {
-        sql_query: 'UPDATE cron.job SET active = false'
+      await nativeAdminCall('/v1/admin/automation-center', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'toggle_all', enabled: false })
       });
-
-      if (error) throw error;
 
       await loadAutomations();
       toast.success('⏸️ Toutes les automatisations ont été désactivées');
