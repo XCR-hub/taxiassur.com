@@ -154,6 +154,7 @@ const server = createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/v1/admin/email-marketing-dashboard') return await adminEmailMarketingDashboard(req,res,origin,requestId);
     if (url.pathname === '/v1/admin/smart-templates' && ['GET','POST','PATCH','DELETE'].includes(req.method)) return await adminSmartTemplates(req,res,origin,requestId,url);
     if (url.pathname === '/v1/admin/content-opportunities' && ['GET','POST'].includes(req.method)) return await adminContentOpportunities(req,res,origin,requestId);
+    if (url.pathname === '/v1/admin/marketing-template-usage' && ['GET','POST'].includes(req.method)) return await adminMarketingTemplateUsage(req,res,origin,requestId);
     if (url.pathname === '/v1/admin/email-tracking' && ['GET','POST'].includes(req.method)) return await adminEmailTracking(req, res, origin, requestId);
     if (req.method === 'PATCH' && url.pathname === '/v1/admin/newsletter-subscribers') return await adminNewsletterSubscribersPatch(req, res, origin, requestId);
     if (req.method === 'DELETE' && url.pathname === '/v1/admin/newsletter-subscribers') return await adminNewsletterSubscribersDelete(req, res, origin, requestId);
@@ -1422,6 +1423,15 @@ async function adminContentOpportunities(req,res,origin,requestId){
   if(!await verifiedAdminSession(req))return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
   if(req.method==='GET'){const items=(await recordsAll('content_opportunities')).sort((a,b)=>Number(b.estimated_traffic||0)-Number(a.estimated_traffic||0));return json(res,origin,200,{ok:true,items},requestId);}
   const body=await readJsonBody(req),keywords=(Array.isArray(body.keywords)?body.keywords:[]).map(x=>String(x).trim().toLowerCase().slice(0,120)).filter(Boolean).slice(0,20);if(!keywords.length)return json(res,origin,400,{ok:false,error:'keywords_required'},requestId);const now=new Date().toISOString(),items=[];for(let index=0;index<keywords.length;index++){const keyword=keywords[index],id=randomUUID(),priority=index<3?'high':index<6?'medium':'low',item={id,keyword,priority,search_volume:0,competition:'unknown',trend:'editorial',suggested_title:`${keyword.charAt(0).toUpperCase()+keyword.slice(1)} : guide pratique TaxiAssur`,suggested_questions:[`Comment choisir ${keyword} ?`,`Quelles garanties verifier pour ${keyword} ?`,`Quels documents preparer pour ${keyword} ?`],estimated_traffic:0,difficulty:0,analysis_source:'editorial_internal',analyzed_at:now,created_at:now};await runPsql(`DELETE FROM taxiassur.records WHERE collection='content_opportunities' AND lower(data->>'keyword')=${quoteLiteral(keyword)};INSERT INTO taxiassur.records(collection,record_id,data,origin)VALUES('content_opportunities',${quoteLiteral(id)},${quoteLiteral(JSON.stringify(item))}::jsonb,'admin');`);items.push(item);}return json(res,origin,201,{ok:true,items},requestId);
+}
+async function adminMarketingTemplateUsage(req,res,origin,requestId){
+  const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
+  if(req.method==='GET'){const items=(await recordsAllWithMirror('marketing_template_usage')).sort((a,b)=>Date.parse(String(b.created_at||''))-Date.parse(String(a.created_at||''))).slice(0,100);return json(res,origin,200,{ok:true,items},requestId);}
+  const body=await readJsonBody(req),action=String(body.action||''),templateType=String(body.template_type||'').trim().slice(0,80),templateId=String(body.template_id||'').trim().slice(0,160);
+  if(!['copy','download'].includes(action)||!templateType||!templateId)return json(res,origin,400,{ok:false,error:'invalid_usage'},requestId);
+  const id=randomUUID(),now=new Date().toISOString(),item={id,template_type:templateType,template_id:templateId,action,ambassador_code:String(body.ambassador_code||'').trim().slice(0,80),created_at:now,created_by:session.sub};
+  await runPsql(`INSERT INTO taxiassur.records(collection,record_id,data,origin)VALUES('marketing_template_usage',${quoteLiteral(id)},${quoteLiteral(JSON.stringify(item))}::jsonb,'admin');`);
+  return json(res,origin,201,{ok:true,item},requestId);
 }
 async function adminSmartTemplates(req,res,origin,requestId,url){
   if(!await verifiedAdminSession(req))return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);

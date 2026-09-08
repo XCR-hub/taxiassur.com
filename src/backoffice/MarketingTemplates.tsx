@@ -4,8 +4,8 @@ import Card from '../components/Card';
 import marketingTemplates from '../data/marketing-templates.json';
 import HelpPanel from '../components/HelpPanel';
 import { getHelpConfig } from '../lib/help-configs';
-import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 interface CopyHistory {
   id: string;
@@ -47,11 +47,7 @@ const MarketingTemplates: React.FC = () => {
 
   const loadStats = async () => {
     try {
-      const { data } = await supabase
-        .from('marketing_template_usage')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100);
+      const { items: data = [] } = await nativeAdminCall<{ items?: Array<Record<string, any>> }>('/v1/admin/marketing-template-usage');
 
       if (data) {
         const totalCopies = data.filter(d => d.action === 'copy').length;
@@ -76,11 +72,8 @@ const MarketingTemplates: React.FC = () => {
 
   const loadCopyHistory = async () => {
     try {
-      const { data } = await supabase
-        .from('marketing_template_usage')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(10);
+      const { items = [] } = await nativeAdminCall<{ items?: Array<Record<string, any>> }>('/v1/admin/marketing-template-usage');
+      const data = items.slice(0, 10);
 
       if (data) {
         setCopyHistory(data.map(d => ({
@@ -97,12 +90,12 @@ const MarketingTemplates: React.FC = () => {
 
   const trackUsage = async (templateType: string, templateId: string, action: 'copy' | 'download') => {
     try {
-      await supabase.from('marketing_template_usage').insert({
+      await nativeAdminCall('/v1/admin/marketing-template-usage', { method: 'POST', body: JSON.stringify({
         template_type: templateType,
         template_id: templateId,
         action: action,
         ambassador_code: ambassadorCode
-      });
+      }) });
       await loadStats();
       await loadCopyHistory();
     } catch (error) {
@@ -156,15 +149,11 @@ const MarketingTemplates: React.FC = () => {
   const generateAIVariant = async (originalText: string) => {
     setGeneratingVariant(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-seo-content', {
-        body: {
-          prompt: `Réécris ce message marketing de manière plus engageante et persuasive, en gardant le même sens : "${originalText}"`,
-          max_length: 500
-        }
-      });
-
-      if (error) throw error;
-      setAiVariant(data?.content || 'Erreur de génération');
+      const data = await nativeAdminCall<{ response?: string }>('/v1/admin/llm', { method: 'POST', body: JSON.stringify({
+        action: 'chat',
+        query: `Réécris ce message marketing de manière professionnelle et engageante, sans modifier les faits, tarifs, garanties ni liens. Retourne uniquement le texte final (500 caractères maximum) :\n\n${originalText}`,
+      }) });
+      setAiVariant(String(data.response || '').slice(0, 500) || 'Erreur de génération');
     } catch (error) {
       logger.error('Error generating variant:', error);
       setAiVariant('Erreur lors de la génération de variante');
