@@ -1,10 +1,16 @@
 import React, { useState } from 'react';
-import { internalFunctionHeaders } from '@/lib/internal-function-auth';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { MapPin, Plus, Loader, CheckCircle, XCircle, AlertCircle, Image, FileText, Newspaper, HelpCircle, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
-import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
+
+interface GeneratedContent {
+  blogPost: { title: string; slug: string; featuredImage?: string };
+  cityPage: { city: string; title: string; slug: string; dept?: string; region?: string; taxi_count?: number };
+  faq: Array<{ question: string; answer: string; category: string }>;
+  newsArticle?: { title?: string };
+}
 
 interface GenerationResult {
   success: boolean;
@@ -62,56 +68,66 @@ const CityPageGenerator: React.FC = () => {
     setResult(null);
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const generated = await nativeAdminCall<{ success: boolean; content: GeneratedContent; error?: string }>('/v1/admin/ai-content', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'generate',
+          keyword: `assurance taxi ${cityName.trim()}`,
+          city: cityName.trim(),
+          secondaryKeywords: [
+            `département ${dept.trim()}`,
+            region.trim(),
+            `${taxiCount ? parseInt(taxiCount, 10) : 500} taxis estimés`,
+          ],
+        }),
+      });
+      if (!generated.success || !generated.content) throw new Error(generated.error || 'generation_failed');
 
-      const response = await fetch(
-        `${supabaseUrl}/functions/v1/generate-city-complete`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': (await internalFunctionHeaders()).Authorization,
-          },
-          body: JSON.stringify({
-            city_name: cityName,
-            dept,
-            region,
-            taxi_count: taxiCount ? parseInt(taxiCount) : 500,
-            generate_article: generateArticle,
-            generate_faq: generateFaq,
-            generate_news: generateNews,
-            generate_image: generateImage,
-          }),
-        }
-      );
+      generated.content.cityPage = {
+        ...generated.content.cityPage,
+        city: cityName.trim(),
+        dept: dept.trim(),
+        region: region.trim(),
+        taxi_count: taxiCount ? parseInt(taxiCount, 10) : 500,
+      };
+      const published = await nativeAdminCall<{
+        success: boolean;
+        results: { blog?: string; city?: string; news?: string; faq?: string[] };
+        error?: string;
+      }>('/v1/admin/ai-content', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'publish', content: generated.content }),
+      });
+      if (!published.success || !published.results?.city) throw new Error(published.error || 'publication_failed');
 
-      const data = await response.json();
+      const slug = generated.content.cityPage.slug;
+      setResult({
+        success: true,
+        message: 'Page ville générée et publiée dans la base native',
+        city_id: published.results.city,
+        slug,
+        url: `/ville/${slug}`,
+        article_id: published.results.blog,
+        faq_ids: published.results.faq,
+        news_id: published.results.news,
+        image_url: generated.content.blogPost.featuredImage,
+        generated: {
+          city_page: true,
+          article: Boolean(published.results.blog),
+          faqs: published.results.faq?.length || 0,
+          news: Boolean(published.results.news),
+          image: Boolean(generated.content.blogPost.featuredImage),
+        },
+      });
 
-      if (response.ok) {
-        setResult({
-          success: true,
-          message: data.message,
-          city_id: data.city_id,
-          slug: data.slug,
-          url: data.url,
-          generated: data.generated,
-        });
-
-        setCityName('');
-        setDept('');
-        setRegion('');
-        setTaxiCount('');
-        setGenerateArticle(true);
-        setGenerateFaq(true);
-        setGenerateNews(false);
-        setGenerateImage(true);
-      } else {
-        setResult({
-          success: false,
-          message: 'Erreur lors de la génération',
-          error: data.error || 'Erreur inconnue',
-        });
-      }
+      setCityName('');
+      setDept('');
+      setRegion('');
+      setTaxiCount('');
+      setGenerateArticle(true);
+      setGenerateFaq(true);
+      setGenerateNews(false);
+      setGenerateImage(true);
     } catch (error) {
       logger.error('Generation error:', error);
       setResult({

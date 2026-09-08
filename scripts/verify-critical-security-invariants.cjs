@@ -607,7 +607,7 @@ for (const functionName of ['generate-city-complete', 'auto-generate-city-page']
   requireMatch('scripts/deploy-critical-supabase-security.ps1', new RegExp("'" + functionName + "'"), functionName + ' is missing from controlled deployment');
 }
 requireMatch('supabase/functions/generate-city-complete/index.ts', /city_name[\s\S]*Nombre de taxis invalide[\s\S]*generate-seo-content[\s\S]*city_pages[\s\S]*Une page existe déjà/, 'manual city generation lacks validation, generation, persistence, or duplicate protection');
-requireMatch('src/backoffice/CityPageGenerator.tsx', /generated: data.generated/, 'city generator UI discards the generated-content delivery report');
+requireMatch('src/backoffice/CityPageGenerator.tsx', /generated:[\s\S]*article: Boolean\(published\.results\.blog\)[\s\S]*faqs: published\.results\.faq\?\.length[\s\S]*news: Boolean\(published\.results\.news\)/, 'city generator UI discards the native publication report');
 for (const functionName of ['ai-social-scraper', 'news-aggregator-master', 'ai-viral-content-generator']) {
   requireMatch('supabase/functions/' + functionName + '/index.ts', /isInternalRequest[\s\S]*Unauthorized/, functionName + ' accepts anonymous content automation requests');
   requireMatch('scripts/deploy-critical-supabase-security.ps1', new RegExp("'" + functionName + "'"), functionName + ' is missing from controlled deployment');
@@ -705,6 +705,8 @@ for (const file of ['src/components/crm/SMSSendModal.tsx', 'src/components/crm/S
   requireMatch(file, /getDeliveryRequestId[\s\S]*request_id: requestId[\s\S]*clearDeliveryRequestId/, 'native SMS delivery lacks stable request ID or success cleanup');
 }
 requireMatch('src/lib/native-admin-data.ts', /nativeAdminCall[\s\S]*AbortSignal\.timeout\(45_000\)/, 'native admin calls can spin forever');
+requireMatch('src/backoffice/CityPageGenerator.tsx', /nativeAdminCall[\s\S]*\/v1\/admin\/ai-content[\s\S]*action: 'publish'/, 'city page generation does not use the authenticated native publication API');
+forbidMatch('src/backoffice/CityPageGenerator.tsx', /supabase|VITE_SUPABASE|generate-city-complete|internalFunctionHeaders/i, 'city page generation still depends on Supabase or its retired Edge Function');
 requireMatch('server/taxiassur-platform-api.mjs', /adminLeadSms[\s\S]*request_id[\s\S]*AbortSignal\.timeout\(15_000\)/, 'native SMS delivery lacks idempotency or provider timeout');
 const criticalDeploy = 'scripts/deploy-critical-supabase-security.ps1';
 requireMatch(criticalDeploy, /ConfirmCriticalMigrationsApplied[\s\S]*20260810033000_add_monetico_creation_idempotency[\s\S]*20260810040000_create_communication_delivery_idempotency[\s\S]*20260810043000_harden_monetico_email_delivery_status[\s\S]*20260810050000_harden_client_claim_creation[\s\S]*Deployment aborted/, 'critical deployment does not fail closed before required migrations');
