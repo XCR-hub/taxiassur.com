@@ -5,7 +5,7 @@ import {
   Download, RefreshCw, ArrowUp, ArrowDown, Minus, Target,
   Users, MessageSquare, Star, Zap, Eye
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminInbox } from '@/lib/native-admin-data';
 
 interface EmailInteraction {
   id: string;
@@ -66,22 +66,18 @@ const EmailTrendline: React.FC<EmailTrendlineProps> = ({ leadId, clientId, perio
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - daysBack);
 
-      let query = supabase
-        .from('crm_interactions')
-        .select('*')
-        .eq('type', 'email')
-        .gte('created_at', startDate.toISOString())
-        .order('created_at', { ascending: true });
-
-      if (leadId) {
-        query = query.eq('lead_id', leadId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      const emailData = data || [];
+      const response = await nativeAdminInbox(leadId ? `lead:${leadId}` : 'all') as {
+        messages?: Array<EmailInteraction & { body_text?: string; received_at?: string }>;
+      };
+      const emailData = (response.messages || [])
+        .map(message => ({
+          ...message,
+          type: 'email',
+          content: message.content || message.body_text,
+          created_at: message.created_at || message.received_at || '',
+        }))
+        .filter(message => Date.parse(message.created_at) >= startDate.getTime())
+        .sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
       setInteractions(emailData);
 
       // Calculate stats

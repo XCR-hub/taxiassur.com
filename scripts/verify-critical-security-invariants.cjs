@@ -713,6 +713,8 @@ requireMatch('server/taxiassur-platform-api.mjs', /adminEmailAccount[\s\S]*passw
 requireMatch('src/backoffice/ManualEmailSync.tsx', /nativeAdminInboxSync[\s\S]*leads_created[\s\S]*création automatique est désactivée/, 'manual email sync does not use or explain the native no-lead-creation flow');
 forbidMatch('src/backoffice/ManualEmailSync.tsx', /supabase|sync-all-emails-complete|clean-email-content|parse-form-emails-create-leads|link_existing_emails_to_leads/i, 'manual email sync still invokes legacy Supabase processing');
 requireMatch('server/taxiassur-platform-api.mjs', /autoProcessInboxLeads[\s\S]*if\(!lead\)\{ignored\+\+;continue;\}[\s\S]*return \{created:0,linked,ignored\}/, 'native inbox synchronization can create leads from received emails');
+requireMatch('src/backoffice/EmailTrendline.tsx', /nativeAdminInbox[\s\S]*lead:\$\{leadId\}[\s\S]*received_at/, 'email trendline does not use the native PostgreSQL inbox history');
+forbidMatch('src/backoffice/EmailTrendline.tsx', /supabase|crm_interactions/i, 'email trendline still reads its history from Supabase');
 requireMatch('server/taxiassur-platform-api.mjs', /adminLeadSms[\s\S]*request_id[\s\S]*AbortSignal\.timeout\(15_000\)/, 'native SMS delivery lacks idempotency or provider timeout');
 const criticalDeploy = 'scripts/deploy-critical-supabase-security.ps1';
 requireMatch(criticalDeploy, /ConfirmCriticalMigrationsApplied[\s\S]*20260810033000_add_monetico_creation_idempotency[\s\S]*20260810040000_create_communication_delivery_idempotency[\s\S]*20260810043000_harden_monetico_email_delivery_status[\s\S]*20260810050000_harden_client_claim_creation[\s\S]*Deployment aborted/, 'critical deployment does not fail closed before required migrations');
