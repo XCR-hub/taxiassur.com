@@ -3,9 +3,9 @@ import { toast } from '@/lib/toast';
 import {
   Mail, RefreshCw, Check, X, User, Calendar, MessageCircle, AlertCircle,
   Send, Trash2, Archive, Tag, Filter, Search, Reply, ExternalLink,
-  CheckSquare, Square, MoreVertical, Settings, Zap, UserPlus, Download
+  CheckSquare, Square, MoreVertical, Settings, Zap, Download
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminInbox, nativeAdminInboxAction, nativeAdminInboxSync, nativeAdminInboxWorkflow, nativeAdminLeads } from '@/lib/native-admin-data';
 import { logger } from '@/lib/logger';
 import { ManualEmailSync } from './ManualEmailSync';
 
@@ -93,52 +93,36 @@ const EmailInboxManager: React.FC = () => {
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [replyContent, setReplyContent] = useState('');
-  const [rules, setRules] = useState<EmailRule[]>([]);
+  const [rules] = useState<EmailRule[]>([]);
   const [groupByThread, setGroupByThread] = useState(false);
 
   useEffect(() => {
     loadEmails();
     loadLeads();
-    loadRules();
   }, [filter]);
 
   const loadEmails = async () => {
     setLoading(true);
     try {
-      let query = supabase
-        .from('email_messages')
-        .select('*')
-        .order('received_at', { ascending: false })
-        .limit(200);
-
-      if (filter === 'processed') {
-        query = query.eq('processed', true);
-      } else if (filter === 'unprocessed') {
-        query = query.eq('processed', false);
-      } else if (filter === 'unassigned') {
-        query = query.is('lead_id', null);
-      } else if (filter === 'leads') {
-        query = query.not('lead_id', 'is', null);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-
-      const emailsData = (data || []).map(email => ({
+      const nativeFilter = filter === 'unassigned' || filter === 'leads' ? filter : 'all';
+      const response = await nativeAdminInbox(nativeFilter, searchTerm) as { messages?: any[] };
+      let emailsData = (response.messages || []).map(email => ({
         id: email.id,
         from_email: email.from_email || email.sender_email,
         from_name: email.from_name || email.sender_name,
-        to_email: email.to_email || email.recipient_email,
+        to_email: email.to_email || email.recipient_email || email.to_emails?.[0],
         subject: email.subject,
-        body: email.body || email.content,
-        received_at: email.received_at || email.sent_at,
-        processed: email.processed || false,
+        body: email.body_text || email.body || email.content || '',
+        received_at: email.received_at || email.sent_at || email.created_at,
+        processed: email.is_read === true || email.processed === true,
         lead_id: email.lead_id,
         intent: email.intent,
         sentiment: email.sentiment,
-        priority: email.priority || 5,
+        priority: email.priority === 'high' ? 9 : Number(email.priority) || 5,
         thread_id: email.thread_id
       }));
+      if (filter === 'processed') emailsData = emailsData.filter(email => email.processed);
+      if (filter === 'unprocessed') emailsData = emailsData.filter(email => !email.processed);
 
       setEmails(emailsData);
       logger.info(`📧 ${emailsData.length} emails chargés`);
@@ -151,33 +135,10 @@ const EmailInboxManager: React.FC = () => {
 
   const loadLeads = async () => {
     try {
-      const { data, error } = await supabase
-        .from('crm_leads')
-        .select('id, first_name, last_name, email, phone, status')
-        .order('created_at', { ascending: false })
-        .limit(1000);
-
-      if (error) throw error;
-      setLeads(data || []);
+      const data = await nativeAdminLeads() as { leads?: Lead[] };
+      setLeads(data.leads || []);
     } catch (error) {
       logger.error('Erreur chargement leads:', error);
-    }
-  };
-
-  const loadRules = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('email_automation_rules')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        logger.warn('Table email_automation_rules pas encore créée');
-        return;
-      }
-      setRules(data || []);
-    } catch (error) {
-      logger.error('Erreur chargement règles:', error);
     }
   };
 
@@ -186,25 +147,11 @@ const EmailInboxManager: React.FC = () => {
     try {
       logger.info('🔄 Synchronisation emails IMAP...');
 
-      const session = await supabase.auth.getSession();
-      if (!session.data.session) {
-        throw new Error('Session expirée');
-      }
-
-      const { data, error } = await supabase.functions.invoke('sync-all-emails-complete', {
-        body: {},
-        headers: {
-          'Authorization': `Bearer ${session.data.session.access_token}`
-        }
-      });
-
-      if (error) {
-        logger.error('Erreur invoke:', error);
-        throw error;
-      }
+      const data = await nativeAdminInboxSync() as { success?: boolean; stats?: { emails_imported?: number } };
+      if (!data.success) throw new Error('Synchronisation native échouée');
 
       logger.info('✅ Synchronisation terminée:', data);
-      toast.success(`✅ ${data?.count || 0} emails récupérés !`);
+      toast.success(`✅ ${data.stats?.emails_imported || 0} emails synchronisés !`);
       await loadEmails();
     } catch (error) {
       logger.error('❌ Erreur synchronisation:', error);
@@ -258,16 +205,7 @@ const EmailInboxManager: React.FC = () => {
 
   const linkToLead = async (emailId: string, leadId: string) => {
     try {
-      const { error } = await supabase
-        .from('email_messages')
-        .update({
-          lead_id: leadId,
-          processed: true,
-          processed_at: new Date().toISOString()
-        })
-        .eq('id', emailId);
-
-      if (error) throw error;
+      await nativeAdminInboxAction('assign', [emailId], { lead_id: leadId });
 
       logger.info('✅ Email lié au lead');
       await loadEmails();
@@ -277,56 +215,11 @@ const EmailInboxManager: React.FC = () => {
     }
   };
 
-  const createLeadFromEmail = async (email: EmailInbox) => {
-    try {
-      const nameParts = email.from_name?.split(' ') || ['', ''];
-      const { data: newLead, error } = await supabase
-        .from('crm_leads')
-        .insert({
-          email: email.from_email,
-          first_name: nameParts[0] || 'Lead',
-          last_name: nameParts.slice(1).join(' ') || 'Email',
-          source: 'email_inbox',
-          status: 'NEW_LEAD',
-          lead_score: 60,
-          metadata: {
-            first_email_subject: email.subject,
-            first_email_date: email.received_at
-          }
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      await linkToLead(email.id, newLead.id);
-      await loadLeads();
-      logger.info('✅ Nouveau lead créé depuis email');
-    } catch (error) {
-      logger.error('Erreur création lead:', error);
-    }
-  };
-
   const sendReply = async () => {
     if (!selectedEmail || !replyContent.trim()) return;
 
     try {
-      const session = await supabase.auth.getSession();
-      if (!session.data.session) throw new Error('Session expirée');
-
-      const { error } = await supabase.functions.invoke('send-email-universal', {
-        body: {
-          to: selectedEmail.from_email,
-          subject: `Re: ${selectedEmail.subject}`,
-          html: replyContent,
-          lead_id: selectedEmail.lead_id
-        },
-        headers: {
-          'Authorization': `Bearer ${session.data.session.access_token}`
-        }
-      });
-
-      if (error) throw error;
+      await nativeAdminInboxWorkflow('reply', { email_id: selectedEmail.id, content: replyContent });
 
       toast.success('✅ Réponse envoyée !');
       setShowReplyModal(false);
@@ -347,25 +240,9 @@ const EmailInboxManager: React.FC = () => {
     setSelectedEmails(newSelection);
   };
 
-  const bulkCreateLeads = async () => {
-    const emailsToProcess = emails.filter(e => selectedEmails.has(e.id));
-
-    for (const email of emailsToProcess) {
-      await createLeadFromEmail(email);
-    }
-
-    setSelectedEmails(new Set());
-    toast.success(`✅ ${emailsToProcess.length} leads créés !`);
-  };
-
   const bulkMarkAsProcessed = async () => {
     try {
-      const { error } = await supabase
-        .from('email_messages')
-        .update({ processed: true, processed_at: new Date().toISOString() })
-        .in('id', Array.from(selectedEmails));
-
-      if (error) throw error;
+      await nativeAdminInboxAction('mark_read', Array.from(selectedEmails));
 
       await loadEmails();
       setSelectedEmails(new Set());
@@ -377,12 +254,7 @@ const EmailInboxManager: React.FC = () => {
 
   const bulkArchive = async () => {
     try {
-      const { error } = await supabase
-        .from('email_messages')
-        .update({ archived: true })
-        .in('id', Array.from(selectedEmails));
-
-      if (error) throw error;
+      await nativeAdminInboxAction('archive', Array.from(selectedEmails));
 
       await loadEmails();
       setSelectedEmails(new Set());
@@ -586,13 +458,6 @@ const EmailInboxManager: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    onClick={bulkCreateLeads}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
-                  >
-                    <UserPlus className="w-4 h-4" />
-                    Créer les leads
-                  </button>
                   <button
                     onClick={bulkMarkAsProcessed}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
@@ -896,14 +761,8 @@ const EmailInboxManager: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="flex gap-3">
-                        <button
-                          onClick={() => createLeadFromEmail(selectedEmail)}
-                          className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                        >
-                          <UserPlus className="w-5 h-5" />
-                          Créer nouveau lead
-                        </button>
+                      <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+                        Pour créer un lead à partir de ce contact, utilisez exclusivement le bouton « Nouveau lead » du CRM, puis rattachez cet email.
                       </div>
                     </>
                   )}
