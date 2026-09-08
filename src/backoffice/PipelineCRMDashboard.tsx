@@ -16,7 +16,7 @@ import {
   Eye,
   Download
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import LeadCompanyQuotes from './LeadCompanyQuotes';
 
 interface LeadWithStatus {
@@ -61,11 +61,9 @@ export default function PipelineCRMDashboard() {
 
   const loadDashboard = async () => {
     try {
-      const { data: leadsData } = await supabase.rpc('get_leads_with_pipeline_status');
-      setLeads(leadsData || []);
-
-      const { data: statsData } = await supabase.rpc('get_pipeline_statistics');
-      setStatistics(statsData);
+      const data = await nativeAdminCall<{ leads?: LeadWithStatus[]; statistics?: any }>('/v1/admin/pipeline-dashboard');
+      setLeads(data.leads || []);
+      setStatistics(data.statistics || null);
 
       setLoading(false);
     } catch (error) {
@@ -75,20 +73,15 @@ export default function PipelineCRMDashboard() {
   };
 
   const loadLeadDetails = async (leadId: string) => {
-    const { data: commsData } = await supabase
-      .from('lead_communications')
-      .select('*')
-      .eq('lead_id', leadId)
-      .order('created_at', { ascending: false });
-
-    setCommunications(commsData || []);
-
-    const { data: docsData } = await supabase
-      .from('lead_documents')
-      .select('*')
-      .eq('lead_id', leadId);
-
-    setDocuments(docsData || []);
+    try {
+      const data = await nativeAdminCall<{ communications?: any[]; documents?: any[] }>(`/v1/admin/pipeline-dashboard?lead_id=${encodeURIComponent(leadId)}`);
+      setCommunications(data.communications || []);
+      setDocuments(data.documents || []);
+    } catch (error) {
+      logger.error('Error loading lead details:', error);
+      setCommunications([]);
+      setDocuments([]);
+    }
   };
 
   const getStageColor = (category: string) => {
