@@ -1,3 +1,4 @@
+import { seoTitle, seoDescription, redirectSources, isCanonicalPublicPath } from '../functions/lib/public-seo.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -15,6 +16,7 @@ const PUBLIC_LIST_LIMIT = Math.max(1, Math.min(250, Number(process.env.PUBLIC_SI
 const PUBLIC_LIST_MAX_PAGES = Math.max(1, Math.min(100, Number(process.env.PUBLIC_SITEMAP_MAX_PAGES || 30)));
 const FETCH_TIMEOUT_MS = Math.max(1500, Math.min(15000, Number(process.env.PUBLIC_SITEMAP_FETCH_TIMEOUT_MS || 8000)));
 const DEFAULT_SOURCE_ORDER = ['postgres-public', 'd1'];
+const REDIRECT_SOURCES = redirectSources(fs.readFileSync(path.join(rootDir, 'public', '_redirects'), 'utf8'));
 const SOURCE_ENDPOINTS = {
   'postgres-public': '/api/postgres-public',
   d1: '/api/d1',
@@ -204,9 +206,9 @@ function descriptionFor(row, fallback) {
 }
 
 function addSeoMapEntry(map, route, entry) {
-  if (!route || !route.startsWith('/')) return;
-  const title = cleanTitle(entry.title, 'TaxiAssur');
-  const description = compactText(entry.description, 170);
+  if (!route || !route.startsWith('/') || !isCanonicalPublicPath(route, REDIRECT_SOURCES)) return;
+  const title = seoTitle(entry.title || 'Assurance taxi');
+  const description = seoDescription(entry.description, 'Retrouvez les conseils TaxiAssur pour comprendre vos garanties, pr?parer vos documents et comparer votre assurance taxi professionnelle.');
   if (!title || !description) return;
 
   map[route] = {
@@ -272,7 +274,7 @@ function normalizeLoc(pathOrUrl) {
 
 function upsertUrl(urlsByLoc, pathOrUrl, lastmod, changefreq, priority) {
   const loc = normalizeLoc(pathOrUrl);
-  if (!isPublicSitemapLoc(loc)) return;
+  if (!isPublicSitemapLoc(loc) || !isCanonicalPublicPath(new URL(loc).pathname, REDIRECT_SOURCES)) return;
   urlsByLoc.set(loc, {
     loc,
     lastmod: toIsoDate(lastmod),

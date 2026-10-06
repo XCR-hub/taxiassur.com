@@ -1,3 +1,4 @@
+import { seoTitle, seoDescription } from '../../functions/lib/public-seo.js';
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -134,8 +135,8 @@ export default function NewsArticle() {
   return (
     <>
       <Helmet>
-        <title>{article.title} | TaxiAssur Actualités</title>
-        <meta name="description" content={article.meta_description || article.excerpt} />
+        <title>{seoTitle(article.title)}</title>
+        <meta name="description" content={seoDescription(article.meta_description || article.excerpt, 'Actualité TaxiAssur pour les chauffeurs de taxi : assurance professionnelle, réglementation, mobilité et conseils pour votre activité.')} />
         <link rel="canonical" href={`https://taxiassur.com/actualites/${article.slug}`} />
 
         {/* Open Graph */}

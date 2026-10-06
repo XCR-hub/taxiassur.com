@@ -1,3 +1,4 @@
+import { seoTitle, seoDescription } from '../../functions/lib/public-seo.js';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -110,8 +111,8 @@ const BlogPost: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>{post.title} | TaxiAssur Blog</title>
-        <meta name="description" content={post.excerpt} />
+        <title>{seoTitle(post.title)}</title>
+        <meta name="description" content={seoDescription(post.excerpt, "Guide TaxiAssur pour comprendre votre assurance taxi professionnelle : garanties, documents, tarifs, sinistres et conseils pour votre activite.")} />
         <link rel="canonical" href={canonicalUrl} />
 
         {/* Open Graph */}

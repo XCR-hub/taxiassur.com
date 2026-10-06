@@ -84,6 +84,10 @@ function audit() {
   const issues = [];
   const warnings = [];
 
+  const redirectPaths = new Set(read('public/_redirects').split(/\r?\n/).map(line => line.trim().split(/\s+/)).filter(([source, , status]) => source?.startsWith('/') && /^3\d\d$/.test(status || '') && !/[:*]/.test(source)).map(([source]) => source));
+  const redirected = locs.filter(url => redirectPaths.has(pathnameOf(url)));
+  if (redirected.length) addIssue(issues, 'error', 'redirects_in_sitemap', 'Sitemap contains redirect sources.', { sample: redirected.slice(0, 20) });
+
   const duplicates = locs.filter((url, index) => locs.indexOf(url) !== index);
   if (duplicates.length) {
     addIssue(issues, 'error', 'duplicate_urls', 'Duplicate URLs found in sitemap.', { count: duplicates.length, sample: duplicates.slice(0, 20) });

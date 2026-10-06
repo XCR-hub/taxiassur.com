@@ -1,3 +1,4 @@
+import { NOINDEX_PATHS, seoTitle, seoDescription } from '../../functions/lib/public-seo.js';
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
@@ -29,21 +30,12 @@ const Seo: React.FC<SeoProps> = ({
   const brandName = 'TaxiAssur';
   const globalNoIndex = shouldNoIndex();
 
-  const BROKEN_NOINDEX_PATHS = new Set([
-    '/actualites/theo-le-taxi-france-tv-1766881140212',
-    '/assurance-taxi-grenoble',
-    '/assurance-taxi-orleans',
-    '/actualites/franchise-assurance-taxi-ce-qui-change-cette-annee',
-    '/blog/double-activite-taxi-vtc-assurance',
-    '/actualites/tesla-model-3-nouvelle-star-taxis-parisiens',
-    '/blog/comparatif-assurances-taxi-2025-axa-generali-covea',
-    '/assurance-taxi-angers',
-  ]);
+  const BROKEN_NOINDEX_PATHS = NOINDEX_PATHS;
   const pathNoIndex = BROKEN_NOINDEX_PATHS.has(location.pathname.replace(/\/$/, ''));
 
-  const fullTitle = title ? `${title} | ${brandName}` : `${brandName} - Assurance Taxi Professionnelle`;
+  const fullTitle = seoTitle(title || 'Assurance taxi professionnelle');
   const defaultDescription = 'Devis d\'assurance taxi gratuit et personnalisé. Courtier spécialiste avec tarifs négociés. Service professionnel et réponse rapide.';
-  const metaDescription = description || defaultDescription;
+  const metaDescription = seoDescription(description, defaultDescription);
 
   const pathname = location.pathname.replace(/\/$/, '');
   const canonicalUrl = canonical

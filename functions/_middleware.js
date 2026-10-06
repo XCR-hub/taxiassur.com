@@ -1,3 +1,5 @@
+import { NOINDEX_PATHS, seoTitle, seoDescription } from './lib/public-seo.js';
+
 const SITE_ORIGIN = 'https://taxiassur.com';
 const APEX_HOST = 'taxiassur.com';
 const WWW_HOST = 'www.taxiassur.com';
@@ -142,6 +144,18 @@ const STATIC_ROUTE_META = {
   },
 };
 
+Object.assign(STATIC_ROUTE_META, {
+"/sitemap": {title: "Plan du site", description: "Retrouvez les guides, actualités et pages locales de TaxiAssur pour comparer les garanties et préparer votre assurance taxi professionnelle.", section: "Plan du site", priority: 'support'},
+"/legal": {title: "Mentions légales", description: "Consultez les mentions légales de TaxiAssur : identité du courtier, coordonnées, informations réglementaires et conditions de présentation du site.", section: "Mentions légales", priority: 'support'},
+"/policy": {title: "Politique de confidentialité", description: "Découvrez comment TaxiAssur traite vos données personnelles, protège vos informations et vous permet d’exercer vos droits sur les données collectées.", section: "Politique de confidentialité", priority: 'support'},
+"/conditions": {title: "Conditions générales", description: "Consultez les conditions générales du site TaxiAssur, les modalités d’utilisation des services et les informations relatives à votre accompagnement.", section: "Conditions générales", priority: 'support'},
+"/reviews": {title: "Avis clients assurance taxi", description: "Retrouvez les avis des clients TaxiAssur sur leur accompagnement en assurance taxi, la préparation des devis et le suivi des dossiers professionnels.", section: "Avis clients assurance taxi", priority: 'support'},
+"/newsletter": {title: "Newsletter assurance taxi", description: "Inscrivez-vous à la newsletter TaxiAssur pour recevoir les actualités du secteur, des conseils sur vos garanties et les informations utiles aux taxis.", section: "Newsletter assurance taxi", priority: 'support'},
+"/programme-partenaires": {title: "Programme partenaires TaxiAssur", description: "Découvrez le programme partenaires TaxiAssur et les possibilités de collaboration pour accompagner les chauffeurs de taxi dans leur assurance.", section: "Programme partenaires TaxiAssur", priority: 'support'},
+"/conseil-personnalise": {title: "Conseil personnalisé assurance taxi", description: "Bénéficiez d’un conseil personnalisé TaxiAssur pour identifier vos besoins, comprendre vos garanties et préparer votre dossier d’assurance taxi.", section: "Conseil personnalisé assurance taxi", priority: 'support'},
+"/confiance-et-certifications": {title: "Confiance et certifications", description: "Retrouvez les informations sur TaxiAssur, son accompagnement de courtier et les engagements de service destinés aux chauffeurs de taxi professionnels.", section: "Confiance et certifications", priority: 'support'}
+});
+
 const CITY_ROUTE_OVERRIDES = {
   '/assurance-taxi-paris': 'Paris',
   '/assurance-taxi-lyon': 'Lyon',
@@ -195,11 +209,15 @@ export async function onRequest(context) {
   }
 
   const response = await context.next();
-  const meta = await getRouteMeta(url, context);
+  const rawMeta = await getRouteMeta(url, context);
+  const meta = rawMeta ? { ...rawMeta, title: seoTitle(rawMeta.title), description: seoDescription(rawMeta.description, `Découvrez ${rawMeta.section || 'les guides TaxiAssur'} : garanties, documents et accompagnement pour préparer votre assurance taxi professionnelle avec TaxiAssur.`) } : null;
   if (!meta || context.request.method !== 'GET') return response;
 
   const contentType = response.headers.get('content-type') || '';
   if (!contentType.toLowerCase().includes('text/html')) return response;
+
+  const directory = meta.canonicalPath === '/sitemap' ? await renderDirectory(context) : '';
+  const navigation = '<nav aria-label="Explorer TaxiAssur" style="max-width:72rem;margin:2rem auto;padding:1rem"><a href="/sitemap">Plan du site complet</a> &middot; <a href="/blog">Guides assurance taxi</a> &middot; <a href="/actualites">Actualités</a> &middot; <a href="/villes">Assurance taxi par ville</a></nav>';
 
   return new HTMLRewriter()
     .on('title', new RemoveElement())
@@ -215,6 +233,8 @@ export async function onRequest(context) {
     .on('meta[name="twitter:title"]', new RemoveElement())
     .on('meta[name="twitter:description"]', new RemoveElement())
     .on('meta[name="twitter:image"]', new RemoveElement())
+    .on('meta[name="robots"]', new RemoveElement())
+    .on('body', { element(element) { element.append(directory + navigation, { html: true }); } })
     .on('head', new HeadInjector(meta))
     .transform(response);
 }
@@ -368,23 +388,24 @@ function renderSeoHead(meta) {
     .replace(/&/g, '\\u0026');
 
   return `
-    <title>${title}</title>
-    <meta name="description" content="${description}">
-    <link rel="canonical" href="${escapeHtml(canonical)}">
-    <link rel="alternate" href="${escapeHtml(canonical)}" hreflang="fr">
-    <link rel="alternate" href="${escapeHtml(canonical)}" hreflang="x-default">
-    <meta property="og:locale" content="fr_FR">
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="TaxiAssur">
-    <meta property="og:title" content="${title}">
-    <meta property="og:description" content="${description}">
-    <meta property="og:url" content="${escapeHtml(canonical)}">
-    <meta property="og:image" content="${escapeHtml(OG_IMAGE)}">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="${title}">
-    <meta name="twitter:description" content="${description}">
-    <meta name="twitter:image" content="${escapeHtml(OG_IMAGE)}">
-    <meta name="taxiassur:seo-edge" content="active">
+    <title data-rh="true">${title}</title>
+    <meta data-rh="true" name="description" content="${description}">
+    <meta data-rh="true" name="robots" content="${NOINDEX_PATHS.has(meta.canonicalPath) ? 'noindex, follow' : 'index, follow, max-image-preview:large'}">
+    <link data-rh="true" rel="canonical" href="${escapeHtml(canonical)}">
+    <link data-rh="true" rel="alternate" href="${escapeHtml(canonical)}" hreflang="fr">
+    <link data-rh="true" rel="alternate" href="${escapeHtml(canonical)}" hreflang="x-default">
+    <meta data-rh="true" property="og:locale" content="fr_FR">
+    <meta data-rh="true" property="og:type" content="website">
+    <meta data-rh="true" property="og:site_name" content="TaxiAssur">
+    <meta data-rh="true" property="og:title" content="${title}">
+    <meta data-rh="true" property="og:description" content="${description}">
+    <meta data-rh="true" property="og:url" content="${escapeHtml(canonical)}">
+    <meta data-rh="true" property="og:image" content="${escapeHtml(OG_IMAGE)}">
+    <meta data-rh="true" name="twitter:card" content="summary_large_image">
+    <meta data-rh="true" name="twitter:title" content="${title}">
+    <meta data-rh="true" name="twitter:description" content="${description}">
+    <meta data-rh="true" name="twitter:image" content="${escapeHtml(OG_IMAGE)}">
+    <meta data-rh="true" name="taxiassur:seo-edge" content="active">
     <script type="application/ld+json" data-seo-edge="route">${schema}</script>
   `;
 }
@@ -476,4 +497,26 @@ function escapeHtml(value) {
         return char;
     }
   });
+}
+
+async function renderDirectory(context) {
+  const assets = context?.env?.ASSETS;
+  if (!assets?.fetch) return '';
+  const response = await assets.fetch(new Request(SITE_ORIGIN + '/sitemap.xml'));
+  if (!response.ok) return '';
+  const xml = await response.text();
+  const contentMap = await loadSeoContentMap(context);
+  const groups = new Map();
+  for (const match of xml.matchAll(/<loc>([^<]+)<\/loc>/g)) {
+    let url;
+    try { url = new URL(match[1].replace(/&amp;/g, '&')); } catch { continue; }
+    if (url.origin !== SITE_ORIGIN || url.search || NOINDEX_PATHS.has(url.pathname)) continue;
+    const pathname = url.pathname;
+    const group = pathname.startsWith('/blog/') ? 'Guides assurance taxi' : pathname.startsWith('/actualites/') ? 'Actualités' : pathname.startsWith('/assurance-taxi-') && !STATIC_ROUTE_META[pathname] ? 'Assurance taxi par ville' : 'Services et informations';
+    if (!groups.has(group)) groups.set(group, new Map());
+    const label = contentMap?.routes?.[pathname]?.title || STATIC_ROUTE_META[pathname]?.section || titleFromSlug(pathname.split('/').pop()) || 'Accueil';
+    groups.get(group).set(pathname, label);
+  }
+  const sections = [...groups].map(([label, entries]) => '<section><h3>' + escapeHtml(label) + '</h3><ul style="columns:18rem;column-gap:2rem">' + [...entries].map(([pathname, title]) => '<li style="break-inside:avoid;margin-bottom:.75rem"><a href="' + escapeHtml(pathname) + '">' + escapeHtml(title) + '</a></li>').join('') + '</ul></section>').join('');
+  return '<section aria-label="Répertoire complet des pages" style="max-width:72rem;margin:2rem auto;padding:1rem"><h2>Toutes les pages TaxiAssur</h2>' + sections + '</section>';
 }
