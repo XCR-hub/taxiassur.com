@@ -1,4 +1,4 @@
-import { NOINDEX_PATHS, seoTitle, seoDescription } from '../../functions/lib/public-seo.js';
+import { NOINDEX_PATHS, seoTitle, seoDescription } from '../../shared/public-seo.js';
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';

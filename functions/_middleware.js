@@ -1,4 +1,4 @@
-import { NOINDEX_PATHS, seoTitle, seoDescription } from './lib/public-seo.js';
+import { NOINDEX_PATHS, seoTitle, seoDescription } from '../shared/public-seo.js';
 
 const SITE_ORIGIN = 'https://taxiassur.com';
 const APEX_HOST = 'taxiassur.com';

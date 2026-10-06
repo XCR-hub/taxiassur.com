@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { seoTitle, seoDescription, redirectSources, isCanonicalPublicPath } from '../functions/lib/public-seo.js';
+import { seoTitle, seoDescription, redirectSources, isCanonicalPublicPath } from '../shared/public-seo.js';
 import { onRequest } from '../functions/_middleware.js';
 
 const sitemap = readFileSync(new URL('../public/sitemap.xml', import.meta.url), 'utf8');

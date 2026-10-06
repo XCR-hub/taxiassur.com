@@ -1,4 +1,4 @@
-import { seoTitle, seoDescription, redirectSources, isCanonicalPublicPath } from '../functions/lib/public-seo.js';
+import { seoTitle, seoDescription, redirectSources, isCanonicalPublicPath } from '../shared/public-seo.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';

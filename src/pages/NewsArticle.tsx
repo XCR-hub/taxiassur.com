@@ -1,4 +1,4 @@
-import { seoTitle, seoDescription } from '../../functions/lib/public-seo.js';
+import { seoTitle, seoDescription } from '../../shared/public-seo.js';
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
