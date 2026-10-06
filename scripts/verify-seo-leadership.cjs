@@ -157,7 +157,7 @@ function decodeHtmlEntities(value) {
 }
 
 function titleOf(html) {
-  const match = html.match(/<title>([\s\S]*?)<\/title>/i);
+  const match = html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i);
   return match ? decodeHtmlEntities(match[1]).replace(/\s+/g, ' ').trim() : '';
 }
 
