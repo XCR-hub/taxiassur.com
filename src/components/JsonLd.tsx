@@ -79,13 +79,6 @@ const JsonLd: React.FC<JsonLdProps> = ({ type, data }) => {
             "Assurance Flotte Taxi",
             "Assurance Véhicule Professionnel"
           ],
-          "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "4.9",
-            "reviewCount": "127",
-            "bestRating": "5",
-            "worstRating": "1"
-          },
           "sameAs": [
             "https://www.linkedin.com/company/xcr",
             "https://www.facebook.com/taxiassur",
@@ -345,13 +338,6 @@ const JsonLd: React.FC<JsonLdProps> = ({ type, data }) => {
             { "@type": "City", "name": "Toulouse" },
             { "@type": "City", "name": "Nice" }
           ],
-          "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "4.9",
-            "reviewCount": "127",
-            "bestRating": "5",
-            "worstRating": "1"
-          },
           "sameAs": [
             "https://www.linkedin.com/company/xcr",
             "https://www.facebook.com/taxiassur"

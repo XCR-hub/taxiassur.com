@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
 import App from './App.tsx';
 import './index.css';
+import { getLeadAcquisition } from './lib/lead-acquisition';
+import { isPrivateApplicationPath } from './lib/privacy-consent';
+if (!isPrivateApplicationPath()) getLeadAcquisition();
 
 // The website does not require offline control. Remove any previously
 // installed PWA worker without reloading the page; stale workers were causing

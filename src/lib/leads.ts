@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { supabase } from './supabase';
 import { logger } from '@/lib/logger';
 import { PLATFORM_BASE_URL } from '@/lib/platform-api';
+import { getLeadAcquisition } from '@/lib/lead-acquisition';
 import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
 
 export const LeadStatusSchema = z.enum(['nouveau', 'contacté', 'devis envoyé', 'client', 'perdu']);
@@ -429,12 +430,12 @@ export async function createLead(input: CreateLeadInput, forceNew: boolean = fal
       cache: 'no-store',
       signal: AbortSignal.timeout(20_000),
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...normalizedInput, force_new: forceNew }),
+      body: JSON.stringify({ ...normalizedInput, acquisition: getLeadAcquisition(), service: normalizedInput.status === 'vtc' ? 'assurance-vtc' : 'assurance-taxi', force_new: forceNew }),
     });
     const nativePayload = await nativeResponse.json().catch(() => ({}));
     if (!nativeResponse.ok || nativePayload?.ok !== true || !nativePayload?.lead_id) {
       logger.warn('Native lead endpoint rejected request:', nativeResponse.status, nativePayload?.error);
-      return { success: false, error: 'Impossible de crÃ©er le lead. Veuillez rÃ©essayer ou nous appeler au 01 80 85 57 86.' };
+      return { success: false, error: 'Votre demande n’a pas pu être enregistrée. Réessayez ou appelez le 01 80 85 57 86.' };
     }
     return {
       success: true,

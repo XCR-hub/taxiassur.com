@@ -1,17 +1,24 @@
-import React, { useCallback, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { z } from 'zod';
 import { Shield, Phone, Clock, Send } from 'lucide-react';
 import { LeadSchema, Lead } from '../lib/schema';
 import { trackLeadSubmission } from '../lib/email';
-import Card from './Card';
 import { logger } from '@/lib/logger';
 import { createLead } from '@/lib/leads';
+import { trackLeadFormEvent } from '@/lib/lead-acquisition';
+import { hasAnalyticsConsent } from '@/lib/privacy-consent';
 import { toast } from '@/lib/toast';
 import TurnstileWidget from './security/TurnstileWidget';
 import { isTurnstileEnabled, verifyTurnstileToken } from '@/lib/turnstile';
 
-const LeadForm: React.FC = () => {
-  const navigate = useNavigate();
+const LeadForm: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
+  const started = useRef(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const location = useLocation();
+  useEffect(() => {
+    if (location.hash === '#devis-form' || location.hash === '#devis') formRef.current?.scrollIntoView({ block: 'start' });
+  }, [location.hash, location.pathname]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [turnstileToken, setTurnstileToken] = useState('');
@@ -43,9 +50,9 @@ const LeadForm: React.FC = () => {
     } catch (error) {
       const newErrors: Record<string, string> = {};
 
-      if (error.errors) {
-        error.errors.forEach((err: { path: string[]; message: string }) => {
-          const field = err.path[0];
+      if (error instanceof z.ZodError) {
+        error.issues.forEach(err => {
+          const field = String(err.path[0]);
           newErrors[field] = err.message;
         });
       }
@@ -61,6 +68,7 @@ const LeadForm: React.FC = () => {
     logger.log('📋 LeadForm submit started');
 
     if (!validateForm()) {
+      trackLeadFormEvent('form_validation_error', 'lead_form', formData.status, 'invalid_fields');
       logger.warn('❌ Form validation failed');
       return;
     }
@@ -72,6 +80,7 @@ const LeadForm: React.FC = () => {
     }
 
     if (isTurnstileEnabled() && !turnstileToken) {
+      trackLeadFormEvent('form_antispam_error', 'lead_form', formData.status, 'captcha_missing');
       toast.error('Validation anti-spam requise.');
       return;
     }
@@ -82,6 +91,7 @@ const LeadForm: React.FC = () => {
       if (isTurnstileEnabled()) {
         const turnstileValid = await verifyTurnstileToken(turnstileToken, 'lead_form');
         if (!turnstileValid) {
+          trackLeadFormEvent('form_antispam_error', 'lead_form', formData.status, 'captcha_rejected');
           toast.error('Validation anti-spam refusee. Veuillez reessayer.');
           setTurnstileToken('');
           return;
@@ -108,11 +118,13 @@ const LeadForm: React.FC = () => {
         window.location.href = `/merci${tokenParam}`;
       } else {
         logger.error('❌ Lead creation failed:', result.error);
+        trackLeadFormEvent('form_server_error', 'lead_form', formData.status, 'lead_rejected');
         toast.error(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
       }
     } catch (error) {
       logger.error('💥 Form submission error:', error);
       console.error('Full error:', error);
+      trackLeadFormEvent('form_network_error', 'lead_form', formData.status, 'network_error');
       toast.error('Erreur de connexion. Veuillez réessayer.');
     } finally {
       setIsSubmitting(false);
@@ -128,16 +140,16 @@ const LeadForm: React.FC = () => {
   }, []);
 
   return (
-    <section id="devis" className="section-padding section-darker taxi-stripe">
-      <div className="container-max">
+    <section id="devis" className={compact ? 'scroll-mt-24' : 'section-padding section-darker taxi-stripe'}>
+      <div className={compact ? '' : 'container-max'}>
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-12">
+          {!compact && <div className="text-center mb-6">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 drop-shadow-lg">
               Demandez Votre Devis Gratuit et Personnalisé
             </h2>
             <p className="text-xl text-gray-200 mb-8 drop-shadow-md">
-              🤖 Formulaire IA sécurisé → Analyse personnalisée → Offre sur-mesure
+              Quatre informations suffisent pour démarrer. Aucun document ni paiement à cette étape.
             </p>
 
             {/* Trust indicators */}
@@ -155,11 +167,11 @@ const LeadForm: React.FC = () => {
                 <span className="text-sm text-gray-200 font-semibold drop-shadow-md">Service Pro</span>
               </div>
             </div>
-          </div>
-
+          </div>}
           {/* Form */}
-          <div className="max-w-2xl mx-auto ai-card p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="max-w-2xl mx-auto ai-card p-4 sm:p-6">
+            {compact && <div className="mb-4"><h2 className="text-xl font-bold text-white">Demander mon devis gratuit</h2><p className="mt-1 text-sm text-gray-300">Sans engagement · Aucun document à cette étape</p></div>}
+            <form ref={formRef} id="devis-form" data-form="devis" onSubmit={handleSubmit} onFocusCapture={() => { if (!started.current && hasAnalyticsConsent()) { trackLeadFormEvent('form_start', 'lead_form', formData.status); started.current = true; } }} className="space-y-4 scroll-mt-24">
               {/* Honeypot field - hidden */}
               <input
                 type="text"
@@ -171,7 +183,7 @@ const LeadForm: React.FC = () => {
                 autoComplete="off"
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="name" className="block text-sm font-semibold text-white mb-2">
                     Nom et prénom *
@@ -180,6 +192,7 @@ const LeadForm: React.FC = () => {
                     type="text"
                     id="name"
                     name="name"
+                    required
                     value={formData.name}
                     onChange={handleChange}
                     autoComplete="name"
@@ -188,7 +201,7 @@ const LeadForm: React.FC = () => {
                     }`}
                     placeholder="Ex: Jean Dupont"
                   />
-                  {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+                  {errors.name && <p role="alert" className="text-red-500 text-sm mt-1">{errors.name}</p>}
                 </div>
 
                 <div>
@@ -199,19 +212,21 @@ const LeadForm: React.FC = () => {
                     type="tel"
                     id="phone"
                     name="phone"
+                    required
                     value={formData.phone}
                     onChange={handleChange}
                     autoComplete="tel"
+                    inputMode="tel"
                     className={`dark-input w-full px-4 py-3 rounded-lg transition-all duration-300 ${
                       errors.phone ? 'border-red-500 focus:border-red-500' : ''
                     }`}
                     placeholder="Ex: 06 12 34 56 78"
                   />
-                  {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
+                  {errors.phone && <p role="alert" className="text-red-500 text-sm mt-1">{errors.phone}</p>}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="email" className="block text-sm font-semibold text-white mb-2">
                     Email *
@@ -220,6 +235,7 @@ const LeadForm: React.FC = () => {
                     type="email"
                     id="email"
                     name="email"
+                    required
                     value={formData.email}
                     onChange={handleChange}
                     autoComplete="email"
@@ -228,7 +244,7 @@ const LeadForm: React.FC = () => {
                     }`}
                     placeholder="Ex: jean@email.com"
                   />
-                  {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                  {errors.email && <p role="alert" className="text-red-500 text-sm mt-1">{errors.email}</p>}
                 </div>
 
                 <div>
@@ -239,6 +255,7 @@ const LeadForm: React.FC = () => {
                     type="text"
                     id="city"
                     name="city"
+                    required
                     value={formData.city}
                     onChange={handleChange}
                     autoComplete="address-level2"
@@ -247,11 +264,11 @@ const LeadForm: React.FC = () => {
                     }`}
                     placeholder="Ex: Paris"
                   />
-                  {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
+                  {errors.city && <p role="alert" className="text-red-500 text-sm mt-1">{errors.city}</p>}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <details className="rounded-lg border border-gray-700 p-3"><summary className="cursor-pointer text-sm text-gray-200">VTC ou immatriculation à préciser ? (facultatif)</summary><div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
                 <div>
                   <label htmlFor="status" className="block text-sm font-semibold text-white mb-2">
                     Statut *
@@ -287,6 +304,8 @@ const LeadForm: React.FC = () => {
                   />
                 </div>
               </div>
+
+              </details>
 
               <TurnstileWidget
                 action="lead_form"

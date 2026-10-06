@@ -3,6 +3,8 @@ import Header from '../components/Header';
 import Hero from '../components/Hero';
 import SEOHead from '../components/SEOHead';
 import JsonLd from '../components/JsonLd';
+import AcquisitionGuide, { AcquisitionQuestions } from '../components/AcquisitionGuide';
+import { ACQUISITION_PAGES, ACQUISITION_FAQ } from '../../shared/acquisition-pages.js';
 import { usePageTracking } from '../hooks/usePageTracking';
 
 const Footer = lazy(() => import('../components/Footer'));
@@ -11,7 +13,6 @@ const StickyCTA = lazy(() => import('../components/StickyCTA'));
 const SocialProof = lazy(() => import('../components/SocialProof'));
 const Avantages = lazy(() => import('../components/Avantages'));
 const Steps = lazy(() => import('../components/Steps'));
-const FAQ = lazy(() => import('../components/FAQ'));
 const InstantQuoteCalculator = lazy(() => import('../components/InstantQuoteCalculator'));
 const DynamicReviews = lazy(() => import('../components/DynamicReviews'));
 const InteractiveQuiz = lazy(() => import('../components/InteractiveQuiz'));
@@ -44,62 +45,26 @@ const Home: React.FC = () => {
   return (
     <>
       <SEOHead
-        title="Assurance Taxi Pas Cher - Devis Gratuit 2 min | TaxiAssur Courtier ORIAS"
-        description="Assurance taxi professionnelle pas chere : devis gratuit en 2 minutes, reponse en 15 min. Courtier ORIAS specialise, RC Pro incluse, tarifs negocies jusqu'a -35%. Couverture toute la France."
+        title={ACQUISITION_PAGES['/'].title}
+        description={ACQUISITION_PAGES['/'].description}
         keywords="assurance taxi, insurance for taxi, assurance taxi pas cher, taxi insurance cheap, courtier assurance taxi, devis assurance taxi gratuit, prix assurance taxi, taxi insurance cost, insurance for taxi drivers, rc professionnelle taxi, assurance taxi professionnel, insurance for taxi company, taxi insurance near me, how much is taxi insurance, assurance taxi france, assurance taxi paris, assurance taxi lyon, assurance taxi marseille"
         canonical="/"
       />
       <JsonLd type="website" />
       <JsonLd type="organization" />
       <JsonLd type="local-business" />
-      <JsonLd type="reviews" />
       <JsonLd type="service" />
-      <JsonLd type="how-to" />
-      <JsonLd type="speakable" data={{ name: 'Assurance Taxi Pas Cher | TaxiAssur', url: '/' }} />
-      <JsonLd type="insurance-product" data={{
-        name: 'Assurance Taxi Professionnelle',
-        description: 'Assurance taxi complète avec RC Pro, dommages tous accidents, assistance 0km. Devis gratuit en 2 min.',
-        url: '/devis-assurance-taxi',
-        lowPrice: 890,
-        highPrice: 2400,
-        offerCount: 15,
-        ratingValue: '4.9',
-        reviewCount: 247
-      }} />
+      <JsonLd type="speakable" data={{ name: ACQUISITION_PAGES['/'].title, url: '/' }} />
       <JsonLd type="breadcrumb" data={[
         { name: 'Accueil', url: '/' }
       ]} />
-      <JsonLd type="faq" data={[
-        {
-          question: "Quel est le prix d'une assurance taxi ?",
-          answer: "Le prix d'une assurance taxi varie entre 1200€ et 3500€ par an selon votre profil, votre véhicule et vos garanties. Avec TaxiAssur, économisez en moyenne 35% grâce à nos tarifs négociés."
-        },
-        {
-          question: "How much is taxi insurance in France?",
-          answer: "The average cost of taxi insurance in France ranges from €1,200 to €3,500 per year, depending on factors like location, driving experience, vehicle type, and coverage level. TaxiAssur offers cheap taxi insurance with up to 35% savings through our negotiated rates with 15+ insurers."
-        },
-        {
-          question: "What insurance is required for taxi drivers?",
-          answer: "Taxi drivers in France must have: 1) Third-party liability insurance (RC Pro), 2) Comprehensive vehicle insurance, 3) Passenger coverage. TaxiAssur provides all-in-one insurance packages for taxi drivers with RC Pro included."
-        },
-        {
-          question: "Combien de temps pour recevoir mon devis ?",
-          answer: "Votre devis personnalisé est généré instantanément en ligne. Notre équipe vous contacte sous 15 minutes maximum pour finaliser votre dossier."
-        },
-        {
-          question: "La RC Pro est-elle obligatoire pour les taxis ?",
-          answer: "Oui, la RC Professionnelle est obligatoire pour tous les taxis et VTC. Elle couvre les dommages causés aux tiers dans le cadre de votre activité professionnelle. Nos contrats l'incluent systématiquement."
-        },
-        {
-          question: "Puis-je changer d'assurance taxi en cours d'année ?",
-          answer: "Oui, grâce à la loi Hamon, vous pouvez résilier votre assurance taxi à tout moment après la première année. Nous gérons gratuitement toutes vos démarches de résiliation."
-        }
-      ]} />
+      <JsonLd type="faq" data={ACQUISITION_FAQ} />
 
       <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black">
         <Header />
         <main id="main-content" tabIndex={-1}>
           <Hero />
+          <AcquisitionGuide pathname="/" />
 
           <div className="section-below-fold">
             <Suspense fallback={<SectionSkeleton />}>
@@ -121,7 +86,7 @@ const Home: React.FC = () => {
 
           <div className="section-below-fold">
             <Suspense fallback={<SectionSkeleton />}>
-              <FAQ />
+              <AcquisitionQuestions />
             </Suspense>
           </div>
 

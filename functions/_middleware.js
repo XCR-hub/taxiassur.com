@@ -1,4 +1,5 @@
 import { NOINDEX_PATHS, seoTitle, seoDescription } from '../shared/public-seo.js';
+import { ACQUISITION_PAGES, renderAcquisitionHtml } from '../shared/acquisition-pages.js';
 
 const SITE_ORIGIN = 'https://taxiassur.com';
 const APEX_HOST = 'taxiassur.com';
@@ -156,6 +157,10 @@ Object.assign(STATIC_ROUTE_META, {
 "/confiance-et-certifications": {title: "Confiance et certifications", description: "Retrouvez les informations sur TaxiAssur, son accompagnement de courtier et les engagements de service destinés aux chauffeurs de taxi professionnels.", section: "Confiance et certifications", priority: 'support'}
 });
 
+for (const [pathname, page] of Object.entries(ACQUISITION_PAGES)) {
+  Object.assign(STATIC_ROUTE_META[pathname], { title: page.title, description: page.description });
+}
+
 const CITY_ROUTE_OVERRIDES = {
   '/assurance-taxi-paris': 'Paris',
   '/assurance-taxi-lyon': 'Lyon',
@@ -234,6 +239,8 @@ export async function onRequest(context) {
     .on('meta[name="twitter:description"]', new RemoveElement())
     .on('meta[name="twitter:image"]', new RemoveElement())
     .on('meta[name="robots"]', new RemoveElement())
+    .on('#root', { element(element) { const html = renderAcquisitionHtml(meta.canonicalPath); if (html) element.setInnerContent(html, { html: true }); } })
+    .on('body > noscript', { element(element) { if (ACQUISITION_PAGES[meta.canonicalPath]) element.remove(); } })
     .on('body', { element(element) { element.append(directory + navigation, { html: true }); } })
     .on('head', new HeadInjector(meta))
     .transform(response);

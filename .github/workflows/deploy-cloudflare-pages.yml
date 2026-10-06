@@ -139,6 +139,10 @@ jobs:
           PUBLIC_MIRROR_GSC_COUNT_TOLERANCE: '25'
         run: npm run verify:publications
 
+      - name: Verify taxi acquisition pages and Google data freshness
+        if: steps.cloudflare.outputs.ready == 'true'
+        run: npm run audit:acquisition
+
       - name: Submit built sitemap to IndexNow
         if: steps.cloudflare.outputs.ready == 'true'
         env:

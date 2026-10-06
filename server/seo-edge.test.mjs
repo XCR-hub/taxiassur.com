@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { seoTitle, seoDescription, redirectSources, isCanonicalPublicPath } from '../shared/public-seo.js';
+import { ACQUISITION_PAGES, renderAcquisitionHtml } from '../shared/acquisition-pages.js';
 import { onRequest } from '../functions/_middleware.js';
 
 const sitemap = readFileSync(new URL('../public/sitemap.xml', import.meta.url), 'utf8');
@@ -32,6 +33,8 @@ test('edge HTML links every sitemap page without JavaScript and protects private
   globalThis.HTMLRewriter = class {
     on(selector, handler) {
       if (selector === 'body' || selector === 'head') handler.element({ append: value => (selector === 'body' ? bodies : heads).push(value) });
+      if (selector === '#root') handler.element({ setInnerContent: value => bodies.push(value) });
+      if (selector === 'body > noscript') handler.element({ remove: () => {} });
       return this;
     }
     transform(response) { return response; }
@@ -56,4 +59,20 @@ test('edge HTML links every sitemap page without JavaScript and protects private
     assert.equal(bodies.length, 0);
     assert.equal(heads.length, 0);
   } finally { globalThis.HTMLRewriter = original; }
+});
+
+
+test('commercial pages provide their own content and conversion link without JavaScript', () => {
+  for (const [pathname, page] of Object.entries(ACQUISITION_PAGES)) {
+    const html = renderAcquisitionHtml(pathname);
+    assert.ok(html.includes(page.h1), pathname);
+    assert.ok(html.includes('/devis-assurance-taxi#devis-form'), pathname);
+    assert.ok(html.includes('tel:0180855786'), pathname);
+    assert.ok(!html.includes('01 76 41 03 44'), pathname);
+    assert.ok(!html.includes('ratingValue'), pathname);
+    for (const section of page.sections) assert.ok(html.includes(section.text), pathname);
+    assert.ok(html.replace(/<[^>]+>/g, ' ').split(/\s+/).length >= 280, pathname);
+  }
+  assert.equal(renderAcquisitionHtml('/backoffice'), '');
+  assert.equal(renderAcquisitionHtml('/espace-prospect'), '');
 });

@@ -164,7 +164,7 @@ const requiredChecks = [
   {
     label: 'public hero lead form is protected by Turnstile',
     file: 'src/components/Hero.tsx',
-    patterns: ['useTurnstileGuard', "action: 'hero_lead_form'", 'turnstile.verify', '!turnstile.canSubmit'],
+    patterns: ["import LeadForm from './LeadForm'", '<LeadForm compact'],
   },
   {
     label: 'public devis form is protected by Turnstile',

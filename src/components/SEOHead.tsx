@@ -2,6 +2,7 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 import { shouldNoIndex } from '../lib/env';
+import { seoTitle } from '../../shared/public-seo.js';
 
 interface SEOHeadProps {
   title?: string;
@@ -32,7 +33,7 @@ const SEOHead: React.FC<SEOHeadProps> = ({
   const globalNoIndex = shouldNoIndex();
 
   const enhancedTitle = title
-    ? `${title} | ${brandName}`
+    ? seoTitle(title)
     : `${brandName} - Assurance Taxi Professionnelle | Devis Gratuit`;
 
   const enhancedDescription = description ||

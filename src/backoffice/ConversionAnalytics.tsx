@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TrendingUp, Users, Target, MousePointer, Clock, BarChart3, PieChart, Activity, Home, RefreshCw, Download, Filter } from 'lucide-react';
 import Card from '../components/Card';
+import TaxiLeadTarget from './TaxiLeadTarget';
 import { nativeAdminCall } from '@/lib/native-admin-data';
 import { logger } from '@/lib/logger';
 
@@ -71,7 +72,7 @@ const ConversionAnalytics: React.FC = () => {
   }
 
   const totalConversions = data.funnelSteps[2]?.conversions || 0;
-  const conversionRate = data.funnelSteps.length > 1
+  const conversionRate = data.funnelSteps.length > 1 && data.funnelSteps[0].visitors > 0
     ? ((totalConversions / data.funnelSteps[0].visitors) * 100).toFixed(1)
     : '0';
 
@@ -129,6 +130,8 @@ const ConversionAnalytics: React.FC = () => {
               </select>
             </div>
           </div>
+
+          <TaxiLeadTarget />
 
           {/* Key Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

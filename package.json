@@ -79,7 +79,8 @@
     "cloudflare:ai-robots": "node scripts/configure-cloudflare-ai-robots.cjs",
     "cloudflare:ai-robots:fix": "powershell -ExecutionPolicy Bypass -File scripts/apply-cloudflare-ai-robots-fix.ps1",
     "seo:quality-audit": "node scripts/seo-quality-audit.cjs",
-    "d1:verify-public-cache-metadata": "node scripts/verify-d1-public-cache-metadata.cjs"
+    "d1:verify-public-cache-metadata": "node scripts/verify-d1-public-cache-metadata.cjs",
+    "audit:acquisition": "node scripts/acquisition-performance-audit.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
