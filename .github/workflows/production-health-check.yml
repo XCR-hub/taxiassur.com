@@ -31,6 +31,17 @@ jobs:
       - name: Verify deployment independence
         run: npm run verify:deployment-independence
 
+      # Scheduled Actions can be delayed; refresh stale data before verifying it.
+      - name: Check public cache age
+        id: cache
+        run: node scripts/check-d1-refresh-needed.cjs
+
+      - name: Refresh expired public cache
+        if: steps.cache.outputs.refresh == 'true'
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+        run: npm run d1:refresh-public-cache
       - name: Verify production site and public caches
         env:
           SITE_URL: https://taxiassur.com
