@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
   CheckCircle, Phone, Upload, ArrowRight, FileText,
-  Clock, Shield, Copy, ExternalLink, Sparkles
+  Clock, Shield, Copy, Sparkles
 } from 'lucide-react';
 import SEOHead from '../components/SEOHead';
 
@@ -27,7 +27,7 @@ const Merci: React.FC = () => {
     <>
     <SEOHead
       title="Merci - Demande recue"
-      description="Votre demande de devis a ete recue. Un expert vous contacte sous 15 minutes."
+      description="Votre demande de devis a été reçue. Un conseiller vous recontactera pour préciser vos besoins."
       noindex={true}
       canonical="/merci"
     />
@@ -38,10 +38,10 @@ const Merci: React.FC = () => {
           <div className="bg-gray-900 p-8 rounded-xl text-center">
             <CheckCircle className="text-green-400 mx-auto mb-4" size={64} />
             <h1 className="text-3xl md:text-4xl font-black text-white mb-3">
-              DEMANDE RECUE !
+              DEMANDE REÇUE !
             </h1>
             <p className="text-xl text-gray-300">
-              Un expert vous rappelle sous <span className="text-green-400 font-bold">15 minutes</span>
+              Votre demande est enregistrée. Un conseiller vous recontactera pour préciser vos besoins.
             </p>
           </div>
         </div>
@@ -131,8 +131,8 @@ const Merci: React.FC = () => {
                 1
               </div>
               <div>
-                <p className="font-semibold text-white">Appel de votre expert (sous 15 min)</p>
-                <p className="text-sm text-gray-400">Analyse de vos besoins specifiques</p>
+                <p className="font-semibold text-white">Échange avec votre conseiller</p>
+                <p className="text-sm text-gray-400">Vérification de vos besoins, de votre activité et des garanties souhaitées</p>
               </div>
             </div>
 
@@ -142,7 +142,7 @@ const Merci: React.FC = () => {
               </div>
               <div>
                 <p className="font-semibold text-white">Devis personnalise</p>
-                <p className="text-sm text-gray-400">Jusqu'a 35% d'economies garanties</p>
+                <p className="text-sm text-gray-400">Tarif et garanties étudiés selon votre dossier et les offres disponibles</p>
               </div>
             </div>
 
@@ -152,7 +152,7 @@ const Merci: React.FC = () => {
               </div>
               <div>
                 <p className="font-semibold text-white">Souscription rapide</p>
-                <p className="text-sm text-gray-400">Attestation sous 24h apres validation</p>
+                <p className="text-sm text-gray-400">Après acceptation de l’offre et validation du dossier par l’assureur</p>
               </div>
             </div>
           </div>
@@ -163,7 +163,7 @@ const Merci: React.FC = () => {
             <div className="bg-amber-500 p-2 rounded-lg">
               <FileText size={24} className="text-black" />
             </div>
-            <h3 className="text-xl font-black text-white">7 Documents Requis (pour devis sous 24h)</h3>
+            <h3 className="text-xl font-black text-white">Documents à préparer selon votre dossier</h3>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 text-sm text-gray-300">
             <div className="flex items-center gap-2">

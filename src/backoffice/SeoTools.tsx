@@ -5,7 +5,7 @@ import { pingSearchEngines } from '../lib/ping';
 import { regenerateFeeds } from '../lib/feeds';
 import { generateCityPages } from '../lib/ping';
 import Card from '../components/Card';
-import TestAutomationButton from './TestAutomationButton';
+import GoogleSearchStatus from './GoogleSearchStatus';
 import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
 import { nativeAdminCall } from '@/lib/native-admin-data';
@@ -210,6 +210,7 @@ const SeoTools: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8">
+        <GoogleSearchStatus />
         <header className="bg-gradient-to-r from-slate-800 via-blue-800 to-slate-800 border-b-2 border-amber-500 shadow-lg mb-8">
           <div className="max-w-7xl mx-auto px-6 py-4">
             <div className="flex justify-between items-center">
@@ -583,25 +584,6 @@ const SeoTools: React.FC = () => {
           </Card>
           </div>
         </div>
-
-        <TestAutomationButton
-          title="Tester Automatisations SEO"
-          tests={[
-            {
-              name: 'Sync Google Search Console',
-              functionName: 'gsc-sync-performance',
-              method: 'POST',
-              description: 'Récupère les vraies métriques SEO depuis GSC'
-            },
-            {
-              name: 'IndexNow Ping',
-              functionName: 'indexnow-ping',
-              method: 'POST',
-              body: { urls: ['https://taxiassur.com'] },
-              description: 'Notifie les moteurs de recherche des nouvelles URLs'
-            }
-          ]}
-        />
     </div>
   );
 };

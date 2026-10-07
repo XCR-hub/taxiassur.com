@@ -4,8 +4,11 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('taxiassur_privacy_consent', JSON.stringify({ analytics: true, marketing: false, behavioral_personalization: false, version: '2026-08-01', updated_at: new Date().toISOString() }));
     let leadCallback: ((token: string) => void) | undefined;
-    window.turnstile = { render: (_element, options) => { if (options.action === 'lead_form') leadCallback = options.callback; return options.action || 'widget'; }, remove: () => {}, reset: () => {} };
-    (window as Window & { completeTestCaptcha?: () => void }).completeTestCaptcha = () => leadCallback?.('local-test-captcha');
+    let leadError: (() => void) | undefined;
+    let counter = 0;
+    window.turnstile = { render: (_element, options) => { if (options.action === 'lead_form') { leadCallback = options.callback; leadError = options['error-callback']; counter++; } return (options.action || 'widget') + counter; }, remove: () => {}, reset: () => {} };
+    Object.assign(window, { failTestCaptcha: () => leadError?.(), testCaptchaRenders: () => counter });
+    (window as Window & { completeTestCaptcha?: () => void }).completeTestCaptcha = () => leadCallback?.('local-test-captcha-' + counter);
   });
   // Every API call is mocked: this test must never create a real prospect or send an email.
   await page.route('**/api/**', async route => {
@@ -52,15 +55,68 @@ test('captcha is required and a successful request includes first entry attribut
   await expect(page).toHaveURL(/merci/);
 });
 
-test('server rejection leaves contact fields intact so the visitor can retry', async ({ page }) => {
-  await page.route('**/api/platform/v1/public/leads', route => route.fulfill({ status: 503, json: { ok: false, error: 'temporarily_unavailable' } }));
+test('server rejection preserves fields and a fresh captcha allows a successful retry', async ({ page }) => {
+  let submissions = 0;
+  const tokens: string[] = [];
+  await page.route('**/api/platform/v1/public/turnstile/verify', route => {
+    tokens.push(route.request().postDataJSON().token);
+    return route.fulfill({ json: { success: true } });
+  });
+  await page.route('**/api/platform/v1/public/leads', route => ++submissions === 1
+    ? route.fulfill({ status: 503, json: { ok: false, error: 'temporarily_unavailable' } })
+    : route.fulfill({ status: 201, json: { ok: true, lead_id: 'local-test-lead', access_token: null } }));
   await page.goto('/devis-assurance-taxi');
   const form = page.locator('form[data-form="devis"]');
   await form.locator('[name="name"]').fill('Test local'); await form.locator('[name="phone"]').fill('0612345678');
   await form.locator('[name="email"]').fill('local-test@example.invalid'); await form.locator('[name="city"]').fill('Paris');
   await page.evaluate(() => (window as Window & { completeTestCaptcha?: () => void }).completeTestCaptcha?.());
   await form.locator('button[type="submit"]').click();
-  await expect(form.locator('button[type="submit"]')).toBeEnabled();
+  await expect(form.getByRole('alert')).toContainText('Votre demande');
+  await expect(form.locator('button[type="submit"]')).toBeDisabled();
   await expect(form.locator('[name="email"]')).toHaveValue('local-test@example.invalid');
-  await expect(page).toHaveURL(/devis-assurance-taxi/);
+  await page.evaluate(() => (window as Window & { completeTestCaptcha?: () => void }).completeTestCaptcha?.());
+  await form.locator('button[type="submit"]').click();
+  await expect(page).toHaveURL(/merci/);
+  expect(submissions).toBe(2);
+  expect(tokens[0]).not.toBe(tokens[1]);
+});
+
+test('a rejected captcha is replaced and the visitor can submit without retyping', async ({ page }) => {
+  let verifies = 0;
+  const tokens: string[] = [];
+  await page.route('**/api/platform/v1/public/turnstile/verify', route => {
+    tokens.push(route.request().postDataJSON().token);
+    return route.fulfill({ json: { success: ++verifies > 1 } });
+  });
+  await page.goto('/devis-assurance-taxi');
+  const form = page.locator('form[data-form="devis"]');
+  await form.locator('[name="name"]').fill('Test local');
+  await form.locator('[name="phone"]').fill('0612345678');
+  await form.locator('[name="email"]').fill('local-test@example.invalid');
+  await form.locator('[name="city"]').fill('Paris');
+  await page.evaluate(() => (window as Window & { completeTestCaptcha?: () => void }).completeTestCaptcha?.());
+  await form.locator('button[type="submit"]').click();
+  await expect(form.getByRole('alert')).toContainText('nouveau contrôle');
+  await expect(form.locator('button[type="submit"]')).toBeDisabled();
+  await expect(form.locator('[name="email"]')).toHaveValue('local-test@example.invalid');
+  await page.evaluate(() => (window as Window & { completeTestCaptcha?: () => void }).completeTestCaptcha?.());
+  await form.locator('button[type="submit"]').click();
+  await expect(page).toHaveURL(/merci/);
+  expect(verifies).toBe(2);
+  expect(tokens[0]).not.toBe(tokens[1]);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('DEMANDE REÇUE');
+  await expect(page.getByText(/économies garanties|sous 15 minutes|sous 15 min/)).toHaveCount(0);
+});
+
+test('an unavailable captcha offers a retry and telephone contact', async ({ page }) => {
+  await page.goto('/devis-assurance-taxi');
+  const form = page.locator('form[data-form="devis"]');
+  await expect(form).toBeVisible();
+  const before = await page.evaluate(() => (window as Window & { testCaptchaRenders?: () => number }).testCaptchaRenders?.() || 0);
+  await page.evaluate(() => (window as Window & { failTestCaptcha?: () => void }).failTestCaptcha?.());
+  await expect(form.getByRole('alert')).toContainText('ne se charge pas');
+  await expect(form.getByRole('alert').locator('a[href="tel:0180855786"]')).toBeVisible();
+  await form.getByRole('button', { name: 'Relancer le contrôle' }).click();
+  await expect(form.getByRole('alert')).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => (window as Window & { testCaptchaRenders?: () => number }).testCaptchaRenders?.() || 0)).toBeGreaterThan(before);
 });

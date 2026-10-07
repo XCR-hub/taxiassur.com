@@ -8,7 +8,6 @@ import { logger } from '@/lib/logger';
 import { createLead } from '@/lib/leads';
 import { trackLeadFormEvent } from '@/lib/lead-acquisition';
 import { hasAnalyticsConsent } from '@/lib/privacy-consent';
-import { toast } from '@/lib/toast';
 import TurnstileWidget from './security/TurnstileWidget';
 import { isTurnstileEnabled, verifyTurnstileToken } from '@/lib/turnstile';
 
@@ -22,6 +21,10 @@ const LeadForm: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [turnstileToken, setTurnstileToken] = useState('');
+  const [captchaAttempt, setCaptchaAttempt] = useState(0);
+  const [submissionError, setSubmissionError] = useState('');
+  const [captchaUnavailable, setCaptchaUnavailable] = useState(false);
+  const submitting = useRef(false);
   const [formData, setFormData] = useState<Lead>({
     name: '',
     email: '',
@@ -65,6 +68,8 @@ const LeadForm: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (submitting.current) return;
+    setSubmissionError('');
     logger.log('📋 LeadForm submit started');
 
     if (!validateForm()) {
@@ -81,18 +86,20 @@ const LeadForm: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
 
     if (isTurnstileEnabled() && !turnstileToken) {
       trackLeadFormEvent('form_antispam_error', 'lead_form', formData.status, 'captcha_missing');
-      toast.error('Validation anti-spam requise.');
+      setSubmissionError('Validez le contrôle anti-spam avant l’envoi.');
       return;
     }
 
+    submitting.current = true;
     setIsSubmitting(true);
+    let sent = false;
 
     try {
       if (isTurnstileEnabled()) {
         const turnstileValid = await verifyTurnstileToken(turnstileToken, 'lead_form');
         if (!turnstileValid) {
           trackLeadFormEvent('form_antispam_error', 'lead_form', formData.status, 'captcha_rejected');
-          toast.error('Validation anti-spam refusee. Veuillez reessayer.');
+          setSubmissionError('Le contrôle anti-spam a expiré ou a été refusé. Validez le nouveau contrôle puis réessayez : vos informations sont conservées.');
           setTurnstileToken('');
           return;
         }
@@ -112,6 +119,7 @@ const LeadForm: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
       logger.log('📥 Result:', result);
 
       if (result.success) {
+        sent = true;
         logger.log('✅ Success, redirecting...');
         trackLeadSubmission(formData);
         const tokenParam = result.accessToken ? `?token=${result.accessToken}` : '';
@@ -119,24 +127,35 @@ const LeadForm: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
       } else {
         logger.error('❌ Lead creation failed:', result.error);
         trackLeadFormEvent('form_server_error', 'lead_form', formData.status, 'lead_rejected');
-        toast.error(result.error || 'Erreur lors de l\'envoi. Veuillez réessayer.');
+        setSubmissionError(result.error || 'Votre demande n’a pas pu être enregistrée. Réessayez : vos informations sont conservées.');
       }
     } catch (error) {
       logger.error('💥 Form submission error:', error);
       console.error('Full error:', error);
       trackLeadFormEvent('form_network_error', 'lead_form', formData.status, 'network_error');
-      toast.error('Erreur de connexion. Veuillez réessayer.');
+      setSubmissionError('La connexion a été interrompue. Réessayez : vos informations sont conservées.');
     } finally {
+      submitting.current = false;
+      if (!sent && isTurnstileEnabled()) {
+        setTurnstileToken('');
+        setCaptchaAttempt(attempt => attempt + 1);
+      }
       setIsSubmitting(false);
     }
   };
 
   const handleTurnstileVerify = useCallback((token: string) => {
     setTurnstileToken(token);
+    setCaptchaUnavailable(false);
   }, []);
 
   const handleTurnstileReset = useCallback(() => {
     setTurnstileToken('');
+  }, []);
+
+  const handleTurnstileError = useCallback(() => {
+    setTurnstileToken('');
+    setCaptchaUnavailable(true);
   }, []);
 
   return (
@@ -308,12 +327,23 @@ const LeadForm: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
               </details>
 
               <TurnstileWidget
+                key={captchaAttempt}
                 action="lead_form"
                 className="flex justify-center"
                 onVerify={handleTurnstileVerify}
                 onExpire={handleTurnstileReset}
-                onError={handleTurnstileReset}
+                onError={handleTurnstileError}
               />
+
+              {captchaUnavailable && <div role="alert" className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-100">
+                <p>Le contrôle anti-spam ne se charge pas. Vos informations sont conservées.</p>
+                <button type="button" onClick={() => { setCaptchaUnavailable(false); setCaptchaAttempt(attempt => attempt + 1); }} className="mt-2 underline font-semibold">Relancer le contrôle</button>
+                <p className="mt-2">Vous pouvez aussi appeler le <a href="tel:0180855786" className="underline">01 80 85 57 86</a>.</p>
+              </div>}
+              {submissionError && <div role="alert" className="rounded-lg border border-red-400/40 bg-red-500/10 p-3 text-sm text-red-100">
+                <p>{submissionError}</p>
+                <p className="mt-2">Besoin d’aide ? <a href="tel:0180855786" className="underline">01 80 85 57 86</a>.</p>
+              </div>}
 
               {/* Legal consent */}
               <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700 backdrop-blur-sm">
