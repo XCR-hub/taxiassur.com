@@ -3,10 +3,10 @@ import {
   FileText, Eye, Search, User, Calendar, CheckCircle, Clock,
   XCircle, Filter, ChevronDown, ChevronUp, ExternalLink,
   Mail, Phone, File, Image, FileSpreadsheet, Building2,
-  Download, TrendingUp, Shield, AlertCircle, RefreshCw
+  Download, TrendingUp, Shield, AlertCircle, RefreshCw, Trash2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { nativeAdminCall, nativeAdminDocumentUrl } from '@/lib/native-admin-data';
+import { nativeAdminCall, nativeAdminDeleteDocument, nativeAdminDocumentUrl } from '@/lib/native-admin-data';
 
 interface Document {
   id: string;
@@ -24,6 +24,7 @@ interface Document {
   notes: string | null;
   bucket: string | null;
   custom_label: string | null;
+  security_scan_status?: string;
   file_url: string | null;
   created_at: string;
   lead: {
@@ -51,8 +52,10 @@ const DOC_TYPE_LABELS: Record<string, { label: string; icon: React.ElementType; 
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
   validated: { label: 'Valid\u00e9', color: 'text-emerald-400', bg: 'bg-emerald-900/40 border-emerald-700/40', icon: CheckCircle },
+  verified: { label: 'Valid\u00e9', color: 'text-emerald-400', bg: 'bg-emerald-900/40 border-emerald-700/40', icon: CheckCircle },
   pending: { label: 'En attente', color: 'text-amber-400', bg: 'bg-amber-900/40 border-amber-700/40', icon: Clock },
   rejected: { label: 'Rejet\u00e9', color: 'text-red-400', bg: 'bg-red-900/40 border-red-700/40', icon: XCircle },
+  quarantined: { label: 'Quarantaine — scan bloquant', color: 'text-orange-300', bg: 'bg-orange-900/40 border-orange-700/40', icon: Shield },
 };
 
 const AllDocumentsViewer: React.FC = () => {
@@ -90,12 +93,13 @@ const AllDocumentsViewer: React.FC = () => {
 
   const stats = useMemo(() => {
     const total = documents.length;
-    const validated = documents.filter(d => d.status === 'validated').length;
+    const validated = documents.filter(d => d.status === 'validated' || d.status === 'verified').length;
     const pending = documents.filter(d => d.status === 'pending').length;
     const rejected = documents.filter(d => d.status === 'rejected').length;
+    const quarantined = documents.filter(d => d.status === 'quarantined' || (d.security_scan_status && d.security_scan_status !== 'clean')).length;
     const uniqueLeads = new Set(documents.map(d => d.lead_id)).size;
     const validationRate = total > 0 ? Math.round((validated / total) * 100) : 0;
-    return { total, validated, pending, rejected, uniqueLeads, validationRate };
+    return { total, validated, pending, rejected, quarantined, uniqueLeads, validationRate };
   }, [documents]);
 
   const docTypes = useMemo(() => {
@@ -139,6 +143,17 @@ const AllDocumentsViewer: React.FC = () => {
       else next.add(leadId);
       return next;
     });
+  };
+
+  const deleteQuarantinedDocument = async (doc: Document) => {
+    if (!window.confirm(`Supprimer définitivement le document en quarantaine « ${doc.file_name} » ?`)) return;
+    try {
+      await nativeAdminDeleteDocument(doc.id);
+      setDocuments(current => current.filter(item => item.id !== doc.id));
+    } catch (error) {
+      console.error('Failed to delete quarantined document:', error);
+      window.alert('La suppression a échoué. Actualisez la liste avant de réessayer.');
+    }
   };
 
   const formatDate = (date: string | null) => {
@@ -191,6 +206,7 @@ const AllDocumentsViewer: React.FC = () => {
           <StatCard label="Valid\u00e9s" value={stats.validated} icon={CheckCircle} color="bg-emerald-600/20" textColor="text-emerald-400" />
           <StatCard label="En attente" value={stats.pending} icon={Clock} color="bg-amber-600/20" textColor="text-amber-400" />
           <StatCard label="Rejet\u00e9s" value={stats.rejected} icon={XCircle} color="bg-red-600/20" textColor="text-red-400" />
+          <StatCard label="Quarantaine" value={stats.quarantined} icon={Shield} color="bg-orange-600/20" textColor="text-orange-300" />
           <StatCard label="Prospects" value={stats.uniqueLeads} icon={User} color="bg-blue-600/20" textColor="text-blue-400" />
           <StatCard label="Taux valid." value={`${stats.validationRate}%`} icon={TrendingUp} color="bg-teal-600/20" textColor="text-teal-400" />
         </div>
@@ -373,13 +389,23 @@ const AllDocumentsViewer: React.FC = () => {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-                                {doc.file_path && (
+                              {doc.file_path && doc.status !== 'quarantined' && (!doc.security_scan_status || doc.security_scan_status === 'clean') && (
                                   <button
                                     onClick={() => void nativeAdminDocumentUrl(doc.id).then((url) => window.open(url, '_blank', 'noopener,noreferrer'))}
                                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 text-xs font-medium transition-colors"
                                   >
                                     <Eye className="w-3.5 h-3.5" />
                                     Voir
+                                  </button>
+                                )}
+                                {(doc.status === 'quarantined' || (doc.security_scan_status && doc.security_scan_status !== 'clean')) && (
+                                  <button
+                                    onClick={() => void deleteQuarantinedDocument(doc)}
+                                    title="Supprimer le document en quarantaine"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600/20 text-red-300 hover:bg-red-600/30 text-xs font-medium transition-colors"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    Supprimer
                                   </button>
                                 )}
                                 <Link
