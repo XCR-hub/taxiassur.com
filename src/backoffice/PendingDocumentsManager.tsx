@@ -8,7 +8,7 @@ import {
   Info, X, CheckSquare, Square, Search, Inbox,
   ChevronLeft,
 } from 'lucide-react';
-import { nativeAdminDocumentUrl, nativeAdminDocuments, nativeAdminDownloadDocument, nativeAdminUpdateDocument } from '@/lib/native-admin-data';
+import { nativeAdminDocumentUrl, nativeAdminDocuments, nativeAdminDownloadDocument, nativeAdminOpenDocument, nativeAdminUpdateDocument } from '@/lib/native-admin-data';
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface PendingDocument {
@@ -156,7 +156,7 @@ function SecureDocumentActions({ doc }: { doc: PendingDocument }) {
   const open = async (download: boolean) => {
     try {
       if (download) return void await nativeAdminDownloadDocument(doc.id, doc.file_name);
-      const localUrl=await nativeAdminDocumentUrl(doc.id); window.open(localUrl,'_blank','noopener,noreferrer'); setTimeout(()=>URL.revokeObjectURL(localUrl),60000);
+      await nativeAdminOpenDocument(doc.id);
     } catch (error) { console.error('Document unavailable', error); }
   };
   return <>
@@ -239,6 +239,7 @@ export default function PendingDocumentsManager() {
   const [allDocs, setAllDocs] = useState<PendingDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<Set<string>>(new Set());
+  const [actionError, setActionError] = useState('');
   const [showSuspects, setShowSuspects] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedLeads, setExpandedLeads] = useState<Set<string>>(new Set());
@@ -362,6 +363,7 @@ export default function PendingDocumentsManager() {
   const urgentCount = realDocs.filter(isUrgentDoc).length;
 
   const handleValidate = async (docId: string) => {
+    setActionError('');
     setProcessing(prev => new Set(prev).add(docId));
     try {
       await nativeAdminUpdateDocument(docId,{status:'validated'});
@@ -369,6 +371,7 @@ export default function PendingDocumentsManager() {
       setSelectedIds(prev => { const s = new Set(prev); s.delete(docId); return s; });
     } catch (err) {
       console.error('Erreur validation:', err);
+      setActionError('La validation a échoué. Le document reste dans la file; actualisez puis réessayez.');
     } finally {
       setProcessing(prev => { const s = new Set(prev); s.delete(docId); return s; });
     }
@@ -432,6 +435,7 @@ Acceder a mon espace
 
   const handleRejectConfirm = async (docId: string, reason: string) => {
     setRejectModal({ open: false, docId: null, reason: '', custom: '' });
+    setActionError('');
 
     if (docId === '__BATCH__') {
       const ids = Array.from(selectedIds);
@@ -444,6 +448,7 @@ Acceder a mon espace
         setSelectedIds(new Set());
       } catch (err) {
         console.error('Erreur rejet groupé:', err);
+        setActionError('Le rejet groupé a échoué ou n’a été appliqué qu’en partie. Actualisez la file et vérifiez les documents avant de relancer.');
       } finally {
         for (const id of ids) {
           setProcessing(prev => { const s = new Set(prev); s.delete(id); return s; });
@@ -459,6 +464,7 @@ Acceder a mon espace
       setSelectedIds(prev => { const s = new Set(prev); s.delete(docId); return s; });
     } catch (err) {
       console.error('Erreur rejet:', err);
+      setActionError('Le rejet a échoué. Le document reste dans la file; actualisez puis réessayez.');
     } finally {
       setProcessing(prev => { const s = new Set(prev); s.delete(docId); return s; });
     }
@@ -730,6 +736,12 @@ Acceder a mon espace
             </div>
           )}
         </div>
+
+        {actionError && (
+          <div role="alert" className="mx-6 mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {actionError}
+          </div>
+        )}
 
         {/* Suspects info banner */}
         {suspectDocs.length > 0 && !showSuspects && (

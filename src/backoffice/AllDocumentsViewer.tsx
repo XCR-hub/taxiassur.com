@@ -6,7 +6,7 @@ import {
   Download, TrendingUp, Shield, AlertCircle, RefreshCw, Trash2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { nativeAdminCall, nativeAdminDeleteDocument, nativeAdminDocumentUrl } from '@/lib/native-admin-data';
+import { nativeAdminCall, nativeAdminDeleteDocument, nativeAdminDocumentUrl, nativeAdminDownloadDocument, nativeAdminOpenDocument } from '@/lib/native-admin-data';
 
 interface Document {
   id: string;
@@ -109,7 +109,7 @@ const AllDocumentsViewer: React.FC = () => {
 
   const filteredDocs = useMemo(() => {
     return documents.filter(d => {
-      if (statusFilter !== 'all' && d.status !== statusFilter) return false;
+      if (statusFilter !== 'all' && !(statusFilter === 'validated' ? d.status === 'validated' || d.status === 'verified' : d.status === statusFilter)) return false;
       if (typeFilter !== 'all' && d.document_type !== typeFilter) return false;
       if (searchTerm) {
         const term = searchTerm.toLowerCase();
@@ -201,7 +201,7 @@ const AllDocumentsViewer: React.FC = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3 mb-6">
           <StatCard label="Total" value={stats.total} icon={FileText} color="bg-slate-700" />
           <StatCard label="Valid\u00e9s" value={stats.validated} icon={CheckCircle} color="bg-emerald-600/20" textColor="text-emerald-400" />
           <StatCard label="En attente" value={stats.pending} icon={Clock} color="bg-amber-600/20" textColor="text-amber-400" />
@@ -390,13 +390,23 @@ const AllDocumentsViewer: React.FC = () => {
                               </div>
                               <div className="flex items-center gap-2 flex-shrink-0 ml-3">
                               {doc.file_path && doc.status !== 'quarantined' && (!doc.security_scan_status || doc.security_scan_status === 'clean') && (
-                                  <button
-                                    onClick={() => void nativeAdminDocumentUrl(doc.id).then((url) => window.open(url, '_blank', 'noopener,noreferrer'))}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 text-xs font-medium transition-colors"
-                                  >
-                                    <Eye className="w-3.5 h-3.5" />
-                                    Voir
-                                  </button>
+                                  <>
+                                    <button
+                                      onClick={() => void nativeAdminOpenDocument(doc.id).catch((error) => console.error('Failed to open document:', error))}
+                                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 text-xs font-medium transition-colors"
+                                    >
+                                      <Eye className="w-3.5 h-3.5" />
+                                      Voir
+                                    </button>
+                                    <button
+                                      onClick={() => void nativeAdminDownloadDocument(doc.id, doc.file_name).catch((error) => console.error('Failed to download document:', error))}
+                                      title="Télécharger le document"
+                                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 text-xs font-medium transition-colors"
+                                    >
+                                      <Download className="w-3.5 h-3.5" />
+                                      Télécharger
+                                    </button>
+                                  </>
                                 )}
                                 {(doc.status === 'quarantined' || (doc.security_scan_status && doc.security_scan_status !== 'clean')) && (
                                   <button
