@@ -70,12 +70,12 @@
 # Compatibility for a stale PWA chunk still referenced by older backoffice tabs
 /assets/backoffice-seo-tools-BDxLGk1i.js /assets/backoffice-seo-tools-DwQ-4z2x.js 302
 
+# Duplicate placeholder article: keep only its canonical URL indexable
+/blog/assurance-taxi-2025-guide-complet-59 /blog/assurance-taxi-2025-guide-complet 301
+
 # Technical city slugs created by old automation
 /assurance-taxi-ville-:id /villes 301
 /ville-:id /villes 301
-
-# Duplicate placeholder article: keep only its canonical URL indexable
-/blog/assurance-taxi-2025-guide-complet-59 /blog/assurance-taxi-2025-guide-complet 301
 
 # Canonical city URLs
 /ville/assurance-taxi-:slug /assurance-taxi-:slug 301
