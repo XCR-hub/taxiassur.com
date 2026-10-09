@@ -367,9 +367,10 @@ export default function PendingDocumentsManager() {
     setActionError('');
     setProcessing(prev => new Set(prev).add(docId));
     try {
-      await nativeAdminUpdateDocument(docId,{status:'validated'});
+      const result=await nativeAdminUpdateDocument(docId,{status:'validated'});
       setAllDocs(prev => prev.filter(d => d.id !== docId));
       setSelectedIds(prev => { const s = new Set(prev); s.delete(docId); return s; });
+      if(result?.email_queued===false)setActionError('Document validé, mais la notification email n’a pas été mise en file. Vérifiez l’adresse du prospect et l’outbox.');
     } catch (err) {
       console.error('Erreur validation:', err);
       setActionError('La validation a échoué. Le document reste dans la file; actualisez puis réessayez.');
@@ -444,9 +445,10 @@ Acceder a mon espace
         setProcessing(prev => new Set(prev).add(id));
       }
       try {
-        await Promise.all(ids.map(id=>nativeAdminUpdateDocument(id,{status:'rejected',rejection_reason:reason})));
+        const results=await Promise.all(ids.map(id=>nativeAdminUpdateDocument(id,{status:'rejected',rejection_reason:reason})));
         setAllDocs(prev => prev.filter(d => !ids.includes(d.id)));
         setSelectedIds(new Set());
+        if(results.some(result=>result?.email_queued===false))setActionError('Documents rejetés, mais au moins une notification email n’a pas été mise en file. Vérifiez les adresses et l’outbox.');
       } catch (err) {
         console.error('Erreur rejet groupé:', err);
         setActionError('Le rejet groupé a échoué ou n’a été appliqué qu’en partie. Actualisez la file et vérifiez les documents avant de relancer.');
@@ -460,9 +462,10 @@ Acceder a mon espace
 
     setProcessing(prev => new Set(prev).add(docId));
     try {
-      await nativeAdminUpdateDocument(docId,{status:'rejected',rejection_reason:reason});
+      const result=await nativeAdminUpdateDocument(docId,{status:'rejected',rejection_reason:reason});
       setAllDocs(prev => prev.filter(d => d.id !== docId));
       setSelectedIds(prev => { const s = new Set(prev); s.delete(docId); return s; });
+      if(result?.email_queued===false)setActionError('Document rejeté, mais la notification email n’a pas été mise en file. Vérifiez l’adresse du prospect et l’outbox.');
     } catch (err) {
       console.error('Erreur rejet:', err);
       setActionError('Le rejet a échoué. Le document reste dans la file; actualisez puis réessayez.');

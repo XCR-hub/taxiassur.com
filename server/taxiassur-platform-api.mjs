@@ -1398,7 +1398,7 @@ async function adminDocumentPatch(req,res,origin,requestId,documentId){
   const updates={status:status,updated_at:new Date().toISOString()};
   if(status==='validated'||status==='verified'){updates.validated_at=new Date().toISOString();updates.validated_by=session.sub;}
   if(status==='rejected')updates.rejection_reason=String(body.rejection_reason||'').slice(0,500);
-  const updateSql="UPDATE taxiassur.records SET data=data||"+quoteLiteral(JSON.stringify(updates))+"::jsonb,updated_at=now(),revision=revision+1 WHERE collection IN ('prospect_documents','crm_lead_documents') AND record_id="+quoteLiteral(documentId)+" RETURNING data::text;";
+  const updateSql="WITH updated AS (UPDATE taxiassur.records SET data=data||"+quoteLiteral(JSON.stringify(updates))+"::jsonb,updated_at=now(),revision=revision+1 WHERE collection IN ('prospect_documents','crm_lead_documents') AND record_id="+quoteLiteral(documentId)+" RETURNING data) INSERT INTO taxiassur.audit_events(actor_type,actor_id,action,target_type,target_id,request_id,metadata) SELECT 'admin',"+quoteLiteral(session.sub)+","+quoteLiteral('document_'+status)+",'prospect_document',"+quoteLiteral(documentId)+","+quoteLiteral(requestId)+"::uuid,"+quoteLiteral(JSON.stringify({status:status}))+"::jsonb FROM updated RETURNING (SELECT data::text FROM updated);";
   const document=parseJsonLine(await runPsql(updateSql));
   if(!document)return json(res,origin,404,{ok:false,error:'not_found'},requestId);
   let rejectionEmailQueued=false;
@@ -1408,16 +1408,20 @@ async function adminDocumentPatch(req,res,origin,requestId,documentId){
       const mailId=randomUUID(),now=new Date().toISOString(),reason=String(updates.rejection_reason||'Document non conforme');
       const mailBody=['Bonjour '+String(lead.first_name||''),'','La pièce « '+String(document.file_name||document.document_type||'document')+' » a été refusée.','','Motif : '+reason,'','Vous pouvez déposer une nouvelle version depuis votre espace TaxiAssur.'].join(String.fromCharCode(10));
       const mail={id:mailId,recipient:String(lead.email).trim().toLowerCase(),subject:'Une pièce de votre dossier TaxiAssur doit être corrigée',body:mailBody,status:'pending',attempts:0,next_attempt_at:now,created_at:now};
-      await runPsql("INSERT INTO taxiassur.records(collection,record_id,data,origin) VALUES('native_email_outbox',"+quoteLiteral(mailId)+","+quoteLiteral(JSON.stringify(mail))+"::jsonb,'admin');");
-      rejectionEmailQueued=true;
+      try {
+        await runPsql("INSERT INTO taxiassur.records(collection,record_id,data,origin) VALUES('native_email_outbox',"+quoteLiteral(mailId)+","+quoteLiteral(JSON.stringify(mail))+"::jsonb,'admin');");
+        rejectionEmailQueued=true;
+      } catch (error) {
+        console.error('[taxiassur-platform-api] Document rejection email could not be queued:', error?.name || 'unknown');
+      }
     }
   }
   let validationEmailQueued=false;
   if(status==='validated'||status==='verified'){
     const lead=parseJsonLine(await runPsql("SELECT data::text FROM taxiassur.records WHERE collection='crm_leads' AND record_id="+quoteLiteral(String(document.lead_id))+" LIMIT 1;"));
-    validationEmailQueued=await queueProspectEventEmail(lead,'Document validé - TaxiAssur',`Votre document « ${String(document.file_name||document.document_type||'document')} » a été validé par votre conseiller. Votre dossier avance.`, 'documents', {lead_id:String(document.lead_id),document_id:documentId});
+    try { validationEmailQueued=await queueProspectEventEmail(lead,'Document validé - TaxiAssur',`Votre document « ${String(document.file_name||document.document_type||'document')} » a été validé par votre conseiller. Votre dossier avance.`, 'documents', {lead_id:String(document.lead_id),document_id:documentId}); }
+    catch (error) { console.error('[taxiassur-platform-api] Document validation email could not be queued:', error?.name || 'unknown'); }
   }
-  await runPsql("INSERT INTO taxiassur.audit_events(actor_type,actor_id,action,target_type,target_id,request_id,metadata) VALUES('admin',"+quoteLiteral(session.sub)+","+quoteLiteral('document_'+status)+",'prospect_document',"+quoteLiteral(documentId)+","+quoteLiteral(requestId)+"::uuid,"+quoteLiteral(JSON.stringify({status:status}))+"::jsonb);");
   return json(res,origin,200,{ok:true,document:document,email_queued:rejectionEmailQueued||validationEmailQueued},requestId);
 }
 async function adminLeadCreate(req,res,origin,requestId){

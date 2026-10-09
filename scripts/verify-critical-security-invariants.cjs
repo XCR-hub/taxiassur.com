@@ -339,6 +339,9 @@ requireMatch('server/taxiassur-platform-api.mjs', /async function adminCompanyDo
 requireMatch('server/taxiassur-platform-api.mjs', /async function adminDocumentOpen[\s\S]*?blockedRecord[\s\S]*?document_scan_blocked/, 'path-based admin document open does not block legacy quarantined records');
 requireMatch('server/taxiassur-platform-api.mjs', /async function adminDocumentDownload[\s\S]*?row\.status==='quarantined'[\s\S]*?document_scan_blocked/, 'admin document download does not block records marked quarantined');
 requireMatch('server/taxiassur-platform-api.mjs', /async function adminDocumentPatch[\s\S]*?documentRecord\.status==='quarantined'[\s\S]*?document_scan_blocked/, 'admin document validation does not block records marked quarantined');
+requireMatch('server/taxiassur-platform-api.mjs', /const updateSql="WITH updated AS \(UPDATE taxiassur\.records[\s\S]*?INSERT INTO taxiassur\.audit_events[\s\S]*?FROM updated RETURNING/, 'admin document status changes are not atomically recorded in the audit log');
+requireMatch('server/taxiassur-platform-api.mjs', /try \{\s*await runPsql\("INSERT INTO taxiassur\.records\(collection,record_id,data,origin\) VALUES\('native_email_outbox'/, 'document rejection status can be reported as failed when only email queuing failed');
+requireMatch('src/backoffice/PendingDocumentsManager.tsx', /email_queued===false[\s\S]*notification email n['’]a pas été mise en file/, 'admin document validation/rejection hides failed prospect email notifications');
 requireMatch(intelligentDocumentRequest, /isAuthorized\(req, supabaseUrl, supabaseKey\)/, 'document request email can be invoked without staff authorization');
 requireMatch(intelligentDocumentRequest, /uuidPattern\.test\(lead_id\)/, 'document request accepts an invalid lead identifier');
 forbidMatch(intelligentDocumentRequest, /portal_url:|details: error\.toString/, 'document request response leaks portal credentials or internal errors');
