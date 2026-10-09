@@ -334,6 +334,9 @@ const privateEmailAttachmentMigration = 'supabase/migrations/20260809113000_make
 const privateCrmDocumentsMigration = 'supabase/migrations/20260809213000_secure_crm_documents_storage.sql';
 const privateContractDocumentsMigration = 'supabase/migrations/20260809220000_make_contract_documents_private.sql';
 const pendingAttachmentMigration = 'supabase/migrations/20260809110000_secure_pending_email_attachments_rpc.sql';
+requireMatch('server/taxiassur-platform-api.mjs', /async function adminDocumentOpen[\s\S]*?blockedRecord[\s\S]*?document_scan_blocked/, 'path-based admin document open does not block legacy quarantined records');
+requireMatch('server/taxiassur-platform-api.mjs', /async function adminDocumentDownload[\s\S]*?row\.status==='quarantined'[\s\S]*?document_scan_blocked/, 'admin document download does not block records marked quarantined');
+requireMatch('server/taxiassur-platform-api.mjs', /async function adminDocumentPatch[\s\S]*?documentRecord\.status==='quarantined'[\s\S]*?document_scan_blocked/, 'admin document validation does not block records marked quarantined');
 requireMatch(intelligentDocumentRequest, /isAuthorized\(req, supabaseUrl, supabaseKey\)/, 'document request email can be invoked without staff authorization');
 requireMatch(intelligentDocumentRequest, /uuidPattern\.test\(lead_id\)/, 'document request accepts an invalid lead identifier');
 forbidMatch(intelligentDocumentRequest, /portal_url:|details: error\.toString/, 'document request response leaks portal credentials or internal errors');

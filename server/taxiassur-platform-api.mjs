@@ -1347,6 +1347,8 @@ async function adminDocumentOpen(req,res,origin,requestId){
   if(!storagePath)return json(res,origin,400,{ok:false,error:'invalid_path'},requestId);
   const blockedFile=parseJsonLine(await runPsql(`SELECT jsonb_build_object('scan_status',scan_status)::text FROM taxiassur.file_objects WHERE storage_path IN (${quoteLiteral(storagePath)},${quoteLiteral(requestedPath)}) AND scan_status<>'clean' LIMIT 1;`));
   if(blockedFile)return json(res,origin,423,{ok:false,error:'document_scan_blocked'},requestId);
+  const blockedRecord=parseJsonLine(await runPsql(`SELECT jsonb_build_object('status',data->>'status','scan_status',data->>'security_scan_status')::text FROM taxiassur.records WHERE collection IN ('prospect_documents','crm_lead_documents') AND (data->>'file_path' IN (${quoteLiteral(storagePath)},${quoteLiteral(requestedPath)}) OR data->>'storage_path' IN (${quoteLiteral(storagePath)},${quoteLiteral(requestedPath)})) AND (data->>'status'='quarantined' OR (NULLIF(data->>'security_scan_status','') IS NOT NULL AND data->>'security_scan_status'<>'clean')) LIMIT 1;`));
+  if(blockedRecord)return json(res,origin,423,{ok:false,error:'document_scan_blocked'},requestId);
   const nativePath=safeStoragePath(storagePath),legacyPath=resolveExistingLegacyPath(requestedPath,[bucket,'prospect-documents','crm-documents','email-attachments']),filePath=existsSync(nativePath)?nativePath:legacyPath;
   if(!existsSync(filePath))return json(res,origin,404,{ok:false,error:'file_missing'},requestId);
   const extension=path.extname(filePath).toLowerCase();
@@ -1387,8 +1389,11 @@ async function adminDocumentPatch(req,res,origin,requestId,documentId){
   const body=await readJsonBody(req),status=String(body.status||'');
   if(!['pending','validated','verified','rejected'].includes(status))return json(res,origin,400,{ok:false,error:'invalid_status'},requestId);
   const fileObject=parseJsonLine(await runPsql(`SELECT jsonb_build_object('scan_status',scan_status)::text FROM taxiassur.file_objects WHERE id=${quoteLiteral(documentId)}::uuid LIMIT 1;`));
-  const recordScanStatus=parseJsonLine(await runPsql(`SELECT jsonb_build_object('scan_status',data->>'security_scan_status')::text FROM taxiassur.records WHERE collection IN ('prospect_documents','crm_lead_documents') AND record_id=${quoteLiteral(documentId)} LIMIT 1;`))?.scan_status;
+  const documentRecord=parseJsonLine(await runPsql(`SELECT jsonb_build_object('status',data->>'status','scan_status',data->>'security_scan_status')::text FROM taxiassur.records WHERE collection IN ('prospect_documents','crm_lead_documents') AND record_id=${quoteLiteral(documentId)} LIMIT 1;`));
+  if(!documentRecord)return json(res,origin,404,{ok:false,error:'not_found'},requestId);
+  const recordScanStatus=documentRecord.scan_status;
   const scanStatus=fileObject?.scan_status||recordScanStatus;
+  if(documentRecord.status==='quarantined'&&status!=='rejected')return json(res,origin,409,{ok:false,error:'document_scan_blocked',scan_status:scanStatus||'quarantined'},requestId);
   if(scanStatus&&scanStatus!=='clean'&&status!=='rejected')return json(res,origin,409,{ok:false,error:'document_scan_blocked',scan_status:scanStatus},requestId);
   const updates={status:status,updated_at:new Date().toISOString()};
   if(status==='validated'||status==='verified'){updates.validated_at=new Date().toISOString();updates.validated_by=session.sub;}
@@ -1446,7 +1451,7 @@ async function adminDocumentDownload(req,res,origin,requestId,documentId){
   if(!await verifiedAdminSession(req))return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
   const stored=parseJsonLine(await runPsql(`SELECT jsonb_build_object('collection',collection,'data',data)::text FROM taxiassur.records WHERE collection IN ('prospect_documents','crm_lead_documents') AND record_id=${quoteLiteral(documentId)} LIMIT 1;`));if(!stored?.data)return json(res,origin,404,{ok:false,error:'not_found'},requestId);const row=stored.data;
   let filePath;const local=parseJsonLine(await runPsql(`SELECT json_build_object('storage_path',storage_path,'mime_type',mime_type,'original_name',original_name,'scan_status',scan_status)::text FROM taxiassur.file_objects WHERE id=${quoteLiteral(documentId)}::uuid LIMIT 1;`));
-  if((local&&local.scan_status!=='clean')||(row.security_scan_status&&row.security_scan_status!=='clean'))return json(res,origin,423,{ok:false,error:'document_scan_blocked'},requestId);
+  if(row.status==='quarantined'||(local&&local.scan_status!=='clean')||(row.security_scan_status&&row.security_scan_status!=='clean'))return json(res,origin,423,{ok:false,error:'document_scan_blocked'},requestId);
   if(local){filePath=safeStoragePath(local.storage_path);}else{const declared=String(row.bucket||'').toLowerCase(),bucket=declared==='email-attachments'||String(row.file_path||'').startsWith('00000000-0000-0000-0000-000000000001/')?'email-attachments':declared==='prospect-documents'?'prospect-documents':declared==='crm-documents'?'crm-documents':stored.collection==='crm_lead_documents'?'crm-documents':'prospect-documents';filePath=resolveExistingLegacyPath(row.file_path,[bucket,'prospect-documents','crm-documents','email-attachments']);}
   if(!existsSync(filePath))return json(res,origin,404,{ok:false,error:'file_missing'},requestId);const size=statSync(filePath).size;const name=local?.original_name||row.file_name||row.document_name||'document';const mime=local?.mime_type||row.mime_type||'application/octet-stream';res.writeHead(200,responseHeaders(origin,requestId,{'Content-Type':mime,'Content-Length':String(size),'Content-Disposition':`attachment; filename*=UTF-8''${encodeURIComponent(name)}`}));createReadStream(filePath).pipe(res);
 }
