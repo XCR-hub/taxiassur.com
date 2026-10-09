@@ -66,6 +66,7 @@ const AllDocumentsViewer: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedLeads, setExpandedLeads] = useState<Set<string>>(new Set());
   const [actionError, setActionError] = useState('');
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     loadDocuments();
@@ -73,6 +74,7 @@ const AllDocumentsViewer: React.FC = () => {
 
   const loadDocuments = async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const result = await nativeAdminCall<{ documents?: Array<Document & { lead_first_name?: string; lead_last_name?: string; lead_email?: string; lead_phone?: string; lead_status?: string }> }>('/v1/admin/documents?scope=all');
       setDocuments((result.documents || []).map((document) => ({
@@ -87,6 +89,7 @@ const AllDocumentsViewer: React.FC = () => {
       })));
     } catch (error) {
       console.error('Failed to load documents:', error);
+      setLoadError('Le chargement des documents a échoué. Vérifiez la connexion puis actualisez la liste.');
     } finally {
       setLoading(false);
     }
@@ -213,6 +216,7 @@ const AllDocumentsViewer: React.FC = () => {
         </div>
 
         {actionError && <div role="alert" className="mb-5 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">{actionError}</div>}
+        {loadError && <div role="alert" className="mb-5 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">{loadError}</div>}
 
         <div className="flex flex-wrap items-center gap-3 mb-5">
           <div className="relative flex-1 min-w-[240px] max-w-md">

@@ -270,6 +270,7 @@ export default function PendingDocumentsManager() {
       if (showLoader) setExpandedLeads(leadsWithReal);
     } catch (err) {
       console.error('Erreur chargement documents:', err);
+      setActionError('Le chargement des documents a échoué. Vérifiez la connexion puis actualisez la file.');
     } finally {
       if (showLoader) setLoading(false);
       refreshInFlightRef.current = false;
