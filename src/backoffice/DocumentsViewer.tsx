@@ -37,6 +37,13 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState('');
+  const [loadError, setLoadError] = useState('');
+
+  useEffect(() => {
+    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
+  }, [previewUrl]);
 
   useEffect(() => {
     loadDocuments();
@@ -44,6 +51,7 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
 
   const loadDocuments = async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const params = new URLSearchParams({ scope: 'all' });
       if (leadId) params.set('lead_id', leadId);
@@ -52,6 +60,7 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
       setDocuments(result.documents || []);
     } catch (error) {
       console.error('Error loading documents:', error);
+      setLoadError('Le chargement des documents a échoué. Vérifiez la connexion puis actualisez la liste.');
     } finally {
       setLoading(false);
     }
@@ -132,16 +141,23 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
 
   const previewDocument = async (doc: Document) => {
     setSelectedDoc(doc);
+    setPreviewUrl(null);
+    setPreviewError('');
 
     if (!doc.file_path) {
+      setPreviewError('Le chemin du fichier est indisponible. Actualisez la liste ou téléchargez le document depuis sa fiche.');
       return;
     }
 
+    setPreviewLoading(true);
     try {
       const signedUrl = await nativeAdminDocumentUrl(doc.id);
       setPreviewUrl(signedUrl);
     } catch (error) {
       console.error('Error loading preview:', error);
+      setPreviewError('Impossible de charger l’aperçu. Le document est peut-être indisponible ou en quarantaine.');
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
@@ -190,6 +206,8 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
           </button>
         </div>
       </div>
+
+      {loadError && <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">{loadError}</div>}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -391,7 +409,7 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
                 <p className="text-slate-200 mt-1">{getDocumentTypeLabel(selectedDoc.document_type)}</p>
               </div>
               <button
-                onClick={() => { setSelectedDoc(null); setPreviewUrl(null); }}
+                onClick={() => { setSelectedDoc(null); setPreviewUrl(null); setPreviewError(''); }}
                 className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-300 hover:text-white"
               >
                 <XCircle className="w-6 h-6" />
@@ -399,7 +417,12 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
             </div>
 
             <div className="flex-1 overflow-auto p-6 bg-slate-900/50">
-              {previewUrl ? (
+              {previewError ? (
+                <div role="alert" className="text-center py-12">
+                  <AlertCircle className="w-12 h-12 text-amber-400 mx-auto mb-4" />
+                  <p className="text-amber-100">{previewError}</p>
+                </div>
+              ) : previewUrl ? (
                 selectedDoc.mime_type?.includes('image') ? (
                   <img src={previewUrl} alt={selectedDoc.file_name} className="max-w-full h-auto mx-auto rounded-lg shadow-2xl border border-purple-500/20" />
                 ) : selectedDoc.mime_type?.includes('pdf') ? (
@@ -410,10 +433,12 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
                     <p className="text-white">Aperçu non disponible pour ce type de fichier</p>
                   </div>
                 )
-              ) : (
+              ) : previewLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
                 </div>
+              ) : (
+                <div className="text-center py-12 text-slate-300">Aucun aperçu disponible.</div>
               )}
             </div>
 
@@ -426,7 +451,7 @@ const DocumentsViewer: React.FC<DocumentsViewerProps> = ({ leadId, clientId, com
                 Télécharger
               </button>
               <button
-                onClick={() => { setSelectedDoc(null); setPreviewUrl(null); }}
+                onClick={() => { setSelectedDoc(null); setPreviewUrl(null); setPreviewError(''); }}
                 className="px-6 py-3 border border-purple-500/30 text-white rounded-lg hover:bg-slate-800 transition-colors font-semibold"
               >
                 Fermer
