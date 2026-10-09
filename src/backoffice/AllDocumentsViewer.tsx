@@ -6,7 +6,7 @@ import {
   Download, TrendingUp, Shield, AlertCircle, RefreshCw, Trash2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { nativeAdminCall, nativeAdminDeleteDocument, nativeAdminDocumentUrl, nativeAdminDownloadDocument, nativeAdminOpenDocument } from '@/lib/native-admin-data';
+import { nativeAdminCall, nativeAdminDeleteDocument, nativeAdminDownloadDocument, nativeAdminOpenDocument } from '@/lib/native-admin-data';
 
 interface Document {
   id: string;
@@ -65,6 +65,7 @@ const AllDocumentsViewer: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedLeads, setExpandedLeads] = useState<Set<string>>(new Set());
+  const [actionError, setActionError] = useState('');
 
   useEffect(() => {
     loadDocuments();
@@ -152,7 +153,7 @@ const AllDocumentsViewer: React.FC = () => {
       setDocuments(current => current.filter(item => item.id !== doc.id));
     } catch (error) {
       console.error('Failed to delete quarantined document:', error);
-      window.alert('La suppression a échoué. Actualisez la liste avant de réessayer.');
+      setActionError('La suppression a échoué. Actualisez la liste avant de réessayer.');
     }
   };
 
@@ -210,6 +211,8 @@ const AllDocumentsViewer: React.FC = () => {
           <StatCard label="Prospects" value={stats.uniqueLeads} icon={User} color="bg-blue-600/20" textColor="text-blue-400" />
           <StatCard label="Taux valid." value={`${stats.validationRate}%`} icon={TrendingUp} color="bg-teal-600/20" textColor="text-teal-400" />
         </div>
+
+        {actionError && <div role="alert" className="mb-5 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">{actionError}</div>}
 
         <div className="flex flex-wrap items-center gap-3 mb-5">
           <div className="relative flex-1 min-w-[240px] max-w-md">
@@ -392,14 +395,14 @@ const AllDocumentsViewer: React.FC = () => {
                               {doc.file_path && doc.status !== 'quarantined' && (!doc.security_scan_status || doc.security_scan_status === 'clean') && (
                                   <>
                                     <button
-                                      onClick={() => void nativeAdminOpenDocument(doc.id).catch((error) => console.error('Failed to open document:', error))}
+                                      onClick={() => { setActionError(''); void nativeAdminOpenDocument(doc.id).catch((error) => { console.error('Failed to open document:', error); setActionError('Impossible d’ouvrir ce document. Vérifiez votre session et son état antivirus.'); }); }}
                                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 text-xs font-medium transition-colors"
                                     >
                                       <Eye className="w-3.5 h-3.5" />
                                       Voir
                                     </button>
                                     <button
-                                      onClick={() => void nativeAdminDownloadDocument(doc.id, doc.file_name).catch((error) => console.error('Failed to download document:', error))}
+                                      onClick={() => { setActionError(''); void nativeAdminDownloadDocument(doc.id, doc.file_name).catch((error) => { console.error('Failed to download document:', error); setActionError('Le téléchargement a échoué. Actualisez la liste puis réessayez.'); }); }}
                                       title="Télécharger le document"
                                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 text-xs font-medium transition-colors"
                                     >

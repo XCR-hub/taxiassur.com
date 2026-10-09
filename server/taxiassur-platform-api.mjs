@@ -1345,6 +1345,8 @@ async function adminDocumentOpen(req,res,origin,requestId){
   }
   const storagePath=storageObjectPath(requestedPath,bucket);
   if(!storagePath)return json(res,origin,400,{ok:false,error:'invalid_path'},requestId);
+  const blockedFile=parseJsonLine(await runPsql(`SELECT jsonb_build_object('scan_status',scan_status)::text FROM taxiassur.file_objects WHERE storage_path IN (${quoteLiteral(storagePath)},${quoteLiteral(requestedPath)}) AND scan_status<>'clean' LIMIT 1;`));
+  if(blockedFile)return json(res,origin,423,{ok:false,error:'document_scan_blocked'},requestId);
   const nativePath=safeStoragePath(storagePath),legacyPath=resolveExistingLegacyPath(requestedPath,[bucket,'prospect-documents','crm-documents','email-attachments']),filePath=existsSync(nativePath)?nativePath:legacyPath;
   if(!existsSync(filePath))return json(res,origin,404,{ok:false,error:'file_missing'},requestId);
   const extension=path.extname(filePath).toLowerCase();

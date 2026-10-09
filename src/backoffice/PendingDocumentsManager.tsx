@@ -152,12 +152,12 @@ function PreviewThumb({ doc }: { doc: PendingDocument }) {
 }
 
 
-function SecureDocumentActions({ doc }: { doc: PendingDocument }) {
+function SecureDocumentActions({ doc, onError }: { doc: PendingDocument; onError: (message: string) => void }) {
   const open = async (download: boolean) => {
     try {
       if (download) return void await nativeAdminDownloadDocument(doc.id, doc.file_name);
       await nativeAdminOpenDocument(doc.id);
-    } catch (error) { console.error('Document unavailable', error); }
+    } catch (error) { console.error('Document unavailable', error); onError('Impossible d’ouvrir ou télécharger le document. Vérifiez votre session et son état antivirus.'); }
   };
   return <>
     <button type="button" onClick={() => void open(false)} title="Aperçu" className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"><Eye className="w-4 h-4" /></button>
@@ -883,7 +883,7 @@ Acceder a mon espace
 
                               {/* Actions */}
                               <div className="flex items-center gap-1.5 flex-shrink-0">
-                                <SecureDocumentActions doc={doc} />
+                                <SecureDocumentActions doc={doc} onError={setActionError} />
                                 <button
                                   onClick={() => handleValidate(doc.id)}
                                   disabled={isProc}
