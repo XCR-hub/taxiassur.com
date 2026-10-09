@@ -11,7 +11,7 @@ import {
   FolderOpen,
   FileSignature
 } from 'lucide-react';
-import { nativeAdminCall, nativeAdminDocumentUrl, nativeAdminStoredDocumentUrl } from '@/lib/native-admin-data';
+import { nativeAdminCall, nativeAdminDocumentUrl, nativeAdminDownloadDocument, nativeAdminStoredDocumentUrl } from '@/lib/native-admin-data';
 
 interface LeadDocument {
   id: string;
@@ -98,6 +98,8 @@ export function LeadDocumentsSelector({
     new Set(selectedDocuments.map(d => d.id))
   );
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [actionError, setActionError] = useState('');
   const [activeCategory, setActiveCategory] = useState<'all' | DocumentCategory>('all');
 
   const loadDocuments = useCallback(async () => {
@@ -229,8 +231,10 @@ export function LeadDocumentsSelector({
 
       */
       setDocuments(allDocs);
+      setLoadError('');
     } catch (err) {
       console.error('Error loading documents:', err);
+      setLoadError('Le chargement des documents a échoué. Actualisez pour réessayer.');
     } finally {
       setLoading(false);
     }
@@ -241,13 +245,42 @@ export function LeadDocumentsSelector({
   }, [loadDocuments]);
 
   const openDocument = async (doc: LeadDocument, download = false) => {
-    const url = doc.id.startsWith('document-')
-      ? await nativeAdminDocumentUrl(doc.id.slice('document-'.length))
-      : doc.file_url
-        ? await nativeAdminStoredDocumentUrl(doc.file_url, 'contract-documents', download, doc.name)
-        : undefined;
-    if (!url) return;
-    window.open(url, "_blank", "noopener,noreferrer");
+    const popup = download ? null : window.open('about:blank', '_blank');
+    setActionError('');
+    try {
+      if (doc.id.startsWith('document-')) {
+        const id = doc.id.slice('document-'.length);
+        if (download) {
+          await nativeAdminDownloadDocument(id, doc.name);
+          return;
+        }
+        const url = await nativeAdminDocumentUrl(id);
+        if (!popup) throw new Error('document_popup_blocked');
+        popup.opener = null;
+        popup.location.replace(url);
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        return;
+      }
+      if (!doc.file_url) throw new Error('document_path_missing');
+      const url = await nativeAdminStoredDocumentUrl(doc.file_url, 'contract-documents', download, doc.name);
+      if (download) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = doc.name || 'document';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } else {
+        if (!popup) throw new Error('document_popup_blocked');
+        popup.opener = null;
+        popup.location.replace(url);
+      }
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (err) {
+      popup?.close();
+      console.error('Document open/download failed:', err);
+      setActionError(download ? 'Le téléchargement a échoué. Vérifiez le document puis réessayez.' : 'Impossible d’ouvrir le document. Il peut être indisponible ou en quarantaine.');
+    }
   };
 
   const toggleDocument = (docId: string) => {
@@ -303,7 +336,7 @@ export function LeadDocumentsSelector({
     );
   }
 
-  if (documents.length === 0) {
+  if (documents.length === 0 && !loadError) {
     return (
       <div className="bg-white rounded-xl border-2 border-gray-200 p-6 text-center">
         <FolderOpen className="w-12 h-12 text-gray-400 mx-auto mb-2" />
@@ -324,6 +357,13 @@ export function LeadDocumentsSelector({
           Sélectionnez les documents à joindre à l'email
         </p>
       </div>
+
+      {(loadError || actionError) && (
+        <div role="alert" className="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {loadError || actionError}
+          {loadError && <button type="button" onClick={() => void loadDocuments()} className="ml-3 font-semibold underline">Actualiser</button>}
+        </div>
+      )}
 
       {/* Filtres par catégorie */}
       <div className="p-4 border-b border-gray-200 bg-gray-50">
