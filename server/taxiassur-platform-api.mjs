@@ -1394,6 +1394,7 @@ async function adminDocumentPatch(req,res,origin,requestId,documentId){
   const updateSql="UPDATE taxiassur.records SET data=data||"+quoteLiteral(JSON.stringify(updates))+"::jsonb,updated_at=now(),revision=revision+1 WHERE collection IN ('prospect_documents','crm_lead_documents') AND record_id="+quoteLiteral(documentId)+" RETURNING data::text;";
   const document=parseJsonLine(await runPsql(updateSql));
   if(!document)return json(res,origin,404,{ok:false,error:'not_found'},requestId);
+  let rejectionEmailQueued=false;
   if(status==='rejected'){
     const lead=parseJsonLine(await runPsql("SELECT data::text FROM taxiassur.records WHERE collection='crm_leads' AND record_id="+quoteLiteral(String(document.lead_id))+" LIMIT 1;"));
     if(lead&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(lead.email||''))){
@@ -1401,6 +1402,7 @@ async function adminDocumentPatch(req,res,origin,requestId,documentId){
       const mailBody=['Bonjour '+String(lead.first_name||''),'','La pièce « '+String(document.file_name||document.document_type||'document')+' » a été refusée.','','Motif : '+reason,'','Vous pouvez déposer une nouvelle version depuis votre espace TaxiAssur.'].join(String.fromCharCode(10));
       const mail={id:mailId,recipient:String(lead.email).trim().toLowerCase(),subject:'Une pièce de votre dossier TaxiAssur doit être corrigée',body:mailBody,status:'pending',attempts:0,next_attempt_at:now,created_at:now};
       await runPsql("INSERT INTO taxiassur.records(collection,record_id,data,origin) VALUES('native_email_outbox',"+quoteLiteral(mailId)+","+quoteLiteral(JSON.stringify(mail))+"::jsonb,'admin');");
+      rejectionEmailQueued=true;
     }
   }
   let validationEmailQueued=false;
@@ -1409,7 +1411,7 @@ async function adminDocumentPatch(req,res,origin,requestId,documentId){
     validationEmailQueued=await queueProspectEventEmail(lead,'Document validé - TaxiAssur',`Votre document « ${String(document.file_name||document.document_type||'document')} » a été validé par votre conseiller. Votre dossier avance.`, 'documents', {lead_id:String(document.lead_id),document_id:documentId});
   }
   await runPsql("INSERT INTO taxiassur.audit_events(actor_type,actor_id,action,target_type,target_id,request_id,metadata) VALUES('admin',"+quoteLiteral(session.sub)+","+quoteLiteral('document_'+status)+",'prospect_document',"+quoteLiteral(documentId)+","+quoteLiteral(requestId)+"::uuid,"+quoteLiteral(JSON.stringify({status:status}))+"::jsonb);");
-  return json(res,origin,200,{ok:true,document:document,email_queued:status==='rejected'||validationEmailQueued},requestId);
+  return json(res,origin,200,{ok:true,document:document,email_queued:rejectionEmailQueued||validationEmailQueued},requestId);
 }
 async function adminLeadCreate(req,res,origin,requestId){
   const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
