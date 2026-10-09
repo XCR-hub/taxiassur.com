@@ -205,6 +205,93 @@ function descriptionFor(row, fallback) {
   return compactText(fallback, 170);
 }
 
+function comparableText(value) {
+  return stripHtml(value)
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function cityContextForSlug(slug, cityPages) {
+  const contentSlug = cleanSlugValue(slug)
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .replace(/-(?:en-)?20\d{2}$/, '');
+
+  const candidates = cityPages
+    .map((row) => {
+      const citySlug = cleanSlugValue(field(row, 'slug'))
+        .replace(/^assurance-taxi-/, '')
+        .normalize('NFD')
+        .replace(/\p{Diacritic}/gu, '')
+        .toLowerCase();
+      const city = field(row, 'city_name') || field(row, 'city') || field(row, 'name') || citySlug.replace(/-/g, ' ');
+      return { citySlug, city };
+    })
+    .filter(({ citySlug, city }) => citySlug.length > 2 && city && contentSlug.endsWith(`-${citySlug}`))
+    .sort((left, right) => right.citySlug.length - left.citySlug.length);
+
+  return candidates[0]?.city || null;
+}
+
+function titleWithCity(value, city) {
+  const cityPattern = String(city || '')
+    .trim()
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    .replace(/[-\s]+/g, '[-\\s]+');
+  const title = stripHtml(value)
+    .replace(/\s*\|\s*(?:Blog |Actualit[e\u00e9]s )?TaxiAssur.*$/i, '')
+    .replace(/\s*(?:\u2026|\.{3})\s*$/, '')
+    .replace(cityPattern ? new RegExp(cityPattern, 'giu') : /$^/, ' ')
+    .replace(/\s+(?:à|a|de|du|des|en|pour)\s*$/i, '')
+    .replace(/^[\s,;:!?\u2013\u2014-]+|[\s,;:!?\u2013\u2014-]+$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!city || !title) return title;
+
+  const suffix = ` à ${city}`;
+  const maxBaseLength = Math.max(12, 48 - suffix.length);
+  let base = title
+    .replace(/^(?:comment|pourquoi)\s+/i, '')
+    .replace(/\bde votre assurance\b/i, "de l'assurance")
+    .replace(/:\s*(?:les\s+)?meilleures\s+offres\b/i, ': offres')
+    .replace(/:\s*combien\s+ça\s+coûte(?:\s+vraiment)?/i, ': tarifs')
+    .replace(/\bgaranties essentielles de l'assurance taxi\b/i, "garanties clés de l'assurance taxi")
+    .trim();
+
+  if (base.length > maxBaseLength) {
+    base = base
+      .replace(/\b(?:votre|vos|les|des|du|la|le|combien|vraiment|meilleures|meilleur)\b/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  if (base.length > maxBaseLength && base.includes(':')) {
+    base = base.slice(0, base.indexOf(':')).trim();
+  }
+
+  if (base.length > maxBaseLength) {
+    base = compactText(base, maxBaseLength).replace(/\s*(?:\u2026|\.{3})\s*$/, '').trim();
+  }
+
+  base = base.replace(/\s+(?:à|a|de|du|des|en|pour|le|la|les|un|une|votre|vos)$/i, '').trim();
+  return `${base}${suffix}`;
+}
+
+function descriptionWithCity(value, city) {
+  const description = stripHtml(value);
+  if (!city || !description || comparableText(description).includes(comparableText(city))) return description;
+
+  const suffix = ` Repères utiles pour votre activité à ${city}.`;
+  const base = compactText(description, Math.max(50, 160 - suffix.length))
+    .replace(/[\s.,;:!?\u2026]+$/, '')
+    .trim();
+  return `${base}${suffix}`;
+}
+
 function addSeoMapEntry(map, route, entry) {
   if (!route || !route.startsWith('/') || !isCanonicalPublicPath(route, REDIRECT_SOURCES)) return;
   const title = seoTitle(entry.title || 'Assurance taxi');
@@ -421,12 +508,17 @@ function buildSeoContentMap(cityPages, blogPosts, newsArticles) {
   for (const row of blogPosts) {
     const slug = cleanSlugValue(field(row, 'slug'));
     if (!isIndexableContentSlug(slug)) continue;
-    const title = cleanTitle(field(row, 'title'), 'Article assurance taxi');
+    const city = cityContextForSlug(slug, cityPages) || field(row, 'city_name') || field(row, 'city');
+    const title = titleWithCity(cleanTitle(field(row, 'title'), 'Article assurance taxi'), city);
     addSeoMapEntry(routes, `/blog/${slug}`, {
       title: withBrandSuffix(title, 'Blog TaxiAssur'),
-      description: descriptionFor(row, 'Guide TaxiAssur pour chauffeurs de taxi : assurance professionnelle, garanties, sinistres, tarifs et bonnes pratiques.'),
+      description: descriptionWithCity(
+        descriptionFor(row, 'Guide TaxiAssur pour chauffeurs de taxi : assurance professionnelle, garanties, sinistres, tarifs et bonnes pratiques.'),
+        city,
+      ),
       section: 'Blog',
       priority: 'content',
+      city,
       updated_at: field(row, 'updated_at') || field(row, 'published_at') || field(row, 'created_at'),
     });
   }
