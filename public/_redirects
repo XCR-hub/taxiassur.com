@@ -74,6 +74,9 @@
 /assurance-taxi-ville-:id /villes 301
 /ville-:id /villes 301
 
+# Duplicate placeholder article: keep only its canonical URL indexable
+/blog/assurance-taxi-2025-guide-complet-59 /blog/assurance-taxi-2025-guide-complet 301
+
 # Canonical city URLs
 /ville/assurance-taxi-:slug /assurance-taxi-:slug 301
 /villes/assurance-taxi-:slug /assurance-taxi-:slug 301
