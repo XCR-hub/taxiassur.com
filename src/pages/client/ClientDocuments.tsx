@@ -164,8 +164,8 @@ export default function ClientDocuments() {
       return;
     }
     const extension = file.name.toLowerCase().split('.').pop() || '';
-    if (!['application/pdf', 'image/jpeg', 'image/png', 'image/webp'].includes(file.type) && !['pdf', 'jpg', 'jpeg', 'png', 'webp'].includes(extension)) {
-      setUploadError('Type de fichier refusé. Formats autorisés : PDF, JPG, PNG ou WEBP.');
+    if (!['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(file.type) && !['pdf', 'jpg', 'jpeg', 'png', 'webp', 'doc', 'docx'].includes(extension)) {
+      setUploadError('Type de fichier refusé. Formats autorisés : PDF, JPG, PNG, WEBP, DOC ou DOCX.');
       return;
     }
     setUploading(true);
@@ -317,7 +317,7 @@ export default function ClientDocuments() {
                   <p className="font-semibold text-gray-900 text-sm">
                     {dragOver ? 'Relâchez pour envoyer' : 'Glissez un fichier ou cliquez sur le bouton'}
                   </p>
-                  <p className="text-xs text-gray-400 mt-0.5">PDF, JPG, PNG, DOCX — max 10 MB</p>
+                  <p className="text-xs text-gray-400 mt-0.5">PDF, JPG, PNG, WEBP, DOC, DOCX — max 10 MB</p>
 
                   {uploadError && (
                     <div className="flex items-start gap-2 mt-2 bg-red-50 border border-red-200 rounded-lg p-2.5">

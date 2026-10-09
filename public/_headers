@@ -96,3 +96,7 @@ https://:version.:project.pages.dev/*
 
 https://cf.taxiassur.com/*
   X-Robots-Tag: noindex, nofollow, noarchive
+
+/merci
+  Cache-Control: no-store, max-age=0
+  X-Robots-Tag: noindex, nofollow, noarchive

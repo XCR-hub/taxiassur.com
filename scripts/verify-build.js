@@ -20,6 +20,11 @@ const distPath = join(projectRoot, 'dist');
 console.log('🔍 Vérification du build...\n');
 
 let hasErrors = false;
+// A static /merci.html shadows the application route and loses the prospect portal.
+if (existsSync(join(distPath, 'merci.html'))) {
+  console.error('❌ ERREUR : merci.html masque la confirmation React et son accès au dossier');
+  hasErrors = true;
+}
 
 // Liste des fichiers critiques à vérifier
 const criticalFiles = [
