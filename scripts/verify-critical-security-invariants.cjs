@@ -334,6 +334,8 @@ const privateEmailAttachmentMigration = 'supabase/migrations/20260809113000_make
 const privateCrmDocumentsMigration = 'supabase/migrations/20260809213000_secure_crm_documents_storage.sql';
 const privateContractDocumentsMigration = 'supabase/migrations/20260809220000_make_contract_documents_private.sql';
 const pendingAttachmentMigration = 'supabase/migrations/20260809110000_secure_pending_email_attachments_rpc.sql';
+requireMatch('server/taxiassur-platform-api.mjs', /async function uploadCompanyFile[\s\S]*?allowedCompanyMimes=new Set\(\[\.\.\.imageMimes,'application\/pdf','application\/msword'/, 'company document uploads accept active HTML content');
+requireMatch('server/taxiassur-platform-api.mjs', /async function adminCompanyDocument[\s\S]*?inlineMime=new Set\(\['application\/pdf','image\/jpeg','image\/png','image\/webp'\]\)[\s\S]*?safeInline\?'inline':'attachment'/, 'company document download can render an active file inline');
 requireMatch('server/taxiassur-platform-api.mjs', /async function adminDocumentOpen[\s\S]*?blockedRecord[\s\S]*?document_scan_blocked/, 'path-based admin document open does not block legacy quarantined records');
 requireMatch('server/taxiassur-platform-api.mjs', /async function adminDocumentDownload[\s\S]*?row\.status==='quarantined'[\s\S]*?document_scan_blocked/, 'admin document download does not block records marked quarantined');
 requireMatch('server/taxiassur-platform-api.mjs', /async function adminDocumentPatch[\s\S]*?documentRecord\.status==='quarantined'[\s\S]*?document_scan_blocked/, 'admin document validation does not block records marked quarantined');
