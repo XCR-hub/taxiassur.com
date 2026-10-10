@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Loader2, Sparkles } from 'lucide-react';
-import { getSupabaseUrl, getSupabaseAnonKey } from '../lib/env';
+import { sendPublicPlatformChat } from '@/lib/platform-api';
 import { logger } from '@/lib/logger';
 
 interface Message {
@@ -57,45 +57,19 @@ export default function AIChatBot() {
     setIsLoading(true);
 
     try {
-      const supabaseUrl = getSupabaseUrl();
-      const supabaseKey = getSupabaseAnonKey();
-
-      // Check if Supabase is configured
-      if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder')) {
-        throw new Error('Supabase not configured');
-      }
-
-      // Limit conversation history to prevent "input too long" errors
       const safeMessages = Array.isArray(messages) ? messages : [];
-      const recentMessages = safeMessages.slice(-10);
+      const recentMessages = safeMessages.slice(-5);
       const conversationMessages = recentMessages
         .map(m => ({
           role: m.role,
-          content: (m.content || '').substring(0, 500) // Limit each message to 500 chars
+          content: (m.content || '').substring(0, 500)
         }))
         .concat([{ role: 'user', content: (userMessage.content || '').substring(0, 500) }]);
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/chatbot`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${supabaseKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: conversationMessages
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to get response');
-      }
-
-      const data = await response.json();
+      const answer = await sendPublicPlatformChat(conversationMessages);
 
       const assistantMessage: Message = {
         role: 'assistant',
-        content: data.message || data.response || "Je n'ai pas pu générer une réponse.",
+        content: answer || "Je n'ai pas pu générer une réponse.",
         timestamp: new Date()
       };
 

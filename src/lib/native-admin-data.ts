@@ -37,6 +37,7 @@ export async function nativeAdminLead(id:string){
   return call(`/v1/admin/leads/${encodeURIComponent(id)}`);
 }
 export const nativeAdminUpdateLead=(id:string,updates:Record<string,unknown>)=>call(`/v1/admin/leads/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(updates)});
+export const nativeAdminLeadQuotesWorkspace=(id:string)=>call(`/v1/admin/leads/${encodeURIComponent(id)}/quotes-workspace`);
 export const nativeAdminLeadSummary=(id:string)=>call(`/v1/admin/leads/${encodeURIComponent(id)}/summary`);
 export const nativeAdminUpdateAiDecision=(id:string,status:'approved'|'rejected')=>call(`/v1/admin/ai-decisions/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({status})});
 export const nativeAdminCommercialAi=(leadId:string,content:string)=>call('/v1/admin/commercial/ai-assistant',{method:'POST',body:JSON.stringify({action:'improve_email',lead_id:leadId,content})});

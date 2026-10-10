@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { subscribePublicPlatformNewsletter } from '@/lib/platform-api';
 import { Mail, Send, CheckCircle, TrendingUp, FileText, Gift, Bell, Star, Users, AlertCircle } from 'lucide-react';
 import AITaxiBackground from './AITaxiBackground';
 import { useTurnstileGuard } from '@/hooks/useTurnstileGuard';
@@ -36,34 +36,19 @@ export default function NewsletterSubscribeForm() {
         return;
       }
 
-      const { error: insertError } = await supabase
-        .from('newsletter_subscribers')
-        .insert({
-          email: email.toLowerCase().trim(),
-          first_name: firstName.trim() || null,
-          source: 'website_form',
-          status: 'active',
-          engagement_score: 50,
-          categories: ['assurance-taxi', 'actualites'],
+      await subscribePublicPlatformNewsletter({
+        email: email.toLowerCase().trim(),
+        first_name: firstName.trim(),
+        source: 'website_form',
+      });
+      setSuccess(true);
+
+      if (typeof gtag !== 'undefined') {
+        gtag('event', 'newsletter_subscribe', {
+          event_category: 'engagement',
+          event_label: 'newsletter_signup'
         });
-
-      if (insertError) {
-        if (insertError.code === '23505') {
-          setError('Cet email est déjà inscrit à notre newsletter.');
-        } else {
-          throw insertError;
-        }
-      } else {
-        setSuccess(true);
-
-        if (typeof gtag !== 'undefined') {
-          gtag('event', 'newsletter_subscribe', {
-            event_category: 'engagement',
-            event_label: 'newsletter_signup'
-          });
-        }
-      }
-    } catch (err) {
+      }    } catch (err) {
       console.error('Erreur inscription:', err);
       setError('Une erreur est survenue. Veuillez réessayer.');
     } finally {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { subscribePublicPlatformNewsletter } from '@/lib/platform-api';
 import { Mail, CheckCircle, ArrowRight } from 'lucide-react';
 import { useTurnstileGuard } from '@/hooks/useTurnstileGuard';
 
@@ -28,27 +28,12 @@ export default function NewsletterFooterWidget() {
         return;
       }
 
-      const { error } = await supabase
-        .from('newsletter_subscribers')
-        .insert({
-          email: email.toLowerCase().trim(),
-          status: 'active',
-          source: 'footer_widget',
-          engagement_score: 50,
-          categories: ['assurance-taxi', 'actualites'],
-        });
-
-      if (error) {
-        if (error.code === '23505') {
-          setStatus('error');
-        } else {
-          throw error;
-        }
-      } else {
-        setStatus('success');
-        setEmail('');
-      }
-    } catch (error) {
+      await subscribePublicPlatformNewsletter({
+        email: email.toLowerCase().trim(),
+        source: 'footer_widget',
+      });
+      setStatus('success');
+      setEmail('');    } catch (error) {
       console.error('Erreur:', error);
       setStatus('error');
     } finally {

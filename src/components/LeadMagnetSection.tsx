@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { BookOpen, ClipboardList, Download, CheckCircle, AlertCircle, ChevronRight, Lock, Star, Mail } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { submitPublicPlatformLeadMagnet } from '@/lib/platform-api';
 
 type GuideType = 'guide-complet' | 'checklist-documents';
 
@@ -23,21 +23,6 @@ const DOWNLOADS: Record<GuideType, string> = {
   'checklist-documents': '/guides/checklist-documents-taxi.html',
 };
 
-
-async function sendConfirmationEmail(to: string, firstName: string, guideType: GuideType): Promise<void> {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  const response = await fetch(`${supabaseUrl}/functions/v1/send-lead-magnet-confirmation`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${supabaseKey}`,
-      Apikey: supabaseKey,
-    },
-    body: JSON.stringify({ email: to, first_name: firstName, guide_type: guideType }),
-  });
-  if (!response.ok) throw new Error(`GuideEmailError:${response.status}`);
-}
 
 interface MagnetCardProps {
   guideType: GuideType;
@@ -78,18 +63,12 @@ const MagnetCard: React.FC<MagnetCardProps> = ({
     setForm(prev => ({ ...prev, status: 'loading' }));
 
     try {
-      const { error } = await supabase
-        .from('lead_magnet_downloads')
-        .insert({
-          email,
-          first_name: form.firstName.trim(),
-          guide_type: guideType,
-          source_page: sourcePage || window.location.pathname,
-        });
-
-      if (error) throw error;
-
-      await sendConfirmationEmail(email, form.firstName.trim(), guideType);
+      await submitPublicPlatformLeadMagnet({
+        email,
+        first_name: form.firstName.trim(),
+        guide_type: guideType,
+        source_page: sourcePage || window.location.pathname,
+      });
 
       setForm(prev => ({ ...prev, status: 'success' }));
       onSuccess?.();

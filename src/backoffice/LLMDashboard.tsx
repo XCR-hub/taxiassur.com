@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { internalFunctionHeaders } from '@/lib/internal-function-auth';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { logger } from '@/lib/logger';
+import { toast } from '@/lib/toast';
 import {
   Brain,
   Bot,
@@ -108,22 +108,17 @@ const LLMDashboard: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [agentsRes, runsRes, convsRes] = await Promise.all([
-        supabase.from('llm_agents').select('*').order('priority', { ascending: false }),
-        supabase.from('llm_orchestrator_runs').select('*').order('started_at', { ascending: false }).limit(10),
-        supabase.from('llm_conversations').select('*, agent:llm_agents(name, slug)').order('started_at', { ascending: false }).limit(10),
-      ]);
-
-      if (agentsRes.data) {
-        setAgents(agentsRes.data);
-        const totalCalls = agentsRes.data.reduce((sum, a) => sum + (a.total_calls || 0), 0);
-        const totalTokens = agentsRes.data.reduce((sum, a) => sum + (a.total_tokens_used || 0), 0);
-        const avgTime = agentsRes.data.reduce((sum, a) => sum + (a.avg_response_time_ms || 0), 0) / (agentsRes.data.length || 1);
-        const avgSuccess = agentsRes.data.reduce((sum, a) => sum + (a.success_rate || 100), 0) / (agentsRes.data.length || 1);
+      const data = await nativeAdminCall<{ agents: Agent[]; runs: OrchestratorRun[]; conversations: Conversation[] }>('/v1/admin/llm');
+      if (data.agents) {
+        setAgents(data.agents);
+        const totalCalls = data.agents.reduce((sum, a) => sum + (a.total_calls || 0), 0);
+        const totalTokens = data.agents.reduce((sum, a) => sum + (a.total_tokens_used || 0), 0);
+        const avgTime = data.agents.reduce((sum, a) => sum + (a.avg_response_time_ms || 0), 0) / (data.agents.length || 1);
+        const avgSuccess = data.agents.reduce((sum, a) => sum + (a.success_rate || 100), 0) / (data.agents.length || 1);
         setStats({ totalCalls, totalTokens, avgResponseTime: Math.round(avgTime), successRate: avgSuccess });
       }
-      if (runsRes.data) setRuns(runsRes.data);
-      if (convsRes.data) setConversations(convsRes.data);
+      setRuns(data.runs || []);
+      setConversations(data.conversations || []);
     } catch (error) {
       logger.error('Error loading LLM data:', error);
     } finally {
@@ -140,20 +135,9 @@ const LLMDashboard: React.FC = () => {
     setChatLoading(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/llm-brain`, {
-        method: 'POST',
-        headers: {
-          'Authorization': (await internalFunctionHeaders()).Authorization,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'chat',
-          input: { message: userMessage },
-          session_id: `dashboard_${Date.now()}`,
-        }),
+      const data = await nativeAdminCall<{ success: boolean; response?: string; error?: string }>('/v1/admin/llm', {
+        method: 'POST', body: JSON.stringify({ action: 'chat', message: userMessage }),
       });
-
-      const data = await response.json();
       if (data.success && data.response) {
         setChatMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
       } else {
@@ -169,25 +153,23 @@ const LLMDashboard: React.FC = () => {
 
   const triggerWorkflow = async (workflowName: string) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/llm-autonomous-orchestrator`, {
-        method: 'POST',
-        headers: {
-          'Authorization': (await internalFunctionHeaders()).Authorization,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'execute_workflow',
+      const data = await nativeAdminCall<{ success: boolean; error?: string }>('/v1/admin/llm', {
+        method: 'POST', body: JSON.stringify({
+          action: 'workflow',
           workflow_name: workflowName,
           trigger_data: { source: 'dashboard', timestamp: new Date().toISOString() },
         }),
       });
-
-      const data = await response.json();
       if (data.success) {
         await loadData();
+      } else {
+        toast.error(data.error === 'workflow_engine_unavailable'
+          ? 'Le moteur de workflow n’est pas disponible sur le serveur.'
+          : 'Le workflow n’a pas pu être lancé.');
       }
     } catch (error) {
       logger.error('Workflow trigger error:', error);
+      toast.error('Le workflow n’a pas pu être lancé.');
     }
   };
 

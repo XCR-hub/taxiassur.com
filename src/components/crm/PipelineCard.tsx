@@ -20,17 +20,17 @@ import {
   User,
   X,
 } from "lucide-react";
-import { CRMLead, PIPELINE_STATUSES, PipelineStatus, pipelineService } from "@/lib/crm-pipeline";
+import { CRMLead, PIPELINE_STATUSES, PipelineStatus } from "@/lib/crm-pipeline";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabase";
 import { toast } from "@/lib/toast";
-import { withTimeout } from "@/lib/promise-timeout";
+import { nativeAdminInsuranceCompanies, nativeAdminLeadQuotesWorkspace, nativeAdminUpdateLead, nativeAdminUploadQuoteDocument } from "@/lib/native-admin-data";
 
 interface InsuranceCompanyOption {
   id: string;
   name: string;
   code: string;
   logo_url?: string;
+  is_mandatory?: boolean;
 }
 
 interface PipelineCardProps {
@@ -114,128 +114,7 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
   });
   }, [lead]);
 
-  /* Legacy per-card Supabase reads are disabled: the historical compatibility
-     service is not part of the native production path. Pipeline indicators
-     remain conservative until the dashboard payload exposes their aggregates. */
-  /*
-  useEffect(() => {
-    const loadIndicators = async () => {
-      try {
-        const [
-          docsResult,
-          companyQuotesResult,
-          contractResult,
-          interactionsResult,
-          automationsResult,
-          leadDataResult,
-        ] = await Promise.allSettled([
-          supabase.from("crm_lead_documents").select("status").eq(
-            "lead_id",
-            lead.id,
-          ),
-          supabase.from("lead_company_quotes").select("status").eq(
-            "lead_id",
-            lead.id,
-          ),
-          supabase.from("lead_contracts").select(
-            "status, down_payment_status, down_payment_amount",
-          ).eq("lead_id", lead.id).limit(1),
-          supabase.from("crm_interactions").select("created_at").eq(
-            "lead_id",
-            lead.id,
-          ).order("created_at", { ascending: false }).limit(1),
-          supabase.from("pipeline_action_queue").select("id").eq(
-            "lead_id",
-            lead.id,
-          ).in("status", ["pending", "processing"]),
-          supabase.from("crm_leads").select(
-            "last_automation_result, automation_count",
-          ).eq("id", lead.id).maybeSingle(),
-        ]);
 
-        const docs =
-          (docsResult.status === "fulfilled" ? docsResult.value.data : null) ||
-          [];
-        const validatedDocs = docs.filter((d) =>
-          d.status === "validated"
-        ).length;
-        const totalUploadedDocs = docs.length;
-
-        const companyQuotes = (companyQuotesResult.status === "fulfilled"
-          ? companyQuotesResult.value.data
-          : null) || [];
-        const quotedCompanies = companyQuotes.filter((q) =>
-          q.status === "quote_submitted" || q.status === "validated"
-        ).length;
-        const refusedCompanies = companyQuotes.filter((q) =>
-          q.status === "refused"
-        ).length;
-
-        const contract = contractResult.status === "fulfilled"
-          ? contractResult.value.data?.[0]
-          : null;
-        const lastInteraction = interactionsResult.status === "fulfilled"
-          ? interactionsResult.value.data?.[0]
-          : null;
-        const pendingAutomations = (automationsResult.status === "fulfilled"
-          ? automationsResult.value.data?.length
-          : null) || 0;
-        const leadData = leadDataResult.status === "fulfilled"
-          ? leadDataResult.value.data
-          : null;
-
-        const referenceDate = lead.first_request_at || lead.created_at;
-        const daysInPipeline = Math.floor(
-          (Date.now() - new Date(referenceDate).getTime()) /
-            (1000 * 60 * 60 * 24),
-        );
-        const lastInteractionDays = lastInteraction
-          ? Math.floor(
-            (Date.now() - new Date(lastInteraction.created_at).getTime()) /
-              (1000 * 60 * 60 * 24),
-          )
-          : daysInPipeline;
-
-        let downPaymentStatus: "none" | "required" | "pending" | "paid" =
-          "none";
-        if (contract?.down_payment_status === "paid") {
-          downPaymentStatus = "paid";
-        } else if (contract?.down_payment_status === "pending") {
-          downPaymentStatus = "pending";
-        } else if (
-          lead.status === "DOWN_PAYMENT_REQUIRED" || lead.status === "SIGNED"
-        ) {
-          downPaymentStatus = "required";
-        }
-
-        setIndicators({
-          documentsValidated: totalUploadedDocs,
-          documentsTotal: 9,
-          companiesQuoted: quotedCompanies,
-          companiesRefused: refusedCompanies,
-          companiesTotal: 5,
-          hasSignature: contract?.status === "signed",
-          downPaymentStatus,
-          downPaymentAmount: contract?.down_payment_amount || null,
-          daysInPipeline,
-          needsRelance: lastInteractionDays >= 3 &&
-            !["ACTIVE_CLIENT", "LOST", "CANCELLED"].includes(lead.status),
-          lastInteractionDays,
-          pendingAutomations,
-          lastAutomationResult: leadData?.last_automation_result as
-            | "success"
-            | "failed"
-            | null,
-          automationCount: leadData?.automation_count || 0,
-        });
-      } catch (error) {
-        console.error("Error loading indicators:", error);
-      }
-    };
-
-    loadIndicators();
-  }, [lead.id, lead.created_at, lead.status]);
-  */
 
   const handleDragStart = (e: React.DragEvent) => {
     isDraggingRef.current = true;
@@ -314,13 +193,7 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
   const handleSetRecontactDate = async (date: string) => {
     setSavingDate(true);
     try {
-      await supabase
-        .from("crm_leads")
-        .update({
-          recontact_scheduled_date: date,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", lead.id);
+      await nativeAdminUpdateLead(lead.id, { recontact_scheduled_date: date });
       lead.recontact_scheduled_date = date;
       setShowDatePicker(false);
     } catch (err) {
@@ -400,17 +273,14 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
     }
 
     if (companyOptions.length === 0) {
-      const { data, error } = await supabase
-        .from("insurance_companies")
-        .select("id, name, code, logo_url")
-        .eq("is_active", true)
-        .order("priority_order", { ascending: true });
-      if (error) {
+      try {
+        const result = await nativeAdminInsuranceCompanies() as { companies?: InsuranceCompanyOption[] };
+        setCompanyOptions((result.companies || []).filter(company => company.is_mandatory !== false));
+      } catch (error) {
         console.error("Erreur chargement compagnies:", error);
         toast.error("Impossible de charger les compagnies");
         return;
       }
-      setCompanyOptions(data || []);
     }
 
     setPendingQuoteFile(file);
@@ -425,46 +295,12 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
     if (!pendingQuoteFile) return;
     setUploadingQuote(true);
     try {
-      const safeName = pendingQuoteFile.name
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^\w.\-]+/g, "_")
-        .replace(/_+/g, "_");
-      const filePath = lead.id + "/" + companyId + "/" + crypto.randomUUID() +
-        "_" + safeName.slice(0, 160);
-
-      const { error: uploadError } = await withTimeout(
-        supabase.storage.from("contract-documents").upload(
-          filePath,
-          pendingQuoteFile,
-          {
-            contentType: "application/pdf",
-            upsert: false,
-          },
-        ),
-        60_000,
-      );
-      if (uploadError) throw new Error(uploadError.message);
-
-      const submittedAt = new Date().toISOString();
-      const { error: insertError } = await withTimeout(
-        supabase.from("lead_company_quotes").insert({
-          lead_id: lead.id,
-          company_id: companyId,
-          insurance_company_id: companyId,
-          quote_file_url: filePath,
-          quote_pdf_url: filePath,
-          status: "quote_submitted",
-          quote_status: "quote_submitted",
-          submitted_at: submittedAt,
-        }),
-        20_000,
-      );
-
-      if (insertError) {
-        await supabase.storage.from("contract-documents").remove([filePath]);
-        throw new Error(insertError.message);
-      }
+      const workspace = await nativeAdminLeadQuotesWorkspace(lead.id) as {
+        workspace?: { quotes?: Array<{ id: string; company_id: string }> };
+      };
+      const quote = (workspace.workspace?.quotes || []).find(item => item.company_id === companyId);
+      if (!quote) throw new Error("Devis assureur introuvable dans le dossier");
+      await nativeAdminUploadQuoteDocument(lead.id, quote.id, pendingQuoteFile, "quote", true);
 
       const company = companyOptions.find((c) => c.id === companyId);
       toast.success(`Devis ${company?.name || ""} ajouté`);
@@ -482,8 +318,11 @@ export const PipelineCard: React.FC<PipelineCardProps> = ({
     if (movingToNew) return;
     setMovingToNew(true);
     try {
-      const result = await pipelineService.updateLeadStatus(lead.id, "NOUVEAU_LEAD");
-      if (!result.success) throw new Error(result.message);
+      await nativeAdminUpdateLead(lead.id, {
+        status: "NOUVEAU_LEAD",
+        pipeline_stage: "nouveau_lead",
+        current_stage_key: "new_lead",
+      });
       onStatusChange?.(lead.id, "NOUVEAU_LEAD");
       toast.success("Lead remis en Nouveau Lead");
     } catch (err: unknown) {

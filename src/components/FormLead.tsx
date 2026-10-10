@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Shield, Phone, Clock, Send } from 'lucide-react';
 import { logger } from '@/lib/logger';
-import { createLead, checkExistingEmail, resendAccess } from '@/lib/leads';
+import { createLead } from '@/lib/leads';
 import ExistingLeadChoiceModal from './ExistingLeadChoiceModal';
 import { toast } from '@/lib/toast';
 import { useTurnstileGuard } from '@/hooks/useTurnstileGuard';
@@ -57,29 +57,7 @@ const FormLead: React.FC = () => {
         toast.error('Validation anti-spam refusee. Veuillez reessayer.');
         setIsSubmitting(false);
         return;
-      }
-
-      // Vérifier si l'email existe déjà
-      const existingData = await checkExistingEmail(formData.email);
-
-      if (existingData.exists) {
-        // Email existe : afficher le modal de choix
-        setExistingLead({
-          email: formData.email,
-          firstName: existingData.firstName || '',
-          lastName: existingData.lastName || '',
-          phone: existingData.phone || '',
-          city: existingData.city || '',
-          vehicleCount: existingData.vehicleCount || 1,
-          createdAt: existingData.createdAt || new Date().toISOString()
-        });
-        setShowModal(true);
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Email n'existe pas : créer le lead normalement
-      await submitNewLead(false);
+      }      await submitNewLead(false);
     } catch (error) {
       logger.error('Form submission error:', error);
       toast.error('Erreur de connexion. Veuillez vérifier votre connexion internet.');
@@ -100,6 +78,20 @@ const FormLead: React.FC = () => {
       }, forceNew);
 
       if (result.success) {
+        if (result.existingLead) {
+          const nameParts = formData.name.trim().split(/\s+/);
+          setExistingLead({
+            email: formData.email,
+            firstName: nameParts[0] || '',
+            lastName: nameParts.slice(1).join(' '),
+            phone: formData.phone,
+            city: formData.city,
+            vehicleCount: 1,
+            createdAt: new Date().toISOString(),
+          });
+          setShowModal(true);
+          return;
+        }
         // Track conversion
         if (typeof gtag !== 'undefined') {
           gtag('event', 'conversion', {
@@ -121,44 +113,21 @@ const FormLead: React.FC = () => {
     }
   };
 
-  const handleAccessExisting = async () => {
+  const handleAccessExisting = () => {
     setShowModal(false);
-    setIsSubmitting(true);
-
-    try {
-      const result = await resendAccess(formData.email);
-
-      if (result.success) {
-        toast.success('Un email avec vos accès vous a été envoyé ! Consultez votre boîte de réception.');
-        setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          city: '',
-          status: 'taxi',
-          immatriculation: '',
-          company: ''
-        });
-      } else {
-        toast.error('Erreur lors de l\'envoi de l\'email. Veuillez réessayer.');
-      }
-    } catch (error) {
-      logger.error('Error resending access:', error);
-      toast.error('Erreur de connexion.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    setExistingLead(null);
+    toast.success('Un email contenant le lien de votre dossier existant vient d’être envoyé.');
+    setFormData({ name: '', email: '', phone: '', city: '', status: 'taxi', immatriculation: '', company: '' });
   };
 
   const handleCreateNew = async () => {
     setShowModal(false);
-    setIsSubmitting(true);
-    await submitNewLead(true); // Force la création d'un nouveau lead
+    await submitNewLead(true);
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setIsSubmitting(false);
+    setExistingLead(null);
   };
 
   return (
@@ -354,7 +323,6 @@ const FormLead: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal de choix pour lead existant */}
       <ExistingLeadChoiceModal
         isOpen={showModal}
         existingLead={existingLead}

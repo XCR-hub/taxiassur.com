@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Loader2, ExternalLink, Lock } from 'lucide-react';
+import { createPublicPlatformPaymentForm } from '@/lib/platform-api';
 
 interface Props {
   amount: number;
@@ -22,29 +23,12 @@ export default function ClientMoneticoPayment({ reference, accessToken }: Props)
       setError(null);
 
       // Charger un formulaire signé pour le paiement existant, sans recréer ni modifier son montant.
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-monetico-payment-form`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({ reference, accessToken }),
-        }
-      );
+      const formData = await createPublicPlatformPaymentForm(reference, accessToken);
 
-      const result = await response.json() as {
-        success?: boolean;
-        error?: string;
-        formData?: { action?: string; fields?: Record<string, string> };
-      };
+      if (!formData.action || !formData.fields) throw new Error('Impossible de preparer le paiement');
 
-      if (!response.ok || !result.success || !result.formData?.action || !result.formData.fields) {
-        throw new Error(result.error || 'Impossible de préparer le paiement');
-      }
 
-      const action = new URL(result.formData.action);
+      const action = new URL(formData.action);
       if (action.protocol !== 'https:' || action.hostname !== 'p.monetico-services.com') {
         throw new Error('Destination de paiement invalide');
       }
@@ -53,7 +37,7 @@ export default function ClientMoneticoPayment({ reference, accessToken }: Props)
       form.method = 'POST';
       form.action = action.toString();
       form.style.display = 'none';
-      for (const [name, value] of Object.entries(result.formData.fields)) {
+      for (const [name, value] of Object.entries(formData.fields)) {
         const input = document.createElement('input');
         input.type = 'hidden';
         input.name = name;

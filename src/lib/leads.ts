@@ -1,9 +1,8 @@
 import { z } from 'zod';
-import { supabase } from './supabase';
 import { logger } from '@/lib/logger';
 import { PLATFORM_BASE_URL } from '@/lib/platform-api';
 import { getLeadAcquisition } from '@/lib/lead-acquisition';
-import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env';
+import { nativeAdminLeads, nativeAdminUpdateLead } from '@/lib/native-admin-data';
 
 export const LeadStatusSchema = z.enum(['nouveau', 'contacté', 'devis envoyé', 'client', 'perdu']);
 
@@ -51,114 +50,53 @@ const statusFromDb: Record<string, LeadStatus> = {
 
 export async function getLeads(): Promise<Lead[]> {
   try {
-    logger.log('🔍 Fetching leads from Supabase...');
-
-    const { data: leadsData, error } = await supabase
-      .from('crm_leads')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      logger.error('❌ Supabase error:', error);
-      return [];
-    }
-
-    const leads = leadsData || [];
-    logger.log(`✅ Found ${leads.length} leads from Supabase`);
-
-    return (leads as Array<Record<string, unknown>>).map((lead) => {
-      const dbStatus = lead.lead_status || 'nouveau';
-      const mappedStatus = statusFromDb[dbStatus] || 'nouveau';
-
+    const response = await nativeAdminLeads();
+    const rows = Array.isArray(response?.leads) ? response.leads as Array<Record<string, unknown>> : [];
+    return rows.map((lead) => {
+      const dbStatus = String(lead.lead_status || lead.pipeline_stage || lead.status || 'nouveau');
       return {
-        id: lead.id,
-        name: lead.name || 'Lead anonyme',
-        email: lead.email || '',
-        phone: lead.phone || '',
-        city: lead.city || '',
-        status: lead.status || 'taxi',
-        immatriculation: lead.immatriculation || 'Non renseignée',
-        leadStatus: mappedStatus as LeadStatus,
-        createdAt: lead.created_at || new Date().toISOString(),
-        updatedAt: lead.updated_at,
-        contactedAt: lead.contacted_at,
-        devisEnvoyeAt: lead.devis_envoye_at,
-        clientAt: lead.client_at,
-        primeRealisee: lead.prime_realisee,
-        notes: lead.notes,
-        source: lead.source || 'website',
-        assignedTo: lead.assigned_to
+        id: String(lead.id || ''),
+        name: String(lead.name || lead.full_name || `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Lead anonyme'),
+        email: String(lead.email || ''),
+        phone: String(lead.phone || ''),
+        city: String(lead.city || ''),
+        status: lead.vehicle_type === 'VTC' ? 'vtc' : lead.vehicle_type === 'Autre' ? 'autre' : 'taxi',
+        immatriculation: String(lead.immatriculation || 'Non renseignée'),
+        leadStatus: statusFromDb[dbStatus] || 'nouveau',
+        createdAt: String(lead.created_at || new Date().toISOString()),
+        updatedAt: typeof lead.updated_at === 'string' ? lead.updated_at : undefined,
+        contactedAt: typeof lead.contacted_at === 'string' ? lead.contacted_at : undefined,
+        devisEnvoyeAt: typeof lead.devis_envoye_at === 'string' ? lead.devis_envoye_at : undefined,
+        clientAt: typeof lead.client_at === 'string' ? lead.client_at : undefined,
+        primeRealisee: typeof lead.prime_realisee === 'number' ? lead.prime_realisee : undefined,
+        notes: typeof lead.notes === 'string' ? lead.notes : undefined,
+        source: String(lead.source || 'website'),
+        assignedTo: typeof lead.assigned_to === 'string' ? lead.assigned_to : undefined,
       };
     });
   } catch (error) {
-    logger.error('Failed to load leads:', error);
+    logger.error('Failed to load leads from the native platform API:', error);
     return [];
   }
 }
 
-
 export async function updateLeadStatus(
   leadId: string,
   newStatus: LeadStatus,
-  additionalData?: {
-    primeRealisee?: number;
-    notes?: string;
-  }
+  additionalData?: { primeRealisee?: number; notes?: string }
 ): Promise<boolean> {
+  const now = new Date().toISOString();
+  const updates: Record<string, unknown> = { lead_status: newStatus, updated_at: now };
+  if (newStatus === 'contacté') updates.contacted_at = now;
+  if (newStatus === 'devis envoyé') updates.devis_envoye_at = now;
+  if (newStatus === 'client') updates.client_at = now;
+  if (additionalData?.primeRealisee !== undefined) updates.prime_realisee = additionalData.primeRealisee;
+  if (additionalData?.notes !== undefined) updates.notes = additionalData.notes;
   try {
-    logger.log('🔄 Updating lead status:', { leadId, newStatus, additionalData });
-
-    // Utiliser directement le statut français (plus de conversion nécessaire)
-    const dbStatus = newStatus;
-    logger.log('📝 Using status:', { status: dbStatus });
-
-    // Préparer les champs de date basés sur le statut
-    const dateFields: Record<string, string> = {
-      updated_at: new Date().toISOString()
-    };
-
-    if (newStatus === 'contacté') {
-      dateFields.contacted_at = new Date().toISOString();
-    } else if (newStatus === 'devis envoyé') {
-      dateFields.devis_envoye_at = new Date().toISOString();
-    } else if (newStatus === 'client') {
-      dateFields.client_at = new Date().toISOString();
-    }
-
-    // Mise à jour via Supabase avec la valeur DB (français)
-    const updateData: Record<string, unknown> = {
-      lead_status: dbStatus, // Utiliser directement: nouveau, contacte, devis_envoye, client, perdu
-      ...dateFields
-    };
-
-    if (additionalData?.primeRealisee !== undefined) {
-      updateData.prime_realisee = additionalData.primeRealisee;
-    }
-
-    if (additionalData?.notes) {
-      updateData.notes = additionalData.notes;
-    }
-
-    logger.log('📤 Sending to Supabase:', updateData);
-
-    const { data, error } = await supabase
-      .from('crm_leads')
-      .update(updateData)
-      .eq('id', leadId)
-      .select()
-      .single();
-
-    if (error) {
-      logger.error('❌ Supabase update error:', error);
-      logger.error('❌ Error details:', JSON.stringify(error, null, 2));
-      throw error;
-    }
-
-    logger.log('✅ Lead status updated successfully:', data);
-    logger.log('✅ New lead_status in DB:', data?.lead_status);
+    await nativeAdminUpdateLead(leadId, updates);
     return true;
   } catch (error) {
-    logger.error('Failed to update lead status:', error);
+    logger.error('Failed to update lead through the native platform API:', error);
     return false;
   }
 }
@@ -320,84 +258,7 @@ export interface CreateLeadInput {
   notes?: string;
 }
 
-export async function checkExistingEmail(email: string): Promise<{
-  exists: boolean;
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  city?: string;
-  vehicleCount?: number;
-  createdAt?: string;
-}> {
-  try {
-    console.log('[CHECK_EMAIL] Checking email:', email);
-
-    const { data, error } = await supabase.rpc('check_existing_email', {
-      p_email: email
-    });
-
-    if (error) {
-      console.error('[CHECK_EMAIL] Error:', error);
-      return { exists: false };
-    }
-
-    if (!data || data.length === 0 || !data[0].email_exists) {
-      console.log('[CHECK_EMAIL] Email does not exist');
-      return { exists: false };
-    }
-
-    const existingLead = data[0];
-    console.log('[CHECK_EMAIL] Email exists:', existingLead);
-
-    return {
-      exists: true,
-      firstName: existingLead.first_name,
-      lastName: existingLead.last_name,
-      phone: existingLead.phone,
-      city: existingLead.city,
-      vehicleCount: existingLead.vehicle_count,
-      createdAt: existingLead.created_at
-    };
-  } catch (error) {
-    console.error('[CHECK_EMAIL] Exception:', error);
-    return { exists: false };
-  }
-}
-
-export async function resendAccess(email: string): Promise<{
-  success: boolean;
-  accessToken?: string;
-  error?: string;
-}> {
-  try {
-    console.log('[RESEND_ACCESS] Resending access for:', email);
-
-    const { data, error } = await supabase.rpc('resend_lead_access', {
-      p_email: email
-    });
-
-    if (error) {
-      console.error('[RESEND_ACCESS] Error:', error);
-      return { success: false, error: error.message };
-    }
-
-    if (!data || data.length === 0 || !data[0].success) {
-      console.error('[RESEND_ACCESS] Failed to resend');
-      return { success: false, error: 'Impossible de renvoyer les accès' };
-    }
-
-    console.log('[RESEND_ACCESS] Success');
-    return {
-      success: true,
-      accessToken: data[0].access_token
-    };
-  } catch (error) {
-    console.error('[RESEND_ACCESS] Exception:', error);
-    return { success: false, error: error.message };
-  }
-}
-
-export async function createLead(input: CreateLeadInput, forceNew: boolean = false): Promise<{ success: boolean; error?: string; leadId?: string; accessToken?: string }> {
+export async function createLead(input: CreateLeadInput, forceNew: boolean = false): Promise<{ success: boolean; error?: string; leadId?: string; accessToken?: string; existingLead?: boolean }> {
   try {
     console.log('🚀 [FORM] === DÉBUT CRÉATION LEAD ===');
     console.log('🚀 [FORM] Input:', JSON.stringify(input, null, 2));
@@ -440,157 +301,13 @@ export async function createLead(input: CreateLeadInput, forceNew: boolean = fal
     return {
       success: true,
       leadId: String(nativePayload.lead_id),
+      existingLead: nativePayload.is_new === false,
       accessToken: typeof nativePayload.access_token === 'string' && nativePayload.access_token
         ? nativePayload.access_token
         : undefined,
     };
 
-    const nameParts = normalizedInput.name.split(/\s+/);
-    const firstName = nameParts[0] || 'Client';
-    const lastName = nameParts.slice(1).join(' ') || '';
-    const vehicleType = normalizedInput.status === 'vtc' ? 'VTC' : normalizedInput.status === 'autre' ? 'Autre' : 'Taxi';
 
-    const supabaseUrl = getSupabaseUrl();
-    const supabaseKey = getSupabaseAnonKey();
-
-    if (!supabaseUrl || !supabaseKey) {
-      logger.error('Configuration Supabase publique manquante pour la creation de lead');
-      return {
-        success: false,
-        error: 'Configuration du service indisponible. Merci de contacter TaxiAssur.'
-      };
-    }
-
-    console.log('🔧 [FORM] Supabase URL:', supabaseUrl);
-    console.log('🔧 [FORM] Supabase Key présente:', supabaseKey ? 'OUI' : 'NON');
-
-    const leadParams = {
-      p_email: normalizedInput.email,
-      p_first_name: firstName,
-      p_last_name: lastName,
-      p_phone: normalizedInput.phone,
-      p_city: normalizedInput.city,
-      p_source: normalizedInput.source,
-      p_metadata: {
-        vehicle_type: vehicleType,
-        immatriculation: normalizedInput.immatriculation,
-        notes: normalizedInput.notes
-      }
-    };
-
-    console.log('📦 [FORM] Lead params:', JSON.stringify(leadParams, null, 2));
-    console.log('📦 [FORM] Force New:', forceNew);
-
-    let result: { lead_id: string; access_token: string; is_new: boolean } | null = null;
-
-    // === METHODE 1 : RPC via Supabase client ===
-    console.log('📞 [FORM] Méthode 1: Tentative RPC via Supabase client...');
-    try {
-      const { data, error } = await supabase.rpc('upsert_lead', leadParams);
-      console.log('📞 [FORM] RPC Response:', { data, error });
-      if (!error && data?.[0]) {
-        result = data[0];
-        console.log('✅ [FORM] Lead créé via RPC Supabase client!');
-        logger.log('Lead created via RPC');
-      } else if (error) {
-        console.error('❌ [FORM] RPC failed:', error.message, error.code, error);
-        logger.warn('RPC failed:', error.message, error.code);
-      }
-    } catch (rpcErr) {
-      console.error('❌ [FORM] RPC exception:', rpcErr);
-      logger.warn('RPC exception:', rpcErr);
-    }
-
-    // === METHODE 2 : Edge Function via fetch direct (bypass supabase client) ===
-    if (!result) {
-      console.log('🌐 [FORM] Méthode 2: Tentative Edge Function...');
-      try {
-        const edgeUrl = `${supabaseUrl}/functions/v1/create-lead-direct`;
-        console.log('🌐 [FORM] Edge URL:', edgeUrl);
-        const resp = await fetch(edgeUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseKey}`,
-            'apikey': supabaseKey
-          },
-          body: JSON.stringify(leadParams)
-        });
-
-        console.log('🌐 [FORM] Edge Response status:', resp.status, resp.statusText);
-        if (resp.ok) {
-          const edgeData = await resp.json();
-          console.log('🌐 [FORM] Edge Data:', edgeData);
-          if (edgeData?.success) {
-            result = {
-              lead_id: edgeData.lead_id,
-              access_token: edgeData.access_token,
-              is_new: edgeData.is_new
-            };
-            console.log('✅ [FORM] Lead créé via Edge Function!');
-            logger.log('Lead created via Edge Function');
-          } else {
-            console.error('❌ [FORM] Edge Function returned error:', edgeData?.error);
-            logger.warn('Edge Function returned error:', edgeData?.error);
-          }
-        } else {
-          const errorText = await resp.text();
-          console.error('❌ [FORM] Edge Function HTTP error:', resp.status, errorText);
-          logger.warn('Edge Function HTTP error:', resp.status, resp.statusText);
-        }
-      } catch (edgeErr) {
-        console.error('❌ [FORM] Edge Function exception:', edgeErr);
-        logger.warn('Edge Function exception:', edgeErr);
-      }
-    }
-
-    // === METHODE 3 : RPC via fetch direct (bypass supabase client entirely) ===
-    if (!result) {
-      console.log('🔄 [FORM] Méthode 3: Tentative RPC direct...');
-      try {
-        const rpcUrl = `${supabaseUrl}/rest/v1/rpc/upsert_lead`;
-        console.log('🔄 [FORM] RPC URL:', rpcUrl);
-        const resp = await fetch(rpcUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseKey}`,
-            'apikey': supabaseKey
-          },
-          body: JSON.stringify(leadParams)
-        });
-
-        console.log('🔄 [FORM] RPC Response status:', resp.status, resp.statusText);
-        if (resp.ok) {
-          const rpcData = await resp.json();
-          console.log('🔄 [FORM] RPC Data:', rpcData);
-          if (Array.isArray(rpcData) && rpcData[0]) {
-            result = rpcData[0];
-            console.log('✅ [FORM] Lead créé via RPC direct!');
-            logger.log('Lead created via direct RPC fetch');
-          }
-        } else {
-          const errText = await resp.text();
-          console.error('❌ [FORM] Direct RPC fetch failed:', resp.status, errText);
-          logger.error('Direct RPC fetch failed:', resp.status, errText);
-        }
-      } catch (fetchErr) {
-        console.error('❌ [FORM] Direct RPC fetch exception:', fetchErr);
-        logger.error('Direct RPC fetch exception:', fetchErr);
-      }
-    }
-
-    if (!result) {
-      console.error('❌ [FORM] TOUTES LES MÉTHODES ONT ÉCHOUÉ!');
-      console.error('❌ [FORM] Vérifiez la console ci-dessus pour les détails');
-      return { success: false, error: 'Impossible de créer le lead. Veuillez réessayer ou nous appeler au 01 80 85 57 86.' };
-    }
-
-    console.log('✅ [FORM] SUCCESS! Lead ID:', result.lead_id);
-    console.log('✅ [FORM] Access Token:', result.access_token);
-    console.log('📧 [FORM] Les emails sont envoyés automatiquement par la fonction upsert_lead');
-
-    return { success: true, leadId: result.lead_id, accessToken: result.access_token };
   } catch (error) {
     logger.error('Failed to create lead:', error);
     return { success: false, error: 'Une erreur est survenue. Veuillez réessayer.' };

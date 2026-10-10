@@ -61,7 +61,7 @@ export async function loadPublicInsuranceCompany(code: string): Promise<PublicIn
   return payload?.company as PublicInsuranceCompany || null;
 }
 
-async function publicPlatformRequest(path: string, body: Record<string, string>) {
+async function publicPlatformRequest(path: string, body: Record<string, unknown>) {
   const response = await fetch(`${PLATFORM_BASE_URL}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -93,6 +93,46 @@ export async function unsubscribePublicPlatformNewsletter(token: string): Promis
   return typeof payload.message === 'string'
     ? payload.message
     : 'Vous avez été désabonné avec succès';
+}
+
+export async function subscribePublicPlatformNewsletter(input: {
+  email: string;
+  first_name?: string;
+  source: string;
+}): Promise<{ resubscribed: boolean }> {
+  const payload = await publicPlatformRequest('/v1/public/newsletter', {
+    email: input.email,
+    first_name: input.first_name || '',
+    source: input.source,
+    marketing_consent: true,
+  });
+  return { resubscribed: payload?.resubscribed === true };
+}
+
+export async function submitPublicPlatformLeadMagnet(input: {
+  email: string;
+  first_name: string;
+  guide_type: string;
+  source_page: string;
+}): Promise<void> {
+  const payload = await publicPlatformRequest('/v1/public/lead-magnet', input);
+  if (!payload?.ok) throw new Error('Inscription au guide indisponible');
+}
+
+export async function sendPublicPlatformChat(messages: Array<{ role: 'user' | 'assistant'; content: string }>): Promise<string> {
+  const response = await fetch(`${PLATFORM_BASE_URL}/v1/public/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: messages.slice(-6) }),
+    credentials: 'omit',
+    cache: 'no-store',
+    signal: AbortSignal.timeout(30_000),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || typeof payload?.message !== 'string') {
+    throw new Error(platformError(payload?.error, response.status));
+  }
+  return payload.message;
 }
 
 async function platformRequest(path: string, token: string, init: RequestInit = {}, timeoutMs = 20_000) {
