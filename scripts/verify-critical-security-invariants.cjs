@@ -177,7 +177,7 @@ requireMatch(leadMagnetConfirmation, /functions\/v1\/send-email[\s\S]*Bearer \$\
 requireMatch(leadMagnetDeliveryMigration, /UNIQUE \(email_hash, guide_type, delivery_day\)[\s\S]*REVOKE ALL/, 'lead magnet delivery audit is not rate-limited or private');
 forbidMatch('src/components/LeadMagnetSection.tsx', /send-email-ionos|subject:|html:/, 'lead magnet section can send arbitrary email content');
 forbidMatch('src/components/LeadMagnetPopup.tsx', /send-email-ionos|subject:|html:/, 'lead magnet popup can send arbitrary email content');
-requireMatch('src/components/LeadMagnetSection.tsx', /await sendConfirmationEmail[\s\S]*status: 'success'/, 'lead magnet section reports success before email acceptance');
+requireMatch('src/components/LeadMagnetSection.tsx', /await submitPublicPlatformLeadMagnet[\s\S]*status: 'success'/, 'lead magnet section reports success before native API acceptance');
 requireMatch('src/components/LeadMagnetPopup.tsx', /await sendConfirmationEmail[\s\S]*setStatus\('success'\)/, 'lead magnet popup reports success before email acceptance');
 requireMatch('supabase/functions/send-whatsapp/index.ts', /body, message, to, lead_id, leadId[\s\S]*messageBody = body \|\| message/, 'WhatsApp function breaks legacy CRM payloads');
 requireMatch('supabase/functions/send-whatsapp/index.ts', /requestedLeadId[\s\S]*crm_leads[\s\S]*phone = normalizePhone\(lead\.phone\)/, 'lead WhatsApp delivery trusts the supplied phone instead of stored lead data');
@@ -414,9 +414,9 @@ requireMatch(signedQuoteStep, /SecureDocumentLink[\s\S]*filePath=\{uploadedFile\
 requireMatch(signedQuoteStep, /nativeAdminDeleteDocument\(uploadedFile\.id\)/, 'signed quote deletion bypasses native object cleanup');
 const pipelineCard = 'src/components/crm/PipelineCard.tsx';
 forbidMatch(pipelineCard, /getPublicUrl|quote_pdf_url:\s*publicUrl|sent_at:\s*new Date/, 'Kanban quote upload exposes a public URL or claims delivery prematurely');
-requireMatch(pipelineCard, /application\/pdf[\s\S]*10 \* 1024 \* 1024[\s\S]*crypto\.randomUUID\(\)/, 'Kanban quote validation or unpredictable naming is missing');
-requireMatch(pipelineCard, /withTimeout\([\s\S]*\.upload\([\s\S]*60_000[\s\S]*quote_file_url:\s*filePath[\s\S]*submitted_at/, 'Kanban quote persistence is public or unbounded');
-requireMatch(pipelineCard, /if \(insertError\)[\s\S]*remove\(\[filePath\]\)/, 'Kanban quote DB failure leaves an orphan upload');
+requireMatch(pipelineCard, /file\.type !== "application\/pdf"[\s\S]*file\.size > 10 \* 1024 \* 1024[\s\S]*nativeAdminUploadQuoteDocument\(lead\.id, quote\.id, pendingQuoteFile/, 'Kanban quote validation or native upload handoff is missing');
+requireMatch('src/lib/native-admin-data.ts', /nativeAdminUploadQuoteDocument[\s\S]*AbortSignal\.timeout\(60_000\)[\s\S]*Content-Type[\s\S]*application\/pdf/, 'Kanban quote upload is not private, typed, or bounded');
+requireMatch('server/taxiassur-platform-api.mjs', /adminLeadQuoteDocumentUpload[\s\S]*mime!=='application\/pdf'[\s\S]*size>maxUploadBytes[\s\S]*randomUUID\(\)[\s\S]*scanFile\(temporaryPath\)[\s\S]*safeUnlink\(finalPath\)/, 'Native Kanban quote upload lacks validation, scanning, or orphan cleanup');
 const contractSignatureManager = 'src/components/crm/ContractSignatureManager.tsx';
 forbidMatch(contractSignatureManager, /getPublicUrl|\.from\(["']documents["']\)[\s\S]*\.upload|href=\{signatureData\.(?:contract_url|special_conditions_url)\}/, 'contract manager exposes private contract documents');
 requireMatch(contractSignatureManager, /application\/pdf[\s\S]*10 \* 1024 \* 1024[\s\S]*nativeAdminUploadContractDocument/, 'contract upload validation or native handoff is missing');
