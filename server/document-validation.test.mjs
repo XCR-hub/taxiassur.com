@@ -52,3 +52,10 @@ test('rejection clears previous validation metadata and remains possible for inf
   assert.match(sql, /"validated_at":null/);
   assert.match(sql, /"validated_by":null/);
 });
+test('verified documents map to the validated status supported by native file storage', async () => {
+  const f = fixture({ status: 'verified' });
+  assert.equal((await f.run()).status, 200);
+  const sql = f.queries.find(sql => sql.startsWith('WITH updated'));
+  assert.match(sql, /"status":"verified"/);
+  assert.match(sql, /UPDATE taxiassur.file_objects SET status='validated'/);
+});
