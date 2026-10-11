@@ -10,10 +10,40 @@ import { PendingAttachmentsPanel } from '../PendingAttachmentsPanel';
 import DocumentValidationManager from '../DocumentValidationManager';
 import { DocumentChecklistPanel } from '../DocumentChecklistPanel';
 import { DocumentChecklistPanelV2 } from '../DocumentChecklistPanelV2';
+import { DocumentUnifiedManager } from '../DocumentUnifiedManager';
 
 const document = { id: 'doc-id', document_type: 'rib', file_name: 'rib.pdf', file_path: 'lead/rib.pdf', file_size: 100, uploaded_at: '2026-10-11T12:00:00Z', status: 'pending', bucket: 'native' };
 const attachment = { attachment_id: 'mail-id:2', filename: 'email-piece.pdf', content_type: 'application/pdf', file_size: 200, storage_path: 'lead/email-piece.pdf', storage_bucket: 'email-attachments', received_at: '2026-10-11T12:00:00Z', source: 'email' };
 beforeEach(() => { call.mockReset(); update.mockReset().mockResolvedValue({ ok: true }); open.mockReset().mockResolvedValue(undefined); download.mockReset().mockResolvedValue(undefined); upload.mockReset().mockResolvedValue({ ok: true }); remove.mockReset().mockResolvedValue({ ok: true }); errorToast.mockReset(); });
+
+describe('native unified document manager', () => {
+  const props = { leadId: 'lead-id', leadEmail: 'test@example.com', leadFirstName: 'Camille' };
+  const piece = { ...document, document_type: 'carte_grise', lead_id: 'owner-id' };
+  it('moves a CRM file through its actual owning lead workspace', async () => {
+    call.mockImplementation(async (route: string) => route.includes('scope=all') ? { documents: [piece] } : route.includes('/documents?') ? { documents: [] } : { attachments: [] });
+    render(<DocumentUnifiedManager {...props} />);
+    const file = await screen.findByText('rib.pdf');
+    fireEvent.dragStart(file.closest('[draggable]')!);
+    fireEvent.drop(screen.getByText('RIB').closest('.p-3')!);
+    await waitFor(() => expect(call).toHaveBeenCalledWith('/v1/admin/leads/owner-id/document-workspace', { method: 'POST', body: JSON.stringify({ action: 'move', document_id: 'doc-id', document_type: 'rib' }) }));
+  });
+  it('validates the actual document ID instead of a separate lead checklist', async () => {
+    call.mockImplementation(async (route: string) => route.includes('/documents?') ? { documents: [piece] } : { attachments: [] });
+    render(<DocumentUnifiedManager {...props} />);
+    fireEvent.click(await screen.findByTitle('Valider'));
+    await waitFor(() => expect(update).toHaveBeenCalledWith('doc-id', { status: 'validated' }));
+  });
+  it('recognises verified status and blocks quarantine validation', async () => {
+    call.mockImplementation(async (route: string) => route.includes('/documents?') ? { documents: [{ ...piece, status: 'verified' }] } : { attachments: [] });
+    const { unmount } = render(<DocumentUnifiedManager {...props} />);
+    await screen.findByTitle('Redemander');
+    expect(screen.queryByTitle('Valider')).not.toBeInTheDocument();
+    unmount();
+    call.mockImplementation(async (route: string) => route.includes('/documents?') ? { documents: [{ ...piece, status: 'quarantined' }] } : { attachments: [] });
+    render(<DocumentUnifiedManager {...props} />);
+    expect(await screen.findByTitle('Valider')).toBeDisabled();
+  });
+});
 
 describe('native second document checklist', () => {
   const props = { leadId: 'lead-id', leadEmail: 'test@example.com', leadFirstName: 'Camille' };

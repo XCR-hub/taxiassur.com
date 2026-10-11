@@ -4,8 +4,9 @@ import {
   FileText, CheckCircle, XCircle, Clock, AlertTriangle,
   RefreshCw, Send, RotateCcw, GripVertical
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { nativeAdminSession } from '@/lib/native-admin-auth';
+import { nativeAdminCall, nativeAdminUpdateDocument } from '@/lib/native-admin-data';
+import { documentValidationError } from '@/lib/native-document-status';
+
 import { SecureDocumentLink } from './SecureDocumentLink';
 
 interface DocumentStatus {
@@ -18,12 +19,11 @@ interface DocumentStatus {
   notes?: string;
 }
 
-interface DocumentChecklist {
-  [key: string]: DocumentStatus;
-}
 
 interface UnifiedDocument {
   id: string;
+  lead_id?: string;
+  rejection_reason?: string;
   document_type: string | null;
   file_name: string;
   file_path?: string;
@@ -71,7 +71,6 @@ export function DocumentUnifiedManager({
   leadId,
   onRequestDocuments
 }: DocumentUnifiedManagerProps) {
-  const [checklist, setChecklist] = useState<DocumentChecklist>({});
   const [allDocuments, setAllDocuments] = useState<UnifiedDocument[]>([]);
   const [unclassifiedDocuments, setUnclassifiedDocuments] = useState<UnifiedDocument[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,104 +84,27 @@ export function DocumentUnifiedManager({
     console.log('🔄 DocumentUnifiedManager: loadData called for leadId:', leadId);
     setLoading(true);
     try {
-      const [leadResult, prospectDocsResult, crmDocsResult, emailAttachmentsResult] = await Promise.all([
-        supabase
-          .from('crm_leads')
-          .select('document_checklist, documents_complete')
-          .eq('id', leadId)
-          .maybeSingle(),
-        supabase
-          .from('prospect_documents')
-          .select('*')
-          .eq('lead_id', leadId)
-          .order('uploaded_at', { ascending: false }),
-        supabase
-          .from('crm_lead_documents')
-          .select('*')
-          .eq('lead_id', leadId)
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('email_attachments')
-          .select('*')
-          .eq('lead_id', leadId)
-          .order('created_at', { ascending: false })
+      const [data, prospect, workspace] = await Promise.all([
+        nativeAdminCall<{ documents?: UnifiedDocument[] }>(`/v1/admin/documents?lead_id=${encodeURIComponent(leadId)}&scope=all`),
+        nativeAdminCall<{ documents?: UnifiedDocument[] }>(`/v1/admin/documents?lead_id=${encodeURIComponent(leadId)}`),
+        nativeAdminCall<{ attachments?: Array<{ attachment_id: string; filename: string; content_type: string; file_size: number; storage_path: string; storage_bucket?: string; source: string; received_at: string }> }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/document-workspace`)
       ]);
-
-      if (leadResult.data?.document_checklist) {
-        setChecklist(leadResult.data.document_checklist);
-      }
-
-      // Unifier tous les documents
-      const unified: UnifiedDocument[] = [];
-
-      // Documents uploadés par le prospect
-      if (prospectDocsResult.data) {
-        prospectDocsResult.data.forEach((doc) => {
-          unified.push({
-            id: doc.id,
-            document_type: doc.document_type,
-            file_name: doc.file_name,
-            file_path: doc.file_path,
-            file_size: doc.file_size,
-            uploaded_at: doc.uploaded_at,
-            status: doc.status,
-            notes: doc.notes,
-            source: 'prospect_upload',
-            download_url: typeof doc.metadata?.download_url === 'string' ? doc.metadata.download_url : undefined,
-            metadata: doc.metadata
-          });
-        });
-      }
-
-      // Documents classifiés dans crm_lead_documents
-      if (crmDocsResult.data) {
-        crmDocsResult.data.forEach((doc) => {
-          unified.push({
-            id: doc.id,
-            document_type: doc.document_type,
-            file_name: doc.file_name,
-            file_path: doc.file_path,
-            file_size: doc.file_size,
-            uploaded_at: doc.uploaded_at || doc.created_at,
-            status: doc.status,
-            notes: doc.notes,
-            source: 'manual_upload',
-            metadata: { ...doc.metadata, storage_bucket: doc.bucket }
-          });
-        });
-      }
-
-      // Documents reçus par email
-      if (emailAttachmentsResult.data) {
-        emailAttachmentsResult.data.forEach((attachment) => {
-          unified.push({
-            id: attachment.id,
-            document_type: attachment.classification_status === 'classified' ? attachment.auto_detected_type : null,
-            file_name: attachment.file_name,
-            file_size: attachment.file_size,
-            created_at: attachment.created_at,
-            status: 'pending',
-            source: 'email_attachment',
-            download_url: attachment.download_url,
-            classification_status: attachment.classification_status,
-            auto_detected_type: attachment.auto_detected_type,
-            metadata: { email_id: attachment.email_message_id }
-          });
-        });
-      }
-
+      const prospectIds = new Set((prospect.documents || []).map(doc => doc.id));
+      const stored = [...new Map((data.documents || []).filter(doc => doc.file_path).map(doc => [doc.id, doc])).values()].map(doc => ({
+        ...doc, source: prospectIds.has(doc.id) ? 'prospect_upload' as const : 'manual_upload' as const,
+        metadata: { ...doc.metadata, storage_bucket: (doc as UnifiedDocument & { bucket?: string }).bucket || 'prospect-documents' }
+      }));
+      const email: UnifiedDocument[] = (workspace.attachments || []).filter(item => item.source === 'email').map(item => ({
+        id: item.attachment_id, document_type: null, file_name: item.filename, file_path: item.storage_path, file_size: item.file_size,
+        created_at: item.received_at, status: 'pending', source: 'email_attachment', classification_status: 'pending',
+        metadata: { storage_bucket: item.storage_bucket || 'email-attachments' }
+      }));
+      const unified = [...stored, ...email];
       setAllDocuments(unified);
-
-      // Séparer les documents non classés
-      const unclassified = unified.filter(
-        doc => !doc.document_type || doc.classification_status === 'pending'
-      );
-      setUnclassifiedDocuments(unclassified);
-
-      console.log('✅ DocumentUnifiedManager: Loaded', unified.length, 'documents');
-      console.log('   - Unclassified:', unclassified.length);
+      setUnclassifiedDocuments(unified.filter(doc => !doc.document_type || doc.document_type === 'autre' || doc.classification_status === 'pending'));
     } catch (err) {
       console.error('❌ DocumentUnifiedManager: Error loading data:', err);
+      toast.error('Impossible de charger les documents. Vérifiez votre session puis réessayez.');
     } finally {
       setLoading(false);
     }
@@ -222,65 +144,10 @@ export function DocumentUnifiedManager({
     setActionLoading(draggedDoc.id);
 
     try {
-      // Classer le document dans le type cible
-      if (draggedDoc.source === 'email_attachment') {
-        // Créer un prospect_document depuis l'email attachment
-        const { error: insertError } = await supabase
-          .from('prospect_documents')
-          .insert({
-            lead_id: leadId,
-            document_type: targetDocType,
-            file_name: draggedDoc.file_name,
-            file_path: '00000000-0000-0000-0000-000000000001/' + draggedDoc.file_name,
-            file_size: draggedDoc.file_size,
-            status: 'pending',
-            metadata: {
-              source: 'email_attachment',
-              email_attachment_id: draggedDoc.id,
-              download_url: draggedDoc.download_url,
-              ...draggedDoc.metadata
-            }
-          });
-
-        if (insertError) throw insertError;
-
-        // Marquer l'attachment comme classé
-        await supabase
-          .from('email_attachments')
-          .update({
-            classification_status: 'classified',
-            auto_detected_type: targetDocType
-          })
-          .eq('id', draggedDoc.id);
-
-      } else if (draggedDoc.source === 'prospect_upload') {
-        // Reclasser un document existant
-        const { error: updateError } = await supabase
-          .from('prospect_documents')
-          .update({
-            document_type: targetDocType,
-            status: 'pending'
-          })
-          .eq('id', draggedDoc.id);
-
-        if (updateError) throw updateError;
-      }
-
-      // Mettre à jour la checklist
-      const newChecklist = { ...checklist };
-      newChecklist[targetDocType] = {
-        status: 'uploaded',
-        validated: false,
-        uploaded_at: draggedDoc.uploaded_at || draggedDoc.created_at,
-        file_name: draggedDoc.file_name
-      };
-
-      await supabase
-        .from('crm_leads')
-        .update({ document_checklist: newChecklist })
-        .eq('id', leadId);
-
-      console.log('✅ Document classé dans:', targetDocType);
+      const owner = draggedDoc.lead_id || leadId;
+      const action = draggedDoc.source === 'manual_upload' ? { action: 'move', document_id: draggedDoc.id, document_type: targetDocType }
+        : { action: 'classify', attachment_id: draggedDoc.source === 'email_attachment' ? draggedDoc.id : `prospect:${draggedDoc.id}`, document_type: targetDocType };
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(owner)}/document-workspace`, { method: 'POST', body: JSON.stringify(action) });
       await loadData();
 
     } catch (err) {
@@ -298,44 +165,23 @@ export function DocumentUnifiedManager({
   };
 
   const getDocumentStatus = (docType: string): DocumentStatus => {
-    const checklistStatus = checklist[docType];
-    const docs = getDocumentsForType(docType);
-
-    if (checklistStatus?.validated) {
-      return { ...checklistStatus, status: 'validated' };
-    }
-    if (checklistStatus?.status === 'rejected') {
-      return checklistStatus;
-    }
-    if (docs.length > 0 || checklistStatus?.status === 'uploaded') {
-      return {
-        status: 'uploaded',
-        validated: false,
-        uploaded_at: docs[0]?.uploaded_at || docs[0]?.created_at,
-        file_name: docs[0]?.file_name
-      };
-    }
-    return { status: 'missing', validated: false };
+    const doc = getDocumentsForType(docType)[0];
+    if (!doc) return { status: 'missing', validated: false };
+    const validated = ['validated', 'verified'].includes(doc.status);
+    return { status: validated ? 'validated' : doc.status === 'rejected' ? 'rejected' : 'uploaded', validated,
+      uploaded_at: doc.uploaded_at || doc.created_at, file_name: doc.file_name, rejection_reason: doc.rejection_reason };
   };
 
   const handleValidate = async (docType: string) => {
     setActionLoading(docType);
     try {
-      const { user } = await nativeAdminSession();
-      const adminId = user?.id;
-
-      const { error } = await supabase.rpc('validate_document', {
-        p_lead_id: leadId,
-        p_document_type: docType,
-        p_admin_id: adminId,
-        p_notes: null
-      });
-
-      if (error) throw error;
+      const doc = getDocumentsForType(docType)[0];
+      if (!doc) throw new Error('not_found');
+      await nativeAdminUpdateDocument(doc.id, { status: 'validated' });
       await loadData();
     } catch (err) {
       console.error('Error validating document:', err);
-      toast.error('Erreur lors de la validation');
+      toast.error(documentValidationError(err));
     } finally {
       setActionLoading(null);
     }
@@ -349,17 +195,9 @@ export function DocumentUnifiedManager({
 
     setActionLoading(docType);
     try {
-      const { user } = await nativeAdminSession();
-      const adminId = user?.id;
-
-      const { error } = await supabase.rpc('invalidate_document', {
-        p_lead_id: leadId,
-        p_document_type: docType,
-        p_admin_id: adminId,
-        p_reason: rejectReason
-      });
-
-      if (error) throw error;
+      const doc = getDocumentsForType(docType)[0];
+      if (!doc) throw new Error('not_found');
+      await nativeAdminUpdateDocument(doc.id, { status: 'rejected', rejection_reason: rejectReason.trim() });
       setShowRejectModal(null);
       setRejectReason('');
       await loadData();
@@ -609,7 +447,7 @@ export function DocumentUnifiedManager({
                     <>
                       <button
                         onClick={() => handleValidate(docType.id)}
-                        disabled={isLoading}
+                        disabled={isLoading || docs[0]?.status === 'quarantined'}
                         className="p-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg transition-colors"
                         title="Valider"
                       >
