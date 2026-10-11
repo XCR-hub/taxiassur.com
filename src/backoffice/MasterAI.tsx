@@ -8,7 +8,7 @@ import {
   Shield, Database, Globe, Mail, Share2, Search, Link, FileText,
   Users, DollarSign, Award, Rocket, Cpu, Network, Home
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 
 interface SystemHealth {
   database: number;
@@ -67,7 +67,7 @@ interface DashboardData {
 export default function MasterAI() {
   const navigate = useNavigate();
 const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [isAutoMode, setIsAutoMode] = useState(true);
+  const [isAutoMode, setIsAutoMode] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
@@ -85,23 +85,18 @@ const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
 
   const loadDashboardData = async () => {
     try {
-      // Appeler la fonction RPC qui retourne TOUTES les données réelles
-      const { data, error } = await supabase.rpc('get_ai_master_dashboard');
-
-      if (error) {
-        logger.error('Error loading AI Master dashboard:', error);
-        return;
-      }
+      const data = await nativeAdminCall<DashboardData>('/v1/admin/master-ai');
 
       if (data) {
         setDashboardData(data);
-        setIsAutoMode(data.status?.is_active ?? true);
+        setIsAutoMode(data.status?.is_active === true);
         setLastUpdate(new Date());
       }
 
       setLoading(false);
     } catch (error) {
       logger.error('Failed to load dashboard:', error);
+      toast.error('Impossible de charger le tableau de bord. Vérifiez votre session puis réessayez.');
       setLoading(false);
     }
   };
@@ -109,15 +104,9 @@ const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const toggleAutoMode = async () => {
     setToggling(true);
     try {
-      const { data, error } = await supabase.rpc('toggle_ai_automation', {
-        new_state: !isAutoMode
+      const data = await nativeAdminCall<{ is_active: boolean; message: string }>('/v1/admin/master-ai', {
+        method: 'POST', body: JSON.stringify({ action: 'toggle', enabled: !isAutoMode })
       });
-
-      if (error) {
-        logger.error('Error toggling automation:', error);
-        toast.error('❌ Erreur lors du changement de mode');
-        return;
-      }
 
       if (data) {
         setIsAutoMode(data.is_active);
@@ -133,8 +122,15 @@ const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   };
 
   const runManualOptimization = async () => {
-    toast.info('🤖 Lancement manuel de l\'optimisation...\n\nL\'IA analyse et optimise votre système. Résultats dans quelques instants.');
-    await loadDashboardData();
+    setToggling(true);
+    try {
+      await nativeAdminCall('/v1/admin/master-ai', { method: 'POST', body: JSON.stringify({ action: 'analyze' }) });
+      toast.info('Analyse enregistrée. Consultez les recommandations avant de les appliquer.');
+      await loadDashboardData();
+    } catch (error) {
+      logger.error('Failed to analyze:', error);
+      toast.error('Impossible de lancer l’analyse. Réessayez dans quelques instants.');
+    } finally { setToggling(false); }
   };
 
   if (loading) {
@@ -256,7 +252,7 @@ const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
 
                 <button
                   onClick={toggleAutoMode}
-                  disabled={toggling}
+                  disabled={toggling || !dashboardData}
                   className={`px-4 py-2 rounded-lg font-medium transition-all ${
                     isAutoMode
                       ? 'bg-red-600 hover:bg-red-500 text-white'
@@ -268,6 +264,7 @@ const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
 
                 <button
                   onClick={runManualOptimization}
+                  disabled={toggling || !dashboardData}
                   className="p-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white transition-colors"
                   title="Forcer l'optimisation maintenant"
                 >
