@@ -1,6 +1,6 @@
 import { Lead } from './schema';
 import { SecureLead } from './security';
-import { supabase } from './supabase';
+import { PLATFORM_BASE_URL } from './platform-api';
 import { logger } from '@/lib/logger';
 
 export async function submitLead(leadData: Lead): Promise<{ success: boolean; error?: string }> {
@@ -30,90 +30,19 @@ export async function submitLead(leadData: Lead): Promise<{ success: boolean; er
 }
 
 export async function submitSecureLead(leadData: SecureLead): Promise<{ success: boolean; error?: string; accessToken?: string }> {
+  if (leadData.honeypot) return { success: false, error: 'Soumission refusée' };
   try {
-    // Séparer le nom en first_name et last_name
-    const nameParts = leadData.name.trim().split(' ');
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.slice(1).join(' ') || '';
-
-    // Insérer dans crm_leads (nouvelle table unifiée)
-    const { data: leadRecord, error: dbError } = await supabase
-      .from('crm_leads')
-      .insert({
-        first_name: firstName,
-        last_name: lastName,
-        email: leadData.email,
-        phone: leadData.phone,
-        city: leadData.city,
-        immatriculation: leadData.immatriculation,
-        status: 'NOUVEAU_LEAD', // ✅ Utilise le nouveau système français
-        source: 'website_form'
-      })
-      .select('*, access_token, full_name')
-      .single();
-
-    if (dbError) {
-      logger.error('Database error:', dbError);
-      return { success: false, error: 'Erreur lors de l\'enregistrement' };
-    }
-
-    logger.info(`Lead created: ${leadRecord.id}`);
-
-    // Appeler l'edge function IMMÉDIATEMENT pour envoi instantané des emails
-    sendLeadNotificationEmails({
-      lead_id: leadRecord.id,
-      name: leadRecord.full_name,
-      email: leadData.email,
-      phone: leadData.phone,
-      city: leadData.city,
-      status: leadRecord.status,
-      immatriculation: leadData.immatriculation || '',
-      access_token: leadRecord.access_token
-    }).catch(err => {
-      logger.warn('Email notification failed (non-blocking):', err);
+    const response = await fetch(`${PLATFORM_BASE_URL}/v1/public/leads`, {
+      method: 'POST', credentials: 'omit', cache: 'no-store', signal: AbortSignal.timeout(20_000),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...leadData, source: 'website_form' })
     });
-
-    return {
-      success: true,
-      accessToken: leadRecord?.access_token
-    };
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.ok !== true) return { success: false, error: response.status === 429 ? 'Trop de demandes. Réessayez dans quelques instants.' : 'Impossible d’enregistrer votre demande. Réessayez dans quelques instants.' };
+    return { success: true, accessToken: typeof result.access_token === 'string' ? result.access_token : undefined };
   } catch (error) {
-    logger.error('Secure lead submission error:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Erreur de connexion'
-    };
-  }
-}
-
-async function sendLeadNotificationEmails(lead: {
-  lead_id: string;
-  name: string;
-  email: string;
-  phone: string;
-  city: string;
-  status: string;
-  immatriculation: string;
-  access_token?: string;
-}): Promise<void> {
-  try {
-    const { data, error } = await supabase.functions.invoke('send-lead-notification', {
-      body: lead
-    });
-
-    if (error) {
-      logger.error('Notification edge function error:', error);
-      throw error;
-    }
-
-    if (data?.success) {
-      logger.info(`Notifications sent: ${data.emails_sent} emails`);
-    } else {
-      logger.warn('Notification response:', data);
-    }
-  } catch (err) {
-    logger.error('Failed to send notifications:', err);
-    throw err;
+    logger.error('Native lead submission failed:', error);
+    return { success: false, error: 'Connexion indisponible. Réessayez dans quelques instants.' };
   }
 }
 
