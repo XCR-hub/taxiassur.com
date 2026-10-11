@@ -9,6 +9,20 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
+it('uploads the original file with authenticated, encoded notes through the native scanner', async () => {
+  const fetchMock = vi.fn().mockResolvedValue(response({ ok: true }));
+  vi.stubGlobal('fetch', fetchMock);
+  localStorage.setItem(NATIVE_ADMIN_TOKEN_KEY, 'native-admin-token');
+  const { nativeAdminUploadLeadDocument } = await import('../native-admin-data');
+  const file = new File(['pdf'], 'carte.pdf', { type: 'application/pdf' });
+  await nativeAdminUploadLeadDocument('lead-id', 'carte_grise', file, undefined, 'classified', 'Pièce reçue\nVérifier');
+  expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/v1/admin/leads/lead-id/document-workspace/upload'), expect.objectContaining({
+    method: 'POST', body: file, headers: expect.objectContaining({ Authorization: 'Bearer native-admin-token', 'X-Document-Notes': encodeURIComponent('Pièce reçue\nVérifier') })
+  }));
+  fetchMock.mockResolvedValueOnce({ ok: false, json: async () => ({ error: 'infected_file' }) });
+  await expect(nativeAdminUploadLeadDocument('lead-id', 'carte_grise', file)).rejects.toThrow('infected_file');
+});
+
 it('does not request private stored documents without a native admin session', async () => {
   const fetchMock = vi.fn();
   vi.stubGlobal('fetch', fetchMock);

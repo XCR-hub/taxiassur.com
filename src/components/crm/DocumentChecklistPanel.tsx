@@ -13,7 +13,8 @@ import {
   Plus,
   Trash2
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall, nativeAdminUploadLeadDocument, nativeAdminUpdateDocument, nativeAdminDeleteDocument, nativeAdminOpenDocument, nativeAdminDownloadDocument } from '@/lib/native-admin-data';
+import { documentValidationError } from '@/lib/native-document-status';
 import { getRequiredDocuments } from '@/lib/document-requirements';
 
 interface Document {
@@ -21,7 +22,7 @@ interface Document {
   document_type: string;
   file_name: string;
   file_path: string;
-  status: 'pending' | 'validated' | 'rejected';
+  status: 'pending' | 'validated' | 'verified' | 'rejected' | 'quarantined';
   uploaded_at: string;
   validated_at?: string;
   notes?: string;
@@ -54,16 +55,11 @@ export function DocumentChecklistPanel({ leadId, vehicleType, onDocumentUpload, 
   const loadDocuments = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('crm_lead_documents')
-        .select('*')
-        .eq('lead_id', leadId)
-        .order('uploaded_at', { ascending: false });
-
-      if (error) throw error;
-      setDocuments(data || []);
+      const data = await nativeAdminCall<{ documents?: Document[] }>(`/v1/admin/documents?lead_id=${encodeURIComponent(leadId)}&scope=all`);
+      setDocuments([...new Map((data.documents || []).filter(doc => doc.file_path).map(doc => [doc.id, doc])).values()]);
     } catch (err) {
       console.error('Error loading documents:', err);
+      toast.error('Impossible de charger les documents');
     } finally {
       setLoading(false);
     }
@@ -72,7 +68,7 @@ export function DocumentChecklistPanel({ leadId, vehicleType, onDocumentUpload, 
   const getDocumentStatus = (docType: string) => {
     const doc = documents.find(d => d.document_type === docType);
     if (!doc) return { status: 'missing', doc: null };
-    return { status: doc.status, doc };
+    return { status: doc.status === 'verified' ? 'validated' : doc.status, doc };
   };
 
   const getMissingRequiredDocs = () => {
@@ -87,7 +83,7 @@ export function DocumentChecklistPanel({ leadId, vehicleType, onDocumentUpload, 
       const status = getDocumentStatus(d.type);
       return status.status === 'validated';
     });
-    return Math.round((validatedDocs.length / requiredDocs.length) * 100);
+    return requiredDocs.length ? Math.round((validatedDocs.length / requiredDocs.length) * 100) : 100;
   };
 
   const handleUpload = async () => {
@@ -95,30 +91,7 @@ export function DocumentChecklistPanel({ leadId, vehicleType, onDocumentUpload, 
 
     setUploading(true);
     try {
-      const fileExt = uploadForm.file.name.split('.').pop();
-      const fileName = `${leadId}/${uploadForm.type}_${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('crm-documents')
-        .upload(fileName, uploadForm.file);
-
-      if (uploadError) throw uploadError;
-
-      const { error: dbError } = await supabase
-        .from('crm_lead_documents')
-        .insert({
-          lead_id: leadId,
-          document_type: uploadForm.type,
-          file_name: uploadForm.file.name,
-          file_path: fileName,
-          file_size: uploadForm.file.size,
-          mime_type: uploadForm.file.type,
-          status: 'pending',
-          notes: uploadForm.notes,
-          uploaded_by: 'admin'
-        });
-
-      if (dbError) throw dbError;
+      await nativeAdminUploadLeadDocument(leadId, uploadForm.type, uploadForm.file, undefined, 'classified', uploadForm.notes);
 
       setShowUploadModal(false);
       setUploadForm({ type: 'carte_grise', file: null, notes: '' });
@@ -126,7 +99,8 @@ export function DocumentChecklistPanel({ leadId, vehicleType, onDocumentUpload, 
       if (onDocumentUpload) onDocumentUpload();
     } catch (err) {
       console.error('Upload error:', err);
-      toast.error('Erreur lors de l\'upload');
+      const code = err instanceof Error ? err.message : '';
+      toast.error(code === 'infected_file' ? 'Fichier refusé par le contrôle antivirus.' : code === 'scan_failed' ? 'Le contrôle antivirus est indisponible. Réessayez plus tard.' : 'Impossible de déposer le document. Vérifiez le format du fichier et votre session.');
     } finally {
       setUploading(false);
     }
@@ -134,15 +108,11 @@ export function DocumentChecklistPanel({ leadId, vehicleType, onDocumentUpload, 
 
   const handleValidate = async (docId: string) => {
     try {
-      const { error } = await supabase
-        .from('crm_lead_documents')
-        .update({ status: 'validated', validated_at: new Date().toISOString(), validated_by: 'admin' })
-        .eq('id', docId);
-
-      if (error) throw error;
+      await nativeAdminUpdateDocument(docId, { status: 'validated' });
       await loadDocuments();
     } catch (err) {
       console.error('Validation error:', err);
+      toast.error(documentValidationError(err));
     }
   };
 
@@ -151,15 +121,11 @@ export function DocumentChecklistPanel({ leadId, vehicleType, onDocumentUpload, 
     if (!reason) return;
 
     try {
-      const { error } = await supabase
-        .from('crm_lead_documents')
-        .update({ status: 'rejected', notes: reason })
-        .eq('id', docId);
-
-      if (error) throw error;
+      await nativeAdminUpdateDocument(docId, { status: 'rejected', rejection_reason: reason });
       await loadDocuments();
     } catch (err) {
       console.error('Reject error:', err);
+      toast.error('Impossible de refuser le document');
     }
   };
 
@@ -167,16 +133,19 @@ export function DocumentChecklistPanel({ leadId, vehicleType, onDocumentUpload, 
     if (!confirm('Supprimer ce document?')) return;
 
     try {
-      const { error } = await supabase
-        .from('crm_lead_documents')
-        .delete()
-        .eq('id', docId);
-
-      if (error) throw error;
+      await nativeAdminDeleteDocument(docId);
       await loadDocuments();
     } catch (err) {
       console.error('Delete error:', err);
+      toast.error('Impossible de supprimer le document');
     }
+  };
+
+  const openDocument = async (doc: Document, download = false) => {
+    try {
+      if (download) await nativeAdminDownloadDocument(doc.id, doc.file_name);
+      else await nativeAdminOpenDocument(doc.id);
+    } catch { toast.error('Impossible d’ouvrir le document'); }
   };
 
   const completion = getCompletionPercentage();
@@ -276,7 +245,7 @@ export function DocumentChecklistPanel({ leadId, vehicleType, onDocumentUpload, 
                     </p>
                     {doc && (
                       <p className="text-xs text-gray-500">
-                        {doc.file_name} - {new Date(doc.uploaded_at).toLocaleDateString('fr-FR')}
+                        {status === 'quarantined' && 'En quarantaine — '}{doc.file_name} - {new Date(doc.uploaded_at).toLocaleDateString('fr-FR')}
                       </p>
                     )}
                   </div>
@@ -285,10 +254,11 @@ export function DocumentChecklistPanel({ leadId, vehicleType, onDocumentUpload, 
                 <div className="flex items-center gap-1">
                   {doc ? (
                     <>
-                      {status === 'pending' && (
+                      {['pending', 'quarantined'].includes(status) && (
                         <>
                           <button
                             onClick={() => handleValidate(doc.id)}
+                            disabled={status === 'quarantined'}
                             className="p-1.5 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
                             title="Valider"
                           >
@@ -306,12 +276,14 @@ export function DocumentChecklistPanel({ leadId, vehicleType, onDocumentUpload, 
                       <button
                         className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
                         title="Voir"
+                        onClick={() => openDocument(doc)}
                       >
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
                         className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                         title="Telecharger"
+                        onClick={() => openDocument(doc, true)}
                       >
                         <Download className="w-4 h-4" />
                       </button>
@@ -380,7 +352,7 @@ export function DocumentChecklistPanel({ leadId, vehicleType, onDocumentUpload, 
                 <label className="block text-sm font-medium text-gray-700 mb-1">Fichier</label>
                 <input
                   type="file"
-                  accept="image/*,application/pdf,.doc,.docx"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
                   onChange={(e) => setUploadForm({ ...uploadForm, file: e.target.files?.[0] || null })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
                 />
@@ -389,6 +361,7 @@ export function DocumentChecklistPanel({ leadId, vehicleType, onDocumentUpload, 
                 <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
                 <textarea
                   value={uploadForm.notes}
+                  maxLength={2000}
                   onChange={(e) => setUploadForm({ ...uploadForm, notes: e.target.value })}
                   rows={2}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"

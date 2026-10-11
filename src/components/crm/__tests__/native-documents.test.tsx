@@ -1,17 +1,58 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-const { call, update, open, download, errorToast } = vi.hoisted(() => ({ call: vi.fn(), update: vi.fn(), open: vi.fn(), download: vi.fn(), errorToast: vi.fn() }));
-vi.mock('@/lib/native-admin-data', () => ({ nativeAdminCall: call, nativeAdminUpdateDocument: update, nativeAdminOpenDocument: open, nativeAdminDownloadDocument: download }));
+const { call, update, open, download, upload, remove, errorToast } = vi.hoisted(() => ({ call: vi.fn(), update: vi.fn(), open: vi.fn(), download: vi.fn(), upload: vi.fn(), remove: vi.fn(), errorToast: vi.fn() }));
+vi.mock('@/lib/native-admin-data', () => ({ nativeAdminCall: call, nativeAdminUpdateDocument: update, nativeAdminOpenDocument: open, nativeAdminDownloadDocument: download, nativeAdminUploadLeadDocument: upload, nativeAdminDeleteDocument: remove }));
 vi.mock('@/lib/toast', () => ({ toast: { error: errorToast, warning: vi.fn() } }));
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn() } }));
 vi.mock('../SecureDocumentLink', () => ({ SecureDocumentLink: ({ bucket }: { bucket: string }) => <span data-testid="document-bucket">{bucket}</span> }));
 import DocumentValidationPanel from '../DocumentValidationPanel';
 import { PendingAttachmentsPanel } from '../PendingAttachmentsPanel';
 import DocumentValidationManager from '../DocumentValidationManager';
+import { DocumentChecklistPanel } from '../DocumentChecklistPanel';
 
 const document = { id: 'doc-id', document_type: 'rib', file_name: 'rib.pdf', file_path: 'lead/rib.pdf', file_size: 100, uploaded_at: '2026-10-11T12:00:00Z', status: 'pending', bucket: 'native' };
 const attachment = { attachment_id: 'mail-id:2', filename: 'email-piece.pdf', content_type: 'application/pdf', file_size: 200, storage_path: 'lead/email-piece.pdf', storage_bucket: 'email-attachments', received_at: '2026-10-11T12:00:00Z', source: 'email' };
-beforeEach(() => { call.mockReset(); update.mockReset().mockResolvedValue({ ok: true }); open.mockReset().mockResolvedValue(undefined); download.mockReset().mockResolvedValue(undefined); errorToast.mockReset(); });
+beforeEach(() => { call.mockReset(); update.mockReset().mockResolvedValue({ ok: true }); open.mockReset().mockResolvedValue(undefined); download.mockReset().mockResolvedValue(undefined); upload.mockReset().mockResolvedValue({ ok: true }); remove.mockReset().mockResolvedValue({ ok: true }); errorToast.mockReset(); });
+
+describe('native document checklist', () => {
+  it('retains upload notes and reports success only after the native upload succeeds', async () => {
+    call.mockResolvedValue({ documents: [] });
+    const changed = vi.fn();
+    const { container } = render(<DocumentChecklistPanel leadId="lead-id" onDocumentUpload={changed} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Ajouter un autre document' }));
+    const file = new File(['pdf'], 'carte.pdf', { type: 'application/pdf' });
+    fireEvent.change(container.querySelector('input[type=file]')!, { target: { files: [file] } });
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Reçue au bureau' } });
+    upload.mockRejectedValueOnce(new Error('infected_file'));
+    fireEvent.click(screen.getByRole('button', { name: 'Uploader' }));
+    await waitFor(() => expect(errorToast).toHaveBeenCalled());
+    expect(changed).not.toHaveBeenCalled();
+    expect(screen.getByRole('textbox')).toHaveValue('Reçue au bureau');
+    fireEvent.click(screen.getByRole('button', { name: 'Uploader' }));
+    await waitFor(() => expect(changed).toHaveBeenCalledOnce());
+    expect(upload).toHaveBeenLastCalledWith('lead-id', 'carte_grise', file, undefined, 'classified', 'Reçue au bureau');
+  });
+  it('opens native documents and blocks quarantine validation without blocking rejection', async () => {
+    call.mockResolvedValue({ documents: [{ ...document, document_type: 'carte_grise', status: 'quarantined' }] });
+    render(<DocumentChecklistPanel leadId="lead-id" />);
+    expect(await screen.findByTitle('Valider')).toBeDisabled();
+    expect(screen.getByTitle('Rejeter')).toBeEnabled();
+    fireEvent.click(screen.getByTitle('Voir'));
+    fireEvent.click(screen.getByTitle('Telecharger'));
+    expect(open).toHaveBeenCalledWith('doc-id');
+    expect(download).toHaveBeenCalledWith('doc-id', 'rib.pdf');
+  });
+  it('deletes through the native file lifecycle only after confirmation', async () => {
+    call.mockResolvedValue({ documents: [{ ...document, document_type: 'carte_grise' }] });
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
+    render(<DocumentChecklistPanel leadId="lead-id" />);
+    fireEvent.click(await screen.findByTitle('Supprimer'));
+    expect(remove).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTitle('Supprimer'));
+    await waitFor(() => expect(remove).toHaveBeenCalledWith('doc-id'));
+    confirm.mockRestore();
+  });
+});
 
 describe('native document validation manager', () => {
   it('deduplicates native records and validates only after confirmation', async () => {
