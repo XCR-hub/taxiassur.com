@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Phone, PhoneOff, User, PhoneIncoming } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminLeads } from '@/lib/native-admin-data';
 import { telephonyService, IncomingCallInfo } from '@/lib/telephony-service';
 import { logger } from '@/lib/logger';
 
@@ -31,16 +31,14 @@ export const IncomingCallNotification: React.FC<IncomingCallNotificationProps> =
 
       // Lookup lead by phone
       try {
-        const phoneClean = info.from.replace(/^\+33/, '0').replace(/\s/g, '');
-        const { data: leads } = await supabase
-          .from('crm_leads')
-          .select('id, first_name, last_name')
-          .or(`phone.eq.${info.from},phone.eq.${phoneClean}`)
-          .limit(1);
+        const normalizePhone = (phone: string) => phone.replace(/[\s().-]/g, '').replace(/^0033/, '+33').replace(/^\+33/, '0');
+        const phoneClean = normalizePhone(info.from);
+        const result = await nativeAdminLeads() as { leads?: Array<{ id: string; phone?: string; first_name?: string; last_name?: string }> };
+        const lead = result.leads?.find(row => normalizePhone(row.phone || '') === phoneClean);
 
-        if (leads && leads.length > 0) {
-          leadId = leads[0].id;
-          leadName = `${leads[0].first_name || ''} ${leads[0].last_name || ''}`.trim();
+        if (lead) {
+          leadId = lead.id;
+          leadName = `${lead.first_name || ''} ${lead.last_name || ''}`.trim();
         }
       } catch (err) {
         logger.error('Lead lookup failed:', err);
@@ -50,7 +48,7 @@ export const IncomingCallNotification: React.FC<IncomingCallNotificationProps> =
       setCallAccepted(false);
 
       // Browser notification
-      if (Notification.permission === 'granted') {
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
         new Notification('Appel entrant', {
           body: leadName ? `${leadName} (${info.from})` : info.from,
           icon: '/favicon.ico',
@@ -59,37 +57,11 @@ export const IncomingCallNotification: React.FC<IncomingCallNotificationProps> =
     });
 
     // Request notification permission
-    if (Notification.permission === 'default') {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
       Notification.requestPermission();
     }
 
     return unsubscribe;
-  }, []);
-
-  // Also listen via Supabase Realtime for redundancy
-  useEffect(() => {
-    const channel = supabase
-      .channel('incoming-calls')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'crm_event_notifications',
-          filter: 'type=eq.incoming_call',
-        },
-        (payload) => {
-          const data = payload.new as any;
-          if (data.payload) {
-            logger.info('Realtime incoming call event:', data.payload);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
   const acceptCall = useCallback(() => {
