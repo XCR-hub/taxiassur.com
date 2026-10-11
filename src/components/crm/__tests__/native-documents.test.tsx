@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 const { call, update, open, download, upload, remove, errorToast } = vi.hoisted(() => ({ call: vi.fn(), update: vi.fn(), open: vi.fn(), download: vi.fn(), upload: vi.fn(), remove: vi.fn(), errorToast: vi.fn() }));
-vi.mock('@/lib/native-admin-data', () => ({ nativeAdminCall: call, nativeAdminUpdateDocument: update, nativeAdminOpenDocument: open, nativeAdminDownloadDocument: download, nativeAdminUploadLeadDocument: upload, nativeAdminDeleteDocument: remove }));
+vi.mock('@/lib/native-admin-data', () => ({ nativeAdminCall: call, nativeAdminUpdateDocument: update, nativeAdminOpenDocument: open, nativeAdminDownloadDocument: download, nativeAdminUploadLeadDocument: upload, nativeAdminDeleteDocument: remove, nativeAdminAddTimeline: vi.fn().mockResolvedValue({ ok: true }), nativeAdminDocumentUrl: vi.fn().mockResolvedValue('blob:document') }));
 vi.mock('@/lib/toast', () => ({ toast: { error: errorToast, warning: vi.fn() } }));
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn() } }));
 vi.mock('../SecureDocumentLink', () => ({ SecureDocumentLink: ({ bucket }: { bucket: string }) => <span data-testid="document-bucket">{bucket}</span> }));
@@ -11,10 +11,53 @@ import DocumentValidationManager from '../DocumentValidationManager';
 import { DocumentChecklistPanel } from '../DocumentChecklistPanel';
 import { DocumentChecklistPanelV2 } from '../DocumentChecklistPanelV2';
 import { DocumentUnifiedManager } from '../DocumentUnifiedManager';
+import { DocumentValidationWithReasons } from '../DocumentValidationWithReasons';
 
 const document = { id: 'doc-id', document_type: 'rib', file_name: 'rib.pdf', file_path: 'lead/rib.pdf', file_size: 100, uploaded_at: '2026-10-11T12:00:00Z', status: 'pending', bucket: 'native' };
 const attachment = { attachment_id: 'mail-id:2', filename: 'email-piece.pdf', content_type: 'application/pdf', file_size: 200, storage_path: 'lead/email-piece.pdf', storage_bucket: 'email-attachments', received_at: '2026-10-11T12:00:00Z', source: 'email' };
 beforeEach(() => { call.mockReset(); update.mockReset().mockResolvedValue({ ok: true }); open.mockReset().mockResolvedValue(undefined); download.mockReset().mockResolvedValue(undefined); upload.mockReset().mockResolvedValue({ ok: true }); remove.mockReset().mockResolvedValue({ ok: true }); errorToast.mockReset(); });
+
+describe('native document validation with reasons', () => {
+  const props = { leadId: 'lead-id', leadEmail: 'test@example.com' };
+  it('reports native validation errors without invoking the completion callback', async () => {
+    call.mockResolvedValue({ documents: [document] });
+    update.mockRejectedValueOnce(new Error('document_scan_blocked'));
+    const changed = vi.fn();
+    render(<DocumentValidationWithReasons {...props} onValidationComplete={changed} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Valider' }));
+    await waitFor(() => expect(errorToast).toHaveBeenCalledWith(expect.stringContaining('antivirus')));
+    expect(changed).not.toHaveBeenCalled();
+  });
+  it('preserves the no-email rejection choice and human-readable details', async () => {
+    call.mockResolvedValue({ documents: [document] });
+    const changed = vi.fn();
+    render(<DocumentValidationWithReasons {...props} onValidationComplete={changed} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Rejeter' }));
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'incomplete' } });
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Page 2 manquante' } });
+    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmer le rejet' }));
+    await waitFor(() => expect(changed).toHaveBeenCalledOnce());
+    expect(call).toHaveBeenCalledWith('/v1/admin/documents/doc-id', { method: 'PATCH', body: JSON.stringify({ status: 'rejected', rejection_reason: 'Document incomplet : Page 2 manquante', notify: false }) });
+  });
+  it('uses the native prospect reference for a category change', async () => {
+    call.mockResolvedValue({ documents: [document] });
+    render(<DocumentValidationWithReasons {...props} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Catégorie' }));
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'carte_grise' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Changer' }));
+    await waitFor(() => expect(call).toHaveBeenCalledWith('/v1/admin/leads/lead-id/document-workspace', { method: 'POST', body: JSON.stringify({ action: 'classify', attachment_id: 'prospect:doc-id', document_type: 'carte_grise' }) }));
+  });
+  it('opens authenticated files and prevents quarantine validation', async () => {
+    call.mockResolvedValue({ documents: [{ ...document, status: 'quarantined' }] });
+    render(<DocumentValidationWithReasons {...props} />);
+    expect(await screen.findByRole('button', { name: 'Valider' })).toBeDisabled();
+    fireEvent.click(screen.getByTitle('Voir'));
+    fireEvent.click(screen.getByTitle('Télécharger'));
+    expect(open).toHaveBeenCalledWith('doc-id');
+    expect(download).toHaveBeenCalledWith('doc-id', 'rib.pdf');
+  });
+});
 
 describe('native unified document manager', () => {
   const props = { leadId: 'lead-id', leadEmail: 'test@example.com', leadFirstName: 'Camille' };

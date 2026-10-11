@@ -5,9 +5,9 @@ import { readFileSync } from 'node:fs';
 const source = readFileSync(new URL('./taxiassur-platform-api.mjs', import.meta.url), 'utf8');
 const handler = source.slice(source.indexOf('async function adminDocumentPatch('), source.indexOf('async function adminLeadCreate('));
 const create = new Function('verifiedAdminSession', 'readJsonBody', 'runPsql', 'parseJsonLine', 'quoteLiteral', 'json', 'queueProspectEventEmail', 'randomUUID', `${handler}; return adminDocumentPatch;`);
-function fixture({ session = { sub: 'admin' }, status = 'validated', scan = 'clean', record = { status: 'pending' } } = {}) {
+function fixture({ session = { sub: 'admin' }, status = 'validated', scan = 'clean', record = { status: 'pending' }, notify } = {}) {
   const queries = [];
-  const action = create(async () => session, async () => ({ status }), async sql => {
+  const action = create(async () => session, async () => ({ status, notify }), async sql => {
     queries.push(sql);
     if (sql.includes('SELECT jsonb_build_object(\'scan_status\'')) return JSON.stringify({ scan_status: scan });
     if (sql.includes('SELECT jsonb_build_object(\'status\'')) return JSON.stringify(record);
@@ -16,6 +16,15 @@ function fixture({ session = { sub: 'admin' }, status = 'validated', scan = 'cle
   }, JSON.parse, value => `'${String(value).replaceAll("'", "''")}'`, (_res, _origin, status, body) => ({ status, body }), async () => false, () => 'mail-id');
   return { queries, run: () => action({}, {}, '', 'request', '11111111-1111-4111-8111-111111111111') };
 }
+
+for (const status of ['validated', 'rejected']) test(`native ${status} respects the explicit no-email choice`, async () => {
+  const f = fixture({ status, notify: false });
+  const result = await f.run();
+  assert.equal(result.status, 200);
+  assert.equal(result.body.email_queued, false);
+  assert.ok(f.queries.some(sql => sql.startsWith('WITH updated')));
+  assert.ok(!f.queries.some(sql => sql.includes("collection='crm_leads'") || sql.includes("native_email_outbox")));
+});
 
 test('native validation rejects an absent session before reading documents', async () => {
   const f = fixture({ session: null });

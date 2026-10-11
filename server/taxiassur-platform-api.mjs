@@ -1416,7 +1416,7 @@ async function adminDocumentPatch(req,res,origin,requestId,documentId){
   const document=parseJsonLine(await runPsql(updateSql));
   if(!document)return json(res,origin,404,{ok:false,error:'not_found'},requestId);
   let rejectionEmailQueued=false;
-  if(status==='rejected'){
+  if(status==='rejected'&&body.notify!==false){
     const lead=parseJsonLine(await runPsql("SELECT data::text FROM taxiassur.records WHERE collection='crm_leads' AND record_id="+quoteLiteral(String(document.lead_id))+" LIMIT 1;"));
     if(lead&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(lead.email||''))){
       const mailId=randomUUID(),now=new Date().toISOString(),reason=String(updates.rejection_reason||'Document non conforme');
@@ -1431,7 +1431,7 @@ async function adminDocumentPatch(req,res,origin,requestId,documentId){
     }
   }
   let validationEmailQueued=false;
-  if(status==='validated'||status==='verified'){
+  if((status==='validated'||status==='verified')&&body.notify!==false){
     const lead=parseJsonLine(await runPsql("SELECT data::text FROM taxiassur.records WHERE collection='crm_leads' AND record_id="+quoteLiteral(String(document.lead_id))+" LIMIT 1;"));
     try { validationEmailQueued=await queueProspectEventEmail(lead,'Document validé - TaxiAssur',`Votre document « ${String(document.file_name||document.document_type||'document')} » a été validé par votre conseiller. Votre dossier avance.`, 'documents', {lead_id:String(document.lead_id),document_id:documentId}); }
     catch (error) { console.error('[taxiassur-platform-api] Document validation email could not be queued:', error?.name || 'unknown'); }

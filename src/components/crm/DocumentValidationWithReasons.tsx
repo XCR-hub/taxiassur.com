@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import { FileText, CheckCircle, XCircle, Eye, Download, Printer, AlertCircle, Mail, CreditCard as Edit3, X, Check } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { nativeAdminSession } from '@/lib/native-admin-auth';
-import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
+import { nativeAdminCall, nativeAdminUpdateDocument, nativeAdminOpenDocument, nativeAdminDownloadDocument, nativeAdminDocumentUrl, nativeAdminAddTimeline } from '@/lib/native-admin-data';
+import { documentValidationError } from '@/lib/native-document-status';
+
+
 import { logger } from '@/lib/logger';
 
 interface Document {
   id: string;
+  lead_id?: string;
+  prospect?: boolean;
   document_type: string;
   file_name: string;
   file_path: string;
@@ -16,6 +19,7 @@ interface Document {
   uploaded_at: string;
   validation_status?: string;
   rejection_reason?: string;
+  rejection_details?: string;
   metadata?: {
     download_url?: string;
   };
@@ -26,9 +30,6 @@ interface DocumentValidationWithReasonsProps {
   leadEmail?: string;
   onValidationComplete?: () => void;
 }
-
-const escapeHtml = (value: unknown) => String(value ?? "")
-  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 const DOCUMENT_LABELS: Record<string, string> = {
   licence_taxi: 'Licence de taxi',
@@ -75,115 +76,58 @@ export function DocumentValidationWithReasons({
   const loadDocuments = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('prospect_documents')
-        .select('*')
-        .eq('lead_id', leadId)
-        .order('uploaded_at', { ascending: false });
-
-      if (error) throw error;
-      setDocuments(data || []);
+      const [data, prospect] = await Promise.all([
+        nativeAdminCall<{ documents?: Document[] }>(`/v1/admin/documents?lead_id=${encodeURIComponent(leadId)}&scope=all`),
+        nativeAdminCall<{ documents?: Document[] }>(`/v1/admin/documents?lead_id=${encodeURIComponent(leadId)}`)
+      ]);
+      const prospectIds = new Set((prospect.documents || []).map(doc => doc.id));
+      setDocuments([...new Map((data.documents || []).filter(doc => doc.file_path).map(doc => [doc.id, doc])).values()].map(doc => ({
+        ...doc, prospect: prospectIds.has(doc.id), validation_status: ['validated', 'verified'].includes(doc.status) ? 'validated' : doc.status || doc.validation_status || 'pending'
+      })));
     } catch (err) {
       logger.error('Error loading documents:', err);
+      toast.error('Impossible de charger les documents. Vérifiez votre session puis réessayez.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleViewDocument = (doc: Document) => {
-    const url = doc.metadata?.download_url || doc.file_path;
-    window.open(url, '_blank');
+  const handleViewDocument = async (doc: Document) => {
+    try { await nativeAdminOpenDocument(doc.id); } catch { toast.error('Impossible d’ouvrir le document'); }
   };
-
-  const handleDownloadDocument = (doc: Document) => {
-    const url = doc.metadata?.download_url || doc.file_path;
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = doc.file_name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownloadDocument = async (doc: Document) => {
+    try { await nativeAdminDownloadDocument(doc.id, doc.file_name); } catch { toast.error('Impossible de télécharger le document'); }
   };
-
-  const handlePrintDocument = (doc: Document) => {
-    const url = doc.metadata?.download_url || doc.file_path;
-    const printWindow = window.open(url, '_blank');
-    if (printWindow) {
-      printWindow.onload = () => {
-        printWindow.print();
-      };
-    }
+  const handlePrintDocument = async (doc: Document) => {
+    const popup = window.open('about:blank', '_blank');
+    if (!popup) { toast.error('Autorisez l’ouverture de la fenêtre pour imprimer'); return; }
+    try {
+      const url = await nativeAdminDocumentUrl(doc.id);
+      popup.opener = null;
+      popup.onload = () => popup.print();
+      popup.location.replace(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch { popup.close(); toast.error('Impossible d’imprimer le document'); }
+  };
+  const addHistory = async (doc: Document, content: string) => {
+    try { await nativeAdminAddTimeline(doc.lead_id || leadId, { channel: 'note', content }); }
+    catch { toast.warning('Modification enregistrée, mais la note de suivi n’a pas pu être ajoutée.'); }
   };
 
   const handleValidate = async (docId: string) => {
     setActionLoading(docId);
     try {
-      const { user } = await nativeAdminSession();
-
       const doc = documents.find(d => d.id === docId);
-      if (!doc) {
-        toast.error('Document introuvable');
-        return;
-      }
-
-      // Update document status
-      await supabase
-        .from('prospect_documents')
-        .update({
-          validation_status: 'validated',
-          validated: true,
-          validated_at: new Date().toISOString(),
-          validated_by: user?.id
-        })
-        .eq('id', docId);
-
-      // Log validation action
-      await supabase.from('crm_document_validation_actions').insert({
-        document_id: docId,
-        lead_id: leadId,
-        action_type: 'validated',
-        validated_by: user?.id
-      });
-
-      // Add to timeline
-      await supabase.from('crm_interactions').insert({
-        lead_id: leadId,
-        type: 'document',
-        subject: 'Document validé',
-        content: `Document "${doc.file_name}" validé par le commercial`,
-        created_by: user?.id
-      });
-
-      // Send email notification to prospect
-      if (leadEmail) {
-        console.log('[VALIDATION] Sending validation email to:', leadEmail);
-
-        const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-document-notification', {
-          body: {
-            lead_id: leadId,
-            document_type: doc.document_type,
-            document_name: doc.file_name,
-            action: 'validated',
-            recipient_email: leadEmail
-          }
-        });
-
-        if (emailError || !emailResult?.success) {
-          console.error('[VALIDATION] Email error:', emailError || emailResult);
-          // Don't block the validation if email fails
-          logger.warn('Email notification failed but document validated:', emailError?.message || emailResult?.error);
-        } else {
-          console.log('[VALIDATION] Email sent successfully:', emailResult);
-        }
-      }
-
+      if (!doc) throw new Error('not_found');
+      const result = await nativeAdminUpdateDocument(doc.id, { status: 'validated' }) as { email_queued?: boolean };
+      await addHistory(doc, `Document « ${doc.file_name} » validé`);
       await loadDocuments();
       onValidationComplete?.();
 
-      toast.success(`Document "${doc.file_name}" validé avec succès !${leadEmail ? '\nEmail de confirmation envoyé au prospect.' : ''}`);
+      toast.success(`Document « ${doc.file_name} » validé.${result.email_queued ? ' Email de confirmation mis en file d’attente.' : ''}`);
     } catch (err) {
       logger.error('Error validating document:', err);
-      toast.error('Erreur lors de la validation');
+      toast.error(documentValidationError(err));
     } finally {
       setActionLoading(null);
     }
@@ -198,56 +142,15 @@ export function DocumentValidationWithReasons({
 
     setActionLoading(rejectModal);
     try {
-      const { user } = await nativeAdminSession();
-
       const doc = documents.find(d => d.id === rejectModal);
-      if (!doc) return;
-
-      // Update document status
-      await supabase
-        .from('prospect_documents')
-        .update({
-          validation_status: 'rejected',
-          validated: false,
-          rejection_reason: rejectionForm.reason,
-          rejection_details: rejectionForm.details
-        })
-        .eq('id', rejectModal);
-
-      // Log rejection action
-      await supabase.from('crm_document_validation_actions').insert({
-        document_id: rejectModal,
-        lead_id: leadId,
-        action_type: 'rejected',
-        rejection_reason: rejectionForm.reason,
-        rejection_details: rejectionForm.details,
-        send_email_notification: rejectionForm.sendEmail,
-        validated_by: user?.id
+      if (!doc) throw new Error('not_found');
+      const label = REJECTION_REASONS.find(r => r.value === rejectionForm.reason)?.label || rejectionForm.reason;
+      const reason = [label, rejectionForm.details.trim()].filter(Boolean).join(' : ');
+      const result = await nativeAdminCall<{ email_queued?: boolean }>(`/v1/admin/documents/${encodeURIComponent(doc.id)}`, {
+        method: 'PATCH', body: JSON.stringify({ status: 'rejected', rejection_reason: reason, notify: rejectionForm.sendEmail && Boolean(leadEmail) })
       });
-
-      // Send email if requested
-      if (rejectionForm.sendEmail && leadEmail) {
-        const reasonLabel = REJECTION_REASONS.find(r => r.value === rejectionForm.reason)?.label || rejectionForm.reason;
-
-        const { data: sendResult, error: sendError } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
-          body: {
-            to: leadEmail, lead_id: leadId,
-            subject: "Document à renouveler - " + (DOCUMENT_LABELS[doc.document_type] || doc.document_type),
-            content: "<p>Bonjour,</p><p>Le document <strong>" + escapeHtml(doc.file_name) + "</strong> doit être renouvelé.</p><p><strong>Motif :</strong> " + escapeHtml(reasonLabel) + "</p>" + (rejectionForm.details ? "<p>" + escapeHtml(rejectionForm.details) + "</p>" : "") + "<p>Merci de déposer une nouvelle version dans votre espace sécurisé.</p><p>L équipe TaxiAssur</p>"
-          }
-        });
-        if (sendError || !sendResult?.success) throw sendError || new Error("E-mail de refus non envoyé");
-      }
-
-      // Add to timeline
-      await supabase.from('crm_interactions').insert({
-        lead_id: leadId,
-        type: 'document',
-        subject: 'Document rejeté',
-        content: `Document rejeté: ${rejectionForm.reason} - ${rejectionForm.details}`,
-        created_by: user?.id
-      });
-
+      await addHistory(doc, `Document « ${doc.file_name} » refusé : ${reason}`);
+      if (rejectionForm.sendEmail && leadEmail && !result.email_queued) toast.warning('Document refusé, mais l’email de notification n’a pas pu être mis en file d’attente.');
       setRejectModal(null);
       setRejectionForm({ reason: '', details: '', sendEmail: true });
       await loadDocuments();
@@ -265,38 +168,11 @@ export function DocumentValidationWithReasons({
 
     setActionLoading(categoryChangeModal);
     try {
-      const { user } = await nativeAdminSession();
-
       const doc = documents.find(d => d.id === categoryChangeModal);
-      if (!doc) return;
-
-      // Update document category
-      await supabase
-        .from('prospect_documents')
-        .update({
-          document_type: newCategory
-        })
-        .eq('id', categoryChangeModal);
-
-      // Log category change
-      await supabase.from('crm_document_validation_actions').insert({
-        document_id: categoryChangeModal,
-        lead_id: leadId,
-        action_type: 'category_changed',
-        old_category: doc.document_type,
-        new_category: newCategory,
-        validated_by: user?.id
-      });
-
-      // Add to timeline
-      await supabase.from('crm_interactions').insert({
-        lead_id: leadId,
-        type: 'document',
-        subject: 'Catégorie de document modifiée',
-        content: `Catégorie changée de "${DOCUMENT_LABELS[doc.document_type]}" vers "${DOCUMENT_LABELS[newCategory]}"`,
-        created_by: user?.id
-      });
-
+      if (!doc) throw new Error('not_found');
+      const action = doc.prospect ? { action: 'classify', attachment_id: `prospect:${doc.id}`, document_type: newCategory } : { action: 'move', document_id: doc.id, document_type: newCategory };
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(doc.lead_id || leadId)}/document-workspace`, { method: 'POST', body: JSON.stringify(action) });
+      await addHistory(doc, `Catégorie du document « ${doc.file_name} » changée vers ${DOCUMENT_LABELS[newCategory] || newCategory}`);
       setCategoryChangeModal(null);
       setNewCategory('');
       await loadDocuments();
@@ -331,7 +207,7 @@ export function DocumentValidationWithReasons({
     );
   }
 
-  const pendingDocs = documents.filter(d => d.validation_status === 'pending' || !d.validation_status);
+  const pendingDocs = documents.filter(d => ['pending', 'quarantined'].includes(d.validation_status || 'pending'));
   const validatedDocs = documents.filter(d => d.validation_status === 'validated');
   const rejectedDocs = documents.filter(d => d.validation_status === 'rejected');
 
@@ -426,7 +302,7 @@ export function DocumentValidationWithReasons({
                       <p className="text-sm text-red-400 font-medium">
                         {REJECTION_REASONS.find(r => r.value === doc.rejection_reason)?.label || doc.rejection_reason}
                       </p>
-                      {doc.rejection_details && (
+                      {doc.rejection_details && !doc.rejection_reason?.includes(' : ') && (
                         <p className="text-xs text-red-300 mt-1">{doc.rejection_details}</p>
                       )}
                     </div>
@@ -437,7 +313,7 @@ export function DocumentValidationWithReasons({
                     <div className="flex gap-2 mt-3">
                       <button
                         onClick={() => handleValidate(doc.id)}
-                        disabled={actionLoading === doc.id}
+                        disabled={actionLoading === doc.id || doc.status === 'quarantined'}
                         className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
                       >
                         <Check className="w-4 h-4" />
