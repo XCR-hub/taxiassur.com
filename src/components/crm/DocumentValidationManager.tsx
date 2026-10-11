@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, XCircle, AlertCircle, Eye, Download, FileText, Clock } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
-import { nativeAdminSession } from '@/lib/native-admin-auth';
+import { nativeAdminCall, nativeAdminUpdateDocument, nativeAdminOpenDocument, nativeAdminDownloadDocument } from '@/lib/native-admin-data';
+import { documentValidationError } from '@/lib/native-document-status';
 import { toast } from '@/lib/toast';
 
 interface Document {
   id: string;
   document_type: string;
-  file_url: string;
+  file_name: string;
   validation_status: string;
   rejection_reason: string | null;
   rejection_comment: string | null;
@@ -64,16 +64,16 @@ export default function DocumentValidationManager({ leadId, onValidationChange }
   const loadDocuments = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('document_validation_status')
-        .select('*')
-        .eq('lead_id', leadId)
-        .order('uploaded_at', { ascending: false });
-
-      if (error) throw error;
-      setDocuments(data || []);
+      const data = await nativeAdminCall<{ documents?: Array<Document & { status?: string; file_path?: string; updated_at?: string }> }>(`/v1/admin/documents?lead_id=${encodeURIComponent(leadId)}&scope=all`);
+      const rows = (data.documents || []).filter(doc => doc.file_path).map(doc => ({
+        ...doc,
+        rejected_at: doc.rejected_at || (doc.status === 'rejected' ? doc.updated_at || null : null),
+        validation_status: ['validated', 'verified', 'approved'].includes(doc.status || '') ? 'validated' : doc.status || doc.validation_status || 'pending'
+      }));
+      setDocuments([...new Map(rows.map(doc => [doc.id, doc])).values()]);
     } catch (error) {
       console.error('Erreur chargement documents:', error);
+      toast.error('Impossible de charger les documents');
     } finally {
       setLoading(false);
     }
@@ -85,26 +85,14 @@ export default function DocumentValidationManager({ leadId, onValidationChange }
     try {
       setProcessing(activeModal.document.id);
 
-      const { user: adminUser } = await nativeAdminSession();
-
-      const { error } = await supabase
-        .from('document_validation_status')
-        .update({
-          validation_status: 'validated',
-          validated_at: new Date().toISOString(),
-          validated_by: adminUser?.id,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', activeModal.document.id);
-
-      if (error) throw error;
+      await nativeAdminUpdateDocument(activeModal.document.id, { status: 'validated' });
 
       setActiveModal(null);
       loadDocuments();
       onValidationChange?.();
     } catch (error) {
       console.error('Erreur validation document:', error);
-      toast.error(error.message || 'Erreur lors de la validation');
+      toast.error(documentValidationError(error));
     } finally {
       setProcessing(null);
     }
@@ -119,37 +107,11 @@ export default function DocumentValidationManager({ leadId, onValidationChange }
     try {
       setProcessing(activeModal.document.id);
 
-      const { user: adminUser } = await nativeAdminSession();
-
-      const { error } = await supabase
-        .from('document_validation_status')
-        .update({
-          validation_status: 'rejected',
-          rejection_reason: rejectionForm.reason,
-          rejection_comment: rejectionForm.comment || null,
-          rejected_at: new Date().toISOString(),
-          rejected_by: adminUser?.id,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', activeModal.document.id);
-
-      if (error) throw error;
-
-      const { error: notifError } = await supabase
-        .from('crm_event_notifications')
-        .insert({
-          lead_id: leadId,
-          event_type: 'document_rejected',
-          message: `Document refusé: ${DOCUMENT_TYPE_LABELS[activeModal.document.document_type] || activeModal.document.document_type}`,
-          priority: 10,
-          context_data: {
-            document_type: activeModal.document.document_type,
-            rejection_reason: rejectionForm.reason,
-            rejection_comment: rejectionForm.comment
-          }
-        });
-
-      if (notifError) console.error('Erreur notification:', notifError);
+      const label = REJECTION_REASONS.find(reason => reason.value === rejectionForm.reason)?.label || rejectionForm.reason;
+      await nativeAdminUpdateDocument(activeModal.document.id, {
+        status: 'rejected',
+        rejection_reason: [label, rejectionForm.comment.trim()].filter(Boolean).join(' : ')
+      });
 
       setActiveModal(null);
       setRejectionForm({ reason: '', comment: '' });
@@ -157,7 +119,7 @@ export default function DocumentValidationManager({ leadId, onValidationChange }
       onValidationChange?.();
     } catch (error) {
       console.error('Erreur refus document:', error);
-      toast.error(error.message || 'Erreur lors du refus');
+      toast.error('Le refus a échoué. Actualisez la liste puis réessayez.');
     } finally {
       setProcessing(null);
     }
@@ -165,6 +127,8 @@ export default function DocumentValidationManager({ leadId, onValidationChange }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case 'quarantined':
+        return <span className="text-xs text-red-800">En quarantaine</span>;
       case 'pending':
         return <span className="flex items-center gap-1 px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3" /> En attente</span>;
       case 'validated':
@@ -176,7 +140,16 @@ export default function DocumentValidationManager({ leadId, onValidationChange }
     }
   };
 
-  const pendingDocs = documents.filter(d => d.validation_status === 'pending');
+  const openDocument = async (doc: Document, download = false) => {
+    try {
+      if (download) await nativeAdminDownloadDocument(doc.id, doc.file_name);
+      else await nativeAdminOpenDocument(doc.id);
+    } catch (error) {
+      toast.error('Impossible d’ouvrir le document. Vérifiez votre session puis réessayez.');
+    }
+  };
+
+  const pendingDocs = documents.filter(d => ['pending', 'quarantined'].includes(d.validation_status));
   const validatedDocs = documents.filter(d => d.validation_status === 'validated');
   const rejectedDocs = documents.filter(d => d.validation_status === 'rejected');
 
@@ -238,18 +211,16 @@ export default function DocumentValidationManager({ leadId, onValidationChange }
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <a
-                      href={doc.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      onClick={() => openDocument(doc)}
                       className="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-2 text-sm"
                     >
                       <Eye className="w-4 h-4" />
                       Voir
-                    </a>
+                    </button>
                     <button
                       onClick={() => setActiveModal({ type: 'validate', document: doc })}
-                      disabled={processing === doc.id}
+                      disabled={processing === doc.id || doc.validation_status === 'quarantined'}
                       className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 flex items-center gap-2 text-sm"
                     >
                       <CheckCircle className="w-4 h-4" />
@@ -295,15 +266,13 @@ export default function DocumentValidationManager({ leadId, onValidationChange }
                       Validé le {doc.validated_at && new Date(doc.validated_at).toLocaleDateString('fr-FR')}
                     </div>
                   </div>
-                  <a
-                    href={doc.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={() => openDocument(doc, true)}
                     className="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-2 text-sm"
                   >
                     <Download className="w-4 h-4" />
                     Télécharger
-                  </a>
+                  </button>
                 </div>
               </div>
             ))}
@@ -343,15 +312,13 @@ export default function DocumentValidationManager({ leadId, onValidationChange }
                       Refusé le {doc.rejected_at && new Date(doc.rejected_at).toLocaleDateString('fr-FR')}
                     </div>
                   </div>
-                  <a
-                    href={doc.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={() => openDocument(doc)}
                     className="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-2 text-sm"
                   >
                     <Eye className="w-4 h-4" />
                     Voir
-                  </a>
+                  </button>
                 </div>
               </div>
             ))}

@@ -1,16 +1,63 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-const { call, update, errorToast } = vi.hoisted(() => ({ call: vi.fn(), update: vi.fn(), errorToast: vi.fn() }));
-vi.mock('@/lib/native-admin-data', () => ({ nativeAdminCall: call, nativeAdminUpdateDocument: update }));
+const { call, update, open, download, errorToast } = vi.hoisted(() => ({ call: vi.fn(), update: vi.fn(), open: vi.fn(), download: vi.fn(), errorToast: vi.fn() }));
+vi.mock('@/lib/native-admin-data', () => ({ nativeAdminCall: call, nativeAdminUpdateDocument: update, nativeAdminOpenDocument: open, nativeAdminDownloadDocument: download }));
 vi.mock('@/lib/toast', () => ({ toast: { error: errorToast, warning: vi.fn() } }));
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn() } }));
 vi.mock('../SecureDocumentLink', () => ({ SecureDocumentLink: ({ bucket }: { bucket: string }) => <span data-testid="document-bucket">{bucket}</span> }));
 import DocumentValidationPanel from '../DocumentValidationPanel';
 import { PendingAttachmentsPanel } from '../PendingAttachmentsPanel';
+import DocumentValidationManager from '../DocumentValidationManager';
 
 const document = { id: 'doc-id', document_type: 'rib', file_name: 'rib.pdf', file_path: 'lead/rib.pdf', file_size: 100, uploaded_at: '2026-10-11T12:00:00Z', status: 'pending', bucket: 'native' };
 const attachment = { attachment_id: 'mail-id:2', filename: 'email-piece.pdf', content_type: 'application/pdf', file_size: 200, storage_path: 'lead/email-piece.pdf', storage_bucket: 'email-attachments', received_at: '2026-10-11T12:00:00Z', source: 'email' };
-beforeEach(() => { call.mockReset(); update.mockReset().mockResolvedValue({ ok: true }); errorToast.mockReset(); });
+beforeEach(() => { call.mockReset(); update.mockReset().mockResolvedValue({ ok: true }); open.mockReset().mockResolvedValue(undefined); download.mockReset().mockResolvedValue(undefined); errorToast.mockReset(); });
+
+describe('native document validation manager', () => {
+  it('deduplicates native records and validates only after confirmation', async () => {
+    call.mockResolvedValue({ documents: [document, document] });
+    const changed = vi.fn();
+    render(<DocumentValidationManager leadId="lead-id" onValidationChange={changed} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Valider' }));
+    expect(update).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmer la validation' }));
+    await waitFor(() => expect(changed).toHaveBeenCalledOnce());
+    expect(update).toHaveBeenCalledWith('doc-id', { status: 'validated' });
+  });
+  it('keeps a failed validation open and never reports success', async () => {
+    call.mockResolvedValue({ documents: [document] });
+    update.mockRejectedValueOnce(new Error('document_scan_blocked'));
+    const changed = vi.fn();
+    render(<DocumentValidationManager leadId="lead-id" onValidationChange={changed} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Valider' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmer la validation' }));
+    await waitFor(() => expect(errorToast).toHaveBeenCalledWith(expect.stringContaining('antivirus')));
+    expect(changed).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Confirmer la validation' })).toBeInTheDocument();
+  });
+  it('prevents quarantine validation but allows a reasoned rejection', async () => {
+    call.mockResolvedValue({ documents: [{ ...document, status: 'quarantined' }] });
+    render(<DocumentValidationManager leadId="lead-id" />);
+    expect(await screen.findByRole('button', { name: 'Valider' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Refuser' }));
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'incomplete' } });
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Page 2 manquante' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmer le refus' }));
+    await waitFor(() => expect(update).toHaveBeenCalledWith('doc-id', { status: 'rejected', rejection_reason: 'Document incomplet : Page 2 manquante' }));
+  });
+  it('opens files by authenticated document ID and recognises verified documents', async () => {
+    call.mockResolvedValue({ documents: [document] });
+    const { unmount } = render(<DocumentValidationManager leadId="lead-id" />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Voir' }));
+    expect(open).toHaveBeenCalledWith('doc-id');
+    unmount();
+    call.mockResolvedValue({ documents: [{ ...document, status: 'verified' }] });
+    render(<DocumentValidationManager leadId="lead-id" />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Télécharger' }));
+    expect(download).toHaveBeenCalledWith('doc-id', 'rib.pdf');
+    expect(screen.queryByRole('button', { name: 'Valider' })).not.toBeInTheDocument();
+  });
+});
 
 describe('native document validation panel', () => {
   it('validates through the native document ID route and refreshes the list', async () => {
