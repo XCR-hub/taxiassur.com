@@ -1,6 +1,6 @@
 import React from 'react';
 import { ExternalLink, Download } from 'lucide-react';
-import { getSecureDocumentUrl } from '@/lib/secure-document-url';
+import { downloadSecureDocument, viewSecureDocument } from '@/lib/secure-document-url';
 import { logger } from '@/lib/logger';
 import { toast } from '@/lib/toast';
 
@@ -72,13 +72,13 @@ export const SecureDocumentLink: React.FC<SecureDocumentLinkProps> = ({
 
       logger.info('📂 Opening document:', { originalPath: filePath, explicitBucket, finalBucket: bucket, cleanPath, fileName });
 
-      const signedUrl = await getSecureDocumentUrl({
+      const options = {
         bucket,
         path: cleanPath,
-        download: mode === 'download',
         fileName,
-      });
-      window.open(signedUrl, '_blank', 'noopener,noreferrer');
+      };
+      if (mode === 'download') await downloadSecureDocument(options);
+      else await viewSecureDocument(options);
       logger.info('Document opened successfully');
     } catch (err: unknown) {
       logger.error('Exception opening document:', err);

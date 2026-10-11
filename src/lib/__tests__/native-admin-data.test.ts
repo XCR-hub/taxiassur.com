@@ -9,6 +9,26 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
+it('does not request private stored documents without a native admin session', async () => {
+  const fetchMock = vi.fn();
+  vi.stubGlobal('fetch', fetchMock);
+  const { nativeAdminStoredDocumentUrl } = await import('../native-admin-data');
+  await expect(nativeAdminStoredDocumentUrl('lead/file.pdf', 'crm-documents')).rejects.toThrow('native_session_required');
+  expect(fetchMock).not.toHaveBeenCalled();
+});
+
+it('authenticates private stored document requests and propagates antivirus blocks', async () => {
+  const fetchMock = vi.fn().mockResolvedValue({ ok: false, json: async () => ({ error: 'document_scan_blocked' }) });
+  vi.stubGlobal('fetch', fetchMock);
+  localStorage.setItem(NATIVE_ADMIN_TOKEN_KEY, 'native-admin-token');
+  const { nativeAdminStoredDocumentUrl } = await import('../native-admin-data');
+  await expect(nativeAdminStoredDocumentUrl('lead/file.pdf', 'crm-documents', true, 'permis.pdf')).rejects.toThrow('document_scan_blocked');
+  expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/v1/admin/documents/open'), expect.objectContaining({
+    method: 'POST', headers: { Authorization: 'Bearer native-admin-token', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path: 'lead/file.pdf', bucket: 'crm-documents', download: true, file_name: 'permis.pdf' }),
+  }));
+});
+
 it('reuses dashboard requests only within the same authenticated session', async () => {
   const fetchMock = vi.fn().mockResolvedValueOnce(response({ account: 'A' }))
     .mockResolvedValueOnce(response({ account: 'B' }));

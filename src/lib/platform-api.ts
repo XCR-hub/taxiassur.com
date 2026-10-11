@@ -155,6 +155,29 @@ export async function loadProspectPlatformSession(token: string): Promise<Prospe
   return response.json();
 }
 
+export async function prospectStoredDocumentUrl(token: string, path: string, bucket: string): Promise<string> {
+  if (!['prospect-documents', 'crm-documents', 'contract-documents', 'native'].includes(bucket)) {
+    throw new Error('Document non autorisé');
+  }
+  const normalize = (value: string) => value.replace(/^\/+/, '').replace(/^(prospect-documents|crm-documents|contract-documents)\//, '');
+  const requestedPath = normalize(path);
+  const session = await loadProspectPlatformSession(token);
+  const candidates = [
+    ...(session.documents || []).map(document => ({ document, final: false })),
+    ...(session.final_documents || []).map(document => ({ document, final: true })),
+  ];
+  const match = candidates.find(({ document }) => {
+    const declaredBucket = String(document.bucket || '');
+    return typeof document.id === 'string' && typeof document.file_path === 'string'
+      && normalize(document.file_path) === requestedPath
+      && (!declaredBucket || declaredBucket === 'native' || declaredBucket === bucket);
+  });
+  if (!match) throw new Error('Document non autorisé');
+  const resource = match.final ? 'final-documents' : 'documents';
+  const response = await platformRequest(`/v1/prospect/${resource}/${encodeURIComponent(String(match.document.id))}/download`, token);
+  return URL.createObjectURL(await response.blob());
+}
+
 export async function uploadProspectPlatformDocument(token: string, documentType: string, file: File, requestId?: string) {
   const extension=file.name.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1]||'';
   const inferredMime:Record<string,string>={pdf:'application/pdf',jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'};

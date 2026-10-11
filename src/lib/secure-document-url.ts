@@ -1,11 +1,6 @@
-import { supabase } from "./supabase";
-import { withTimeout } from "./promise-timeout";
-
-interface SignedDocumentResponse {
-  success?: boolean;
-  error?: string;
-  signedUrl?: string;
-}
+import { nativeAdminStoredDocumentUrl } from './native-admin-data';
+import { prospectStoredDocumentUrl } from './platform-api';
+import { withTimeout } from './promise-timeout';
 
 export async function getSecureDocumentUrl(options: {
   path: string;
@@ -14,22 +9,15 @@ export async function getSecureDocumentUrl(options: {
   download?: boolean;
   fileName?: string;
 }): Promise<string> {
-  const { data, error } = await withTimeout(
-    supabase.functions.invoke<SignedDocumentResponse>("sign-document-url", {
-      body: {
-        path: options.path,
-        bucket: options.bucket,
-        accessToken: options.accessToken || undefined,
-        download: options.download === true,
-        fileName: options.fileName,
-      },
-    }),
-    20_000,
-  );
-  if (error || !data?.success || !data.signedUrl) {
-    throw new Error(data?.error || "Impossible d'ouvrir ce document");
-  }
-  return data.signedUrl;
+  const bucket = options.bucket === 'native' ? 'crm-documents' : options.bucket;
+  const request = options.accessToken
+    ? prospectStoredDocumentUrl(options.accessToken, options.path, bucket)
+    : nativeAdminStoredDocumentUrl(options.path, bucket, options.download === true, options.fileName || 'document');
+  return withTimeout(request.then(url => {
+    // Release late responses too, even if the caller has already timed out.
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    return url;
+  }), 20_000);
 }
 
 type SecureDocumentOptions = Parameters<typeof getSecureDocumentUrl>[0];

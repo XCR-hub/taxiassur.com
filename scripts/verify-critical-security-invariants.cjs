@@ -392,7 +392,8 @@ requireMatch(clientClaimsPage, /loadClientPlatformSession\(accessToken\)/, 'clie
 requireMatch(clientClaimMigration, /client_email_for_access_token[\s\S]*client_portal_users[\s\S]*is_active = true/, 'claim creation is not bound to an active token portal');
 requireMatch(clientClaimMigration, /ACCIDENT_RESPONSABLE[\s\S]*ASSISTANCE[\s\S]*length\(btrim\(coalesce\(p_incident_location/, 'claim type or location validation is missing');
 requireMatch(clientClaimMigration, /incident_location[\s\S]*REVOKE ALL[\s\S]*FROM PUBLIC[\s\S]*GRANT EXECUTE/, 'claim location is not persisted or RPC grants are unsafe');
-requireMatch('src/lib/secure-document-url.ts', /sign-document-url/, 'frontend secure URL helper bypasses the signer');
+requireMatch('src/lib/secure-document-url.ts', /options\.accessToken[\s\S]*prospectStoredDocumentUrl[\s\S]*nativeAdminStoredDocumentUrl/, 'secure document helper does not use token-bound prospect or authenticated native admin routes');
+forbidMatch('src/lib/secure-document-url.ts', /supabase|functions\.invoke|getPublicUrl/, 'secure document helper still uses legacy storage signing');
 forbidMatch('src/components/crm/SecureDocumentLink.tsx', /createSignedUrl|getPublicUrl|signedUrl\)/, 'back-office document link bypasses the server signer or logs its URL');
 requireMatch('src/pages/client/ClientDocuments.tsx', /openClientPlatformDocument\(accessToken[\s\S]*doc\.download_path/, 'client documents are opened without token-bound authorization');
 requireMatch('supabase/functions/sign-document-url/index.ts', /lead_company_quotes[\s\S]*quote_file_url, quote_pdf_url, rc_pro_addon_file_url/, 'quote signer does not verify prospect ownership');

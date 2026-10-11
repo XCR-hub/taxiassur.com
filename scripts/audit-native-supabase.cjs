@@ -27,7 +27,11 @@ function visit(file) {
 }
 visit(path.join(root, 'src', 'main.tsx'));
 const relative = file => path.relative(root, file).replaceAll('\\', '/');
-const legacy = [...sources].filter(([, source]) => /\bsupabase\s*\.|supabaseInstance|createClient\(/.test(source));
+const printer = ts.createPrinter({ removeComments: true });
+const legacy = [...sources].filter(([file, source]) => {
+  const code = printer.printFile(ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true));
+  return /\bsupabase\s*\.|supabaseInstance|createClient\(/.test(code);
+});
 const active = legacy.filter(([file]) => reachable.has(file)).map(([file]) => relative(file)).sort();
 const inactive = legacy.filter(([file]) => !reachable.has(file)).map(([file]) => relative(file)).sort();
 const report = {
