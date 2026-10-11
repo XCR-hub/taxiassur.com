@@ -4,12 +4,22 @@ const BASE=(runtimeEnv?.VITE_NATIVE_PLATFORM_URL||runtimeEnv?.VITE_PLATFORM_API_
 export async function nativeAdminCall<T=any>(path:string,init:RequestInit={}):Promise<T>{const token=localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY);if(!token)throw new Error('native_session_required');const response=await fetch(`${BASE}${path}`,{...init,signal:init.signal||AbortSignal.timeout(45_000),cache:'no-store',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`,...init.headers}});const data=await response.json().catch(()=>({}));if(!response.ok){const error=new Error(data.error||'native_data_error') as Error&{status?:number};error.status=response.status;throw error;}return data as T;}
 const call=nativeAdminCall;
 const dashboardCache=new Map<string,{expires:number,data?:unknown,promise?:Promise<unknown>}>();
+let dashboardSession: string | null = null;
 export async function nativeAdminDashboard(compact=false){
+  const token=localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY);
+  if(token!==dashboardSession){dashboardCache.clear();dashboardSession=token;}
+  if(!token)throw new Error('native_session_required');
   const key=compact?'compact':'full',now=Date.now(),cached=dashboardCache.get(key);
   if(cached?.data&&cached.expires>now)return cached.data;
   if(cached?.promise)return cached.promise;
-  const promise=call(`/v1/admin/dashboard${compact?'?compact=1':''}`).then(data=>{dashboardCache.set(key,{data,expires:Date.now()+10_000});return data;},error=>{dashboardCache.delete(key);throw error;});
-  dashboardCache.set(key,{expires:0,promise});
+  const entry: {expires:number,data?:unknown,promise?:Promise<unknown>}={expires:0};
+  const promise=call(`/v1/admin/dashboard${compact?'?compact=1':''}`).then(data=>{
+    if(localStorage.getItem(NATIVE_ADMIN_TOKEN_KEY)!==token)throw new Error('native_session_changed');
+    if(dashboardCache.get(key)===entry){entry.data=data;entry.expires=Date.now()+10_000;delete entry.promise;}
+    return data;
+  }).catch(error=>{if(dashboardCache.get(key)===entry)dashboardCache.delete(key);throw error;});
+  entry.promise=promise;
+  dashboardCache.set(key,entry);
   return promise;
 }
 export const nativeAdminCrmDashboard=()=>call('/v1/admin/dashboard?crm_summary=1');

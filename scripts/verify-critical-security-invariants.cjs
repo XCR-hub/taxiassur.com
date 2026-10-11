@@ -178,7 +178,8 @@ requireMatch(leadMagnetDeliveryMigration, /UNIQUE \(email_hash, guide_type, deli
 forbidMatch('src/components/LeadMagnetSection.tsx', /send-email-ionos|subject:|html:/, 'lead magnet section can send arbitrary email content');
 forbidMatch('src/components/LeadMagnetPopup.tsx', /send-email-ionos|subject:|html:/, 'lead magnet popup can send arbitrary email content');
 requireMatch('src/components/LeadMagnetSection.tsx', /await submitPublicPlatformLeadMagnet[\s\S]*status: 'success'/, 'lead magnet section reports success before native API acceptance');
-requireMatch('src/components/LeadMagnetPopup.tsx', /await sendConfirmationEmail[\s\S]*setStatus\('success'\)/, 'lead magnet popup reports success before email acceptance');
+requireMatch('src/components/LeadMagnetPopup.tsx', /await submitPublicPlatformLeadMagnet[\s\S]*setStatus\('success'\)/, 'lead magnet popup reports success before native API acceptance');
+forbidMatch('src/components/LeadMagnetPopup.tsx', /supabase|functions\/v1\//, 'lead magnet popup bypasses the native API');
 requireMatch('supabase/functions/send-whatsapp/index.ts', /body, message, to, lead_id, leadId[\s\S]*messageBody = body \|\| message/, 'WhatsApp function breaks legacy CRM payloads');
 requireMatch('supabase/functions/send-whatsapp/index.ts', /requestedLeadId[\s\S]*crm_leads[\s\S]*phone = normalizePhone\(lead\.phone\)/, 'lead WhatsApp delivery trusts the supplied phone instead of stored lead data');
 requireMatch('supabase/functions/send-whatsapp/index.ts', /wa_contacts[\s\S]*upsert[\s\S]*wa_conversations[\s\S]*resolvedConversationId/, 'legacy WhatsApp delivery cannot resolve or create a conversation safely');

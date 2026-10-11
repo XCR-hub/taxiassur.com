@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, BookOpen, Download, CheckCircle, AlertCircle, ChevronRight, Shield, TrendingDown } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { submitPublicPlatformLeadMagnet } from '@/lib/platform-api';
 
 const STORAGE_KEY = 'taxiassur_lead_magnet_popup';
 const COOLDOWN_DAYS = 7;
@@ -30,17 +30,6 @@ function shouldShow(): boolean {
 
 function markDismissed(): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ dismissedAt: Date.now() }));
-}
-
-async function sendConfirmationEmail(to: string, firstName: string): Promise<void> {
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  const response = await fetch(`${url}/functions/v1/send-lead-magnet-confirmation`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}`, Apikey: key },
-    body: JSON.stringify({ email: to, first_name: firstName, guide_type: 'guide-complet' }),
-  });
-  if (!response.ok) throw new Error(`GuideEmailError:${response.status}`);
 }
 
 const ITEMS = [
@@ -114,18 +103,13 @@ const LeadMagnetPopup: React.FC<LeadMagnetPopupProps> = ({ onClose }) => {
     setStatus('loading');
 
     try {
-      const { error } = await supabase
-        .from('lead_magnet_downloads')
-        .insert({
-          email: cleanEmail,
-          first_name: firstName.trim(),
-          guide_type: 'guide-complet',
-          source_page: `popup:${window.location.pathname}`,
-        });
+      await submitPublicPlatformLeadMagnet({
+        email: cleanEmail,
+        first_name: firstName.trim(),
+        guide_type: 'guide-complet',
+        source_page: `popup:${window.location.pathname}`,
+      });
 
-      if (error) throw error;
-
-      await sendConfirmationEmail(cleanEmail, firstName.trim());
       markDismissed();
       setStatus('success');
 
