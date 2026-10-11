@@ -16,7 +16,7 @@ import {
   FileCheck,
   Clock3
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall, nativeAdminUpdateLead, nativeAdminAddTimeline } from '@/lib/native-admin-data';
 import { invokeIdempotentDelivery } from '@/lib/invoke-idempotent-delivery';
 
 export interface DocumentStatus {
@@ -49,6 +49,13 @@ export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
   const [selectedChannel, setSelectedChannel] = useState<'email' | 'sms' | 'whatsapp' | null>(null);
   const [customMessage, setCustomMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const deliveryClient = { functions: { invoke: async (functionName: string, { body }: { body: Record<string, unknown> }) => {
+    const route = functionName === 'send-crm-email' ? 'commercial-email' : functionName === 'send-sms-brevo' ? 'sms' : 'whatsapp';
+    const data = await nativeAdminCall<{ ok: boolean }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/${route}`, {
+      method: 'POST', body: JSON.stringify({ ...body, action: 'send', request_id: body.requestId })
+    });
+    return { data: { ...data, success: data.ok === true }, error: null };
+  } } };
 
   const getStatusIcon = (status: 'validated' | 'received' | 'missing') => {
     switch (status) {
@@ -88,24 +95,9 @@ export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
     : null;
 
   const getAccessLink = async () => {
-    const { data: lead } = await supabase
-      .from('crm_leads')
-      .select('access_token')
-      .eq('id', leadId)
-      .single();
-
-    if (lead?.access_token) {
-      return `${window.location.origin}/espace-prospect/${lead.access_token}`;
-    }
-
-    // Générer un nouveau token si nécessaire
-    const token = Math.random().toString(36).substring(2, 15);
-    await supabase
-      .from('crm_leads')
-      .update({ access_token: token })
-      .eq('id', leadId);
-
-    return `${window.location.origin}/espace-prospect/${token}`;
+    const access = await nativeAdminCall<{ access_token: string }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/prospect-access`, { method: 'POST', body: '{}' });
+    if (!access.access_token) throw new Error('Accès prospect indisponible');
+    return `${window.location.origin}/espace-prospect/${encodeURIComponent(access.access_token)}`;
   };
 
   const sendReminder = async (channel: 'email' | 'sms' | 'whatsapp') => {
@@ -134,62 +126,24 @@ export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
         message += `\nLien upload: ${accessLink}`;
       }
 
-      // Envoyer via l'edge function appropriée
-      let sendResult;
       if (channel === 'email' && leadEmail) {
-        const { data, error } = await invokeIdempotentDelivery(supabase, 'email', 'send-crm-email', {
-            to: leadEmail,
-            subject: `Documents manquants - ${leadName}`,
-            content: message.replace(/\n/g, '<br>')
-
-        });
-        if (error || !data?.success) {
-          const errorMsg = error?.message || data?.error || 'Erreur inconnue';
-          throw new Error(`Email non envoyé: ${errorMsg}`);
-        }
-        sendResult = data;
+        const result = await invokeIdempotentDelivery(deliveryClient, 'email', 'send-crm-email', { lead_id: leadId, subject: `Documents manquants - ${leadName}`, content: message });
+        if (!result.data?.success) throw new Error('Email non accepté');
       } else if (channel === 'sms' && leadPhone) {
-        const { data, error } = await invokeIdempotentDelivery(supabase, 'sms', 'send-sms-brevo', {
-            to: leadPhone,
-            content: message,
-            lead_id: leadId,
-            tag: 'document-reminder'
-
-        });
-        if (error || !data?.success) {
-          const errorMsg = error?.message || data?.error || 'Erreur inconnue';
-          throw new Error(`SMS non envoyé: ${errorMsg}`);
-        }
-        sendResult = data;
+        const result = await invokeIdempotentDelivery(deliveryClient, 'sms', 'send-sms-brevo', { lead_id: leadId, content: message });
+        if (!result.data?.success) throw new Error('SMS non accepté');
       } else if (channel === 'whatsapp' && leadPhone) {
-        const { data, error } = await invokeIdempotentDelivery(supabase, 'whatsapp', 'send-whatsapp', {
-            to: leadPhone,
-            message: message
-
-        });
-        if (error || !data?.success) {
-          const errorMsg = error?.message || data?.error || 'Erreur inconnue';
-          throw new Error(`WhatsApp non envoyé: ${errorMsg}`);
-        }
-        sendResult = data;
+        const result = await invokeIdempotentDelivery(deliveryClient, 'whatsapp', 'send-whatsapp', { lead_id: leadId, content: message });
+        if (!result.data?.success) throw new Error('WhatsApp non accepté');
+      } else {
+        throw new Error('Coordonnées manquantes pour ce canal');
       }
-
-      // Enregistrer la relance
-      await supabase.from('crm_interactions').insert({
-        lead_id: leadId,
-        type: channel === 'email' ? 'email' : channel,
-        direction: 'outbound',
-        content: `Relance documents manquants : ${missingDocsText}`,
-        status: 'sent'
-      });
-
-      // Mettre à jour la date de dernière relance
-      await supabase
-        .from('crm_leads')
-        .update({ last_contact_at: new Date().toISOString() })
-        .eq('id', leadId);
-
-      toast.success(`✅ Relance envoyée avec succès via ${channel} !`);
+      try {
+        await nativeAdminUpdateLead(leadId, { last_contact_at: new Date().toISOString() });
+      } catch {
+        toast.warning('Relance acceptée, mais la date de contact n’a pas pu être actualisée.');
+      }
+      toast.success(channel === 'email' ? 'Relance email mise en file d’attente.' : `Relance envoyée via ${channel}.`);
       setSelectedChannel(null);
       setCustomMessage('');
     } catch (error) {
@@ -201,30 +155,26 @@ export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
   };
 
   const copyAccessLink = async () => {
-    const link = await getAccessLink();
-    navigator.clipboard.writeText(link);
-    toast.success('Lien copié dans le presse-papier !');
+    setLoading(true);
+    try {
+      const link = await getAccessLink();
+      await navigator.clipboard.writeText(link);
+      toast.success('Lien copié dans le presse-papier !');
+    } catch {
+      toast.error('Impossible de copier le lien prospect. Vérifiez votre session.');
+    } finally { setLoading(false); }
   };
 
   const markDocumentsComplete = async () => {
     setLoading(true);
     try {
-      // Passer le lead à l'étape DEVIS
-      await supabase
-        .from('crm_leads')
-        .update({ status: 'DEVIS' })
-        .eq('id', leadId);
-
-      // Créer une interaction
-      await supabase.from('crm_interactions').insert({
-        lead_id: leadId,
-        type: 'system',
-        direction: 'outbound',
-        content: 'Documents collectés - Passage étape DEVIS',
-        status: 'completed'
-      });
-
-      toast.success('Documents validés ! Le lead passe à l\'étape DEVIS.');
+      await nativeAdminUpdateLead(leadId, { status: 'DEVIS' });
+      try {
+        await nativeAdminAddTimeline(leadId, { channel: 'note', direction: 'outbound', content: 'Documents collectés - Passage étape DEVIS' });
+      } catch {
+        toast.warning('Le dossier est au devis, mais la note de suivi n’a pas pu être enregistrée.');
+      }
+      toast.success('Le dossier passe à l’étape DEVIS.');
       if (onDocumentsComplete) {
         onDocumentsComplete();
       }
@@ -298,6 +248,7 @@ export const DocumentReminderPanel: React.FC<DocumentReminderPanelProps> = ({
       <div className="p-4 border-b border-gray-200 space-y-2">
         <button
           onClick={copyAccessLink}
+          disabled={loading}
           className="w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center justify-center gap-2 text-gray-700 font-medium"
         >
           <LinkIcon className="w-5 h-5" />
