@@ -4,8 +4,9 @@ import {
   FileText, CheckCircle, XCircle, Clock, AlertTriangle,
   RefreshCw, Send, RotateCcw, ExternalLink
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { nativeAdminSession } from '@/lib/native-admin-auth';
+import { nativeAdminCall, nativeAdminUpdateDocument } from '@/lib/native-admin-data';
+import { documentValidationError } from '@/lib/native-document-status';
+
 import { SecureDocumentLink } from './SecureDocumentLink';
 import { getRequiredDocuments } from '@/lib/document-requirements';
 
@@ -19,10 +20,6 @@ interface DocumentStatus {
   notes?: string;
 }
 
-interface DocumentChecklist {
-  [key: string]: DocumentStatus;
-}
-
 interface ProspectDocument {
   id: string;
   document_type: string;
@@ -32,6 +29,8 @@ interface ProspectDocument {
   uploaded_at: string;
   status: string;
   notes?: string;
+  bucket?: string;
+  rejection_reason?: string;
   metadata?: {
     download_url?: string;
     email_id?: string;
@@ -49,6 +48,7 @@ interface EmailAttachment {
   file_size: number;
   download_url: string;
   storage_path: string;
+  storage_bucket?: string;
   auto_detected_type?: string;
   confidence_score?: number;
   classification_status: string;
@@ -78,7 +78,6 @@ export function DocumentChecklistPanelV2({
     required: d.required,
     icon: d.icon || '📄'
   }));
-  const [checklist, setChecklist] = useState<DocumentChecklist>({});
   const [prospectDocuments, setProspectDocuments] = useState<ProspectDocument[]>([]);
   const [emailAttachments, setEmailAttachments] = useState<EmailAttachment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,39 +91,20 @@ export function DocumentChecklistPanelV2({
     console.log('🔄 DocumentChecklistPanelV2: loadData called for leadId:', leadId);
     setLoading(true);
     try {
-      const [leadResult, docsResult, attachmentsResult] = await Promise.all([
-        supabase
-          .from('crm_leads')
-          .select('document_checklist, documents_complete')
-          .eq('id', leadId)
-          .maybeSingle(),
-        supabase
-          .from('prospect_documents')
-          .select('id, document_type, file_name, file_path, file_size, status, uploaded_at, notes, metadata')
-          .eq('lead_id', leadId)
-          .order('uploaded_at', { ascending: false }),
-        supabase
-          .from('email_attachments')
-          .select('*')
-          .eq('lead_id', leadId)
-          .order('created_at', { ascending: false })
+      const [data, workspace] = await Promise.all([
+        nativeAdminCall<{ documents?: ProspectDocument[] }>(`/v1/admin/documents?lead_id=${encodeURIComponent(leadId)}&scope=all`),
+        nativeAdminCall<{ attachments?: Array<{ attachment_id: string; filename: string; content_type: string; file_size: number; storage_path: string; storage_bucket?: string; source: string; received_at: string }> }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/document-workspace`)
       ]);
-
-      if (leadResult.data?.document_checklist) {
-        setChecklist(leadResult.data.document_checklist);
-      }
-
-      if (docsResult.data) {
-        setProspectDocuments(docsResult.data);
-      }
-
-      if (attachmentsResult.data) {
-        setEmailAttachments(attachmentsResult.data);
-      }
-
+      setProspectDocuments([...new Map((data.documents || []).filter(doc => doc.file_path).map(doc => [doc.id, doc])).values()]);
+      setEmailAttachments((workspace.attachments || []).filter(item => item.source === 'email').map(item => ({
+        id: item.attachment_id, file_name: item.filename, file_type: item.content_type, file_size: item.file_size,
+        download_url: '', storage_path: item.storage_path, storage_bucket: item.storage_bucket || 'email-attachments',
+        classification_status: 'pending', created_at: item.received_at, email_message_id: item.attachment_id.split(':')[0]
+      })));
       console.log('✅ DocumentChecklistPanelV2: loadData completed');
     } catch (err) {
       console.error('❌ DocumentChecklistPanelV2: Error loading document data:', err);
+      toast.error('Impossible de charger les documents. Vérifiez votre session puis réessayez.');
     } finally {
       setLoading(false);
     }
@@ -133,34 +113,14 @@ export function DocumentChecklistPanelV2({
   useEffect(() => {
     console.log('🎯 DocumentChecklistPanelV2: useEffect triggered, leadId:', leadId);
     loadData();
-  }, [leadId]);
+  }, [leadId, loadData]);
 
   const getDocumentStatus = (docType: string): DocumentStatus => {
-    const checklistStatus = checklist[docType];
-
-    // Chercher dans les documents uploadés directement
-    const uploaded = prospectDocuments.find(d => d.document_type === docType);
-
-    // Chercher aussi dans les pièces jointes d'emails classifiées
-    const emailAttachment = emailAttachments.find(
-      a => a.auto_detected_type === docType && a.classification_status === 'classified'
-    );
-
-    if (checklistStatus?.validated) {
-      return { ...checklistStatus, status: 'validated' };
-    }
-    if (checklistStatus?.status === 'rejected') {
-      return checklistStatus;
-    }
-    if (uploaded || emailAttachment || checklistStatus?.status === 'uploaded') {
-      return {
-        status: 'uploaded',
-        validated: false,
-        uploaded_at: uploaded?.uploaded_at || emailAttachment?.created_at,
-        file_name: uploaded?.file_name || emailAttachment?.file_name
-      };
-    }
-    return { status: 'missing', validated: false };
+    const doc = prospectDocuments.find(item => item.document_type === docType);
+    if (!doc) return { status: 'missing', validated: false };
+    const validated = ['validated', 'verified'].includes(doc.status);
+    return { status: validated ? 'validated' : doc.status === 'rejected' ? 'rejected' : 'uploaded', validated,
+      uploaded_at: doc.uploaded_at, file_name: doc.file_name, rejection_reason: doc.rejection_reason };
   };
 
   const getCompletionPercentage = () => {
@@ -169,7 +129,7 @@ export function DocumentChecklistPanelV2({
       const status = getDocumentStatus(d.id);
       return status.validated || status.status === 'uploaded';
     }).length;
-    return Math.round((completedCount / requiredDocs.length) * 100);
+    return requiredDocs.length ? Math.round((completedCount / requiredDocs.length) * 100) : 100;
   };
 
   const getValidatedPercentage = () => {
@@ -178,7 +138,7 @@ export function DocumentChecklistPanelV2({
       const status = getDocumentStatus(d.id);
       return status.validated;
     }).length;
-    return Math.round((validatedCount / requiredDocs.length) * 100);
+    return requiredDocs.length ? Math.round((validatedCount / requiredDocs.length) * 100) : 100;
   };
 
   const getMissingDocuments = () => {
@@ -191,21 +151,13 @@ export function DocumentChecklistPanelV2({
   const handleValidate = async (docType: string) => {
     setActionLoading(docType);
     try {
-      const { user } = await nativeAdminSession();
-      const adminId = user?.id;
-
-      const { error } = await supabase.rpc('validate_document', {
-        p_lead_id: leadId,
-        p_document_type: docType,
-        p_admin_id: adminId,
-        p_notes: null
-      });
-
-      if (error) throw error;
+      const doc = prospectDocuments.find(item => item.document_type === docType);
+      if (!doc) throw new Error('not_found');
+      await nativeAdminUpdateDocument(doc.id, { status: 'validated' });
       await loadData();
     } catch (err) {
       console.error('Error validating document:', err);
-      toast.error('Erreur lors de la validation');
+      toast.error(documentValidationError(err));
     } finally {
       setActionLoading(null);
     }
@@ -219,17 +171,9 @@ export function DocumentChecklistPanelV2({
 
     setActionLoading(docType);
     try {
-      const { user } = await nativeAdminSession();
-      const adminId = user?.id;
-
-      const { error } = await supabase.rpc('invalidate_document', {
-        p_lead_id: leadId,
-        p_document_type: docType,
-        p_admin_id: adminId,
-        p_reason: rejectReason
-      });
-
-      if (error) throw error;
+      const doc = prospectDocuments.find(item => item.document_type === docType);
+      if (!doc) throw new Error('not_found');
+      await nativeAdminUpdateDocument(doc.id, { status: 'rejected', rejection_reason: rejectReason.trim() });
       setShowRejectModal(null);
       setRejectReason('');
       await loadData();
@@ -269,7 +213,6 @@ export function DocumentChecklistPanelV2({
   const copyPortalLink = async () => {
     console.log('📋 copyPortalLink called');
     const url = getProspectPortalUrl();
-    console.log('🔗 URL:', url);
 
     if (url) {
       try {
@@ -318,18 +261,9 @@ export function DocumentChecklistPanelV2({
 
     setActionLoading(docType);
     try {
-      // Appeler la fonction RPC pour classifier le document
-      const { error } = await supabase.rpc('classify_attachment', {
-        p_attachment_id: draggedAttachment.id,
-        p_doc_type: docType,
-        p_create_document: true
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/document-workspace`, {
+        method: 'POST', body: JSON.stringify({ action: 'classify', attachment_id: draggedAttachment.id, document_type: docType })
       });
-
-      if (error) {
-        console.error('❌ Error classifying attachment:', error);
-        throw error;
-      }
-
       console.log('✅ Document classified successfully');
       await loadData();
     } catch (err) {
@@ -505,7 +439,7 @@ export function DocumentChecklistPanelV2({
                       )}
                     </div>
                     {status.file_name && (
-                      <p className="text-xs text-gray-400 mt-0.5">{status.file_name}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{doc?.status === 'quarantined' && 'En quarantaine — '}{status.file_name}</p>
                     )}
                     {status.status === 'rejected' && status.rejection_reason && (
                       <p className="text-xs text-red-400 mt-1">
@@ -522,7 +456,7 @@ export function DocumentChecklistPanelV2({
                     <>
                       <button
                         onClick={() => handleValidate(docType.id)}
-                        disabled={isLoading}
+                        disabled={isLoading || doc?.status === 'quarantined'}
                         className="p-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg transition-colors"
                         title="Valider"
                       >
@@ -558,13 +492,11 @@ export function DocumentChecklistPanelV2({
                     <SecureDocumentLink
                       filePath={doc.file_path}
                       source={doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/') ? 'email_attachments' : 'prospect_documents'}
-                      bucket={doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/') ? 'email-attachments' : 'prospect-documents'}
+                      bucket={doc.bucket || (doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/') ? 'email-attachments' : 'prospect-documents')}
                       fileName={doc.file_name}
                       className="p-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors"
                       iconSize={16}
                     />
-                  ) : emailAttachments.find(a => a.auto_detected_type === docType.id && a.classification_status === 'classified')?.download_url ? (
-                    <SecureDocumentLink filePath={emailAttachments.find(a => a.auto_detected_type === docType.id && a.classification_status === 'classified')!.storage_path} source="email_attachments" bucket="email-attachments" fileName={emailAttachments.find(a => a.auto_detected_type === docType.id && a.classification_status === 'classified')!.file_name} className="p-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors" iconSize={16} />
                   ) : null}
                 </div>
               </div>
@@ -630,8 +562,8 @@ export function DocumentChecklistPanelV2({
                             </div>
                           </div>
                           <div className="flex items-center gap-2 ml-2">
-                            <SecureDocumentLink filePath={attachment.storage_path} source="email_attachments" bucket="email-attachments" fileName={attachment.file_name} mode="view" className="p-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors" iconSize={16} />
-                            <SecureDocumentLink filePath={attachment.storage_path} source="email_attachments" bucket="email-attachments" fileName={attachment.file_name} mode="download" className="p-1.5 bg-gray-600/50 hover:bg-gray-600 text-gray-400 rounded-lg transition-colors" iconSize={16} />
+                            <SecureDocumentLink filePath={attachment.storage_path} source="email_attachments" bucket={attachment.storage_bucket || 'email-attachments'} fileName={attachment.file_name} mode="view" className="p-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors" iconSize={16} />
+                            <SecureDocumentLink filePath={attachment.storage_path} source="email_attachments" bucket={attachment.storage_bucket || 'email-attachments'} fileName={attachment.file_name} mode="download" className="p-1.5 bg-gray-600/50 hover:bg-gray-600 text-gray-400 rounded-lg transition-colors" iconSize={16} />
                           </div>
                         </div>
                       </div>

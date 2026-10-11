@@ -9,10 +9,55 @@ import DocumentValidationPanel from '../DocumentValidationPanel';
 import { PendingAttachmentsPanel } from '../PendingAttachmentsPanel';
 import DocumentValidationManager from '../DocumentValidationManager';
 import { DocumentChecklistPanel } from '../DocumentChecklistPanel';
+import { DocumentChecklistPanelV2 } from '../DocumentChecklistPanelV2';
 
 const document = { id: 'doc-id', document_type: 'rib', file_name: 'rib.pdf', file_path: 'lead/rib.pdf', file_size: 100, uploaded_at: '2026-10-11T12:00:00Z', status: 'pending', bucket: 'native' };
 const attachment = { attachment_id: 'mail-id:2', filename: 'email-piece.pdf', content_type: 'application/pdf', file_size: 200, storage_path: 'lead/email-piece.pdf', storage_bucket: 'email-attachments', received_at: '2026-10-11T12:00:00Z', source: 'email' };
 beforeEach(() => { call.mockReset(); update.mockReset().mockResolvedValue({ ok: true }); open.mockReset().mockResolvedValue(undefined); download.mockReset().mockResolvedValue(undefined); upload.mockReset().mockResolvedValue({ ok: true }); remove.mockReset().mockResolvedValue({ ok: true }); errorToast.mockReset(); });
+
+describe('native second document checklist', () => {
+  const props = { leadId: 'lead-id', leadEmail: 'test@example.com', leadFirstName: 'Camille' };
+  const piece = { ...document, document_type: 'carte_grise' };
+  it('classifies a dragged email attachment by its native workspace reference', async () => {
+    call.mockImplementation(async (route: string) => route.includes('/documents?') ? { documents: [piece] } : { attachments: [attachment, { ...attachment, filename: 'prospect.pdf', source: 'prospect_documents' }] });
+    render(<DocumentChecklistPanelV2 {...props} />);
+    const email = await screen.findByText('email-piece.pdf');
+    expect(screen.queryByText('prospect.pdf')).not.toBeInTheDocument();
+    fireEvent.dragStart(email.closest('[draggable]')!);
+    const target = screen.getByText('rib.pdf').closest('.p-3')!;
+    fireEvent.dragOver(target);
+    fireEvent.drop(target);
+    await waitFor(() => expect(call).toHaveBeenCalledWith('/v1/admin/leads/lead-id/document-workspace', { method: 'POST', body: JSON.stringify({ action: 'classify', attachment_id: 'mail-id:2', document_type: 'carte_grise' }) }));
+  });
+  it('validates the stored document ID and uses the recorded storage bucket', async () => {
+    call.mockImplementation(async (route: string) => route.includes('/documents?') ? { documents: [piece] } : { attachments: [] });
+    render(<DocumentChecklistPanelV2 {...props} />);
+    fireEvent.click(await screen.findByTitle('Valider'));
+    await waitFor(() => expect(update).toHaveBeenCalledWith('doc-id', { status: 'validated' }));
+    expect(screen.getByTestId('document-bucket')).toHaveTextContent('native');
+  });
+  it('recognises verified documents and sends a reasoned native rejection', async () => {
+    call.mockImplementation(async (route: string) => route.includes('/documents?') ? { documents: [{ ...piece, status: 'verified' }] } : { attachments: [] });
+    render(<DocumentChecklistPanelV2 {...props} />);
+    fireEvent.click(await screen.findByTitle('Redemander'));
+    expect(screen.queryByTitle('Valider')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Page manquante' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Rejeter et redemander' }));
+    await waitFor(() => expect(update).toHaveBeenCalledWith('doc-id', { status: 'rejected', rejection_reason: 'Page manquante' }));
+  });
+  it('does not allow quarantine validation and displays failures for pending validation', async () => {
+    call.mockImplementation(async (route: string) => route.includes('/documents?') ? { documents: [{ ...piece, status: 'quarantined' }] } : { attachments: [] });
+    const { unmount } = render(<DocumentChecklistPanelV2 {...props} />);
+    expect(await screen.findByTitle('Valider')).toBeDisabled();
+    expect(screen.getByTitle('Rejeter')).toBeEnabled();
+    unmount();
+    call.mockImplementation(async (route: string) => route.includes('/documents?') ? { documents: [piece] } : { attachments: [] });
+    update.mockRejectedValueOnce(new Error('document_scan_blocked'));
+    render(<DocumentChecklistPanelV2 {...props} />);
+    fireEvent.click(await screen.findByTitle('Valider'));
+    await waitFor(() => expect(errorToast).toHaveBeenCalledWith(expect.stringContaining('antivirus')));
+  });
+});
 
 describe('native document checklist', () => {
   it('retains upload notes and reports success only after the native upload succeeds', async () => {

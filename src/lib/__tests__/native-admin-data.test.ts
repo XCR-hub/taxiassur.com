@@ -9,6 +9,15 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
+it('opens a native storage reference through the supported CRM bucket alias', async () => {
+  const fetchMock = vi.fn().mockResolvedValue({ ok: false, json: async () => ({ error: 'document_scan_blocked' }) });
+  vi.stubGlobal('fetch', fetchMock);
+  localStorage.setItem(NATIVE_ADMIN_TOKEN_KEY, 'native-admin-token');
+  const { nativeAdminStoredDocumentUrl } = await import('../native-admin-data');
+  await expect(nativeAdminStoredDocumentUrl('lead/documents/id.pdf', 'native')).rejects.toThrow('document_scan_blocked');
+  expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/v1/admin/documents/open'), expect.objectContaining({ body: JSON.stringify({ path: 'lead/documents/id.pdf', bucket: 'crm-documents', download: false, file_name: 'document' }) }));
+});
+
 it('uploads the original file with authenticated, encoded notes through the native scanner', async () => {
   const fetchMock = vi.fn().mockResolvedValue(response({ ok: true }));
   vi.stubGlobal('fetch', fetchMock);
