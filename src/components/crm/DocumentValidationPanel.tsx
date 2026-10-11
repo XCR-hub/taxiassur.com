@@ -8,8 +8,8 @@ import {
   FileText,
   Loader2,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { nativeAdminSession } from '@/lib/native-admin-auth';
+import { nativeAdminCall, nativeAdminUpdateDocument } from '@/lib/native-admin-data';
+import { documentValidationError } from '@/lib/native-document-status';
 import { logger } from '@/lib/logger';
 import { SecureDocumentLink } from './SecureDocumentLink';
 
@@ -19,7 +19,8 @@ interface Document {
   file_name: string;
   file_path: string;
   file_size: number;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'validated' | 'verified' | 'rejected' | 'quarantined';
+  bucket?: string;
   uploaded_at: string;
   validated_by?: string;
   validated_at?: string;
@@ -84,16 +85,11 @@ const DocumentValidationPanel: React.FC<DocumentValidationPanelProps> = ({ leadI
   const loadDocuments = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('prospect_documents')
-        .select('id, document_type, file_name, file_path, file_size, status, uploaded_at, validated_by, validated_at, rejection_reason, rejection_details, metadata')
-        .eq('lead_id', leadId)
-        .order('uploaded_at', { ascending: false });
-
-      if (error) throw error;
-      setDocuments(data || []);
+      const data = await nativeAdminCall<{ documents?: Document[] }>(`/v1/admin/documents?lead_id=${encodeURIComponent(leadId)}&scope=all`);
+      setDocuments((data.documents || []).filter(document => document.file_path));
     } catch (error) {
       logger.error('Error loading documents:', error);
+      toast.error('Impossible de charger les documents. Actualisez puis réessayez.');
     } finally {
       setLoading(false);
     }
@@ -102,23 +98,12 @@ const DocumentValidationPanel: React.FC<DocumentValidationPanelProps> = ({ leadI
   const handleValidate = async (documentId: string) => {
     setValidating(documentId);
     try {
-      const { user } = await nativeAdminSession();
-      if (!user) throw new Error('Not authenticated');
-
-      const { data, error } = await supabase.rpc('validate_document', {
-        p_document_id: documentId,
-        p_validated_by: user.id
-      });
-
-      if (error) throw error;
-
-      if (data?.success) {
-        await loadDocuments();
-        onValidationChange?.();
-      }
+      await nativeAdminUpdateDocument(documentId, { status: 'validated' });
+      await loadDocuments();
+      onValidationChange?.();
     } catch (error) {
       logger.error('Error validating document:', error);
-      toast.error('Erreur lors de la validation');
+      toast.error(documentValidationError(error));
     } finally {
       setValidating(null);
     }
@@ -132,38 +117,13 @@ const DocumentValidationPanel: React.FC<DocumentValidationPanelProps> = ({ leadI
 
     setRejecting(rejectModal.documentId);
     try {
-      const { user } = await nativeAdminSession();
-      if (!user) throw new Error('Not authenticated');
-
-      const { data, error } = await supabase.rpc('reject_document', {
-        p_document_id: rejectModal.documentId,
-        p_validated_by: user.id,
-        p_rejection_reason: rejectForm.reason,
-        p_rejection_details: rejectForm.details || null
-      });
-
-      if (error) throw error;
-
-      if (data?.success) {
-        // Envoyer l'email de notification
-        if (data.lead_email && data.access_token) {
-          await supabase.functions.invoke('send-document-notification', {
-            body: {
-              type: 'rejection',
-              lead_email: data.lead_email,
-              document_type: rejectModal.documentName,
-              rejection_reason: REJECTION_REASONS.find(r => r.value === rejectForm.reason)?.label,
-              rejection_details: rejectForm.details,
-              access_token: data.access_token
-            }
-          });
-        }
-
-        await loadDocuments();
-        onValidationChange?.();
-        setRejectModal(null);
-        setRejectForm({ reason: '', details: '' });
-      }
+      const reasonLabel = REJECTION_REASONS.find(reason => reason.value === rejectForm.reason)?.label || rejectForm.reason;
+      const reason = [reasonLabel, rejectForm.details.trim()].filter(Boolean).join(' : ');
+      await nativeAdminUpdateDocument(rejectModal.documentId, { status: 'rejected', rejection_reason: reason });
+      await loadDocuments();
+      onValidationChange?.();
+      setRejectModal(null);
+      setRejectForm({ reason: '', details: '' });
     } catch (error) {
       logger.error('Error rejecting document:', error);
       toast.error('Erreur lors du rejet');
@@ -175,12 +135,16 @@ const DocumentValidationPanel: React.FC<DocumentValidationPanelProps> = ({ leadI
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
+      case 'validated':
+      case 'verified':
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">
             <CheckCircle className="w-4 h-4" />
             Validé
           </span>
         );
+      case 'quarantined':
+        return <span className="text-sm text-orange-700">En quarantaine</span>;
       case 'rejected':
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-red-100 text-red-800 text-sm font-medium">
@@ -204,8 +168,8 @@ const DocumentValidationPanel: React.FC<DocumentValidationPanelProps> = ({ leadI
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
-  const pendingCount = documents.filter(d => d.status === 'pending').length;
-  const approvedCount = documents.filter(d => d.status === 'approved').length;
+  const pendingCount = documents.filter(d => ['pending', 'quarantined'].includes(d.status)).length;
+  const approvedCount = documents.filter(d => ['approved', 'validated', 'verified'].includes(d.status)).length;
   const rejectedCount = documents.filter(d => d.status === 'rejected').length;
 
   if (loading) {
@@ -255,10 +219,10 @@ const DocumentValidationPanel: React.FC<DocumentValidationPanelProps> = ({ leadI
                 <div className="flex items-start gap-4">
                   {/* Icône de validation */}
                   <div className="flex-shrink-0 pt-1">
-                    {doc.status === 'approved' && (
+                    {['approved', 'validated', 'verified'].includes(doc.status) && (
                       <CheckCircle className="w-6 h-6 text-green-600" />
                     )}
-                    {doc.status === 'pending' && (
+                    {['pending', 'quarantined'].includes(doc.status) && (
                       <Clock className="w-6 h-6 text-blue-600" />
                     )}
                     {doc.status === 'rejected' && (
@@ -290,7 +254,7 @@ const DocumentValidationPanel: React.FC<DocumentValidationPanelProps> = ({ leadI
                           <AlertCircle className="w-4 h-4 text-red-600 mt-0.5" />
                           <div className="text-sm">
                             <div className="font-medium text-red-900">
-                              {REJECTION_REASONS.find(r => r.value === doc.rejection_reason)?.label}
+                              {REJECTION_REASONS.find(r => r.value === doc.rejection_reason)?.label || doc.rejection_reason}
                             </div>
                             {doc.rejection_details && (
                               <div className="text-red-700 mt-1">{doc.rejection_details}</div>
@@ -306,17 +270,17 @@ const DocumentValidationPanel: React.FC<DocumentValidationPanelProps> = ({ leadI
                     <SecureDocumentLink
                       filePath={doc.file_path}
                       source={doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/') ? 'email_attachments' : 'prospect_documents'}
-                      bucket={doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/') ? 'email-attachments' : 'prospect-documents'}
+                      bucket={doc.bucket || (doc.file_path.startsWith('00000000-0000-0000-0000-000000000001/') ? 'email-attachments' : 'prospect-documents')}
                       fileName={doc.file_name}
                       className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                       iconSize={20}
                     />
 
-                    {doc.status === 'pending' && (
+                    {['pending', 'quarantined'].includes(doc.status) && (
                       <>
                         <button
                           onClick={() => handleValidate(doc.id)}
-                          disabled={validating === doc.id}
+                          disabled={validating === doc.id || doc.status === 'quarantined'}
                           className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
                           {validating === doc.id ? (

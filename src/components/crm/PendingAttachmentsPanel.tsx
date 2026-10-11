@@ -4,7 +4,7 @@ import {
   Paperclip, FileText, Image, File, Check, X,
   Mail, Sparkles, ChevronDown, ChevronUp
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
 import { cn } from '@/lib/utils';
 import { SecureDocumentLink } from './SecureDocumentLink';
 
@@ -20,6 +20,22 @@ interface PendingAttachment {
   created_at: string;
   email_subject: string | null;
   email_from: string | null;
+  storage_bucket: string;
+}
+
+interface WorkspaceAttachment {
+  attachment_id: string;
+  filename: string;
+  content_type?: string;
+  file_size?: number;
+  storage_path?: string;
+  storage_bucket?: string;
+  proposed_doc_type?: string;
+  confidence?: number;
+  received_at: string;
+  email_subject?: string;
+  from_email?: string;
+  source: string;
 }
 
 interface PendingAttachmentsPanelProps {
@@ -49,13 +65,24 @@ export const PendingAttachmentsPanel: React.FC<PendingAttachmentsPanelProps> = (
 
   const loadAttachments = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .rpc('get_pending_attachments', { p_lead_id: leadId });
-
-      if (error) throw error;
-      setAttachments(data || []);
+      const data = await nativeAdminCall<{ attachments?: WorkspaceAttachment[] }>(`/v1/admin/leads/${encodeURIComponent(leadId)}/document-workspace`);
+      setAttachments((data.attachments || []).filter(item => item.source === 'email').map(item => ({
+        id: item.attachment_id,
+        file_name: item.filename,
+        file_type: item.content_type || null,
+        file_size: Number(item.file_size || 0),
+        download_url: null,
+        storage_path: item.storage_path || null,
+        storage_bucket: item.storage_bucket || 'email-attachments',
+        auto_detected_type: item.proposed_doc_type || null,
+        confidence_score: item.confidence ?? null,
+        created_at: item.received_at,
+        email_subject: item.email_subject || null,
+        email_from: item.from_email || null,
+      })));
     } catch (err) {
       console.error('Error loading pending attachments:', err);
+      toast.error('Impossible de charger les pièces jointes. Actualisez puis réessayez.');
     } finally {
       setLoading(false);
     }
@@ -85,13 +112,9 @@ export const PendingAttachmentsPanel: React.FC<PendingAttachmentsPanelProps> = (
   const handleClassify = async (attachmentId: string, documentType: string) => {
     setClassifying(attachmentId);
     try {
-      const { error } = await supabase
-        .rpc('classify_attachment', {
-          p_attachment_id: attachmentId,
-          p_document_type: documentType
-        });
-
-      if (error) throw error;
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/document-workspace`, {
+        method: 'POST', body: JSON.stringify({ action: 'classify', attachment_id: attachmentId, document_type: documentType }),
+      });
 
       // Remove from list
       setAttachments(prev => prev.filter(a => a.id !== attachmentId));
@@ -111,13 +134,9 @@ export const PendingAttachmentsPanel: React.FC<PendingAttachmentsPanelProps> = (
   const handleIgnore = async (attachmentId: string) => {
     setClassifying(attachmentId);
     try {
-      const { error } = await supabase
-        .rpc('ignore_attachment', {
-          p_attachment_id: attachmentId,
-          p_reason: 'Ignoré manuellement'
-        });
-
-      if (error) throw error;
+      await nativeAdminCall(`/v1/admin/leads/${encodeURIComponent(leadId)}/document-workspace`, {
+        method: 'POST', body: JSON.stringify({ action: 'reject', attachment_id: attachmentId }),
+      });
 
       setAttachments(prev => prev.filter(a => a.id !== attachmentId));
     } catch (err) {
@@ -198,7 +217,7 @@ export const PendingAttachmentsPanel: React.FC<PendingAttachmentsPanelProps> = (
                         <SecureDocumentLink
                           filePath={attachment.storage_path}
                           source="email_attachments"
-                          bucket="email-attachments"
+                          bucket={attachment.storage_bucket}
                           fileName={attachment.file_name}
                           mode="download"
                           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
