@@ -9,6 +9,7 @@ import {
   ChevronLeft,
 } from 'lucide-react';
 import { nativeAdminDocumentUrl, nativeAdminDocuments, nativeAdminDownloadDocument, nativeAdminOpenDocument, nativeAdminUpdateDocument } from '@/lib/native-admin-data';
+import { documentValidationError } from '@/lib/native-document-status';
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface PendingDocument {
@@ -373,7 +374,7 @@ export default function PendingDocumentsManager() {
       if(result?.email_queued===false)setActionError('Document validé, mais la notification email n’a pas été mise en file. Vérifiez l’adresse du prospect et l’outbox.');
     } catch (err) {
       console.error('Erreur validation:', err);
-      setActionError('La validation a échoué. Le document reste dans la file; actualisez puis réessayez.');
+      setActionError(documentValidationError(err));
     } finally {
       setProcessing(prev => { const s = new Set(prev); s.delete(docId); return s; });
     }

@@ -4,6 +4,7 @@ import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, XCircle, Che
 import { toast } from '@/lib/toast';
 import { getRequiredDocuments } from '@/lib/document-requirements';
 import { nativeAdminCall, nativeAdminDeleteDocument, nativeAdminUpdateDocument, nativeAdminUploadLeadDocument } from '@/lib/native-admin-data';
+import { documentValidationError } from '@/lib/native-document-status';
 
 interface DocumentValidationCompleteProps {
   caseId: string;
@@ -356,7 +357,7 @@ export default function DocumentValidationComplete({
 
     } catch (error) {
       console.error('Error validating document:', error);
-      toast.error('Erreur lors de la validation du document');
+      toast.error(documentValidationError(error));
     } finally {
       setProcessing(null);
     }

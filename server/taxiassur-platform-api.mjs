@@ -1395,10 +1395,12 @@ async function adminDocumentPatch(req,res,origin,requestId,documentId){
   const scanStatus=fileObject?.scan_status||recordScanStatus;
   if(documentRecord.status==='quarantined'&&status!=='rejected')return json(res,origin,409,{ok:false,error:'document_scan_blocked',scan_status:scanStatus||'quarantined'},requestId);
   if(scanStatus&&scanStatus!=='clean'&&status!=='rejected')return json(res,origin,409,{ok:false,error:'document_scan_blocked',scan_status:scanStatus},requestId);
-  const updates={status:status,updated_at:new Date().toISOString()};
+  const updates={status:status,validated:status==='validated'||status==='verified',validation_status:status,updated_at:new Date().toISOString()};
   if(status==='validated'||status==='verified'){updates.validated_at=new Date().toISOString();updates.validated_by=session.sub;}
+  else {updates.validated_at=null;updates.validated_by=null;}
+  if(status!=='rejected')updates.rejection_reason=null;
   if(status==='rejected')updates.rejection_reason=String(body.rejection_reason||'').slice(0,500);
-  const updateSql="WITH updated AS (UPDATE taxiassur.records SET data=data||"+quoteLiteral(JSON.stringify(updates))+"::jsonb,updated_at=now(),revision=revision+1 WHERE collection IN ('prospect_documents','crm_lead_documents') AND record_id="+quoteLiteral(documentId)+" RETURNING data) INSERT INTO taxiassur.audit_events(actor_type,actor_id,action,target_type,target_id,request_id,metadata) SELECT 'admin',"+quoteLiteral(session.sub)+","+quoteLiteral('document_'+status)+",'prospect_document',"+quoteLiteral(documentId)+","+quoteLiteral(requestId)+"::uuid,"+quoteLiteral(JSON.stringify({status:status}))+"::jsonb FROM updated RETURNING (SELECT data::text FROM updated);";
+  const updateSql="WITH updated AS (UPDATE taxiassur.records SET data=data||"+quoteLiteral(JSON.stringify(updates))+"::jsonb,updated_at=now(),revision=revision+1 WHERE collection IN ('prospect_documents','crm_lead_documents') AND record_id="+quoteLiteral(documentId)+" RETURNING data), file_updated AS (UPDATE taxiassur.file_objects SET status="+quoteLiteral(status)+",updated_at=now() WHERE id="+quoteLiteral(documentId)+"::uuid AND EXISTS(SELECT 1 FROM updated)), audited AS (INSERT INTO taxiassur.audit_events(actor_type,actor_id,action,target_type,target_id,request_id,metadata) SELECT 'admin',"+quoteLiteral(session.sub)+","+quoteLiteral('document_'+status)+",'prospect_document',"+quoteLiteral(documentId)+","+quoteLiteral(requestId)+"::uuid,"+quoteLiteral(JSON.stringify({status:status}))+"::jsonb WHERE EXISTS(SELECT 1 FROM updated)) SELECT data::text FROM updated LIMIT 1;";
   const document=parseJsonLine(await runPsql(updateSql));
   if(!document)return json(res,origin,404,{ok:false,error:'not_found'},requestId);
   let rejectionEmailQueued=false;

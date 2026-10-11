@@ -7,6 +7,7 @@ import ClientSubscriptionForm from '../components/client/ClientSubscriptionForm'
 import ClientPaymentButton from '../components/client/ClientPaymentButton';
 import ClientMoneticoPayment from '../components/client/ClientMoneticoPayment';
 import DragDropUploader from '../components/client/DragDropUploader';
+import { prospectDocumentReviewState } from '@/lib/native-document-status';
 
 interface DocumentStatus {
   status: 'missing' | 'uploaded' | 'validated' | 'rejected';
@@ -304,8 +305,7 @@ const EspaceProspect: React.FC = () => {
 
     if (uploaded) {
       return {
-        status: uploaded.validated ? 'validated' : (uploaded.status === 'refused' ? 'rejected' : 'uploaded'),
-        validated: uploaded.validated,
+        ...prospectDocumentReviewState(uploaded),
         validated_at: uploaded.validated_at,
         uploaded_at: uploaded.uploaded_at,
         file_name: uploaded.file_name,
