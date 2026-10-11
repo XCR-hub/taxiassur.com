@@ -232,7 +232,7 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/v1/admin/master-ai' && ['GET','POST'].includes(req.method)) return await adminMasterAi(req,res,origin,requestId);
     if (url.pathname === '/v1/admin/automation-center' && ['GET','POST','PATCH'].includes(req.method)) return await adminAutomationCenter(req,res,origin,requestId);
     if (url.pathname === '/v1/admin/automation-dashboard' && ['GET','POST','PATCH'].includes(req.method)) return await adminAutomationDashboard(req,res,origin,requestId);
-    if (url.pathname === '/v1/admin/ultron' && req.method === 'POST') return await adminUltron(req,res,origin,requestId);
+    if (url.pathname === '/v1/admin/ultron' && ['GET','POST'].includes(req.method)) return await adminUltron(req,res,origin,requestId);
     if (url.pathname === '/v1/admin/backlinks/prepare' && req.method === 'POST') return await adminBacklinksPrepare(req,res,origin,requestId);
     if (url.pathname === '/v1/admin/backlinks' && ['GET','POST','PATCH'].includes(req.method)) return await adminBacklinks(req,res,origin,requestId);
     if (url.pathname === '/v1/admin/backlinks/dashboard' && req.method === 'GET') return await adminBacklinksDashboard(req,res,origin,requestId);
@@ -1501,6 +1501,13 @@ async function adminAutomationCenter(req,res,origin,requestId){
 }
 async function adminUltron(req,res,origin,requestId){
   const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
+  if(req.method==='GET'){
+    const [missions,logs,configs,crons,gsc,queue,health,anomalies]=await Promise.all(['ultron_missions','ultron_command_log','system_config','cron_jobs_config','gsc_queries','ultron_lead_queue','ultron_health_checks','ultron_anomalies'].map(recordsAll));
+    const configKeys=new Set(['ultron_mode','ai_content_auto_generate','ai_auto_approve_threshold','ai_aggressive_mode','seo_ultra_mode','blog_posts_per_day','city_pages_per_day','ai_max_decisions_per_day','lead_followup_auto','backlink_emails_per_day']);
+    const recent=(rows,key,limit)=>rows.sort((a,b)=>String(b[key]||'').localeCompare(String(a[key]||''))).slice(0,limit);
+    const cutoff=new Date(Date.now()-7*86400000).toISOString().slice(0,10);
+    return json(res,origin,200,{ok:true,missions:missions.sort((a,b)=>String(a.created_at||'').localeCompare(String(b.created_at||''))),logs:recent(logs,'timestamp',20),configs:configs.filter(row=>configKeys.has(row.key)).map(row=>({key:row.key,value:row.value})),crons:crons.map(row=>({jobname:row.job_name||row.name||row.id,schedule:row.schedule||row.cron_expression||'',active:row.is_active===true||row.is_enabled===true})),gsc:gsc.filter(row=>String(row.date||'')>=cutoff).sort((a,b)=>Number(b.impressions||0)-Number(a.impressions||0)).slice(0,100).map(row=>({query:row.query,position:row.position,impressions:row.impressions,clicks:row.clicks})),queue:recent(queue,'created_at',30),health:recent(health,'checked_at',20),anomalies:recent(anomalies.filter(row=>row.repaired!==true),'detected_at',15)},requestId);
+  }
   const body=await readJsonBody(req),action=String(body.action||''),allowed=new Set(['full_audit','cron_system','lead_pipeline','email_system','storage']);
   if(!allowed.has(action))return json(res,origin,400,{ok:false,error:'unsupported_diagnostic'},requestId);
   const checks=action==='full_audit'?['cron_system','lead_pipeline','email_system','storage']:[action],now=new Date().toISOString(),results=[],statements=[];

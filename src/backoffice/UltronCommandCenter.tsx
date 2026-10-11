@@ -6,7 +6,9 @@ import {
   Clock, BarChart3, ArrowUp, ArrowDown, Minus, Shield,
   ChevronRight, Home, Cpu, Radio, Layers, Award
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminCall } from '@/lib/native-admin-data';
+import { loadNativeUltron } from '@/lib/native-ultron';
+import { toast } from '@/lib/toast';
 import { logger } from '@/lib/logger';
 
 interface Mission {
@@ -103,29 +105,7 @@ const MISSION_META: Record<string, { label: string; icon: typeof Target; color: 
   },
 };
 
-const ULTRON_CRONS = [
-  'ultron-orchestration-4h',
-  'ultron-kpi-update-1h',
-  'ultron-gsc-sync-6h',
-  'ultron-lead-relance-2h',
-  'ultron-pipeline-1h',
-  'ultron-gsc-autonomous-3h',
-  'ai_master_hourly_execution',
-  'ai-governance-auto-approve-1h',
-  'ai-governance-generate-decisions-2h',
-  'blog_auto_early_morning',
-  'blog_auto_mid_morning',
-  'blog_auto_lunch_time',
-  'blog_auto_afternoon',
-  'city_auto_late_morning',
-  'city_auto_early_afternoon',
-  'city_auto_late_afternoon',
-  'gsc-ai-generate-content-morning',
-  'gsc-ai-generate-content-noon',
-  'gsc-ai-generate-content-evening',
-  'document-collector-ia-15min',
-  'pattern_learning_engine',
-];
+
 
 export default function UltronCommandCenter() {
   const navigate = useNavigate();
@@ -134,6 +114,8 @@ export default function UltronCommandCenter() {
   const [crons, setCrons] = useState<CronStatus[]>([]);
   const [configs, setConfigs] = useState<SystemConfig[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [limited, setLimited] = useState(false);
   const [triggering, setTriggering] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [leadQueue, setLeadQueue] = useState<LeadQueueItem[]>([]);
@@ -150,86 +132,28 @@ export default function UltronCommandCenter() {
 
   const load = useCallback(async () => {
     try {
-      const [missionsRes, logsRes, cronsRes, configsRes, gscRes, queueRes, healthRes, anomaliesRes] = await Promise.all([
-        supabase.from('ultron_missions').select('*').order('created_at'),
-        supabase.from('ultron_command_log').select('*').order('timestamp', { ascending: false }).limit(20),
-        supabase.rpc('get_active_crons').catch(() => ({ data: null, error: null })),
-        supabase.from('system_config').select('key, value').in('key', [
-          'ultron_mode', 'ai_content_auto_generate', 'ai_auto_approve_threshold',
-          'ai_aggressive_mode', 'seo_ultra_mode', 'blog_posts_per_day',
-          'city_pages_per_day', 'ai_max_decisions_per_day', 'lead_followup_auto',
-          'backlink_emails_per_day'
-        ]),
-        supabase.from('gsc_queries')
-          .select('query, position, impressions, clicks')
-          .gte('date', new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0])
-          .order('impressions', { ascending: false })
-          .limit(100),
-        supabase.from('ultron_lead_queue')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(30),
-        supabase.from('ultron_health_checks')
-          .select('*')
-          .order('checked_at', { ascending: false })
-          .limit(20),
-        supabase.from('ultron_anomalies')
-          .select('*')
-          .eq('repaired', false)
-          .order('detected_at', { ascending: false })
-          .limit(15),
-      ]);
-
-      if (missionsRes.data) setMissions(missionsRes.data);
-      if (logsRes.data) setCommandLogs(logsRes.data);
-      if (configsRes.data) setConfigs(configsRes.data as SystemConfig[] || []);
-
-      if (gscRes.data && gscRes.data.length > 0) {
-        const rows = gscRes.data as { query: string; position: number; impressions: number; clicks: number }[];
-        const avgPos = rows.reduce((s, r) => s + (r.position || 0), 0) / rows.length;
-        setGscData({
-          queries: rows.length,
-          avgPosition: Math.round(avgPos * 10) / 10,
-          topQuery: rows[0]?.query || null,
-        });
-      }
-
-      if (queueRes.data) {
-        const items = queueRes.data as LeadQueueItem[];
-        setLeadQueue(items);
-        setQueueStats({
-          total: items.length,
-          pending: items.filter(i => i.status === 'pending').length,
-          processing: items.filter(i => i.status === 'processing').length,
-          processed: items.filter(i => i.status === 'processed').length,
-          error: items.filter(i => i.status === 'error').length,
-        });
-      }
-
-      if (healthRes.data) {
-        setHealthChecks(healthRes.data as HealthCheck[]);
-        const scores = (healthRes.data as HealthCheck[]).map(h => h.score).filter(Boolean);
-        if (scores.length > 0) {
-          setGlobalScore(Math.round(scores.reduce((a, b) => a + b, 0) / scores.length));
-        }
-      }
-
-      if (anomaliesRes.data) {
-        setAnomalies(anomaliesRes.data as Anomaly[]);
-      }
-
-      if (!cronsRes.data) {
-        const { data: cronData } = await supabase
-          .from('cron.job' as never)
-          .select('jobname, schedule, active')
-          .in('jobname', ULTRON_CRONS)
-          .catch(() => ({ data: null }));
-        if (cronData) setCrons(cronData as CronStatus[]);
-      }
-
+      const data = await loadNativeUltron();
+      setLimited(data.limited);
+      setMissions(data.missions || []);
+      if (data.logs) setCommandLogs(data.logs);
+      setConfigs(data.configs || []);
+      setCrons(data.crons || []);
+      const rows = data.gsc || [];
+      const positions = rows.map((row: { position?: number }) => Number(row.position)).filter((value: number) => Number.isFinite(value) && value > 0);
+      setGscData({ queries: rows.length, avgPosition: positions.length ? Math.round(positions.reduce((sum: number, value: number) => sum + value, 0) / positions.length * 10) / 10 : null, topQuery: rows[0]?.query || null });
+      const items: LeadQueueItem[] = data.queue || [];
+      setLeadQueue(items);
+      setQueueStats({ total: items.length, pending: items.filter(i => i.status === 'pending').length, processing: items.filter(i => i.status === 'processing').length, processed: items.filter(i => i.status === 'processed').length, error: items.filter(i => i.status === 'error').length });
+      const checks: HealthCheck[] = data.health || [];
+      if (data.health) setHealthChecks(checks);
+      const scores = checks.map(check => Number(check.score)).filter(Number.isFinite);
+      if (data.health) setGlobalScore(scores.length ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length) : null);
+      setAnomalies(data.anomalies || []);
       setLastRefresh(new Date());
+      setLoadError(false);
     } catch (err) {
       logger.error('ULTRON load error', err);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -241,36 +165,27 @@ export default function UltronCommandCenter() {
     return () => clearInterval(interval);
   }, [load]);
 
-  const triggerFunction = async (fnName: string, body: Record<string, unknown> = {}) => {
-    setTriggering(fnName);
+  const triggerFunction = async (action: string) => {
+    setTriggering(action);
     try {
-      const { data, error } = await supabase.functions.invoke(fnName, { body });
-      if (error) throw error;
-      await supabase.from('ultron_command_log').insert({
-        action_type: 'manual_trigger',
-        subsystem: fnName,
-        status: 'success',
-        impact_score: 20,
-        details: { triggered_by: 'manual', result: data },
-      });
+      const result = await nativeAdminCall('/v1/admin/ultron', { method: 'POST', body: JSON.stringify({ action }) });
+      if (result.results) {
+        const checks: HealthCheck[] = result.results;
+        setHealthChecks(checks);
+        const scores = checks.map(check => Number(check.score)).filter(Number.isFinite);
+        setGlobalScore(scores.length ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length) : null);
+      }
       await load();
+      toast.success('Diagnostic terminé');
     } catch (err) {
-      logger.error(`ULTRON trigger ${fnName}`, err);
-    } finally {
-      setTriggering(null);
-    }
+      logger.error('ULTRON diagnostic error', err);
+      toast.error('Le diagnostic a échoué. Veuillez réessayer.');
+    } finally { setTriggering(null); }
   };
-
-  const runHealer = async (mode = 'full') => {
+  const runHealer = async () => {
     setHealerRunning(true);
-    try {
-      await supabase.functions.invoke('ultron-site-healer', { body: { mode } });
-      await load();
-    } catch (err) {
-      logger.error('ULTRON healer error', err);
-    } finally {
-      setHealerRunning(false);
-    }
+    try { await triggerFunction('full_audit'); }
+    finally { setHealerRunning(false); }
   };
 
   const getConfigValue = (key: string) => configs.find(c => c.key === key)?.value;
@@ -326,8 +241,8 @@ export default function UltronCommandCenter() {
               </div>
             )}
             <button
-              onClick={() => runHealer('full')}
-              disabled={healerRunning}
+              onClick={() => runHealer()}
+              disabled={healerRunning || !!triggering}
               className="flex items-center gap-2 px-3 py-1.5 bg-blue-900/40 text-blue-400 border border-blue-700 rounded-full text-xs font-medium hover:bg-blue-900/60 transition-colors disabled:opacity-50"
             >
               <Zap className={`w-3.5 h-3.5 ${healerRunning ? 'animate-pulse' : ''}`} />
@@ -337,7 +252,7 @@ export default function UltronCommandCenter() {
               ultronActive ? 'bg-emerald-900/50 text-emerald-400 border border-emerald-700' : 'bg-gray-800 text-gray-400'
             }`}>
               <div className={`w-1.5 h-1.5 rounded-full ${ultronActive ? 'bg-emerald-400 animate-pulse' : 'bg-gray-500'}`} />
-              {ultronActive ? 'ACTIF' : 'INACTIF'}
+              {limited ? 'VUE PARTIELLE' : ultronActive ? 'ACTIF' : 'INACTIF'}
             </div>
             <button
               onClick={load}
@@ -350,6 +265,17 @@ export default function UltronCommandCenter() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
+        {limited && (
+          <div role="status" className="rounded-lg border border-amber-800 bg-amber-950 p-4 text-sm text-amber-200">
+            Vue partielle : tâches planifiées et opportunités SEO disponibles. Les diagnostics affichent leurs résultats après exécution. L’historique, les missions et la file de traitement nécessitent la mise à jour du serveur.
+          </div>
+        )}
+        {loadError && (
+          <div role="alert" className="rounded-lg border border-red-800 bg-red-950 p-4 text-sm text-red-200">
+            Les données de supervision n’ont pas pu être actualisées.
+            <button onClick={load} className="ml-3 underline">Réessayer</button>
+          </div>
+        )}
 
         {/* Status Banner */}
         {ultronActive && (
@@ -401,12 +327,12 @@ export default function UltronCommandCenter() {
                 </span>
               )}
               <button
-                onClick={() => runHealer('full')}
-                disabled={healerRunning}
+                onClick={() => runHealer()}
+                disabled={healerRunning || !!triggering}
                 className="text-xs px-3 py-1.5 bg-blue-900/30 text-blue-400 border border-blue-800 rounded-lg hover:bg-blue-900/50 transition-colors disabled:opacity-50 flex items-center gap-1.5"
               >
                 <Zap className={`w-3 h-3 ${healerRunning ? 'animate-pulse' : ''}`} />
-                {healerRunning ? 'Audit en cours...' : 'Audit + Reparation'}
+                {healerRunning ? 'Audit en cours...' : 'Audit complet'}
               </button>
             </div>
           </div>
@@ -513,7 +439,7 @@ export default function UltronCommandCenter() {
             <div className="text-center py-8 text-gray-600">
               <Shield className="w-10 h-10 mx-auto mb-3 opacity-30" />
               <p className="text-sm">Aucun audit effectue</p>
-              <p className="text-xs mt-1">Cliquez sur "Audit + Reparation" pour lancer le premier scan</p>
+              <p className="text-xs mt-1">Cliquez sur "Audit complet" pour lancer le premier scan</p>
             </div>
           )}
           {healerRunning && (
@@ -632,9 +558,9 @@ export default function UltronCommandCenter() {
           </div>
 
           {[
-            { label: 'Requetes GSC', value: gscData.queries, icon: Search, color: 'text-blue-400' },
+            { label: limited ? 'Opportunités SEO' : 'Requetes GSC', value: gscData.queries, icon: Search, color: 'text-blue-400' },
             { label: 'Position moy.', value: gscData.avgPosition ? `#${gscData.avgPosition}` : '--', icon: TrendingUp, color: 'text-cyan-400' },
-            { label: 'Crons actifs', value: activeCronsCount || ULTRON_CRONS.length, icon: Activity, color: 'text-emerald-400' },
+            { label: 'Crons actifs', value: activeCronsCount, icon: Activity, color: 'text-emerald-400' },
             { label: 'Blog/jour', value: getConfigValue('blog_posts_per_day') || '5', icon: BarChart3, color: 'text-amber-400' },
           ].map((stat, i) => {
             const Icon = stat.icon;
@@ -657,25 +583,21 @@ export default function UltronCommandCenter() {
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
             <div className="flex items-center gap-2 mb-4">
               <Play className="w-4 h-4 text-blue-400" />
-              <h3 className="font-semibold text-white">Declencher Manuellement</h3>
+              <h3 className="font-semibold text-white">Diagnostics manuels</h3>
             </div>
             <div className="space-y-2">
               {[
-                { fn: 'gsc-sync-performance', label: 'Sync GSC (30 jours)', body: { days: 30 }, color: 'blue', icon: Search },
-                { fn: 'gsc-ultra-autonomous-engine', label: 'Optimisation SEO autonome', body: {}, color: 'cyan', icon: Globe },
-                { fn: 'auto-generate-blog-post', label: 'Generer article blog', body: {}, color: 'emerald', icon: FileCheck },
-                { fn: 'auto-generate-city-page', label: 'Generer page ville', body: {}, color: 'teal', icon: Layers },
-                { fn: 'pipeline-automation-engine', label: 'Pipeline leads', body: { action: 'all' }, color: 'amber', icon: Users },
-                { fn: 'relance-engine', label: 'Relancer leads', body: {}, color: 'orange', icon: Zap },
-                { fn: 'generate-ai-decisions', label: 'Generer decisions IA', body: { limit: 50 }, color: 'violet', icon: Brain },
-                { fn: 'master-ai-decision-engine', label: 'Master AI Engine', body: {}, color: 'rose', icon: Cpu },
+                { fn: 'cron_system', label: 'Diagnostic des tâches planifiées', color: 'blue', icon: Activity },
+                { fn: 'lead_pipeline', label: 'Diagnostic du pipeline prospects', color: 'amber', icon: Users },
+                { fn: 'email_system', label: 'Diagnostic des emails', color: 'cyan', icon: Radio },
+                { fn: 'storage', label: 'Diagnostic des documents', color: 'emerald', icon: FileCheck },
               ].map(action => {
                 const Icon = action.icon;
                 const isRunning = triggering === action.fn;
                 return (
                   <button
                     key={action.fn}
-                    onClick={() => triggerFunction(action.fn, action.body)}
+                    onClick={() => triggerFunction(action.fn)}
                     disabled={!!triggering}
                     className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg border transition-all text-sm ${
                       isRunning
@@ -760,11 +682,11 @@ export default function UltronCommandCenter() {
               </span>
             </div>
             <button
-              onClick={() => triggerFunction('pipeline-automation-engine', { action: 'all' })}
+              onClick={() => triggerFunction('lead_pipeline')}
               disabled={!!triggering}
               className="text-xs px-3 py-1.5 bg-emerald-900/30 text-emerald-400 border border-emerald-800 rounded-lg hover:bg-emerald-900/50 transition-colors disabled:opacity-50"
             >
-              Forcer traitement
+              Diagnostiquer le pipeline
             </button>
           </div>
 
