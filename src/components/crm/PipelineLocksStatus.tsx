@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, Unlock, AlertTriangle, CheckCircle } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { nativeAdminLead } from '@/lib/native-admin-data';
 
 interface PipelineLocksStatusProps {
   leadId: string;
@@ -16,28 +16,31 @@ interface LocksData {
 export const PipelineLocksStatus: React.FC<PipelineLocksStatusProps> = ({ leadId }) => {
   const [locks, setLocks] = useState<LocksData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    loadLocks();
-  }, [leadId]);
-
-  const loadLocks = async () => {
-    try {
-      const { data, error } = await supabase.rpc('check_payment_signature_locks', {
-        p_lead_id: leadId
-      });
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        setLocks(data[0]);
+    let cancelled = false;
+    setLoading(true);
+    setFailed(false);
+    setLocks(null);
+    void (async () => {
+      try {
+        const data = await nativeAdminLead(leadId) as { lead?: { payment_confirmed?: boolean; contract_signed?: boolean; can_sign_contract?: boolean } };
+        if (!data.lead) throw new Error('not_found');
+        const payment = data.lead.payment_confirmed === true;
+        const signed = data.lead.contract_signed === true;
+        const documentsReady = data.lead.can_sign_contract === true;
+        const reasons = [!documentsReady && 'Documents complémentaires avant contrat manquants', !payment && 'Paiement non confirmé', !signed && 'Contrat non signé'].filter((reason): reason is string => Boolean(reason));
+        if (!cancelled) setLocks({ can_activate_client: payment && signed && documentsReady, payment_confirmed: payment, contract_signed: signed, blocking_reasons: reasons });
+      } catch (error) {
+        console.error('Erreur chargement verrous:', error);
+        if (!cancelled) setFailed(true);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-    } catch (error) {
-      console.error('Erreur chargement verrous:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    })();
+    return () => { cancelled = true; };
+  }, [leadId]);
 
   if (loading) {
     return (
@@ -47,6 +50,7 @@ export const PipelineLocksStatus: React.FC<PipelineLocksStatusProps> = ({ leadId
     );
   }
 
+  if (failed) return <div role="alert" className="p-4 bg-orange-50 text-orange-900 rounded-lg">Impossible de vérifier les verrous du dossier. Actualisez avant de poursuivre l’activation.</div>;
   if (!locks) return null;
 
   const allClear = locks.can_activate_client;
