@@ -1163,6 +1163,14 @@ export default function DocumentValidationComplete({
                                 <Download className="h-3 w-3 inline mr-1" />
                                 Voir
                               </button>
+                              <button
+                                onClick={() => void downloadDocument(doc.file_path, doc.file_name, doc.bucket)}
+                                className="flex-1 text-xs py-1 px-2 bg-green-50 text-green-700 rounded hover:bg-green-100"
+                                title="Télécharger le document"
+                              >
+                                <Download className="h-3 w-3 inline mr-1" />
+                                Télécharger
+                              </button>
 
                               {doc.status === 'pending' && (
                                 <>

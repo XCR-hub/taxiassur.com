@@ -56,9 +56,11 @@ export async function downloadDocument(filePath: string, fileName: string, bucke
     document.body.appendChild(link);
     link.click();
     link.remove();
-    window.URL.revokeObjectURL(downloadUrl);
+    window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 60_000);
   } catch (error: unknown) {
     console.error('Document download failure', error instanceof Error ? error.name : 'unknown');
-    throw error;
+    toast.error(error instanceof Error && error.message === 'document_scan_blocked'
+      ? 'Ce document est bloqué par le contrôle antivirus.'
+      : 'Impossible de télécharger ce document. Actualisez le dossier puis réessayez.');
   }
 }
