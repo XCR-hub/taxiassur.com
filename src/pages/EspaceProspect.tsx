@@ -7,7 +7,7 @@ import ClientSubscriptionForm from '../components/client/ClientSubscriptionForm'
 import ClientPaymentButton from '../components/client/ClientPaymentButton';
 import ClientMoneticoPayment from '../components/client/ClientMoneticoPayment';
 import DragDropUploader from '../components/client/DragDropUploader';
-import { prospectDocumentReviewState } from '@/lib/native-document-status';
+import { prospectDocumentReviewState, prospectDocumentCounts } from '@/lib/native-document-status';
 
 interface DocumentStatus {
   status: 'missing' | 'uploaded' | 'validated' | 'rejected';
@@ -195,7 +195,7 @@ const EspaceProspect: React.FC = () => {
       return;
     }
 
-    console.log('Loading lead info with token:', token);
+
 
     try {
       const platformSession = await loadProspectPlatformSession(token);
@@ -336,30 +336,18 @@ const EspaceProspect: React.FC = () => {
     return <span className="flex items-center gap-1 text-xs bg-gray-500/20 text-gray-400 px-2 py-1 rounded-full"><AlertCircle size={12} /> Manquant</span>;
   };
 
-  const getProgressPercentage = () => {
-    // Utiliser la progression calculée par le backend
-    if (leadInfo?.progression_percentage !== undefined) {
-      return leadInfo.progression_percentage;
-    }
-    // Fallback si l'ancien système est encore utilisé
-    if (!leadInfo?.document_checklist) return 0;
-    const requiredDocs = documentTypes.filter(d => d.required);
-    const validatedCount = requiredDocs.filter(d => {
-      const status = leadInfo.document_checklist?.[d.id];
-      return status?.validated || status?.status === 'uploaded';
-    }).length;
-    return Math.round((validatedCount / requiredDocs.length) * 100);
-  };
+  const documentCounts = prospectDocumentCounts(uploadedDocuments, documentTypes.filter(doc => doc.required).map(doc => doc.id));
+  const getProgressPercentage = () => documentCounts.progressPercentage;
 
   const getStepStatus = (step: 'documents' | 'devis' | 'paiement' | 'contrat') => {
     if (!leadInfo) return 'pending';
 
     switch (step) {
       case 'documents':
-        return leadInfo.documents_complete ? 'completed' : 'current';
+        return documentCounts.documentsComplete ? 'completed' : 'current';
       case 'devis':
         if (leadInfo.quote_accepted_at) return 'completed';
-        if (leadInfo.documents_complete) return 'current';
+        if (documentCounts.documentsComplete) return 'current';
         return 'pending';
       case 'paiement':
         if (leadInfo.payment_completed_at) return 'completed';
@@ -481,7 +469,7 @@ const EspaceProspect: React.FC = () => {
         )}
 
         {/* Bannière d'action urgente si documents incomplets */}
-        {!leadInfo.documents_complete && activeTab === 'documents' && (
+        {!documentCounts.documentsComplete && activeTab === 'documents' && (
           <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-1 mb-8 animate-pulse">
             <div className="bg-gray-900 rounded-xl p-6">
               <div className="flex flex-col md:flex-row md:items-center gap-4">
@@ -516,18 +504,16 @@ const EspaceProspect: React.FC = () => {
                 <div className="text-center md:text-right">
                   {/* Badge principal : Types de documents complétés */}
                   <div className={`text-white font-black text-xl px-5 py-3 rounded-xl mb-2 ${
-                    (leadInfo.validated_documents || 0) === 0
+                    documentCounts.receivedTypes === 0
                       ? 'bg-red-500 animate-bounce'
-                      : (leadInfo.validated_documents || 0) < (leadInfo.total_documents || 6)
+                      : documentCounts.receivedTypes < documentCounts.requiredTypes
                       ? 'bg-amber-500'
                       : 'bg-green-500'
                   }`}>
-                    {leadInfo.validated_documents || 0} / {leadInfo.total_documents || 6}
+                    {documentCounts.receivedTypes} / {documentCounts.requiredTypes}
                   </div>
                   <p className="text-xs text-gray-400 font-semibold mb-3">
-                    {(leadInfo.validated_documents || 0) === (leadInfo.total_documents || 6)
-                      ? 'Types complets'
-                      : 'Types validés'}
+                    Types reçus
                   </p>
 
                   {/* Compteurs détaillés */}
@@ -536,7 +522,7 @@ const EspaceProspect: React.FC = () => {
                     <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-2">
                       <div className="flex items-center justify-center gap-1 text-blue-400 font-bold text-lg">
                         <Upload size={16} />
-                        {leadInfo.total_uploaded_files || 0}
+                        {documentCounts.uploadedFiles}
                       </div>
                       <p className="text-xs text-gray-400 mt-1">Uploadés</p>
                     </div>
@@ -545,7 +531,7 @@ const EspaceProspect: React.FC = () => {
                     <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-2">
                       <div className="flex items-center justify-center gap-1 text-green-400 font-bold text-lg">
                         <CheckCircle size={16} />
-                        {leadInfo.validated_files || 0}
+                        {documentCounts.validatedFiles}
                       </div>
                       <p className="text-xs text-gray-400 mt-1">Validés</p>
                     </div>
@@ -554,7 +540,7 @@ const EspaceProspect: React.FC = () => {
                     <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2">
                       <div className="flex items-center justify-center gap-1 text-amber-400 font-bold text-lg">
                         <Clock size={16} />
-                        {leadInfo.pending_files || 0}
+                        {documentCounts.pendingFiles}
                       </div>
                       <p className="text-xs text-gray-400 mt-1">En attente</p>
                     </div>
@@ -563,7 +549,7 @@ const EspaceProspect: React.FC = () => {
                     <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-2">
                       <div className="flex items-center justify-center gap-1 text-red-400 font-bold text-lg">
                         <XCircle size={16} />
-                        {leadInfo.rejected_files || 0}
+                        {documentCounts.rejectedFiles}
                       </div>
                       <p className="text-xs text-gray-400 mt-1">Refusés</p>
                     </div>
@@ -575,7 +561,7 @@ const EspaceProspect: React.FC = () => {
         )}
 
         {/* Bannière de félicitations si documents complets */}
-        {leadInfo.documents_complete && activeTab === 'documents' && !leadInfo.quote_accepted_at && (
+        {documentCounts.documentsComplete && activeTab === 'documents' && !leadInfo.quote_accepted_at && (
           <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl p-1 mb-8">
             <div className="bg-gray-900 rounded-xl p-6">
               <div className="flex items-center gap-4">
@@ -769,7 +755,7 @@ const EspaceProspect: React.FC = () => {
               </div>
 
               {/* Avertissement si documents pas complets */}
-              {!leadInfo.documents_complete && (
+              {!documentCounts.documentsComplete && (
                 <div className="mb-4 bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 flex items-start gap-3">
                   <AlertTriangle className="text-amber-400 flex-shrink-0 mt-0.5" size={20} />
                   <div className="text-sm">

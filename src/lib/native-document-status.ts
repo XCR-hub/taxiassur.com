@@ -6,6 +6,21 @@ export function prospectDocumentReviewState(document: { status?: string; validat
   return { status: validated ? 'validated' as const : 'uploaded' as const, validated };
 }
 
+export function prospectDocumentCounts(documents: Array<{ id: string; document_type?: string; status?: string; validated?: boolean }>, requiredTypes: string[]) {
+  const unique = documents.filter((doc, index) => documents.findIndex(other => other.id === doc.id) === index);
+  const states = unique.map(prospectDocumentReviewState);
+  const required = [...new Set(requiredTypes)];
+  const current = required.map(type => unique.find(doc => doc.document_type === type));
+  const receivedTypes = current.filter(doc => doc && doc.status !== 'quarantined' && prospectDocumentReviewState(doc).status !== 'rejected').length;
+  const validatedTypes = current.filter(doc => doc && prospectDocumentReviewState(doc).validated).length;
+  return { uploadedFiles: unique.length, validatedFiles: states.filter(state => state.validated).length,
+    rejectedFiles: states.filter(state => state.status === 'rejected').length,
+    pendingFiles: states.filter(state => state.status === 'uploaded').length,
+    requiredTypes: required.length, receivedTypes, validatedTypes,
+    progressPercentage: required.length ? Math.round(receivedTypes * 100 / required.length) : 100,
+    documentsComplete: validatedTypes === required.length };
+}
+
 export function documentValidationError(error: unknown): string {
   const code = error instanceof Error ? error.message : '';
   if (code === 'document_scan_blocked') return 'Validation bloquée par le contrôle antivirus. Le document doit être contrôlé avant de pouvoir être validé.';

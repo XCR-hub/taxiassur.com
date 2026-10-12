@@ -312,11 +312,12 @@ export default function DocumentValidationComplete({
 
   async function validateDocument(doc: ClassifiedDocument) {
     if (!confirm(`Valider ce document : ${doc.file_name} ?`)) return;
-
+    let validationSaved = false;
     try {
       setProcessing(doc.id);
 
       const validationResult = await nativeAdminUpdateDocument(doc.id, { status: 'validated' }) as { email_queued?: boolean };
+      validationSaved = true;
 
       const emailSent = validationResult.email_queued === true;
 
@@ -357,7 +358,8 @@ export default function DocumentValidationComplete({
 
     } catch (error) {
       console.error('Error validating document:', error);
-      toast.error(documentValidationError(error));
+      if (validationSaved) toast.warning('Le document a été validé, mais la liste n’a pas pu être actualisée. Rechargez le dossier pour vérifier son état.');
+      else toast.error(documentValidationError(error));
     } finally {
       setProcessing(null);
     }

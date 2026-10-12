@@ -554,7 +554,7 @@ async function adminLeadWhatsApp(req,res,origin,requestId,leadId){
 }
 async function adminLeadTimeline(req,res,origin,requestId,leadId){
   const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
-  const lead=parseJsonLine(await runPsql("SELECT data::text FROM (SELECT data,0 priority FROM taxiassur.records WHERE collection='crm_leads' AND record_id="+quoteLiteral(leadId)+" UNION ALL SELECT data,1 priority FROM supabase_rest.crm_leads WHERE data->>'id'="+quoteLiteral(leadId)+") lead_sources ORDER BY priority LIMIT 1;"));if(!lead)return json(res,origin,404,{ok:false,error:'lead_not_found'},requestId);
+  const lead=parseJsonLine(await runPsql("SELECT data::text FROM taxiassur.records WHERE collection='crm_leads' AND record_id="+quoteLiteral(leadId)+" LIMIT 1;"));if(!lead)return json(res,origin,404,{ok:false,error:'lead_not_found'},requestId);
   if(req.method==='POST'){
     const body=await readJsonBody(req),content=String(body.content||'').normalize('NFKC').trim().slice(0,5000);if(!content)return json(res,origin,400,{ok:false,error:'invalid_note'},requestId);
     const channel=['note','phone','call','email','sms','whatsapp'].includes(String(body.channel||''))?String(body.channel):'note',direction=['inbound','outbound'].includes(String(body.direction||''))?String(body.direction):'outbound',id=randomUUID(),now=new Date().toISOString(),interaction={id,lead_id:leadId,type:String(body.type||channel).slice(0,80),channel,direction,subject:String(body.subject||'').slice(0,250),content,notes:String(body.notes||'').slice(0,5000),status:String(body.status||'completed').slice(0,80),metadata:body.metadata&&typeof body.metadata==='object'?body.metadata:{},created_by:session.sub,created_at:now,updated_at:now};
@@ -1978,8 +1978,11 @@ async function prospectSession(req, res, origin, requestId) {
     .filter((document) => quotedCompanyIds.has(String(document.company_id || '')) && document.send_with_quote === true)
     .sort((left, right) => (Number(left.display_order || 0) - Number(right.display_order || 0)) || String(left.document_name || '').localeCompare(String(right.document_name || '')));
   const finalDocuments = crmDocuments.filter((document) => ['contrat_signe', 'attestation_assurance', 'memo_vehicule'].includes(String(document.document_type || '')) && document.status === 'validated');
-  const safeLead = Object.fromEntries(['id', 'first_name', 'last_name', 'full_name', 'email', 'phone', 'address', 'postal_code', 'city', 'status', 'pipeline_stage', 'document_checklist', 'documents_complete', 'quote_amount', 'can_pay', 'can_sign_contract', 'selected_quote_id', 'contract_signed', 'payment_confirmed'].map((key) => [key, lead[key] ?? null]));
-  return json(res, origin, 200, { ok: true, lead: safeLead, documents, final_documents: finalDocuments, document_requests: requests, payments, quotes, company_documents: companyDocuments }, requestId);
+  const finalTypes = new Set(['contrat_signe', 'attestation_assurance', 'memo_vehicule']);
+  const portalDocuments = [...new Map([...documents, ...crmDocuments.filter(document => !finalTypes.has(String(document.document_type || '')))].map(document => [String(document.id), document])).values()]
+    .sort((left, right) => String(right.uploaded_at || right.created_at || '').localeCompare(String(left.uploaded_at || left.created_at || '')));
+  const safeLead = Object.fromEntries(['id', 'first_name', 'last_name', 'full_name', 'email', 'phone', 'vehicle_type', 'address', 'postal_code', 'city', 'status', 'pipeline_stage', 'document_checklist', 'documents_complete', 'quote_amount', 'can_pay', 'can_sign_contract', 'selected_quote_id', 'contract_signed', 'payment_confirmed'].map((key) => [key, lead[key] ?? null]));
+  return json(res, origin, 200, { ok: true, lead: safeLead, documents: portalDocuments, final_documents: finalDocuments, document_requests: requests, payments, quotes, company_documents: companyDocuments }, requestId);
 }
 
 async function adminDocumentWorkspaceUpload(req,res,origin,requestId,leadId){
