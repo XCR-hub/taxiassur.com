@@ -133,7 +133,12 @@ const DocumentValidationSimple: React.FC<DocumentValidationSimpleProps> = ({ lea
   const downloadDocument = async (doc: Document) => {
     try {
       const url = await getSecureDocumentUrl({ bucket: 'prospect-documents', path: doc.file_path, download: true, fileName: doc.file_name });
-      window.open(url, '_blank', 'noopener,noreferrer');
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = doc.file_name || 'document';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
     } catch (error) {
       logger.error('Error downloading document:', error);
       toast.error('Téléchargement indisponible');

@@ -572,7 +572,14 @@ const EventCard: React.FC<{
         url = await getSecureDocumentUrl({ path: att.storage_path, bucket, download, fileName: att.file_name });
       }
       if (!url) throw new Error('Document indisponible');
-      if (download) window.open(url, '_blank', 'noopener,noreferrer');
+      if (download) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = att.file_name || 'document';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
       else onViewDoc(url, att.file_name, att.file_type);
     } catch (error) { console.error('Attachment unavailable', error); }
   };

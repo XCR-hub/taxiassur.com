@@ -200,7 +200,7 @@ export async function downloadProspectPlatformDocument(token: string, documentId
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 export async function downloadProspectFinalDocument(token: string, documentId: string, fileName: string) {
@@ -212,7 +212,7 @@ export async function downloadProspectFinalDocument(token: string, documentId: s
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 export async function updateProspectQuote(token: string, quoteId: string, action: 'validate' | 'refuse' | 'request_modification', details: Record<string, unknown> = {}) {
@@ -238,7 +238,7 @@ export async function openProspectQuote(token: string, quoteId: string, fileName
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 export async function downloadProspectCompanyDocument(token: string, documentId: string, fileName: string) {
@@ -250,7 +250,7 @@ export async function downloadProspectCompanyDocument(token: string, documentId:
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 function platformError(code: string | undefined, status: number) {
