@@ -2519,14 +2519,18 @@ async function readJsonBody(req) {
   try { return raw ? JSON.parse(raw) : {}; } catch { throw publicError(400, 'invalid_json'); }
 }
 
-function scanFile(filePath) {
+async function scanFile(filePath) {
+  if (existsSync(config.clamdScanPath)) {
+    const resident = await runAntivirusScan(config.clamdScanPath, [`--config-file=${config.clamdConfigPath}`, '--no-summary', filePath], 30000);
+    if (resident.status !== 'error') return resident;
+  }
+  if (!existsSync(config.clamScanPath)) return { status: 'error' };
+  return runAntivirusScan(config.clamScanPath, ['--no-summary', ...(config.clamDatabasePath ? [`--database=${config.clamDatabasePath}`] : []), filePath], 120000);
+}
+function runAntivirusScan(executable, args, timeoutMs) {
   return new Promise((resolve) => {
-    const executable=existsSync(config.clamdScanPath)?config.clamdScanPath:config.clamScanPath;
-    if (!existsSync(executable)) return resolve({ status: 'error' });
-    const resident=executable===config.clamdScanPath;
-    const args = resident ? [`--config-file=${config.clamdConfigPath}`, '--no-summary', filePath] : ['--no-summary', ...(config.clamDatabasePath?[`--database=${config.clamDatabasePath}`]:[]), filePath];
     const child = spawn(executable, args, { windowsHide: true, stdio: 'ignore' });
-    const timer = setTimeout(() => child.kill(), resident?30000:120000);
+    const timer = setTimeout(() => child.kill(), timeoutMs);
     child.on('error', () => { clearTimeout(timer); resolve({ status: 'error' }); });
     child.on('close', (code) => { clearTimeout(timer); resolve({ status: code === 0 ? 'clean' : code === 1 ? 'infected' : 'error' }); });
   });
