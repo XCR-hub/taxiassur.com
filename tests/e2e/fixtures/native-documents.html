@@ -1,0 +1,7 @@
+<!doctype html><html><body><div id="root"></div><script type="module">
+import React from 'react';
+import {createRoot} from 'react-dom/client';
+import DocumentValidationComplete from '../../../src/components/crm/DocumentValidationComplete.tsx';
+localStorage.setItem('taxiassur-native-admin-token','browser-regression-test');
+createRoot(document.getElementById('root')).render(React.createElement(DocumentValidationComplete,{caseId:'browser-test-lead'}));
+</script></body></html>

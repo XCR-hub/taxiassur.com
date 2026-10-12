@@ -6,12 +6,15 @@ $drive=$null
 try {
   $drive=New-PSDrive -Name TaxiAV -PSProvider FileSystem -Root "\\$Server\f$\TaxiAssur" -Credential $credential
   Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'diagnose-native-antivirus-remote.ps1') -Destination 'TaxiAV:\Scripts\diagnose-native-antivirus-remote.ps1' -Force
+  Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'verify-native-download-remote.mjs') -Destination 'TaxiAV:\Scripts\verify-native-download-remote.mjs' -Force
   $name='antivirus-diagnostic-'+[guid]::NewGuid().ToString('N')+'.json'
   $command='powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "F:\TaxiAssur\Scripts\diagnose-native-antivirus-remote.ps1" -ReportPath "F:\TaxiAssur\Logs\'+$name+'"'
   $launch=Invoke-WmiMethod -ComputerName $Server -Credential $credential -Class Win32_Process -Name Create -ArgumentList $command
   if($launch.ReturnValue -ne 0){throw 'Diagnostic launch failed'}
-  for($attempt=0;$attempt -lt 50;$attempt++){
-    if(Test-Path -LiteralPath ('TaxiAV:\Logs\'+$name)){Get-Content -LiteralPath ('TaxiAV:\Logs\'+$name);break}
+  $completed=$false
+  for($attempt=0;$attempt -lt 80;$attempt++){
+    if(Test-Path -LiteralPath ('TaxiAV:\Logs\'+$name)){Get-Content -LiteralPath ('TaxiAV:\Logs\'+$name);$completed=$true;break}
     Start-Sleep -Seconds 3
   }
+  if(-not $completed){throw 'Antivirus diagnostic report not available'}
 } finally {if($drive){Remove-PSDrive TaxiAV -Force}}

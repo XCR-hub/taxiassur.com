@@ -11,4 +11,9 @@ try {
     $result.scans+=@{mode=$mode;exit_code=$LASTEXITCODE;output=$output}
   }
 } finally { Remove-Item -LiteralPath $file -Force -ErrorAction SilentlyContinue }
+$result.tasks=@(Get-ScheduledTask | Where-Object {$_.TaskName -match 'clam|antivirus'} | ForEach-Object {@{name=[string]$_.TaskName;state=[string]$_.State}})
+$result.clamd_log=@(Get-Content 'F:\TaxiAssur\Logs\clamd-supervisor.log' -Tail 6 -ErrorAction SilentlyContinue | ForEach-Object { $_.Substring(0,[Math]::Min($_.Length,300)) })
+$downloadReport=$ReportPath+'.downloads.json'
+& 'C:\Program Files\nodejs\node.exe' 'F:\TaxiAssur\Scripts\verify-native-download-remote.mjs' $downloadReport
+if(Test-Path -LiteralPath $downloadReport){$result.downloads=Get-Content -LiteralPath $downloadReport -Raw | ConvertFrom-Json}
 $result | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $ReportPath -Encoding UTF8
