@@ -25,4 +25,5 @@ test('full generator reimports without content writes and rejects incomplete sna
  }finally{db.close();}
  fs.unlinkSync(path.join(tables,'blog_posts.jsonl'));assert.notEqual(build().status,0);assert.equal(fs.readFileSync(output,'utf8'),sql);
  fs.writeFileSync(path.join(tables,'blog_posts.jsonl'),'{invalid JSON\n');assert.notEqual(build().status,0);assert.equal(fs.readFileSync(output,'utf8'),sql);
+ fs.writeFileSync(path.join(tables,'blog_posts.jsonl'),JSON.stringify({id:'oversized',title:"'".repeat(60000)})+'\n');assert.notEqual(build().status,0);assert.equal(fs.readFileSync(output,'utf8'),sql);
 });

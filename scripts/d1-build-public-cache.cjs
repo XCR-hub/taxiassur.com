@@ -197,6 +197,7 @@ async function* readJsonl(filePath) {
 }
 
 async function writeLine(stream, line) {
+  if(Buffer.byteLength(line,'utf8')>95000)throw new Error('Cache SQL statement exceeds the D1 size limit');
   if (!stream.write(`${line}\n`)) {
     await once(stream, 'drain');
   }
