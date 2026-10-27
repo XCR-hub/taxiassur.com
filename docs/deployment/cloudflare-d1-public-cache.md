@@ -43,6 +43,10 @@ npm run d1:import-public-cache
 
 Le fichier genere est ignore par Git : `cloudflare/d1/generated/public-cache.sql`. L import applique le schema avant les donnees afin que `public_cache_metadata` existe toujours avant le chargement.
 
+Depuis la correction du 27 octobre 2026, l'import est incremental : il utilise un UPSERT conditionnel et ne reecrit pas les lignes inchangees. Les suppressions ciblent uniquement les identifiants disparus de chaque table source, par blocs de taille bornee. Les caches ne sont plus vides avant chaque actualisation horaire. Un snapshot manquant, invalide, contenant des doublons ou des lignes trop volumineuses fait echouer la generation ; le dernier fichier SQL complet reste intact.
+
+Ce changement reduit les ecritures et la reconstruction des index lors des actualisations ordinaires. Une premiere importation ou une modification massive reste soumise au quota du compte Cloudflare, partage avec les autres sites. Ne pas relancer un rechargement complet pour contourner une erreur de quota. Les tests SQLite sont executes avant chaque import automatique et dans les controles de pull request.
+
 ## Verification
 
 Verification directe des metadonnees et volumes reels D1 apres import :

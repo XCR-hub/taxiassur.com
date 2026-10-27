@@ -1,0 +1,18 @@
+name: D1 incremental cache checks
+on:
+  pull_request:
+    paths: ['scripts/d1-build-public-cache.cjs', 'scripts/lib/d1-cache-sql.cjs', 'scripts/d1-cache-sql.test.cjs', 'cloudflare/d1/schema-public-cache.sql', '.github/workflows/d1-cache-checks.yml']
+  push:
+    branches: [main]
+    paths: ['scripts/d1-build-public-cache.cjs', 'scripts/lib/d1-cache-sql.cjs', 'scripts/d1-cache-sql.test.cjs', '.github/workflows/d1-cache-checks.yml']
+permissions:
+  contents: read
+jobs:
+  sqlite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - run: node --test scripts/d1-cache-sql.test.cjs
