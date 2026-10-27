@@ -11,6 +11,7 @@ interface DocumentValidationCompleteProps {
   leadEmail?: string;
   leadFirstName?: string;
   vehicleType?: string | null;
+  vehicleDocument?:string;
   onDocumentClassified?: () => void;
 }
 
@@ -68,13 +69,15 @@ interface UnimportedAttachment {
   storage_bucket: string | null;
 }
 
-function buildDocumentCategories(vehicleType?: string | null): DocumentCategory[] {
-  return getRequiredDocuments(vehicleType).map(d => ({
+function buildDocumentCategories(vehicleType?: string | null,vehicleDocument?:string): DocumentCategory[] {
+  const categories=getRequiredDocuments(vehicleType,vehicleDocument).map(d => ({
     id: d.type,
     label: d.label,
     icon: d.icon || '📄',
     required: d.required
   }));
+  for(const item of [{id:'carte_grise',label:'Carte grise du véhicule'},{id:'bon_commande',label:'Bon de commande du véhicule'},{id:'facture_vehicule',label:'Facture du véhicule'}])if(!categories.some(c=>c.id===item.id))categories.push({...item,icon:'📄',required:false});
+  return categories;
 }
 
 export default function DocumentValidationComplete({
@@ -82,9 +85,10 @@ export default function DocumentValidationComplete({
   leadEmail,
   leadFirstName,
   vehicleType,
+  vehicleDocument,
   onDocumentClassified
 }: DocumentValidationCompleteProps) {
-  const DOCUMENT_CATEGORIES = buildDocumentCategories(vehicleType);
+  const DOCUMENT_CATEGORIES = buildDocumentCategories(vehicleType,vehicleDocument);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [classifiedDocs, setClassifiedDocs] = useState<ClassifiedDocument[]>([]);
   const [loading, setLoading] = useState(true);
@@ -128,15 +132,15 @@ export default function DocumentValidationComplete({
       window.clearInterval(intervalId);
       document.removeEventListener('visibilitychange', refreshDocuments);
     };
-  }, [caseId, vehicleType]);
+  }, [caseId, vehicleType,vehicleDocument]);
 
   useEffect(() => {
-    const newCats = buildDocumentCategories(vehicleType);
+    const newCats = buildDocumentCategories(vehicleType,vehicleDocument);
     setCategories(prev => {
       const customCats = prev.filter(c => c.id.startsWith('custom_'));
       return [...newCats, ...customCats];
     });
-  }, [vehicleType]);
+  }, [vehicleType,vehicleDocument]);
 
   async function loadAll(showLoader = false) {
     if (refreshInFlightRef.current) return;

@@ -1,10 +1,12 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Mail, MessageSquare, Phone, Send, CheckCircle2, AlertCircle, Loader2, FileText, Download, Plus, X, CreditCard as Edit3 } from 'lucide-react';
 import DocumentValidationComplete from './DocumentValidationComplete';
 import { toast } from '@/lib/toast';
 import { getRequiredDocuments } from '@/lib/document-requirements';
 import { nativeAdminCall } from '@/lib/native-admin-data';
 import { clearDeliveryRequestId, getDeliveryRequestId } from '@/lib/delivery-idempotency';
+import ProspectRiskSummary from './ProspectRiskSummary';
+import type { ProspectRiskQuestionnaire } from '@/lib/platform-api';
 
 interface CollecteDocumentsStepProps {
   leadId: string;
@@ -49,7 +51,9 @@ export default function CollecteDocumentsStep({
   vehicleType,
   onComplete
 }: CollecteDocumentsStepProps) {
-  const requiredDocs = useMemo(() => getRequiredDocuments(vehicleType), [vehicleType]);
+  const [vehicleDocument,setVehicleDocument]=useState('');
+  const handleRiskLoaded=useCallback((record:ProspectRiskQuestionnaire)=>setVehicleDocument(String(record.answers.vehicle_document||'')),[]);
+  const requiredDocs = useMemo(() => getRequiredDocuments(vehicleType,vehicleDocument), [vehicleType,vehicleDocument]);
   const [templates, setTemplates] = useState<CommunicationTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<CommunicationTemplate | null>(null);
   const [sending, setSending] = useState(false);
@@ -75,7 +79,7 @@ export default function CollecteDocumentsStep({
     if (!leadFirstName) {
       loadLeadName();
     }
-  }, [leadId, vehicleType]);
+  }, [leadId, vehicleType,vehicleDocument]);
 
   async function loadLeadName() {
     try {
@@ -338,6 +342,7 @@ export default function CollecteDocumentsStep({
 
   return (
     <div className="space-y-6">
+      <ProspectRiskSummary leadId={leadId} onLoaded={handleRiskLoaded}/>
       {/* Progress Bar */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
@@ -586,6 +591,8 @@ export default function CollecteDocumentsStep({
           caseId={leadId}
           leadEmail={leadEmail}
           leadFirstName={leadFirstName}
+          vehicleType={vehicleType}
+          vehicleDocument={vehicleDocument}
           onDocumentClassified={() => {
             loadDocumentStats();
           }}

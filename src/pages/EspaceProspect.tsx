@@ -8,6 +8,8 @@ import ClientPaymentButton from '../components/client/ClientPaymentButton';
 import ClientMoneticoPayment from '../components/client/ClientMoneticoPayment';
 import DragDropUploader from '../components/client/DragDropUploader';
 import { prospectDocumentReviewState, prospectDocumentCounts } from '@/lib/native-document-status';
+import ProspectRiskWizard from '@/components/client/ProspectRiskWizard';
+import type { ProspectRiskQuestionnaire } from '@/lib/platform-api';
 
 interface DocumentStatus {
   status: 'missing' | 'uploaded' | 'validated' | 'rejected';
@@ -105,12 +107,13 @@ const MOTO_TAXI_DOCUMENT_TYPES = [
   { id: 'controle_technique', label: 'Controle technique', description: 'Moins de 6 mois', required: true, icon: FileCheck }
 ];
 
-function getProspectDocumentTypes(vehicleType?: string) {
-  if (!vehicleType) return TAXI_DOCUMENT_TYPES;
-  const n = vehicleType.toLowerCase().trim();
-  if (n === 'vtc') return VTC_DOCUMENT_TYPES;
-  if (n === 'moto-taxi') return MOTO_TAXI_DOCUMENT_TYPES;
-  return TAXI_DOCUMENT_TYPES;
+function getProspectDocumentTypes(vehicleType?: string,vehicleDocument?:string) {
+  const n = (vehicleType||'taxi').toLowerCase().trim();
+  const base=n==='vtc'?VTC_DOCUMENT_TYPES:n==='moto-taxi'?MOTO_TAXI_DOCUMENT_TYPES:TAXI_DOCUMENT_TYPES;
+  const alternative=vehicleDocument==='bon_commande'||vehicleDocument==='facture_vehicule';
+  const documents=base.map(doc=>doc.id==='carte_grise'&&alternative?{...doc,id:vehicleDocument,label:vehicleDocument==='bon_commande'?'Bon de commande du véhicule à assurer':'Facture du véhicule à assurer',description:'Pour préparer le devis ; la carte grise sera à transmettre dès disponibilité.'}:doc);
+  if(alternative)documents.push({id:'carte_grise',label:'Carte grise dès disponibilité',description:'À transmettre avant la finalisation du contrat.',required:false,icon:Car});
+  return documents;
 }
 
 interface ProspectPayment {
@@ -166,10 +169,12 @@ const EspaceProspect: React.FC = () => {
   const [pendingPayments, setPendingPayments] = useState<ProspectPayment[]>([]);
   const [allPayments, setAllPayments] = useState<ProspectPayment[]>([]);
   const [finalDocuments, setFinalDocuments] = useState<FinalClientDocument[]>([]);
+  const [riskQuestionnaire,setRiskQuestionnaire]=useState<ProspectRiskQuestionnaire|null>(null);
+  const handleRiskSaved=useCallback((record:ProspectRiskQuestionnaire)=>setRiskQuestionnaire(record),[]);
 
   const documentTypes = useMemo(
-    () => getProspectDocumentTypes(leadInfo?.vehicle_type),
-    [leadInfo?.vehicle_type]
+    () => getProspectDocumentTypes(String(riskQuestionnaire?.answers.professional_use||leadInfo?.vehicle_type||''),String(riskQuestionnaire?.answers.vehicle_document||'')),
+    [leadInfo?.vehicle_type,riskQuestionnaire?.answers.vehicle_document,riskQuestionnaire?.answers.professional_use]
   );
 
   const vehicleLabel = useMemo(() => {
@@ -272,7 +277,7 @@ const EspaceProspect: React.FC = () => {
     setRefreshing(false);
   };
 
-  const handleFileUpload = async (documentType: string, file: File) => {
+  const handleFileUpload = async (documentType: string, file: File, scrollToTop=true) => {
     if (!token) {
       throw new Error('Configuration manquante');
     }
@@ -285,13 +290,13 @@ const EspaceProspect: React.FC = () => {
       const uploaded = await uploadProspectPlatformDocument(token, documentType, file);
       if (uploaded?.document) setUploadedDocuments((current) => [uploaded.document as UploadedDocument, ...current]);
       setSuccess(`Document "${file.name}" envoyé avec succès !`);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if(scrollToTop)window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       console.error('❌ [UPLOAD] Global error:', err);
       const errorMessage = getErrorMessage(err, "Erreur inconnue lors de l'upload");
       setError(`❌ Upload échoué: ${errorMessage}`);
       // Scroll vers le haut pour afficher l'erreur
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if(scrollToTop)window.scrollTo({ top: 0, behavior: 'smooth' });
       throw err; // Propager l'erreur pour que le composant DragDrop l'affiche aussi
     } finally {
       setUploading(null);
@@ -344,7 +349,7 @@ const EspaceProspect: React.FC = () => {
 
     switch (step) {
       case 'documents':
-        return documentCounts.documentsComplete ? 'completed' : 'current';
+        return documentCounts.documentsComplete&&Boolean(riskQuestionnaire?.confirmed_at)&&riskQuestionnaire?.assessment.answers_complete ? 'completed' : 'current';
       case 'devis':
         if (leadInfo.quote_accepted_at) return 'completed';
         if (documentCounts.documentsComplete) return 'current';
@@ -561,7 +566,7 @@ const EspaceProspect: React.FC = () => {
         )}
 
         {/* Bannière de félicitations si documents complets */}
-        {documentCounts.documentsComplete && activeTab === 'documents' && !leadInfo.quote_accepted_at && (
+        {documentCounts.documentsComplete && riskQuestionnaire?.confirmed_at && riskQuestionnaire.assessment.answers_complete && activeTab === 'documents' && !leadInfo.quote_accepted_at && (
           <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl p-1 mb-8">
             <div className="bg-gray-900 rounded-xl p-6">
               <div className="flex items-center gap-4">
@@ -572,10 +577,10 @@ const EspaceProspect: React.FC = () => {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-2xl font-bold text-white mb-2">
-                    Bravo ! Dossier complet
+                    Votre dossier est prêt pour l’étude
                   </h3>
                   <p className="text-gray-300 text-lg">
-                    Tous vos documents ont ete uploades. Notre equipe traite votre demande et vous enverra vos devis <strong className="text-white">sous 24h</strong>.
+                    Vos documents et vos réponses sont reçus. Votre conseiller vérifie le dossier et prépare les devis adaptés à votre véhicule.
                   </p>
                 </div>
                 <button
@@ -625,6 +630,7 @@ const EspaceProspect: React.FC = () => {
 
         {activeTab === 'documents' && (
           <div className="space-y-4">
+            {token&&<ProspectRiskWizard token={token} documents={uploadedDocuments} onSaved={handleRiskSaved} onUpload={(type,file)=>handleFileUpload(type,file,false)}/>}
             <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 mb-6">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-gray-400">Documents requis</span>

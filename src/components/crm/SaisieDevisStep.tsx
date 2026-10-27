@@ -5,6 +5,7 @@ import { toast } from '@/lib/toast';
 import SubmitQuoteModal from './SubmitQuoteModal';
 import SendToInsurerModal from './SendToInsurerModal';
 import { companyVisualStyle } from '@/lib/company-visual-style';
+import ProspectRiskSummary from './ProspectRiskSummary';
 
 interface SaisieDevisStepProps {
   leadId: string;
@@ -240,6 +241,7 @@ export default function SaisieDevisStep({
 
   return (
     <div className="space-y-6">
+      <ProspectRiskSummary leadId={leadId}/>
       {/* Progress */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">

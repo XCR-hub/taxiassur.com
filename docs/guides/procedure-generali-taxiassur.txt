@@ -1,0 +1,122 @@
+PROCÉDURE TAXIASSUR — DEVIS GENERALI STRADIA USAGES SPÉCIAUX
+Mise à jour : 27 octobre 2026
+
+1. Préparer et contrôler le dossier
+- Traiter les leads actifs du plus récent au plus ancien. Vérifier les pièces du
+  backoffice ET les pièces jointes des échanges avant de réclamer un document.
+- Rechercher le prospect dans la recherche rapide LEA avant toute création.
+  Reprendre son identifiant compagnie ; ne pas créer de doublon.
+- Distinguer le véhicule à assurer du véhicule précédent : un relevé d'assurance
+  ou une ancienne ADS peut décrire l'ancien véhicule. Lire le dernier échange,
+  le questionnaire confirmé et le justificatif du véhicule réellement demandé.
+- Sans carte grise du véhicule à assurer : demander le bon de commande ou la
+  facture. Confirmer marque, modèle, finition, puissance, valeur TTC avec options,
+  date de livraison et mode de financement. Ne pas utiliser la date du mail comme
+  date de livraison. Une estimation constructeur reste explicitement provisoire.
+- Le stationnement doit être confirmé par le client : adresse réelle, garage
+  individuel, clos ET couvert sont trois questions distinctes. Ne pas déduire le
+  garage de l'adresse de la carte grise ni présumer un antivol SRA sur un véhicule.
+- Conserver les nombres réels de véhicules et de titulaires du permis déclarés.
+  Le champ « véhicule supplémentaire » est distinct de ces nombres.
+- Le relevé le plus récent identifie le dernier assureur. Pour les sinistres sur
+  36 mois, compléter l'historique avec les anciens relevés couvrant cette période.
+  Une date de fin « inconnue » ne prouve ni une résiliation ni son initiative.
+  Si le contrat reste actif et que le client demande à changer, distinguer sa
+  résiliation envisagée d'une résiliation effectivement notifiée par l'assureur.
+
+2. Accès et navigation
+- Saisie Generali entre 07 h et 21 h, heure de Paris.
+- Les accès LEA et FUE sont distincts. Utiliser les accès chiffrés prévus, sans
+  recopier les mots de passe dans les procédures, captures ou journaux.
+- Pour un code de connexion, lire le nouveau mail Generali de la session courante.
+  Un code expiré nécessite une nouvelle demande, pas des essais répétés.
+- Gestion Client > recherche rapide > sélectionner le bon client >
+  Devis/Souscription > Devis/Souscription IARD > Automobile > Afficher plus de
+  produits > STRADIA USAGES SPÉCIAUX > Souscription.
+- Sur un écran : compléter, valider, lire le message et corriger les erreurs.
+  Lorsque le message est vide, revalider pour passer à l'écran suivant.
+- Pour un code inconnu, saisir ? puis valider ; une seconde validation ouvre
+  souvent l'aide. PF7/PF8 paginent les listes. Lire le libellé complet du code.
+- ATTENTION : PF3 depuis l'écran Décision a ramené au menu des affaires nouvelles.
+  Ce n'est pas un retour au véhicule. Vérifier la navigation avant de l'utiliser.
+
+3. Saisie et codes vérifiés
+- Souscripteur : identifiant compagnie repris sur LEA.
+- « Modif client payeur ou autres données » : O pour accéder au code affaire.
+- Code affaire de l'offre TPV : OFTPV1 (lettre O), et non OTPV20 ou 0TPV20.
+  Référence : circulaire C.08/2007, page 3 ; vérifier l'actualité de la convention.
+- Code auto 9999999 pour le véhicule non classé selon la procédure du produit.
+- Immatriculation non encore disponible : A DEFINIR, instruction du cabinet pour
+  éditer le devis. Recueillir ensuite l'immatriculation réelle avant finalisation.
+- Genre : consulter l'aide (C berline, P 4*4 SUV, etc.). Ne pas généraliser un code
+  pour contourner une incohérence genre/valeur ; tracer le choix appliqué et faire
+  confirmer sa compatibilité au produit si nécessaire.
+- Dates conducteur et véhicule au format MMAAAA ; année du premier CRM 0,50 AAAA.
+  Privilégier le permis original si un relevé contient une date discordante.
+- Civilité conducteur : MR, MME ou MLE ; sexe M/F.
+- Artisan taxi : profession 09, usage 5. Messagerie à confirmer séparément.
+- Résiliation : C client, A assureur ; conserver le motif et son justificatif.
+- Bris de glace : nature B, date MMAAAA. Déclarer tous ceux de la période demandée.
+- Échéance par défaut demandée par le cabinet : 0101. Fractionnement : M.
+  Heure d'effet : 0000. La date d'effet réelle reste à confirmer pour chaque dossier.
+- Prélèvement : C compagnie, A agent ou N non. O n'est pas accepté par cet écran.
+- Exemple de choix demandé : collision N, dommages tous accidents O.
+- Assistance TPV : 5 (circulaire). Garantie conducteur : option 1 dans le guide
+  consulté. Vérifier les garanties et capitaux dans les documents applicables.
+- Franchises : minimum de classe pour vol et DTA, minimum 75 EUR en bris de glace
+  dans le guide consulté. 910 EUR était la franchise affichée dans le dossier
+  traité ; ce montant ne doit pas être imposé à tous les véhicules.
+- Accessoires, valeur conventionnelle, garanties complémentaires : demander le
+  choix du client/cabinet ; ne pas les ajouter ou les exclure automatiquement.
+
+4. Édition et vérification
+- Décision DE = édition devis. Prise de garantie N. Ne pas sélectionner EM ou AC
+  pour une simple demande de devis et ne pas signer ou engager le contrat.
+- Valider les écrans suivants, puis sortie des pièces : O et mode I pour local
+  immédiat. Contrôler le PDF réellement reçu avant dépôt : identité, bon véhicule,
+  prix et périodicité, dates, garanties, franchises, déclarations et référence.
+- Le PDF peut contenir plusieurs exemplaires ; conserver le document assureur.
+- Un contournement a été demandé par le cabinet dans le dossier pilote : saisie
+  de 2 permis malgré 1 permis déclaré, suite au rejet du nombre de véhicules.
+  Le PDF a effectivement repris 2 titulaires. Cette observation n'est pas une
+  règle d'automatisation et ne prouve pas l'accord écrit de Generali. Conserver
+  l'écart en suivi, le signaler dans l'accompagnement et le faire régulariser avant
+  adhésion. Ne pas altérer le PDF pour masquer une déclaration.
+
+5. Dépôt, documents et correspondance
+- Déposer le PDF dans le devis de la bonne compagnie et du bon lead. Compléter
+  mensualité, cumul annuel explicite, formule, franchises, options et exclusions.
+  Ne pas cocher une RC professionnelle absente du devis automobile.
+- Joindre uniquement les pièces destinées au client : devis, IPID/PID, dispositions
+  générales et convention d'assistance de références compatibles avec le devis.
+  Le dossier pilote référence GAF035D, GA1321K et GA1225A. Vérifier les versions
+  pour chaque devis. Exclure circulaire, mini-compilation et consignes internes.
+- Contrôler l'antivirus et les téléchargements depuis l'espace prospect.
+- Vérifier la notification créée au dépôt ET son statut d'envoi effectif.
+- Envoyer l'accompagnement depuis team@taxiassur.com au client, copie tcerda@xcr.fr
+  pour le suivi demandé. Présenter clairement garanties, limites et éléments à
+  vérifier. Ne pas annoncer une réception en boîte externe sur la seule base de
+  l'acceptation SMTP.
+- Envoi SMTP direct : enregistrer également une copie MIME avec le même Message-ID
+  dans les Éléments envoyés de team@taxiassur.com. Vérifier son existence et les
+  pièces jointes. Une copie dans le dossier Envoyés ne nécessite pas de renvoyer
+  le mail au client. Ne jamais renvoyer un message déjà accepté par le serveur.
+- Historiser dans le CRM : référence, pièces, prix, expéditeur, destinataires,
+  date, Message-ID, résultat serveur et éventuelles réserves.
+
+Signature professionnelle :
+Cordialement,
+Tony CERDA
+XCR (EXCELLENCE COVERAGE RISKS)
+tcerda@xcr.fr
+06 83 52 67 51 / 01 80 85 57 80
+
+6. Parcours prospect et reprise des informations
+- L'espace prospect recueille des déclarations propres au véhicule à assurer,
+  avec sauvegarde du brouillon, choix « à préciser » et confirmation horodatée.
+- Le prospect choisit le justificatif exact. Ne pas considérer une ancienne carte
+  grise comme la preuve du nouveau véhicule par simple présence dans le lead.
+- Un bon de commande permet de préparer l'étude, mais la carte grise et les
+  informations provisoires doivent être régularisées avant finalisation.
+- Le backoffice reprend les réponses, les pièces sélectionnées et les éléments
+  à compléter. Le conseiller vérifie leur cohérence avant la saisie assureur.

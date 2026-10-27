@@ -1,3 +1,5 @@
+import type { RiskAnswers, RiskAssessment } from '../../shared/prospect-risk.mjs';
+
 const runtimeEnv = typeof window !== 'undefined'
   ? (window as Window & { ENV_CONFIG?: Record<string, string> }).ENV_CONFIG
   : undefined;
@@ -153,6 +155,29 @@ async function platformRequest(path: string, token: string, init: RequestInit = 
 export async function loadProspectPlatformSession(token: string): Promise<ProspectPlatformSession> {
   const response = await platformRequest('/v1/prospect/session', token);
   return response.json();
+}
+
+export interface ProspectRiskQuestionnaire {
+  id:string;
+  lead_id:string;
+  answers:RiskAnswers;
+  revision:number;
+  confirmed_at:string|null;
+  updated_at?:string;
+  status?:string;
+  assessment:RiskAssessment;
+}
+export async function loadProspectRiskQuestionnaire(token:string):Promise<ProspectRiskQuestionnaire>{
+  const response=await platformRequest('/v1/prospect/risk-questionnaire',token);
+  return (await response.json()).questionnaire;
+}
+export async function saveProspectRiskQuestionnaire(token:string,answers:RiskAnswers,revision:number,confirmed=false):Promise<ProspectRiskQuestionnaire>{
+  const response=await fetch(`${PLATFORM_BASE_URL}/v1/prospect/risk-questionnaire`,{method:'PATCH',headers:{'X-Prospect-Token':token,'Content-Type':'application/json'},body:JSON.stringify({answers,expected_revision:revision,confirmed}),credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(20_000)});
+  const payload=await response.json().catch(()=>({}));
+  if(response.status===409)throw new Error('Les réponses ont été modifiées dans une autre session. Actualisez la page avant de les modifier à nouveau.');
+  if(response.status===400)throw new Error('Vérifiez les formats des dates, montants et nombres saisis.');
+  if(!response.ok)throw new Error('Vos réponses n’ont pas été enregistrées. Réessayez dans un instant.');
+  return payload.questionnaire;
 }
 
 export async function prospectStoredDocumentUrl(token: string, path: string, bucket: string): Promise<string> {

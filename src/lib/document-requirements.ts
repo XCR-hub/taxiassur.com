@@ -41,15 +41,14 @@ export const MOTO_TAXI_DOCUMENTS: RequiredDocument[] = [
   { type: 'controle_technique', label: 'Controle technique', required: true, icon: '🔧' },
 ];
 
-export function getRequiredDocuments(vehicleType?: string | null): RequiredDocument[] {
-  if (!vehicleType) return TAXI_DOCUMENTS;
-  const normalized = vehicleType.toLowerCase().trim();
-  if (normalized === 'vtc') return VTC_DOCUMENTS;
-  if (normalized === 'moto-taxi') return MOTO_TAXI_DOCUMENTS;
-  return TAXI_DOCUMENTS;
+export function getRequiredDocuments(vehicleType?: string | null,vehicleDocument?:string): RequiredDocument[] {
+  const normalized = (vehicleType||'taxi').toLowerCase().trim();
+  const base=normalized==='vtc'?VTC_DOCUMENTS:normalized==='moto-taxi'?MOTO_TAXI_DOCUMENTS:TAXI_DOCUMENTS;
+  if(vehicleDocument!=='bon_commande'&&vehicleDocument!=='facture_vehicule')return base;
+  return base.map(doc=>doc.type==='carte_grise'?{...doc,type:vehicleDocument,label:vehicleDocument==='bon_commande'?'Bon de commande (étude du devis)':'Facture du véhicule (étude du devis)'}:doc);
 }
 
 export function getDocumentLabel(type: string, vehicleType?: string | null): string {
   const docs = getRequiredDocuments(vehicleType);
-  return docs.find(d => d.type === type)?.label || type;
+  return docs.find(d => d.type === type)?.label || ({bon_commande:'Bon de commande du véhicule',facture_vehicule:'Facture du véhicule'} as Record<string,string>)[type] || type;
 }

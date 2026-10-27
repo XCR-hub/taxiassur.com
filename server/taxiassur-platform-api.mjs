@@ -5,6 +5,7 @@ import tls from 'node:tls';
 import { createCipheriv, createDecipheriv, createHash, createHmac, createSign, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import path from 'node:path';
 import { createSession, hashPassword, verifyPassword, verifySession } from './native-auth.mjs';
+import { normaliseRiskPatch, riskAssessment } from '../shared/prospect-risk.mjs';
 
 process.on('uncaughtException', (error) => {
   console.log(`[taxiassur-platform-api] fatal uncaughtException: ${error?.stack || error}`);
@@ -81,7 +82,7 @@ const allowedMimeTypes = new Map([
   ['text/html', 'html'],
   ['application/msword', 'doc'], ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'docx'],
 ]);
-const allowedDocumentTypes = new Set(['licence_taxi', 'permis_conduire', 'piece_identite', 'carte_identite', 'carte_professionnelle', 'custom', 'carte_grise', 'releve_information', 'autorisation_stationnement', 'rib', 'kbis', 'carte_pro_vtc', 'inscription_registre_vtc', 'controle_technique', 'autre']);
+const allowedDocumentTypes = new Set(['licence_taxi', 'permis_conduire', 'piece_identite', 'carte_identite', 'carte_professionnelle', 'custom', 'carte_grise', 'bon_commande', 'facture_vehicule', 'releve_information', 'autorisation_stationnement', 'rib', 'kbis', 'carte_pro_vtc', 'inscription_registre_vtc', 'controle_technique', 'autre']);
 const rateBuckets = new Map();
 mkdirSync(config.documentRoot, { recursive: true });
 mkdirSync(path.join(config.documentRoot, '.tmp'), { recursive: true });
@@ -304,6 +305,9 @@ const server = createServer(async (req, res) => {
     if(adminDocumentMatch&&req.method==='PATCH'&&!adminDocumentMatch[2])return await adminDocumentPatch(req,res,origin,requestId,adminDocumentMatch[1]);
     if(adminDocumentMatch&&req.method==='DELETE'&&!adminDocumentMatch[2])return await adminDocumentDelete(req,res,origin,requestId,adminDocumentMatch[1]);
     if(adminDocumentMatch&&req.method==='GET'&&adminDocumentMatch[2])return await adminDocumentDownload(req,res,origin,requestId,adminDocumentMatch[1]);
+    const riskQuestionnaireAdmin=url.pathname.match(/^\/v1\/admin\/leads\/([0-9a-f-]{36})\/risk-questionnaire$/i);
+    if(riskQuestionnaireAdmin&&req.method==='GET')return await prospectRiskQuestionnaire(req,res,origin,requestId,riskQuestionnaireAdmin[1]);
+    if(url.pathname==='/v1/prospect/risk-questionnaire'&&['GET','PATCH'].includes(req.method))return await prospectRiskQuestionnaire(req,res,origin,requestId);
     if (req.method === 'POST' && url.pathname === '/v1/prospect/documents') return await uploadProspectDocument(req, res, origin, requestId);
     const downloadMatch = url.pathname.match(/^\/v1\/prospect\/documents\/([0-9a-f-]{36})\/download$/i);
     if (req.method === 'GET' && downloadMatch) return await downloadProspectDocument(req, res, origin, requestId, downloadMatch[1]);
@@ -1983,6 +1987,38 @@ async function prospectSession(req, res, origin, requestId) {
     .sort((left, right) => String(right.uploaded_at || right.created_at || '').localeCompare(String(left.uploaded_at || left.created_at || '')));
   const safeLead = Object.fromEntries(['id', 'first_name', 'last_name', 'full_name', 'email', 'phone', 'vehicle_type', 'address', 'postal_code', 'city', 'status', 'pipeline_stage', 'document_checklist', 'documents_complete', 'quote_amount', 'can_pay', 'can_sign_contract', 'selected_quote_id', 'contract_signed', 'payment_confirmed'].map((key) => [key, lead[key] ?? null]));
   return json(res, origin, 200, { ok: true, lead: safeLead, documents: portalDocuments, final_documents: finalDocuments, document_requests: requests, payments, quotes, company_documents: companyDocuments }, requestId);
+}
+
+async function prospectRiskQuestionnaire(req,res,origin,requestId,adminLeadId){
+  let lead;
+  if(adminLeadId){
+    if(!await verifiedAdminSession(req))return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
+    lead=parseJsonLine(await runPsql(`SELECT (data||jsonb_build_object('id',record_id))::text FROM taxiassur.records WHERE collection='crm_leads' AND record_id=${quoteLiteral(adminLeadId)} LIMIT 1;`));
+  }else{
+    const token=prospectToken(req);if(!token)return json(res,origin,401,{ok:false,error:'invalid_access'},requestId);
+    lead=await leadByToken(token);
+  }
+  if(!lead)return json(res,origin,adminLeadId?404:403,{ok:false,error:'invalid_access'},requestId);
+  const leadId=String(lead.id),collection='lead_risk_questionnaires';
+  const current=parseJsonLine(await runPsql(`SELECT data::text FROM taxiassur.records WHERE collection=${quoteLiteral(collection)} AND record_id=${quoteLiteral(leadId)} AND data->>'lead_id'=${quoteLiteral(leadId)} LIMIT 1;`))||{id:leadId,lead_id:leadId,answers:{},revision:0,confirmed_at:null};
+  const documents=[...await recordsForRelatedLeads('prospect_documents',leadId),...await recordsForRelatedLeads('crm_lead_documents',leadId)];
+  const view=record=>({...record,assessment:riskAssessment(record.answers,documents)});
+  if(req.method==='GET')return json(res,origin,200,{ok:true,questionnaire:view(current)},requestId);
+  const body=await readJsonBody(req);
+  if(!Number.isInteger(body.expected_revision)||body.expected_revision!==Number(current.revision))return json(res,origin,409,{ok:false,error:'questionnaire_conflict'},requestId);
+  if(!body.answers||typeof body.answers!=='object'||Array.isArray(body.answers))return json(res,origin,400,{ok:false,error:'invalid_risk_answers'},requestId);
+  const normalised=normaliseRiskPatch(body.answers);
+  if(Object.keys(normalised.errors).length)return json(res,origin,400,{ok:false,error:'invalid_risk_answers',fields:normalised.errors},requestId);
+  if(body.confirmed!==undefined&&typeof body.confirmed!=='boolean')return json(res,origin,400,{ok:false,error:'invalid_confirmation'},requestId);
+  const answers={...current.answers,...normalised.answers},changed=JSON.stringify(answers)!==JSON.stringify(current.answers),now=new Date().toISOString();
+  if(!changed&&Boolean(current.confirmed_at)===Boolean(body.confirmed))return json(res,origin,200,{ok:true,questionnaire:view(current)},requestId);
+  const assessment=riskAssessment(answers,documents);
+  const history=[...(current.history||[]),{at:now,source:'prospect',changed_fields:Object.keys(normalised.answers).filter(key=>answers[key]!==current.answers[key]),confirmed:body.confirmed===true}].slice(-20);
+  const record={...current,answers,revision:Number(current.revision)+1,source:'prospect',updated_at:now,confirmed_at:body.confirmed===true?now:null,status:body.confirmed===true?(assessment.complete?'ready_for_review':'needs_information'):'draft',history};
+  const stored=parseJsonLine(await runPsql(`INSERT INTO taxiassur.records(collection,record_id,data,origin) VALUES(${quoteLiteral(collection)},${quoteLiteral(leadId)},${quoteLiteral(JSON.stringify(record))}::jsonb,'prospect') ON CONFLICT(collection,record_id) DO UPDATE SET data=EXCLUDED.data,updated_at=now(),revision=taxiassur.records.revision+1 WHERE COALESCE((taxiassur.records.data->>'revision')::int,0)=${body.expected_revision} RETURNING data::text;`));
+  if(!stored)return json(res,origin,409,{ok:false,error:'questionnaire_conflict'},requestId);
+  await runPsql(`INSERT INTO taxiassur.audit_events(actor_type,actor_id,action,target_type,target_id,request_id,metadata) VALUES('prospect',${quoteLiteral(leadId)},'risk_questionnaire_saved','crm_lead',${quoteLiteral(leadId)},${quoteLiteral(requestId)}::uuid,${quoteLiteral(JSON.stringify({revision:stored.revision,confirmed:body.confirmed===true,missing:assessment.missing.map(f=>f.key)}))}::jsonb);`);
+  return json(res,origin,200,{ok:true,questionnaire:view(stored)},requestId);
 }
 
 async function adminDocumentWorkspaceUpload(req,res,origin,requestId,leadId){
