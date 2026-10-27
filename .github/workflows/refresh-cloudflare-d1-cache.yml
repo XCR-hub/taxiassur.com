@@ -9,6 +9,7 @@ on:
       - main
     paths:
       - 'scripts/d1-*.cjs'
+      - 'scripts/lib/d1-cache-sql.cjs'
       - 'scripts/verify-d1-public-cache-metadata.cjs'
       - 'cloudflare/d1/**'
       - '.github/workflows/refresh-cloudflare-d1-cache.yml'
@@ -43,6 +44,9 @@ jobs:
 
       - name: Security secret scan
         run: npm run security:scan-secrets
+
+      - name: Verify incremental import without production writes
+        run: node --test scripts/d1-cache-sql.test.cjs
 
       - name: Check required secrets
         shell: bash
