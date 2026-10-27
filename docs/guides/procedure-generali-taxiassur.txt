@@ -120,3 +120,13 @@ tcerda@xcr.fr
   informations provisoires doivent être régularisées avant finalisation.
 - Le backoffice reprend les réponses, les pièces sélectionnées et les éléments
   à compléter. Le conseiller vérifie leur cohérence avant la saisie assureur.
+
+Maintenance du parcours :
+- Le contrat de données partagé est dans shared/prospect-risk.mjs. Déployer ce
+  module dans F:\TaxiAssur\shared avec l'API ; il est aussi utilisé par le site.
+- Tester le nouveau parcours sur un port candidat avec des données techniques,
+  puis vérifier sauvegarde, reprise, accès au bon prospect et absence d'écriture
+  dans les autres dossiers. Nettoyer les données techniques après les essais.
+- Pour redémarrer l'API, arrêter puis redémarrer sa tâche supervisée, pas seulement
+  son processus enfant. Le contrôle de disponibilité vérifie aussi un accès à la
+  base et la présence de la nouvelle route. Une sauvegarde permet le retour arrière.
