@@ -38,6 +38,9 @@ interface Email {
   body_text: string;
   body_html?: string;
   received_at: string;
+  source_mailbox?: string;
+  read_only?: boolean;
+  case_source?: string;
   lead_id?: string;
   status: string;
   classification?: EmailClassification;
@@ -570,6 +573,8 @@ export default function InboxIntelligent() {
 
                   <div className="flex items-center gap-2 ml-4">
                     <button
+                      disabled={selectedEmail.read_only}
+                      title={selectedEmail.read_only ? 'Répondre depuis la messagerie d’origine' : undefined}
                       onClick={() => setReplyingTo(replyingTo === selectedEmail.id ? null : selectedEmail.id)}
                       className="px-3 py-2 text-sm bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 flex items-center gap-2"
                     >
@@ -694,6 +699,11 @@ export default function InboxIntelligent() {
                 </div>
               )}
 
+              {selectedEmail.source_mailbox && (
+                <p className="px-6 py-2 text-sm text-gray-600">
+                  {selectedEmail.case_source} · Boîte : {selectedEmail.source_mailbox}. Échange synchronisé pour le suivi ; répondre depuis cette messagerie.
+                </p>
+              )}
               {/* Contenu de l'email */}
               <div className="flex-1 overflow-y-auto p-6">
                 {selectedEmail.body_html ? (
