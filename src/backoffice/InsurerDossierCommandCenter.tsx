@@ -24,7 +24,7 @@ import {
 import { nativeAdminCall } from '@/lib/native-admin-data';
 import { toast } from '@/lib/toast';
 
-type DossierStatus = 'pending' | 'processing' | 'sent' | 'failed' | 'cancelled' | 'closed' | 'responded';
+type DossierStatus = 'pending' | 'processing' | 'sent' | 'failed' | 'cancelled' | 'closed' | 'responded' | 'delivery_unknown';
 type ViewFilter = 'action' | 'waiting_response' | 'failed' | 'responded' | 'all';
 
 interface DossierRow {
@@ -83,6 +83,7 @@ interface Metric {
   tone: string;
   detail: string;
 }
+interface ReadinessRow { id: string; lead_id: string; workflow_code: string; ready: boolean; status: string; missing: string[]; checked_at: string }
 
 const statusLabel: Record<DossierStatus, string> = {
   pending: 'A envoyer',
@@ -92,6 +93,7 @@ const statusLabel: Record<DossierStatus, string> = {
   cancelled: 'Annule',
   closed: 'Clos',
   responded: 'Reponse',
+  delivery_unknown: 'Envoi à vérifier',
 };
 
 const statusClass: Record<DossierStatus, string> = {
@@ -102,6 +104,7 @@ const statusClass: Record<DossierStatus, string> = {
   cancelled: 'border-slate-400/30 bg-slate-400/10 text-slate-300',
   closed: 'border-slate-400/30 bg-slate-400/10 text-slate-300',
   responded: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200',
+  delivery_unknown: 'border-rose-400/30 bg-rose-400/10 text-rose-200',
 };
 
 function isDue(value: string | null | undefined) {
@@ -139,7 +142,7 @@ function isFollowupDue(row: DossierRow) {
 }
 
 function needsAction(row: DossierRow) {
-  return row.status === 'pending' || row.status === 'processing' || row.status === 'failed' || isFollowupDue(row);
+  return row.status === 'pending' || row.status === 'processing' || row.status === 'failed' || row.status === 'delivery_unknown' || isFollowupDue(row);
 }
 
 function DossierBadge({ status }: { status: DossierStatus }) {
@@ -171,6 +174,8 @@ function MetricTile({ metric }: { metric: Metric }) {
 export default function InsurerDossierCommandCenter() {
   const navigate = useNavigate();
   const [dossiers, setDossiers] = useState<DossierRow[]>([]);
+  const [readiness,setReadiness]=useState<ReadinessRow[]>([]);
+  const [worker,setWorker]=useState<{last_run_at?:string;status?:string}|null>(null);
   const [leadsById, setLeadsById] = useState<Record<string, LeadSummary>>({});
   const [companiesById, setCompaniesById] = useState<Record<string, CompanySummary>>({});
   const [loading, setLoading] = useState(true);
@@ -187,12 +192,15 @@ export default function InsurerDossierCommandCenter() {
         dossiers?: DossierRow[];
         leads?: LeadSummary[];
         companies?: CompanySummary[];
+        readiness?: ReadinessRow[];
+        worker?: {last_run_at?:string;status?:string}|null;
       }>('/v1/admin/insurer-dossiers');
       const rows = (result.dossiers || []).map((row) => ({
         ...row,
         status: (row.status || 'pending') as DossierStatus,
       }));
       setDossiers(rows);
+      setReadiness(result.readiness||[]);setWorker(result.worker||null);
       const leads = result.leads || [];
       const companies = result.companies || [];
 
@@ -364,6 +372,11 @@ export default function InsurerDossierCommandCenter() {
   return (
     <div className="min-h-screen bg-[#0b0e14] px-4 py-5 text-slate-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-5">
+        {!!readiness.length&&<details className="rounded-xl border border-amber-300/20 bg-amber-300/5 p-4">
+          <summary className="cursor-pointer font-semibold text-amber-100">Préparation AXA · {readiness.filter(r=>r.ready).length} prêt(s), {readiness.filter(r=>r.status==='waiting_documents').length} à compléter</summary>
+          <p className="mt-2 text-xs text-slate-400">Dernier contrôle du serveur : {formatDate(worker?.last_run_at)} · {worker?.status==='healthy'?'Actif':'À vérifier'}</p>
+          <div className="mt-3 max-h-80 space-y-2 overflow-y-auto">{readiness.filter(r=>!['already_consulted','blocked'].includes(r.status)).map(r=><button key={r.id} type="button" onClick={()=>openLead(r.lead_id)} className="block w-full rounded-lg border border-white/10 p-3 text-left text-sm hover:bg-white/5"><strong>{leadName(leadsById[r.lead_id])} · {r.ready?'Prêt à transmettre':'À compléter'}</strong><span className="mt-1 block text-xs text-slate-400">{r.missing.slice(0,3).join(' · ')}{r.missing.length>3?` · +${r.missing.length-3} autre(s)`:''}</span></button>)}</div>
+        </details>}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <div className="flex items-center gap-3">

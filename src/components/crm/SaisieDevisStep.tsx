@@ -287,8 +287,8 @@ export default function SaisieDevisStep({
               <Mail className="h-5 w-5 text-amber-700" />
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900">Transmettre le dossier a l'assureur</h4>
-              <p className="text-sm text-gray-600">Envoyer les pieces du prospect a AXA ou autre assureur pour saisie du devis</p>
+              <h4 className="font-semibold text-gray-900">Demander un devis AXA</h4>
+              <p className="text-sm text-gray-600">Vérifier les pièces, compléter le numéro client et suivre la réponse de l’assureur</p>
             </div>
           </div>
           <button

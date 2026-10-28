@@ -1,348 +1,108 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { AlertCircle, CheckCircle2, Loader2, Mail, Paperclip, Save, Send, X } from 'lucide-react';
 import { nativeAdminCall } from '@/lib/native-admin-data';
-import { X, Send, Loader2, Paperclip, Check, AlertCircle, Mail } from 'lucide-react';
 import { toast } from '@/lib/toast';
 
-interface InsurerContact {
-  id: string;
-  company_id: string;
-  full_name: string;
-  email: string;
-  position?: string;
-  company_name?: string;
-}
-interface DocumentItem {
-  id: string;
-  file_name: string;
-  file_path: string;
-  mime_type?: string | null;
-  document_type: string;
-  source: 'prospect' | 'crm';
-}
+type Workspace = {
+  review_version: string;
+  profile: { code: string; name?: string; recipient_email?: string; recipient_name?: string; verified_at?: string; auto_queue_enabled?: boolean };
+  settings: { client_reference?: string; note?: string; automation_enabled?: boolean; evidence_reviewed_at?: string };
+  assessment: { ready: boolean; blocked: boolean; status: string; missing: string[]; needs_review: string[]; document_ids: string[] };
+  documents: { id: string; file_name?: string; original_name?: string; document_type: string; status?: string }[];
+  history: { id: string; company_name?: string; status: string; sent_at?: string; created_at?: string; recipient_email?: string; last_error?: string }[];
+  responses?: { id: string; kind: string; subject: string; received_at: string; preview?: string; attachments?: {name?: string}[] }[];
+  preview: string;
+  worker?: { last_run_at?: string; status?: string } | null;
+};
+type Props = { isOpen: boolean; onClose: () => void; leadId: string; leadName: string; leadEmail?: string; leadPhone?: string };
+const states: Record<string,string> = {pending:'En attente d’envoi',processing:'Transmission en cours',sent:'Accepté par la messagerie',responded:'Réponse reçue',failed:'À corriger',cancelled:'Annulé',delivery_unknown:'Envoi à vérifier, nouvelle transmission suspendue'};
 
-interface SendToInsurerModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  leadId: string;
-  leadName: string;
-  leadEmail?: string;
-  leadPhone?: string;
-}
-
-function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : 'Erreur inconnue';
-}
-export default function SendToInsurerModal({
-  isOpen,
-  onClose,
-  leadId,
-  leadName
-}: SendToInsurerModalProps) {
-  const [contacts, setContacts] = useState<InsurerContact[]>([]);
-  const [documents, setDocuments] = useState<DocumentItem[]>([]);
-  const [selectedContactId, setSelectedContactId] = useState<string>('');
-  const [customEmail, setCustomEmail] = useState('');
-  const [customName, setCustomName] = useState('');
-  const [useCustom, setUseCustom] = useState(false);
-  const [selectedDocs, setSelectedDocs] = useState<Set<string>>(new Set());
-  const [additionalMessage, setAdditionalMessage] = useState('');
-  const [sending, setSending] = useState(false);
-  const [loadingContacts, setLoadingContacts] = useState(true);
-  const [loadingDocs, setLoadingDocs] = useState(true);
-
-  useEffect(() => {
-    if (isOpen) {
-      loadContacts();
-      loadDocuments();
-    }
-  }, [isOpen, leadId]);
-
-  async function loadContacts() {
-    setLoadingContacts(true);
-    try {
-      const result = await nativeAdminCall<{ workspace?: { contacts?: InsurerContact[] } }>(
-        `/v1/admin/leads/${encodeURIComponent(leadId)}/insurer-dossier`
-      );
-      const mapped = result.workspace?.contacts || [];
-      setContacts(mapped);
-
-      if (mapped.length > 0) {
-        setSelectedContactId(mapped[0].id);
-      }
-    } catch (error) {
-      console.error('Error loading contacts:', error);
-    } finally {
-      setLoadingContacts(false);
-    }
+export default function SendToInsurerModal({ isOpen, onClose, leadId, leadName }: Props) {
+  const [workspace,setWorkspace]=useState<Workspace|null>(null);
+  const [reference,setReference]=useState('');
+  const [note,setNote]=useState('');
+  const [automatic,setAutomatic]=useState(false);
+  const [reviewed,setReviewed]=useState(false);
+  const [loading,setLoading]=useState(false);
+  const [busy,setBusy]=useState(false);
+  const [error,setError]=useState('');
+  const route=`/v1/admin/leads/${encodeURIComponent(leadId)}/insurer-dossier`;
+  useEffect(()=>{
+    if(!isOpen)return;
+    let active=true;
+    setWorkspace(null);setLoading(true);setError('');setReviewed(false);
+    nativeAdminCall<{workspace:Workspace}>(route).then(result=>{
+      if(!active)return;
+      setWorkspace(result.workspace);setReference(result.workspace.settings.client_reference||'');
+      setNote(result.workspace.settings.note||'');setAutomatic(result.workspace.settings.automation_enabled??result.workspace.profile.auto_queue_enabled??false);
+    }).catch(e=>{if(active)setError(e instanceof Error?e.message:'Chargement impossible');})
+      .finally(()=>{if(active)setLoading(false);});
+    return()=>{active=false;};
+  },[isOpen,route]);
+  async function save(send=false){
+    setBusy(true);setError('');
+    try{
+      const result=await nativeAdminCall<{workspace:Workspace}>(route,{method:'PATCH',body:JSON.stringify({action:'configure',workflow_code:'axa',client_reference:reference,note,automation_enabled:automatic,evidence_reviewed:reviewed,expected_review_version:workspace?.review_version})});
+      setWorkspace(result.workspace);setReviewed(false);
+      if(send){
+        if(!result.workspace.assessment.ready){toast.error('Complétez les éléments signalés avant la transmission.');return;}
+        const queued=await nativeAdminCall<{ok:boolean;email_queued?:boolean}>(route,{method:'POST',body:JSON.stringify({workflow_code:'axa'})});
+        if(!queued.ok||!queued.email_queued)throw new Error('La demande n’a pas été mise en file.');
+        setWorkspace((await nativeAdminCall<{workspace:Workspace}>(route)).workspace);
+        toast.success('Demande enregistrée. La confirmation d’envoi apparaîtra dans l’historique.');
+      }else toast.success('Parcours AXA enregistré et dossier revérifié.');
+    }catch(e){const message=e instanceof Error?e.message:'Enregistrement impossible';setError(message);toast.error(message);}
+    finally{setBusy(false);}
   }
-
-  async function loadDocuments() {
-    setLoadingDocs(true);
-    try {
-      const result = await nativeAdminCall<{ workspace?: { documents?: DocumentItem[] } }>(
-        `/v1/admin/leads/${encodeURIComponent(leadId)}/insurer-dossier`
-      );
-      const allDocs = (result.workspace?.documents || []).filter((document) => document.file_path);
-
-      setDocuments(allDocs);
-      setSelectedDocs(new Set(allDocs.map(d => d.id)));
-    } catch (error) {
-      console.error('Error loading documents:', error);
-    } finally {
-      setLoadingDocs(false);
-    }
-  }
-
-  function toggleDoc(docId: string) {
-    setSelectedDocs(prev => {
-      const next = new Set(prev);
-      if (next.has(docId)) {
-        next.delete(docId);
-      } else {
-        next.add(docId);
-      }
-      return next;
-    });
-  }
-
-  function selectAllDocs() {
-    setSelectedDocs(new Set(documents.map(d => d.id)));
-  }
-
-  function deselectAllDocs() {
-    setSelectedDocs(new Set());
-  }
-
-  async function handleSend() {
-    const contact = contacts.find(c => c.id === selectedContactId);
-    const recipientEmail = (useCustom ? customEmail : contact?.email || '').trim().toLowerCase();
-    const recipientName = (useCustom ? customName : contact?.full_name || '').trim();
-    const companyName = useCustom ? 'Destinataire personnalise' : contact?.company_name || 'Assureur';
-
-    if (!recipientEmail) {
-      toast.error('Veuillez saisir un email destinataire');
-      return;
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) {
-      toast.error('Veuillez saisir un email destinataire valide');
-      return;
-    }
-
-    if (selectedDocs.size === 0) {
-      toast.error('Veuillez selectionner au moins un document');
-      return;
-    }
-
-    setSending(true);
-    try {
-      const result = await nativeAdminCall<{ ok?: boolean; send_id?: string; email_queued?: boolean }>(
-        `/v1/admin/leads/${encodeURIComponent(leadId)}/insurer-dossier`,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            recipient_email: recipientEmail,
-            recipient_name: recipientName || null,
-            company_name: companyName,
-            company_id: useCustom ? null : contact?.company_id || null,
-            contact_id: useCustom ? null : selectedContactId || null,
-            subject: `Demande de saisie devis - ${leadName || 'Prospect'}`,
-            message: additionalMessage.trim() || null,
-            document_ids: [...selectedDocs]
-          })
-        }
-      );
-
-      if (!result.ok || !result.email_queued) {
-        throw new Error('Mise en file refusee');
-      }
-
-      toast.success(`Dossier mis en file pour ${recipientName || recipientEmail} - Relances J+2/J+5 activees`);
-      onClose();
-    } catch (error: unknown) {
-      console.error('Error queueing insurer dossier:', error);
-      toast.error(`Erreur lors de la mise en file : ${getErrorMessage(error)}`);
-    } finally {
-      setSending(false);
-    }
-  }
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-amber-50 to-orange-50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-100 rounded-lg">
-              <Mail className="h-5 w-5 text-amber-700" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-gray-900">Transmettre le dossier</h2>
-              <p className="text-sm text-gray-600">File auditee avec Relances J+2/J+5</p>
-            </div>
+  if(!isOpen)return null;
+  const selected=workspace?.documents.filter(d=>workspace.assessment.document_ids.includes(d.id))||[];
+  const hasPrevious=workspace?.assessment.status==='already_consulted';
+  const locked=workspace?.assessment.blocked||hasPrevious;
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm">
+    <section role="dialog" aria-modal="true" aria-labelledby="insurer-dossier-title" className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white text-gray-900 shadow-2xl">
+      <header className="flex items-center justify-between border-b bg-amber-50 px-5 py-4">
+        <div className="flex items-center gap-3"><Mail className="h-6 w-6 text-amber-700"/><div>
+          <h2 id="insurer-dossier-title" className="text-lg font-bold">Demande de devis AXA</h2><p className="text-sm text-gray-600">{leadName} · Pièces, transmission et réponse</p>
+        </div></div><button type="button" aria-label="Fermer" onClick={onClose} className="rounded-lg p-2 hover:bg-white"><X className="h-5 w-5"/></button>
+      </header>
+      <div className="space-y-5 overflow-y-auto p-5">
+        {error&&<p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p>}
+        {loading&&<p className="flex items-center gap-2 py-8"><Loader2 className="h-5 w-5 animate-spin"/>Vérification du dossier…</p>}
+        {workspace&&<>
+          <div className="rounded-xl border border-gray-200 p-4 text-sm">
+            <p className="font-semibold">{workspace.profile.name||'AXA · Souscription auto entreprises'}</p>
+            <p>{workspace.profile.recipient_name||'Contact en attente de vérification'}{workspace.profile.recipient_email&&` · ${workspace.profile.recipient_email}`}</p>
+            <p className="mt-2 text-gray-600">Expéditeur et réponse : tcerda@xcr.fr · Tony en copie</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <X className="h-5 w-5 text-gray-500" />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
-            <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-700" />
-            <p className="text-sm text-blue-900">
-              La demande est enregistree en base puis envoyee par le worker securise. Les relances sont stoppees des qu'une reponse assureur est marquee.
-            </p>
+          {locked&&<p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm">{hasPrevious?'Une consultation existe déjà pour ce dossier. Consultez l’historique avant toute nouvelle demande.':'Ce dossier est exclu des transmissions automatiques : opposition, dossier clos ou traitement suspendu.'}</p>}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="text-sm font-medium">Numéro client AXA<input value={reference} onChange={e=>setReference(e.target.value)} inputMode="numeric" maxLength={30} placeholder="Numéro vérifié dans les échanges AXA" className="mt-1 w-full rounded-lg border border-gray-300 p-2.5"/></label>
+            <div className="rounded-lg bg-gray-50 p-3 text-sm"><p className="font-medium">Licence taxi / ADS</p><p className="mt-1 text-gray-600">La pièce doit être déposée et validée dans le dossier, avec le permis et les autres justificatifs.</p></div>
           </div>
-          {/* Recipient */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Destinataire</label>
-
-            <div className="flex items-center gap-3 mb-3">
-              <button
-                onClick={() => setUseCustom(false)}
-                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${!useCustom ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}
-              >
-                Contact existant
-              </button>
-              <button
-                onClick={() => setUseCustom(true)}
-                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${useCustom ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}
-              >
-                Email personnalise
-              </button>
-            </div>
-
-            {!useCustom ? (
-              loadingContacts ? (
-                <div className="flex items-center gap-2 py-3">
-                  <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-                  <span className="text-sm text-gray-500">Chargement...</span>
-                </div>
-              ) : (
-                <select
-                  value={selectedContactId}
-                  onChange={(e) => setSelectedContactId(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                >
-                  {contacts.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.company_name} - {c.full_name} ({c.email}) {c.position ? `- ${c.position}` : ''}
-                    </option>
-                  ))}
-                </select>
-              )
-            ) : (
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  placeholder="Nom du destinataire"
-                  value={customName}
-                  onChange={(e) => setCustomName(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                />
-                <input
-                  type="email"
-                  placeholder="Email du destinataire"
-                  value={customEmail}
-                  onChange={(e) => setCustomEmail(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                />
-              </div>
-            )}
+          <div className={`rounded-xl border p-4 ${workspace.assessment.ready?'border-green-200 bg-green-50':'border-amber-200 bg-amber-50'}`}>
+            <p className="flex items-center gap-2 font-semibold">{workspace.assessment.ready?<CheckCircle2 className="h-5 w-5 text-green-700"/>:<AlertCircle className="h-5 w-5 text-amber-700"/>}{workspace.assessment.ready?'Dossier prêt à transmettre':`${workspace.assessment.missing.length} élément(s) à compléter ou vérifier`}</p>
+            {!!workspace.assessment.missing.length&&<details className="mt-2 text-sm" open={workspace.assessment.missing.length<9}><summary className="cursor-pointer">Voir les éléments attendus</summary><ul className="mt-2 list-disc space-y-1 pl-5">{workspace.assessment.missing.map(item=><li key={item}>{item}</li>)}</ul></details>}
+            {!!workspace.assessment.needs_review.length&&<ul className="mt-3 list-disc space-y-1 pl-5 text-sm">{workspace.assessment.needs_review.map(item=><li key={item}>{item}</li>)}</ul>}
+            <p className="mt-3 text-xs text-gray-600">Enregistrez pour recalculer la complétude. Les informations inconnues restent à confirmer dans le questionnaire du prospect.</p>
           </div>
-
-          {/* Documents */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Documents a joindre ({selectedDocs.size}/{documents.length})
-              </label>
-              <div className="flex gap-2">
-                <button onClick={selectAllDocs} className="text-xs text-blue-600 hover:underline">Tout selectionner</button>
-                <button onClick={deselectAllDocs} className="text-xs text-gray-500 hover:underline">Tout deselectionner</button>
-              </div>
-            </div>
-
-            {loadingDocs ? (
-              <div className="flex items-center gap-2 py-4">
-                <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-                <span className="text-sm text-gray-500">Chargement des documents...</span>
-              </div>
-            ) : documents.length === 0 ? (
-              <div className="flex items-center gap-2 py-4 px-3 bg-orange-50 border border-orange-200 rounded-lg">
-                <AlertCircle className="h-4 w-4 text-orange-600" />
-                <span className="text-sm text-orange-800">Aucun document disponible pour ce prospect</span>
-              </div>
-            ) : (
-              <div className="border border-gray-200 rounded-lg max-h-52 overflow-y-auto divide-y divide-gray-100">
-                {documents.map(doc => (
-                  <label
-                    key={doc.id}
-                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 cursor-pointer transition-colors"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedDocs.has(doc.id)}
-                      onChange={() => toggleDoc(doc.id)}
-                      className="h-4 w-4 text-amber-600 rounded border-gray-300 focus:ring-amber-500"
-                    />
-                    <Paperclip className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900 truncate">{doc.file_name}</p>
-                      <p className="text-xs text-gray-500">{doc.document_type || 'document'} - {doc.source === 'prospect' ? 'Upload prospect' : 'CRM'}</p>
-                    </div>
-                    {selectedDocs.has(doc.id) && (
-                      <Check className="h-4 w-4 text-green-600 flex-shrink-0" />
-                    )}
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Additional message */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Message complementaire (optionnel)</label>
-            <textarea
-              value={additionalMessage}
-              onChange={(e) => setAdditionalMessage(e.target.value)}
-              placeholder="Ex: Devis tous risques souhaite, vehicule Toyota Prius 2023..."
-              rows={3}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none"
-            />
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Annuler
-          </button>
-          <button
-            onClick={handleSend}
-            disabled={sending || selectedDocs.size === 0}
-            className="px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-amber-600 to-orange-600 rounded-lg hover:from-amber-700 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-sm"
-          >
-            {sending ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Mise en file...
-              </>
-            ) : (
-              <>
-                <Send className="h-4 w-4" />
-                Mettre en file ({selectedDocs.size} doc{selectedDocs.size > 1 ? 's' : ''})
-              </>
-            )}
-          </button>
-        </div>
+          <details className="rounded-xl border border-gray-200 p-4" open>
+            <summary className="cursor-pointer text-sm font-semibold">Pièces retenues ({selected.length})</summary>
+            <ul className="mt-3 space-y-2 text-sm">{selected.map(d=><li key={d.id} className="flex gap-2"><Paperclip className="mt-0.5 h-4 w-4 shrink-0 text-gray-400"/><span className="min-w-0 break-words">{d.file_name||d.original_name||d.document_type}<span className="block text-xs text-gray-500">{d.document_type} · Validé</span></span></li>)}</ul>
+            <p className="mt-3 text-xs text-gray-600">Le justificatif concerne le véhicule sélectionné. RIB, anciennes offres et documents internes sont exclus. Les fichiers seront contrôlés avant l’envoi.</p>
+          </details>
+          <label className="block text-sm font-medium">Précisions pour AXA (garanties souhaitées, contraintes confirmées)<textarea value={note} onChange={e=>setNote(e.target.value)} rows={3} maxLength={4000} className="mt-1 w-full rounded-lg border border-gray-300 p-2.5"/></label>
+          <label className="flex items-start gap-3 rounded-lg border p-3 text-sm"><input type="checkbox" checked={reviewed} onChange={e=>setReviewed(e.target.checked)} className="mt-0.5"/><span>J’ai vérifié les pièces, le recto et le verso du permis, le véhicule demandé et les antécédents d’assurance. Les informations sont conformes aux justificatifs et aux réponses du prospect.</span></label>
+          <label className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm"><input type="checkbox" checked={automatic} onChange={e=>setAutomatic(e.target.checked)} disabled={!!locked} className="mt-0.5"/><span><strong>Transmettre automatiquement dès que le dossier est complet.</strong><span className="mt-1 block text-gray-600">Une modification des pièces ou du questionnaire impose une nouvelle vérification. Une demande déjà transmise ne sera pas renvoyée.</span></span></label>
+          <details className="rounded-xl border border-gray-200 p-4"><summary className="cursor-pointer text-sm font-semibold">Aperçu du mail enregistré</summary><pre className="mt-3 whitespace-pre-wrap break-words font-sans text-sm leading-6">{workspace.preview}</pre></details>
+          <div><h3 className="mb-2 text-sm font-semibold">Historique des transmissions</h3>{workspace.history.length?workspace.history.map(item=><div key={item.id} className="mb-2 rounded-lg border p-3 text-sm"><strong>{item.company_name||'Assureur'} · {states[item.status]||item.status}</strong><p className="text-gray-600">{item.recipient_email} · {new Date(item.sent_at||item.created_at||Date.now()).toLocaleString('fr-FR')}</p>{item.last_error&&<p className="mt-1 text-red-700">{item.last_error}</p>}</div>):<p className="text-sm text-gray-500">Aucune demande enregistrée.</p>}</div>
+          {!!workspace.responses?.length&&<div><h3 className="mb-2 text-sm font-semibold">Retours de l’assureur</h3>{workspace.responses.map(item=><div key={item.id} className="mb-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm"><strong>{item.kind==='quote_to_review'?'Devis reçu · à vérifier':item.kind==='acknowledgement'?'Accusé de réception':item.kind==='absence'?'Absence · interlocuteur à remplacer':item.kind==='declined'?'Refus de souscription':'Réponse à examiner'}</strong><p>{item.subject}</p><p className="mt-1 text-gray-600">{item.preview}</p>{item.attachments?.map((a,i)=><p key={i} className="mt-1">Pièce reçue : {a.name||'Document'} · disponible dans tcerda@xcr.fr</p>)}</div>)}</div>}
+          <p className="text-xs text-gray-500">Dernier contrôle automatique : {workspace.worker?.last_run_at?new Date(workspace.worker.last_run_at).toLocaleString('fr-FR'):'en attente du premier passage du serveur'}. Une mise en file ne vaut pas confirmation d’envoi.</p>
+        </>}
       </div>
-    </div>
-  );
+      <footer className="flex flex-wrap justify-end gap-2 border-t bg-gray-50 p-4">
+        <button type="button" onClick={()=>save()} disabled={busy||!workspace} className="flex items-center gap-2 rounded-lg border bg-white px-4 py-2 text-sm font-medium disabled:opacity-50"><Save className="h-4 w-4"/>Enregistrer</button>
+        <button type="button" onClick={()=>save(true)} disabled={busy||!workspace||!!locked} className="flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{busy?<Loader2 className="h-4 w-4 animate-spin"/>:<Send className="h-4 w-4"/>}Vérifier et mettre en file</button>
+      </footer>
+    </section>
+  </div>;
 }
