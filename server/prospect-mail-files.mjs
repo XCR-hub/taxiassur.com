@@ -5,3 +5,7 @@ export function mailAttachmentMatchesType(content,type){
  if(type==='image/webp')return content.subarray(0,4).toString()==='RIFF'&&content.subarray(8,12).toString()==='WEBP';
  return false;
 }
+export function isInternalMailDocument(document){
+ if(document?.visibility==='client'&&document?.validated===true)return false;
+ return document?.internal_only===true||document?.visibility==='internal'||String(document?.notes||'').startsWith('Import mail XCR ');
+}
