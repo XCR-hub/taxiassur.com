@@ -34,7 +34,7 @@ try{
  const folders=new Map((await db.all('inbox_folders')).map(x=>[x.id,x]));
  const now=new Date().toISOString();
  const previous=existsSync(root+'/checkpoint.json')?JSON.parse(readFileSync(root+'/checkpoint.json','utf8')):{};
- const signature=stableId(JSON.stringify({cases:safeCases.map(c=>c.key+':'+c.email+':'+(c.message_ids||[]).slice().sort().join(',')).sort(),accounts:config.accounts.map(a=>[a.id,a.address,a.allowed_sources||null]).sort()}));
+ const signature=stableId(JSON.stringify({review_version:1,cases:safeCases.map(c=>c.key+':'+c.email+':'+(c.message_ids||[]).slice().sort().join(',')).sort(),accounts:config.accounts.map(a=>[a.id,a.address,a.allowed_sources||null]).sort()}));
  async function save(collection,id,data){await db.save(collection,id,data);}
  for(const account of config.accounts){
   const boxReport={address:account.address,examined:0,matched:0,imported:0};report.mailboxes.push(boxReport);
