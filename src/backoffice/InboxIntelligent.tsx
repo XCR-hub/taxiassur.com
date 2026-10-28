@@ -399,7 +399,7 @@ export default function InboxIntelligent() {
           <h1 className="text-2xl font-bold text-gray-900">📥 Inbox Multicanal Intelligent</h1>
           <div className="flex items-center gap-3">
             <button
-              onClick={loadEmails}
+              onClick={() => { loadFolders(); selectedFolder ? loadEmailsForFolder(selectedFolder) : loadEmails(); }}
               className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
             >
               <RefreshCw className="h-4 w-4" />
