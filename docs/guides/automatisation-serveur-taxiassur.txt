@@ -1,53 +1,55 @@
-AUTOMATISATION TAXIASSUR SUR SERVEUR XCR
+﻿AUTOMATISATION TAXIASSUR SUR SERVEUR XCR
 Configuration du 28/10/2026
 
-EXÉCUTION
-Les programmes métier s’exécutent sur SERVEUR-XCR sous SYSTEM, sans application
-Codex ouverte ni session Windows utilisateur. Le site est publié sur Cloudflare ;
-PostgreSQL, les documents et l’API métier restent sur XCR.
+Le site est publie sur Cloudflare. PostgreSQL, les documents et l'API metier
+restent sur SERVEUR-XCR. Fermer Codex ou le PC n'arrete pas les taches serveur.
+Le serveur, le reseau et les services externes doivent rester disponibles.
 
-TaxiAssur Native Insurer Quotes : contrôle toutes les cinq minutes et au démarrage.
-Parcours AXA initial : contact professionnel vérifié, numéro client du bon dossier,
-questionnaire confirmé, pièces validées et contrôle antivirus avant transmission.
-Expéditeur assureur tcerda@xcr.fr et Tony en copie. Les relances J+2/J+5 cessent
-après réponse, opposition ou changement du dossier. Une transmission incertaine
-n’est jamais relancée automatiquement. Les pièces reçues doivent être examinées
-avant publication d’une offre au prospect. Le bilan des compléments est envoyé à
-Tony au maximum une fois par jour, depuis la file de messagerie TaxiAssur.
+GENERALI
+Le seul traitement de saisie actif est TaxiAssur Generali Reprise, sous compte
+de service non administrateur. Plan et registre : F:\XCR-Continuity\taxi-generali.
+Reprise chaque heure de 07h a 20h, saisie autorisee de 07h a 21h Europe/Paris.
+Navigateur persistant sur CDP 127.0.0.1:9327. Ne pas lancer de second agent.
+L'ancien TaxiAssur Generali Server Agent est desactive, ainsi que la tache PC.
+Pour suspendre Generali, desactiver le plan canonique et arreter uniquement son
+worker. Conserver les preuves et rapprocher les operations incertaines.
+Les acces LEA et FUE sont distincts, proteges par DPAPI sur le serveur.
+Le compte technique CRM est collaborateur ; son jeton expire apres deux heures
+et la tache TaxiAssur Quote Worker API Session le renouvelle chaque cinq minutes.
+Aucun jeton ou mot de passe ne doit figurer dans les journaux ou le depot.
+Les informations du risque restent celles des justificatifs et confirmations.
+Aucune signature, prise de garantie ou souscription engageante automatique.
 
-TaxiAssur Generali Server Agent : contrôle horaire et au démarrage. Le programme
-refuse les saisies hors 07h-21h Europe/Paris et limite chaque passage à 40 minutes.
-Le navigateur Chrome est headless ; le port de pilotage reste sur la boucle locale.
-L’agent lit la procédure, les dossiers, les pièces et les échanges ; il vérifie le
-client existant avant toute création et conserve les déclarations réelles.
-Devis seulement : aucune signature, souscription engageante ni prise de garantie.
+AXA
+TaxiAssur Native Insurer Quotes fonctionne sous SYSTEM, toutes les cinq minutes
+et au demarrage. Contact verifie, numero client du dossier, questionnaire confirme,
+pieces validees et antivirus obligatoires avant transmission. Expediteur et
+reponse tcerda@xcr.fr, Tony en copie. Relances J+2/J+5 interrompues des reponse,
+opposition ou changement. Un envoi incertain ne doit pas etre repete.
+Le controle cron_jobs_config native-insurer-quotes suspend ce traitement.
+Un accusé de reception n'est pas une offre ; les PDF recus restent a examiner.
 
-Le registre conserve le lot initial et le dossier flotte supplémentaire ; les
-nouveaux leads éligibles sont ajoutés sans perdre l’historique. Un lot terminé
-n’arrête pas la surveillance des nouveaux dossiers. Les questions à Tony passent
-par les canaux effectivement disponibles, notamment le mail autorisé.
+CLASSEMENT MAIL ET SUIVI
+XCR Prospect Mail Filing : SYSTEM, toutes les quinze minutes et au demarrage.
+Boites demandees : tcerda@xcr.fr et team@taxiassur.com ; les autres boites XCR deja
+configurees sont conservees. Team TaxiAssur est limite aux dossiers TaxiAssur.
+Dossiers messagerie : Prospects XCR / TaxiAssur / Nom du prospect - reference.
+Les dossiers correspondants apparaissent dans le back-office et les mails dans
+l'historique de la fiche prospect. Les copies sont regroupees par Message-ID.
+Le programme ajoute une appartenance au dossier ; il ne supprime ni les messages,
+ni leur presence dans la boite de reception, ni leur etat lu/non lu.
+Le rapprochement exige une adresse exacte ou une reference fiable. Si plusieurs
+dossiers correspondent, le message reste dans la messagerie pour verification.
+L'ajout d'une boite ou un changement du repertoire declenche une reprise historique.
+Les reprises sont idempotentes. Aucun envoi de mail ne resulte du classement.
 
-CONTRÔLES
-Le test technique doit confirmer : hôte SERVEUR-XCR, compte SYSTEM, Chrome
-headless opérationnel, Codex exécutant un outil sans interface utilisateur et
-couverture du registre. Ce test ne remplace pas le contrôle de connexion Generali
-et de la première saisie réelle pendant la plage d’ouverture.
+TaxiAssur Prospect Mail Attachments importe les PDF et images pris en charge par
+le depot documentaire, par lots de vingt avec antivirus. Chaque piece est deposee
+par l'API existante dans les pieces a classer, statut pending, sans validation.
+Les doublons sont detectes par dossier et empreinte ; les originaux sont conserves.
+Les fichiers trop lourds ou non pris en charge demandent une verification manuelle.
+Le rapprochement du mail est reverifie avant toute copie de piece.
+Journaux et etat : F:\TaxiAssur\Automation\ProspectMail (configuration privee).
+Une indisponibilite conserve l'historique et ne doit jamais etre presentee comme
+un traitement termine ou un devis obtenu.
 
-Les tâches sont relancées au démarrage, sans dépendre d’une connexion RDP.
-La règle IgnoreNew et les verrous empêchent plusieurs passages simultanés.
-Les fichiers de travail et accès restent dans des répertoires privés sur XCR.
-Les identifiants Generali sont distincts pour LEA et FUE, protégés par DPAPI ;
-l’authentification Codex reste privée, sans secret dans le dépôt ou les journaux.
-Si un accès expire ou si un service devient indisponible, conserver l’état,
-signaler l’échec réel et rétablir l’accès ; ne jamais annoncer un devis inexistant.
-
-SUIVI ET ARRÊT
-Le back-office affiche les dossiers AXA à compléter et le dernier passage.
-Les contrôles cron_jobs_config native-insurer-quotes et generali-server-agent
-permettent de suspendre les traitements. Une pause explicite de Tony prime.
-L’ancienne tâche locale TaxiAssur Generali Reprise doit être désactivée seulement
-après activation et vérification de la tâche serveur, afin d’éviter les doublons.
-
-Le fonctionnement continu suppose que le serveur, son alimentation, le réseau,
-la base et les services assureur/OpenAI restent disponibles. Fermer Codex sur le
-PC utilisateur n’interrompt pas les tâches installées sur le serveur.

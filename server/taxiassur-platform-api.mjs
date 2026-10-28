@@ -1,4 +1,4 @@
-import { selectProspectInbox } from './prospect-mail-matching.mjs';
+import { selectProspectInbox, mergeProspectEmails } from './prospect-mail-matching.mjs';
 import { createServer } from 'node:http';
 import { appendFileSync, createReadStream, createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, statSync, unlinkSync } from 'node:fs';
 import { spawn } from 'node:child_process';
@@ -561,8 +561,10 @@ async function adminLeadTimeline(req,res,origin,requestId,leadId){
     return json(res,origin,201,{ok:true,interaction,note:interaction},requestId);
   }
   const email=String(lead.email||'').trim().toLowerCase(),idsSql=email?"SELECT record_id FROM taxiassur.records WHERE collection='crm_leads' AND lower(data->>'email')="+quoteLiteral(email):"SELECT "+quoteLiteral(leadId)+" AS record_id";
-  const sql="WITH lead_ids AS ("+idsSql+"), selected AS (SELECT collection,data FROM taxiassur.records WHERE collection IN ('email_messages','crm_interactions','crm_lead_documents','crm_ai_decisions','crm_ai_suggestions','crm_event_notifications') AND data->>'lead_id' IN (SELECT record_id FROM lead_ids)) SELECT jsonb_build_object('emails',COALESCE(jsonb_agg(data) FILTER(WHERE collection='email_messages'),'[]'::jsonb),'interactions',COALESCE(jsonb_agg(data) FILTER(WHERE collection='crm_interactions'),'[]'::jsonb),'documents',COALESCE(jsonb_agg(data) FILTER(WHERE collection='crm_lead_documents'),'[]'::jsonb),'ai_decisions',COALESCE(jsonb_agg(data) FILTER(WHERE collection='crm_ai_decisions'),'[]'::jsonb),'notifications',COALESCE(jsonb_agg(data) FILTER(WHERE collection='crm_event_notifications'),'[]'::jsonb))::text FROM selected;";
-  return json(res,origin,200,{ok:true,timeline:parseJsonLine(await runPsql(sql))||{emails:[],interactions:[],documents:[],ai_decisions:[],notifications:[]}},requestId);
+  const sql="WITH lead_ids AS ("+idsSql+"), selected AS (SELECT collection,data FROM taxiassur.records WHERE collection IN ('email_messages','xcr_email_messages','crm_interactions','crm_lead_documents','crm_ai_decisions','crm_ai_suggestions','crm_event_notifications') AND data->>'lead_id' IN (SELECT record_id FROM lead_ids)) SELECT jsonb_build_object('emails',COALESCE(jsonb_agg(data) FILTER(WHERE collection IN ('email_messages','xcr_email_messages')),'[]'::jsonb),'interactions',COALESCE(jsonb_agg(data) FILTER(WHERE collection='crm_interactions'),'[]'::jsonb),'documents',COALESCE(jsonb_agg(data) FILTER(WHERE collection='crm_lead_documents'),'[]'::jsonb),'ai_decisions',COALESCE(jsonb_agg(data) FILTER(WHERE collection='crm_ai_decisions'),'[]'::jsonb),'notifications',COALESCE(jsonb_agg(data) FILTER(WHERE collection='crm_event_notifications'),'[]'::jsonb))::text FROM selected;";
+  const timeline=parseJsonLine(await runPsql(sql))||{emails:[],interactions:[],documents:[],ai_decisions:[],notifications:[]};
+  timeline.emails=mergeProspectEmails(timeline.emails);
+  return json(res,origin,200,{ok:true,timeline},requestId);
 }
 async function adminLeadQuoteSignature(req,res,origin,requestId,leadId){
  const session=await verifiedAdminSession(req);if(!session)return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
@@ -1293,8 +1295,9 @@ async function adminUserInvite(req,res,origin,requestId,id){const s=await master
 async function adminUserPasswordReset(req,res,origin,requestId,id){const s=await masterSession(req),u=await adminUserRow(id);if(!s)return json(res,origin,403,{ok:false,error:'master_required'},requestId);if(!u?.is_active)return json(res,origin,404,{ok:false,error:'not_found'},requestId);await queueAdminInvite(u,requestId,s.sub,false);return json(res,origin,200,{ok:true,password_reset_queued:true},requestId);}
 async function adminLeadSummary(req,res,origin,requestId,leadId){
   if(!await verifiedAdminSession(req))return json(res,origin,401,{ok:false,error:'invalid_session'},requestId);
-  const collections=['crm_lead_documents','prospect_documents','lead_company_quotes','lead_contracts','email_messages','crm_interactions','crm_ai_decisions','crm_ai_suggestions','crm_event_notifications','monetico_payments','insurance_claims','client_portal_requests'];
+  const collections=['crm_lead_documents','prospect_documents','lead_company_quotes','lead_contracts','email_messages','xcr_email_messages','crm_interactions','crm_ai_decisions','crm_ai_suggestions','crm_event_notifications','monetico_payments','insurance_claims','client_portal_requests'];
   const rows={};for(const collection of collections)rows[collection]=await recordsWhereWithMirror(collection,'lead_id',leadId);
+  rows.email_messages=mergeProspectEmails(rows.email_messages,rows.xcr_email_messages);
   const documents=[...rows.crm_lead_documents,...rows.prospect_documents];const validatedTypes=new Set(documents.filter(d=>d.status==='validated'||d.status==='verified').map(d=>d.document_type));
   return json(res,origin,200,{ok:true,summary:{documents,total_documents:documents.length,validated_documents:documents.filter(d=>d.status==='validated'||d.status==='verified').length,pending_documents:documents.filter(d=>d.status==='pending').length,missing_documents:Math.max(0,9-validatedTypes.size),documents_complete:validatedTypes.size>=9,quotes:rows.lead_company_quotes,contracts:rows.lead_contracts,emails:rows.email_messages,interactions:rows.crm_interactions,ai_decisions:rows.crm_ai_decisions,ai_suggestions:rows.crm_ai_suggestions,notifications:rows.crm_event_notifications,payments:rows.monetico_payments,claims:rows.insurance_claims,requests:rows.client_portal_requests,total_events:rows.email_messages.length+rows.crm_interactions.length+documents.length+rows.crm_ai_decisions.length+rows.crm_event_notifications.length,notes_count:rows.crm_interactions.filter(x=>x.channel==='note'||x.type==='note').length}},requestId);
 }
