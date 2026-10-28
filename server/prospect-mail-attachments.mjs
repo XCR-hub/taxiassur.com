@@ -9,6 +9,7 @@ import {matchProspect} from './prospect-mail-matching.mjs';
 import {mailAttachmentMatchesType} from './prospect-mail-files.mjs';
 const root=process.env.XCR_PROSPECT_MAIL_ROOT||'F:/TaxiAssur/Automation/ProspectMail';
 const report={ok:false,at:new Date().toISOString(),imported:0,reused:0,skipped:0,errors:[]};
+const deadline=Date.now()+15*60*1000;
 let lock;
 try{
  try{lock=openSync(root+'/attachments.lock','wx');writeFileSync(lock,String(process.pid));}catch{const pid=Number(readFileSync(root+'/attachments.lock','utf8'));try{process.kill(pid,0);process.exit(0);}catch{unlinkSync(root+'/attachments.lock');lock=openSync(root+'/attachments.lock','wx');writeFileSync(lock,String(process.pid));}}
@@ -29,7 +30,7 @@ try{
  const messages=(await db.all('xcr_email_messages')).filter(x=>x.case_source==='TaxiAssur'&&['tcerda@xcr.fr','team@taxiassur.com'].includes(x.source_mailbox)&&x.attachments?.some(a=>!a.document_id&&!a.import_skip_reason));
  let attempts=0;
  for(const stored of messages){
-  if(attempts>=20)break;
+  if(attempts>=10||Date.now()>deadline)break;
   const account=config.accounts.find(a=>a.id===stored.jmap_account_id&&a.address===stored.source_mailbox);if(!account){report.skipped++;continue;}
   try{
    const response=await fetch('http://192.168.1.91:8080/jmap/',{method:'POST',headers:{Authorization:authorization,'Content-Type':'application/json'},body:JSON.stringify({using:['urn:ietf:params:jmap:core','urn:ietf:params:jmap:mail'],methodCalls:[['Email/get',{accountId:account.id,ids:[stored.jmap_email_id],properties:['id','from','to','cc','subject','messageId','inReplyTo','attachments']},'m']]}),signal:AbortSignal.timeout(30000)});
@@ -37,7 +38,7 @@ try{
    const mail=method[1].list?.[0];if(!mail){report.skipped++;continue;}
    const match=matchProspect(mail,index.cases);if(match.status!=='matched'||match.prospect.source!=='TaxiAssur'||String(match.prospect.lead_id)!==String(stored.lead_id)){report.skipped++;continue;}
    const attachments=(stored.attachments||[]).map(a=>({...a}));
-   for(let i=0;i<(mail.attachments||[]).length&&attempts<20;i++){
+   for(let i=0;i<(mail.attachments||[]).length&&attempts<10&&Date.now()<deadline;i++){
     const a=mail.attachments[i],metadata=attachments[i];if(!metadata||metadata.document_id||metadata.import_skip_reason)continue;
     if(a.name!==metadata.filename||Number(a.size)!==Number(metadata.size))throw Error('attachment_metadata_changed');
     if(!['application/pdf','image/jpeg','image/png','image/webp'].includes(a.type)||!a.size||a.size>15*1024*1024){metadata.import_skip_reason='format_or_size_requires_manual_review';report.skipped++;continue;}

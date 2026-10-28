@@ -44,7 +44,7 @@ L'ajout d'une boite ou un changement du repertoire declenche une reprise histori
 Les reprises sont idempotentes. Aucun envoi de mail ne resulte du classement.
 
 TaxiAssur Prospect Mail Attachments importe les PDF et images pris en charge par
-le depot documentaire, par lots de vingt avec antivirus. Chaque piece est deposee
+le depot documentaire, par lots de dix avec antivirus. Chaque piece est deposee
 par l'API existante dans les pieces a classer, statut pending, sans validation.
 Les doublons sont detectes par dossier et empreinte ; les originaux sont conserves.
 Les fichiers trop lourds ou non pris en charge demandent une verification manuelle.
@@ -52,4 +52,3 @@ Le rapprochement du mail est reverifie avant toute copie de piece.
 Journaux et etat : F:\TaxiAssur\Automation\ProspectMail (configuration privee).
 Une indisponibilite conserve l'historique et ne doit jamais etre presentee comme
 un traitement termine ou un devis obtenu.
-

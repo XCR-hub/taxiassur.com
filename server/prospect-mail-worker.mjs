@@ -1,3 +1,4 @@
+import {fileProspectMailForReview} from './prospect-mail-review.mjs';
 import {readFileSync,writeFileSync,mkdirSync,renameSync,openSync,closeSync,unlinkSync,existsSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {DatabaseSync} from 'node:sqlite';
@@ -54,7 +55,7 @@ try{
       const list=(await call(account.id,'Email/get',{ids:fresh.slice(start,start+50),properties:['id','threadId','mailboxIds','messageId','inReplyTo','from','to','cc','subject','receivedAt','textBody','bodyValues','attachments','keywords'],fetchTextBodyValues:true,maxBodyValueBytes:100000})).list||[];
       for(const mail of list){
        boxReport.examined++;if(Object.keys(mail.mailboxIds||{}).some(id=>excluded.has(id)))continue;
-       const match=matchProspect(mail,safeCases);if(match.status!=='matched'){if(match.status==='ambiguous')report.ambiguous++;continue;}
+       const match=matchProspect(mail,safeCases);if(match.status!=='matched'){if(match.status==='ambiguous'){report.ambiguous++;if(apply)await fileProspectMailForReview({db,mail,account,candidates:safeCases.filter(c=>match.candidates.includes(c.key)),folders,existing,boxes,call});}continue;}
        const c=match.prospect;if(Array.isArray(account.allowed_sources)&&!account.allowed_sources.includes(c.source))continue;report.matched++;boxReport.matched++;
        if(!apply)continue;
        const folderId=stableId('xcr-prospect-folder:'+c.key),parentId=stableId('xcr-prospect-root:'+c.source);
@@ -69,13 +70,19 @@ try{
         db.query(`BEGIN;INSERT INTO taxiassur.records(collection,record_id,data,origin)VALUES('xcr_email_messages',${db.literal(id)},${db.literal(JSON.stringify(record))}::jsonb,'prospect-mail'),('email_folder_assignments',${db.literal(assignmentId)},${db.literal(JSON.stringify({id:assignmentId,email_id:id,folder_id:folderId,assigned_at:now}))}::jsonb,'prospect-mail') ON CONFLICT(collection,record_id) DO NOTHING;COMMIT;`);
         existing.set(id,record);report.imported++;boxReport.imported++;
        }
+       if(existing.get(id)?.link_status==='needs_review'){
+        const restored={...existing.get(id),lead_id:c.lead_id,external_case_id:c.source_id,case_source:c.source,link_status:'confirmed',review_candidates:[],synced_at:now};
+        await save('xcr_email_messages',id,restored);existing.set(id,restored);
+        const assignmentId=stableId('xcr-assignment:'+id);await save('email_folder_assignments',assignmentId,{id:assignmentId,email_id:id,folder_id:folderId,assigned_at:now});
+       }
        if(!parent){const r=await call(account.id,'Mailbox/set',{create:{root:{name:'Prospects XCR',parentId:null}}});parent=r.created?.root;if(!parent)throw Error('parent_folder_not_created');report.foldersCreated++;}
        let product=folderCache.get(parent.id+':'+c.source);
        if(!product){const r=await call(account.id,'Mailbox/set',{create:{product:{name:c.source,parentId:parent.id}}});product=r.created?.product;if(!product)throw Error('product_folder_not_created');folderCache.set(parent.id+':'+c.source,product);report.foldersCreated++;}
        const name=prospectFolderName(c);let dest=folderCache.get(product.id+':'+name);
        if(!dest){const r=await call(account.id,'Mailbox/set',{create:{prospect:{name,parentId:product.id}}});dest=r.created?.prospect;if(!dest)throw Error('prospect_folder_not_created');folderCache.set(product.id+':'+name,dest);report.foldersCreated++;}
        // Add a filing membership, preserving Inbox and flags used by existing workers.
-       if(!mail.mailboxIds?.[dest.id])await call(account.id,'Email/set',{update:{[mail.id]:{['mailboxIds/'+dest.id]:true}}});
+       const reviewBox=boxes.find(b=>b.parentId===product.id&&b.name==='A verifier - rapprochement prospect');
+       if(!mail.mailboxIds?.[dest.id]||reviewBox&&mail.mailboxIds?.[reviewBox.id])await call(account.id,'Email/set',{update:{[mail.id]:{['mailboxIds/'+dest.id]:true,...(reviewBox?{['mailboxIds/'+reviewBox.id]:null}:{})}}});
       }
      }
      if((q.ids||[]).length<200)break;position+=(q.ids||[]).length;
