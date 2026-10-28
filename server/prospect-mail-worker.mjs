@@ -1,3 +1,4 @@
+import {sciassurProspects} from './sciassur-prospect-index.mjs';
 import {readFileSync,writeFileSync,mkdirSync,renameSync,openSync,closeSync,unlinkSync,existsSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {DatabaseSync} from 'node:sqlite';
@@ -7,7 +8,7 @@ const root=process.env.XCR_PROSPECT_MAIL_ROOT||'F:/TaxiAssur/Automation/Prospect
 mkdirSync(root,{recursive:true});
 let fd;try{fd=openSync(root+'/worker.lock','wx');writeFileSync(fd,String(process.pid));}catch{try{process.kill(Number(readFileSync(root+'/worker.lock','utf8')),0);process.exit(0);}catch{unlinkSync(root+'/worker.lock');fd=openSync(root+'/worker.lock','wx');writeFileSync(fd,String(process.pid));}}
 const apply=process.argv.includes('--apply'),report={ok:false,apply,at:new Date().toISOString(),mailboxes:[],matched:0,ambiguous:0,imported:0,foldersCreated:0,errors:[]};
-let sqlite;
+let sqlite,sciSqlite;
 try{
  const env=insurerEnvironment(),db=insurerDatabase(env),config=JSON.parse(readFileSync(root+'/private/config.json','utf8').replace(/^\uFEFF/,''));
  const decrypt="$ErrorActionPreference='Stop';Add-Type -AssemblyName System.Security;$b=[Convert]::FromBase64String([Console]::In.ReadToEnd());[Console]::Out.Write([Text.Encoding]::UTF8.GetString([Security.Cryptography.ProtectedData]::Unprotect($b,$null,[Security.Cryptography.DataProtectionScope]::LocalMachine)))";
@@ -26,6 +27,8 @@ try{
  const cases=leads.filter(x=>x.email&&!x.deleted_at).map(x=>({key:'taxi:'+x.id,source:'TaxiAssur',source_id:x.id,email:normalEmail(x.email),name:x.full_name||[x.first_name,x.last_name].filter(Boolean).join(' ')||x.email,status:x.status||'',lead_id:x.id}));
  sqlite=new DatabaseSync('F:/ArchitecteAssur/architecteassur.sqlite',{readOnly:true});
  for(const x of sqlite.prepare('SELECT * FROM leads').all())if(x.email)cases.push({key:'aa:'+x.id,source:'ArchitecteAssur',source_id:x.id,email:normalEmail(x.email),name:x.name||x.full_name||[x.first_name,x.last_name].filter(Boolean).join(' ')||x.company||x.email,status:x.status||'',lead_id:null});
+ sciSqlite=new DatabaseSync(process.env.XCR_SCIASSUR_SQLITE_PATH||'C:/sciassur/sciassur-leads.sqlite',{readOnly:true});
+ const sciCases=sciassurProspects(sciSqlite.prepare('SELECT id,name,email,crm_status FROM leads').all());cases.push(...sciCases);report.sciassurCases=sciCases.length;
  const safeCases=cases.filter(x=>x.email.includes('@')&&!/@(?:xcr\.fr|taxiassur\.com|architecteassur\.com)$/i.test(x.email));
  report.knownCases=safeCases.length;
  const existing=new Map((await db.all('xcr_email_messages')).map(x=>[x.id,x]));
@@ -43,7 +46,7 @@ try{
    const queried=new Set();
    // Batch queries cover the full history without fetching unrelated private mail.
    for(let offset=0;offset<safeCases.length;offset+=40){
-    const batch=safeCases.slice(offset,offset+40),conditions=batch.flatMap(c=>[{from:c.email},{to:c.email},{subject:`[${c.source==='ArchitecteAssur'?'AA:':'TA-'}${c.source_id}]`}]);
+    const batch=safeCases.slice(offset,offset+40),conditions=batch.flatMap(c=>[{from:c.email},{to:c.email},{subject:`[${c.source==='ArchitecteAssur'?'AA:':c.source==='SCIASSUR'?'SCI:':'TA-'}${c.source_id}]`}]);
     for(let position=0;;){
      const candidateFilter={operator:'OR',conditions};
      const filter=previous.signature===signature&&previous.at?{operator:'AND',conditions:[candidateFilter,{after:new Date(Date.parse(previous.at)-2*86400000).toISOString()}]}:candidateFilter;
@@ -85,5 +88,5 @@ try{
  report.ok=!report.errors.length;report.finishedAt=new Date().toISOString();
  if(apply&&report.ok){writeFileSync(root+'/checkpoint.tmp.json',JSON.stringify({signature,at:now}));renameSync(root+'/checkpoint.tmp.json',root+'/checkpoint.json');}
 }catch(error){report.errors.push({error:String(error.message).slice(0,100)});}
-finally{sqlite?.close();writeFileSync(root+'/health.tmp.json',JSON.stringify(report,null,2));renameSync(root+'/health.tmp.json',root+'/health.json');closeSync(fd);unlinkSync(root+'/worker.lock');}
+finally{sqlite?.close();sciSqlite?.close();writeFileSync(root+'/health.tmp.json',JSON.stringify(report,null,2));renameSync(root+'/health.tmp.json',root+'/health.json');closeSync(fd);unlinkSync(root+'/worker.lock');}
 console.log(JSON.stringify(report));if(!report.ok)process.exitCode=1;
