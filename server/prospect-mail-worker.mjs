@@ -1,3 +1,4 @@
+import {fileProspectMailForReview} from './prospect-mail-review.mjs';
 import {sciassurProspects} from './sciassur-prospect-index.mjs';
 import {readFileSync,writeFileSync,mkdirSync,renameSync,openSync,closeSync,unlinkSync,existsSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
@@ -15,12 +16,12 @@ try{
  const secret=spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-EncodedCommand',Buffer.from(decrypt,'utf16le').toString('base64')],{input:config.credential,encoding:'utf8',windowsHide:true,timeout:15000});
  if(secret.status!==0||!secret.stdout)throw Error('mail_credentials_unavailable');
  const authorization='Basic '+Buffer.from(config.user+':'+secret.stdout).toString('base64');secret.stdout='';
- async function call(accountId,method,args){
+ async function call(accountId,method,args,attempt=0){
   if(!['Email/query','Email/get','Mailbox/get','Mailbox/set','Email/set'].includes(method))throw Error('unsupported_mail_operation');
   if(!apply&&['Mailbox/set','Email/set'].includes(method))throw Error('preview_write_forbidden');
   const r=await fetch('http://192.168.1.91:8080/jmap/',{method:'POST',headers:{Authorization:authorization,'Content-Type':'application/json'},body:JSON.stringify({using:['urn:ietf:params:jmap:core','urn:ietf:params:jmap:mail'],methodCalls:[[method,{accountId,...args},'op']]}),signal:AbortSignal.timeout(60000)});
   if(!r.ok)throw Error('jmap_http_'+r.status);const data=await r.json(),reply=data.methodResponses?.[0];
-  if(reply?.[0]!==method||Object.keys(reply[1].notCreated||{}).length||Object.keys(reply[1].notUpdated||{}).length){const detail=reply?.[0]==='error'?reply[1]:[...Object.values(reply?.[1]?.notCreated||{}),...Object.values(reply?.[1]?.notUpdated||{})][0];throw Error('jmap_operation_failed_'+method+':'+String(detail?.type||'unknown')+':'+(detail?.properties||[]).join(','));}
+  if(reply?.[0]!==method||Object.keys(reply[1].notCreated||{}).length||Object.keys(reply[1].notUpdated||{}).length){const detail=reply?.[0]==='error'?reply[1]:[...Object.values(reply?.[1]?.notCreated||{}),...Object.values(reply?.[1]?.notUpdated||{})][0];if(method==='Email/set'&&detail?.type==='serverUnavailable'&&attempt<3){await new Promise(resolve=>setTimeout(resolve,1000*2**attempt));return call(accountId,method,args,attempt+1);}throw Error('jmap_operation_failed_'+method+':'+String(detail?.type||'unknown')+':'+(detail?.properties||[]).join(','));}
   return reply[1];
  }
  const leads=await db.all('crm_leads');
@@ -31,11 +32,12 @@ try{
  const sciCases=sciassurProspects(sciSqlite.prepare('SELECT id,name,email,crm_status FROM leads').all());cases.push(...sciCases);report.sciassurCases=sciCases.length;
  const safeCases=cases.filter(x=>x.email.includes('@')&&!/@(?:xcr\.fr|taxiassur\.com|architecteassur\.com)$/i.test(x.email));
  report.knownCases=safeCases.length;
+ if(apply){writeFileSync(root+'/private/case-index.tmp.json',JSON.stringify({at:new Date().toISOString(),cases:safeCases}));renameSync(root+'/private/case-index.tmp.json',root+'/private/case-index.json');}
  const existing=new Map((await db.all('xcr_email_messages')).map(x=>[x.id,x]));
  const folders=new Map((await db.all('inbox_folders')).map(x=>[x.id,x]));
  const now=new Date().toISOString();
  const previous=existsSync(root+'/checkpoint.json')?JSON.parse(readFileSync(root+'/checkpoint.json','utf8')):{};
- const signature=stableId(safeCases.map(c=>c.key+':'+c.email).sort().join('|'));
+ const signature=stableId(JSON.stringify({review_version:1,cases:safeCases.map(c=>c.key+':'+c.email+':'+(c.message_ids||[]).slice().sort().join(',')).sort(),accounts:config.accounts.map(a=>[a.id,a.address,a.allowed_sources||null]).sort()}));
  async function save(collection,id,data){await db.save(collection,id,data);}
  for(const account of config.accounts){
   const boxReport={address:account.address,examined:0,matched:0,imported:0};report.mailboxes.push(boxReport);
@@ -56,8 +58,8 @@ try{
       const list=(await call(account.id,'Email/get',{ids:fresh.slice(start,start+50),properties:['id','threadId','mailboxIds','messageId','inReplyTo','from','to','cc','subject','receivedAt','textBody','bodyValues','attachments','keywords'],fetchTextBodyValues:true,maxBodyValueBytes:100000})).list||[];
       for(const mail of list){
        boxReport.examined++;if(Object.keys(mail.mailboxIds||{}).some(id=>excluded.has(id)))continue;
-       const match=matchProspect(mail,safeCases);if(match.status!=='matched'){if(match.status==='ambiguous')report.ambiguous++;continue;}
-       const c=match.prospect;report.matched++;boxReport.matched++;
+       const match=matchProspect(mail,safeCases);if(match.status!=='matched'){if(match.status==='ambiguous'){report.ambiguous++;if(apply)await fileProspectMailForReview({db,mail,account,candidates:safeCases.filter(c=>match.candidates.includes(c.key)),folders,existing,boxes,call});}continue;}
+       const c=match.prospect;if(Array.isArray(account.allowed_sources)&&!account.allowed_sources.includes(c.source))continue;report.matched++;boxReport.matched++;
        if(!apply)continue;
        const folderId=stableId('xcr-prospect-folder:'+c.key),parentId=stableId('xcr-prospect-root:'+c.source);
        if(!folders.has(parentId)){const f={id:parentId,name:'Prospects '+c.source,folder_type:'xcr_prospect',is_system:true,position:10,source:c.source};await save('inbox_folders',parentId,f);folders.set(parentId,f);}
@@ -71,13 +73,19 @@ try{
         db.query(`BEGIN;INSERT INTO taxiassur.records(collection,record_id,data,origin)VALUES('xcr_email_messages',${db.literal(id)},${db.literal(JSON.stringify(record))}::jsonb,'prospect-mail'),('email_folder_assignments',${db.literal(assignmentId)},${db.literal(JSON.stringify({id:assignmentId,email_id:id,folder_id:folderId,assigned_at:now}))}::jsonb,'prospect-mail') ON CONFLICT(collection,record_id) DO NOTHING;COMMIT;`);
         existing.set(id,record);report.imported++;boxReport.imported++;
        }
+       if(existing.get(id)?.link_status==='needs_review'){
+        const restored={...existing.get(id),lead_id:c.lead_id,external_case_id:c.source_id,case_source:c.source,link_status:'confirmed',review_candidates:[],synced_at:now};
+        await save('xcr_email_messages',id,restored);existing.set(id,restored);
+        const assignmentId=stableId('xcr-assignment:'+id);await save('email_folder_assignments',assignmentId,{id:assignmentId,email_id:id,folder_id:folderId,assigned_at:now});
+       }
        if(!parent){const r=await call(account.id,'Mailbox/set',{create:{root:{name:'Prospects XCR',parentId:null}}});parent=r.created?.root;if(!parent)throw Error('parent_folder_not_created');report.foldersCreated++;}
        let product=folderCache.get(parent.id+':'+c.source);
        if(!product){const r=await call(account.id,'Mailbox/set',{create:{product:{name:c.source,parentId:parent.id}}});product=r.created?.product;if(!product)throw Error('product_folder_not_created');folderCache.set(parent.id+':'+c.source,product);report.foldersCreated++;}
        const name=prospectFolderName(c);let dest=folderCache.get(product.id+':'+name);
        if(!dest){const r=await call(account.id,'Mailbox/set',{create:{prospect:{name,parentId:product.id}}});dest=r.created?.prospect;if(!dest)throw Error('prospect_folder_not_created');folderCache.set(product.id+':'+name,dest);report.foldersCreated++;}
        // Add a filing membership, preserving Inbox and flags used by existing workers.
-       if(!mail.mailboxIds?.[dest.id])await call(account.id,'Email/set',{update:{[mail.id]:{['mailboxIds/'+dest.id]:true}}});
+       const reviewBox=boxes.find(b=>b.parentId===product.id&&b.name==='A verifier - rapprochement prospect');
+       if(!mail.mailboxIds?.[dest.id]||reviewBox&&mail.mailboxIds?.[reviewBox.id])await call(account.id,'Email/set',{update:{[mail.id]:{['mailboxIds/'+dest.id]:true,...(reviewBox?{['mailboxIds/'+reviewBox.id]:null}:{})}}});
       }
      }
      if((q.ids||[]).length<200)break;position+=(q.ids||[]).length;

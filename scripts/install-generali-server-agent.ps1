@@ -1,5 +1,14 @@
 param([switch]$PreflightOnly)
 $ErrorActionPreference='Stop'
+$canonicalRoot='F:\XCR-Continuity\taxi-generali'
+if(Test-Path (Join-Path $canonicalRoot 'plan.json')){
+ $scheduler=New-Object -ComObject Schedule.Service;$scheduler.Connect();$folder=$scheduler.GetFolder('\')
+ $canonical=$folder.GetTask('TaxiAssur Generali Reprise')
+ try{$duplicate=$folder.GetTask('TaxiAssur Generali Server Agent');$duplicate.Enabled=$false;$duplicate.Stop(0)}catch{}
+ if(!$canonical.Enabled){throw 'canonical_generali_task_disabled_check_explicit_pause_before_resuming'}
+ Write-Output 'Generali utilise la tache canonique TaxiAssur Generali Reprise. Aucun second agent installe.'
+ return
+}
 $runtime='F:\TaxiAssur\Automation\Generali\server-runtime'
 if(!$PreflightOnly){
  $proof=Get-Content (Join-Path $runtime 'preflight.json') -Raw|ConvertFrom-Json

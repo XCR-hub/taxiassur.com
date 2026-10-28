@@ -7,6 +7,11 @@ import{generaliServerAccess}from'./generali-server-access.mjs';
 import{generaliRunDecision,generaliParisTime,assertGeneraliCoverage}from'./generali-server-control.mjs';
 import{leadTransmissionBlocked}from'../shared/insurer-dossier.mjs';
 
+if(existsSync('F:/XCR-Continuity/taxi-generali/plan.json')){
+ console.log(JSON.stringify({ok:true,skipped:'canonical_generali_worker_present',task:'TaxiAssur Generali Reprise'}));
+ process.exit(0);
+}
+
 const runtime=process.env.GENERALI_SERVER_RUNTIME||'F:/TaxiAssur/Automation/Generali/server-runtime';
 const home=process.env.GENERALI_CODEX_HOME||'F:/TaxiAssur/Automation/Codex/home';
 const cli=process.env.GENERALI_CODEX_ENTRY||'F:/TaxiAssur/Automation/Codex/cli/node_modules/@openai/codex/bin/codex.js';

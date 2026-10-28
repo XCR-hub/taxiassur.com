@@ -17,3 +17,15 @@ export function selectProspectInbox(messages,assignments,folderId,limit=500){
  const ids=folderId?new Set(assignments.filter(x=>x.folder_id===folderId).map(x=>x.email_id)):null;
  return messages.filter(x=>!x.deleted_at&&(!ids||ids.has(x.id))).sort((a,b)=>Date.parse(b.received_at||b.created_at||0)-Date.parse(a.received_at||a.created_at||0)).slice(0,limit);
 }
+
+export function mergeProspectEmails(nativeMessages=[],externalMessages=[]){
+ const result=new Map();
+ for(const mail of [...nativeMessages,...externalMessages]){
+  const messageId=String(mail.message_id||'').trim().replace(/^<([^<>]+)>$/,'$1');
+  const key=messageId?'message:'+messageId:'record:'+mail.id;
+  const existing=result.get(key);
+  if(existing){existing.source_mailboxes=[...new Set([...existing.source_mailboxes,mail.source_mailbox].filter(Boolean))];continue;}
+  result.set(key,{...mail,to_emails:mail.to_emails||mail.to_email||[],source_mailboxes:[mail.source_mailbox].filter(Boolean)});
+ }
+ return [...result.values()].sort((a,b)=>Date.parse(b.received_at||b.created_at||0)-Date.parse(a.received_at||a.created_at||0));
+}
