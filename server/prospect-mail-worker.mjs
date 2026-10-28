@@ -19,7 +19,7 @@ try{
   if(!apply&&['Mailbox/set','Email/set'].includes(method))throw Error('preview_write_forbidden');
   const r=await fetch('http://192.168.1.91:8080/jmap/',{method:'POST',headers:{Authorization:authorization,'Content-Type':'application/json'},body:JSON.stringify({using:['urn:ietf:params:jmap:core','urn:ietf:params:jmap:mail'],methodCalls:[[method,{accountId,...args},'op']]}),signal:AbortSignal.timeout(60000)});
   if(!r.ok)throw Error('jmap_http_'+r.status);const data=await r.json(),reply=data.methodResponses?.[0];
-  if(reply?.[0]!==method||Object.keys(reply[1].notCreated||{}).length||Object.keys(reply[1].notUpdated||{}).length)throw Error('jmap_operation_failed_'+method);
+  if(reply?.[0]!==method||Object.keys(reply[1].notCreated||{}).length||Object.keys(reply[1].notUpdated||{}).length){const detail=reply?.[0]==='error'?reply[1]:[...Object.values(reply?.[1]?.notCreated||{}),...Object.values(reply?.[1]?.notUpdated||{})][0];throw Error('jmap_operation_failed_'+method+':'+String(detail?.type||'unknown')+':'+(detail?.properties||[]).join(','));}
   return reply[1];
  }
  const leads=await db.all('crm_leads');
