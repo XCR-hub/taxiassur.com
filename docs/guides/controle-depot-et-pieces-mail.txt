@@ -1,0 +1,46 @@
+Contrôle documentaire TaxiAssur — 29/10/2026
+
+Le nombre de lignes de documents ne prouve pas la disponibilité des fichiers.
+Contrôler l'existence physique, le statut antivirus et le téléchargement depuis
+le back-office. Tester le dépôt dans le véritable espace prospect avec une fiche
+technique isolée, puis archiver cette fiche et annuler ses notifications en attente.
+
+Le contrôle résident ClamAV est supervisé sur SERVEUR-XCR. Sa tâche ne doit pas
+conserver la limite Windows par défaut de 72 heures : ExecutionTimeLimit=PT0S,
+redémarrage automatique, déclenchement au démarrage. Ne pas supprimer l'antivirus
+pour accélérer les dépôts. Le script restore-native-antivirus-remote.ps1 conserve
+l'identité, l'action et les déclencheurs d'une tâche existante.
+
+Les demandes documentaires sont rapprochées au dépôt par prospect et type exact.
+Sans identifiant de demande, seule une demande en attente unique peut être marquée
+reçue. Aucun rapprochement si plusieurs demandes sont possibles ou si la demande
+est annulée/reçue. Ce rapprochement ne valide pas le contenu du document.
+
+Le classement des mails et l'import des pièces sont deux tâches serveur distinctes.
+Les sources TaxiAssur autorisées comprennent tcerda@xcr.fr, team@taxiassur.com et
+slebon@xcr.fr. La configuration privée chiffrée ne doit jamais être publiée.
+Les comptes des autres produits doivent être conservés lors d'une mise à jour.
+
+L'import traite au maximum 50 nouveaux fichiers par passage, les mails récents
+d'abord, avec une durée maximale de 12 minutes. Les PDF/JPEG/PNG/WebP déclarés en
+application/octet-stream peuvent être reconnus par leur nom, puis obligatoirement
+contrôlés par leur signature binaire et ClamAV. Un nom .pdf ne suffit jamais.
+Conserver les ZIP et formats non pris en charge pour vérification manuelle.
+Les fichiers restent internes et non validés ; dédoublonner par prospect et SHA256.
+
+Pour les anciens chemins email_ref, retrouver le Message-ID exact du mail source,
+vérifier l'expéditeur et le nom de la pièce, télécharger l'original, contrôler ses
+octets et son antivirus, sauvegarder l'ancienne référence puis restaurer le fichier
+en conservant l'identifiant du document. Ne pas remplacer un fichier par un homonyme.
+Les tailles historiques peuvent être erronées ; comparer avec le véritable original.
+
+Rechercher aussi les transferts dans slebon. Un nom seul est un candidat à vérifier,
+pas une preuve de rattachement automatique. Contrôler les identités, société,
+véhicule, date des pièces et cohérence du dossier. Exclure les logos de signature.
+Avant une relance pour pièce manquante, consulter les documents récupérés et les
+mails. L'absence de questionnaire confirmé ne prouve pas l'absence d'information.
+
+Pour Generali, transmettre les résultats au worker canonique défini dans AGENTS.md,
+sans lancer une deuxième saisie ni écraser son registre pendant son exécution.
+Des pièces anciennes ne prouvent pas la continuité d'assurance, le véhicule actuel,
+le motif de résiliation, le garage ou le financement. Documenter les vrais manques.

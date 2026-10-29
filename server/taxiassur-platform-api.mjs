@@ -1,4 +1,5 @@
 import {isInternalMailDocument} from './prospect-mail-files.mjs';
+import {documentRequestForUpload} from './document-request-resolution.mjs';
 import { selectProspectInbox, mergeProspectEmails } from './prospect-mail-matching.mjs';
 import { createServer } from 'node:http';
 import { appendFileSync, createReadStream, createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, statSync, unlinkSync } from 'node:fs';
@@ -2508,6 +2509,8 @@ async function recordsAll(collection) {
 
 async function insertFileObject(file) {
   const now = new Date().toISOString();
+  const pendingRequests=parseJsonLine(await runPsql(`SELECT COALESCE(jsonb_agg(data),'[]'::jsonb)::text FROM taxiassur.records WHERE collection='crm_document_requests' AND data->>'lead_id'=${quoteLiteral(String(file.leadId))};`))||[];
+  file.documentRequestId=documentRequestForUpload(pendingRequests,{leadId:file.leadId,documentType:file.documentType,requestId:file.documentRequestId});
   const document = { id: file.id, lead_id: String(file.leadId), document_type: file.documentType, file_name: file.originalName, file_path: file.relativePath, file_size: file.size, mime_type: file.mimeType, status: file.status, validated: false, uploaded_by: 'prospect', uploaded_at: now, created_at: now, updated_at: now, security_scan_status: file.scan.status, security_scan_engine: 'clamav', security_scan_checked_at: now };
   const lead=parseJsonLine(await runPsql(`SELECT data::text FROM taxiassur.records WHERE collection='crm_leads' AND record_id=${quoteLiteral(String(file.leadId))} LIMIT 1;`))||{};
   const leadName=String(lead.full_name||`${lead.first_name||''} ${lead.last_name||''}`.trim()||lead.name||'Prospect non renseigné');
@@ -2525,7 +2528,7 @@ async function insertFileObject(file) {
     INSERT INTO taxiassur.records (collection, record_id, data, origin) VALUES ('prospect_documents', ${quoteLiteral(file.id)}, ${quoteLiteral(JSON.stringify(document))}::jsonb, 'local');
     INSERT INTO taxiassur.records (collection, record_id, data, origin) VALUES ('native_email_outbox', ${quoteLiteral(notificationId)}, ${quoteLiteral(JSON.stringify(notification))}::jsonb, 'local');
     INSERT INTO taxiassur.records (collection, record_id, data, origin) VALUES ('crm_event_notifications', ${quoteLiteral(pushId)}, ${quoteLiteral(JSON.stringify(push))}::jsonb, 'server');
-    ${file.documentRequestId ? `UPDATE taxiassur.records SET data = data || ${quoteLiteral(JSON.stringify({ statut: 'recu', document_filename: file.originalName, document_url: file.relativePath, updated_at: now }))}::jsonb, updated_at = now(), revision = revision + 1 WHERE collection = 'crm_document_requests' AND record_id = ${quoteLiteral(file.documentRequestId)} AND data ->> 'lead_id' = ${quoteLiteral(String(file.leadId))};` : ''}
+    ${file.documentRequestId ? `UPDATE taxiassur.records SET data = data || ${quoteLiteral(JSON.stringify({ statut: 'recu', document_filename: file.originalName, document_url: file.relativePath, updated_at: now }))}::jsonb, updated_at = now(), revision = revision + 1 WHERE collection = 'crm_document_requests' AND record_id = ${quoteLiteral(file.documentRequestId)} AND data ->> 'lead_id' = ${quoteLiteral(String(file.leadId))} AND COALESCE(NULLIF(data->>'document_type',''),data->>'type_document')=${quoteLiteral(file.documentType)} AND data->>'statut' IN ('demande','relance','en_attente','pending');` : ''}
     UPDATE taxiassur.records SET data = jsonb_set(data, '{total_uploaded_files}', to_jsonb(COALESCE(NULLIF(data ->> 'total_uploaded_files', '')::integer, 0) + 1), true), updated_at = now(), revision = revision + 1 WHERE collection = 'crm_leads' AND record_id = ${quoteLiteral(String(file.leadId))};
     INSERT INTO taxiassur.audit_events (actor_type, actor_id, action, target_type, target_id, request_id, metadata) VALUES ('prospect', ${quoteLiteral(String(file.leadId))}, 'document_uploaded', 'prospect_document', ${quoteLiteral(file.id)}, ${quoteLiteral(randomUUID())}::uuid, ${quoteLiteral(JSON.stringify({ document_type: file.documentType, size_bytes: file.size, scan_status: file.scan.status }))}::jsonb);
     COMMIT;`;

@@ -9,7 +9,18 @@ try {
     $trigger=New-ScheduledTaskTrigger -AtStartup
     $settings=New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1)
     $task=Register-ScheduledTask -TaskName 'TaxiAssur ClamAV Resident' -Action $action -Trigger $trigger -Settings $settings -User SYSTEM -RunLevel Highest
-  }else{$task=$tasks[0]}
+  }else{
+    $task=$tasks[0]
+    # A resident daemon must survive the scheduler's default 72-hour limit.
+    # Preserve its existing identity, action and triggers.
+    $settings=$task.Settings
+    $settings.ExecutionTimeLimit='PT0S'
+    $settings.RestartCount=999
+    $settings.RestartInterval='PT1M'
+    $settings.MultipleInstances=2
+    $settings.StartWhenAvailable=$true
+    Set-ScheduledTask -TaskName $task.TaskName -TaskPath $task.TaskPath -Settings $settings | Out-Null
+  }
   $result.task=$task.TaskName
   if($task.State -ne 'Running'){Start-ScheduledTask -TaskName $task.TaskName -TaskPath $task.TaskPath}
   $file='F:\TaxiAssur\ClamAV\resident-diagnostic-'+[guid]::NewGuid().ToString('N')+'.txt'
