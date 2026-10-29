@@ -359,7 +359,7 @@ export default function InboxIntelligent() {
             </span>
           )}
           <span>{folder.icon}</span>
-          <span className="flex-1 text-left truncate">{folder.name}</span>
+          <span className="flex-1 text-left truncate" title={folder.name} style={{ color: /^#[0-9a-fA-F]{6}$/.test(folder.color || '') ? folder.color : undefined }}>{folder.name}</span>
           {folder.email_count !== undefined && folder.email_count > 0 && (
             <span className="px-2 py-0.5 text-xs bg-gray-200 text-gray-700 rounded-full">
               {folder.email_count}

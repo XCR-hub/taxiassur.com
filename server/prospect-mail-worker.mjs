@@ -1,3 +1,4 @@
+import {followupFolderName,findProspectMailbox} from './prospect-mail-status.mjs';
 import {fileProspectMailForReview} from './prospect-mail-review.mjs';
 import {sciassurProspects} from './sciassur-prospect-index.mjs';
 import {readFileSync,writeFileSync,mkdirSync,renameSync,openSync,closeSync,unlinkSync,existsSync} from 'node:fs';
@@ -63,7 +64,7 @@ try{
        if(!apply)continue;
        const folderId=stableId('xcr-prospect-folder:'+c.key),parentId=stableId('xcr-prospect-root:'+c.source);
        if(!folders.has(parentId)){const f={id:parentId,name:'Prospects '+c.source,folder_type:'xcr_prospect',is_system:true,position:10,source:c.source};await save('inbox_folders',parentId,f);folders.set(parentId,f);}
-       const f={id:folderId,name:prospectFolderName(c),folder_type:'xcr_prospect',is_system:true,parent_folder_id:parentId,source:c.source,external_case_id:c.source_id,prospect_email:c.email,case_status:c.status,lead_id:c.lead_id,position:20};
+       const previousFolder=folders.get(folderId)||{};const f={...previousFolder,id:folderId,base_name:prospectFolderName(c),name:previousFolder.followup_status?followupFolderName(c,previousFolder.followup_status):prospectFolderName(c),folder_type:'xcr_prospect',is_system:true,parent_folder_id:parentId,source:c.source,external_case_id:c.source_id,prospect_email:c.email,case_status:c.status,lead_id:c.lead_id,position:20};
        if(JSON.stringify(folders.get(folderId))!==JSON.stringify(f)){await save('inbox_folders',folderId,f);folders.set(folderId,f);}
        const id=stableId('xcr-mail:'+account.address+':'+mail.id);
        if(!existing.has(id)){
@@ -81,8 +82,11 @@ try{
        if(!parent){const r=await call(account.id,'Mailbox/set',{create:{root:{name:'Prospects XCR',parentId:null}}});parent=r.created?.root;if(!parent)throw Error('parent_folder_not_created');report.foldersCreated++;}
        let product=folderCache.get(parent.id+':'+c.source);
        if(!product){const r=await call(account.id,'Mailbox/set',{create:{product:{name:c.source,parentId:parent.id}}});product=r.created?.product;if(!product)throw Error('product_folder_not_created');folderCache.set(parent.id+':'+c.source,product);report.foldersCreated++;}
-       const name=prospectFolderName(c);let dest=folderCache.get(product.id+':'+name);
+       const name=(config.statusAccounts||[]).includes(account.address)&&f.followup_status?followupFolderName(c,f.followup_status):prospectFolderName(c);let dest=findProspectMailbox(boxes,product.id,c,f.mailbox_folder_ids?.[account.address])||folderCache.get(product.id+':'+name);
        if(!dest){const r=await call(account.id,'Mailbox/set',{create:{prospect:{name,parentId:product.id}}});dest=r.created?.prospect;if(!dest)throw Error('prospect_folder_not_created');folderCache.set(product.id+':'+name,dest);report.foldersCreated++;}
+       if(!boxes.some(b=>b.id===dest.id)){dest={...dest,parentId:product.id,name};boxes.push(dest);}
+       if(dest.name!==name){await call(account.id,'Mailbox/set',{update:{[dest.id]:{name}}});dest.name=name;folderCache.set(product.id+':'+name,dest);}
+       if(f.mailbox_folder_ids?.[account.address]!==dest.id){f.mailbox_folder_ids={...f.mailbox_folder_ids,[account.address]:dest.id};await save('inbox_folders',folderId,f);folders.set(folderId,f);}
        // Add a filing membership, preserving Inbox and flags used by existing workers.
        const reviewBox=boxes.find(b=>b.parentId===product.id&&b.name==='A verifier - rapprochement prospect');
        if(!mail.mailboxIds?.[dest.id]||reviewBox&&mail.mailboxIds?.[reviewBox.id])await call(account.id,'Email/set',{update:{[mail.id]:{['mailboxIds/'+dest.id]:true,...(reviewBox?{['mailboxIds/'+reviewBox.id]:null}:{})}}});
