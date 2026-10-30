@@ -60,6 +60,7 @@ const CRMLeadDetail: React.FC = () => {
     immatriculation: '',
   });
   const [showSMSModal, setShowSMSModal] = useState(false);
+  const [statsStatus, setStatsStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [stats, setStats] = useState({
     documentsComplete: false,
     documentsMissing: 0,
@@ -161,12 +162,15 @@ const CRMLeadDetail: React.FC = () => {
         totalInteractions: Number(summary.total_events || 0),
         notesCount: Number(summary.notes_count || 0),
       });
+      setStatsStatus('ready');
     } catch (err) {
       logger.error('Error loading stats:', err);
+      setStatsStatus('error');
     }
   };
   useEffect(() => {
     if (leadId) {
+      setStatsStatus('loading');
       void loadLeadData(true);
       void loadStats();
       const refreshTimer = window.setInterval(() => {
@@ -653,7 +657,7 @@ const CRMLeadDetail: React.FC = () => {
               <FileText className="h-3.5 w-3.5 text-amber-400" />
               <span className="text-xs text-gray-400">Docs</span>
               <span className={`text-xs font-bold ${stats.documentsComplete ? 'text-green-400' : stats.documentsMissing > 0 ? 'text-amber-400' : 'text-sky-400'}`}>
-                {stats.documentsComplete ? 'Complets' : stats.documentsMissing > 0 ? `${stats.documentsMissing} manquants` : `${stats.basketCount} en attente`}
+                {statsStatus === 'loading' ? 'Chargement…' : statsStatus === 'error' ? 'À actualiser' : stats.documentsComplete ? 'Complets' : stats.documentsMissing > 0 ? `${stats.documentsMissing} à vérifier / compléter` : `${stats.basketCount} en attente`}
               </span>
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08]">
