@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { normalizeDocumentType } from '@/lib/document-categories';
 import { toast } from '@/lib/toast';
 import {
   FileText,
@@ -66,7 +67,7 @@ export function DocumentChecklistPanel({ leadId, vehicleType, onDocumentUpload, 
   };
 
   const getDocumentStatus = (docType: string) => {
-    const doc = documents.find(d => d.document_type === docType);
+    const doc = documents.find(d => normalizeDocumentType(d.document_type) === normalizeDocumentType(docType));
     if (!doc) return { status: 'missing', doc: null };
     return { status: doc.status === 'verified' ? 'validated' : doc.status, doc };
   };

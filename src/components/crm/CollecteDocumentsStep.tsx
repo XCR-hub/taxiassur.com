@@ -3,6 +3,7 @@ import { Mail, MessageSquare, Phone, Send, CheckCircle2, AlertCircle, Loader2, F
 import DocumentValidationComplete from './DocumentValidationComplete';
 import { toast } from '@/lib/toast';
 import { getRequiredDocuments } from '@/lib/document-requirements';
+import { normalizeDocumentType } from '@/lib/document-categories';
 import { nativeAdminCall } from '@/lib/native-admin-data';
 import { clearDeliveryRequestId, getDeliveryRequestId } from '@/lib/delivery-idempotency';
 import ProspectRiskSummary from './ProspectRiskSummary';
@@ -115,8 +116,8 @@ export default function CollecteDocumentsStep({
       const documentLabels: Record<string, string> = {};
       requiredDocs.forEach(d => { documentLabels[d.type] = d.label; });
       const documentsList: DocumentInfo[] = nativeDocuments.map(d => ({
-        type: d.document_type || 'custom',
-        label: d.custom_label || documentLabels[d.document_type || ''] || d.document_type || 'Document',
+        type: normalizeDocumentType(d.document_type),
+        label: d.custom_label || documentLabels[normalizeDocumentType(d.document_type)] || d.document_type || 'Document',
         status: d.status || 'pending',
       }));
       setDocuments(documentsList);
