@@ -9,6 +9,7 @@ import { documentValidationError } from '@/lib/native-document-status';
 
 import { SecureDocumentLink } from './SecureDocumentLink';
 import { getRequiredDocuments } from '@/lib/document-requirements';
+import { normalizeDocumentType } from '@/lib/document-categories';
 
 interface DocumentStatus {
   status: 'missing' | 'uploaded' | 'validated' | 'rejected';
@@ -116,7 +117,7 @@ export function DocumentChecklistPanelV2({
   }, [leadId, loadData]);
 
   const getDocumentStatus = (docType: string): DocumentStatus => {
-    const doc = prospectDocuments.find(item => item.document_type === docType);
+    const doc = prospectDocuments.find(item => normalizeDocumentType(item.document_type) === normalizeDocumentType(docType));
     if (!doc) return { status: 'missing', validated: false };
     const validated = ['validated', 'verified'].includes(doc.status);
     return { status: validated ? 'validated' : doc.status === 'rejected' ? 'rejected' : 'uploaded', validated,

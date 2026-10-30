@@ -3,6 +3,7 @@ import { downloadDocument, openDocument } from '../../lib/document-utils';
 import { FileText, Download, X, CheckCircle2, AlertCircle, Loader2, XCircle, Check, Upload, GripVertical, Mail, ChevronDown, Eye, ArrowRightLeft, Trash2 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { getRequiredDocuments } from '@/lib/document-requirements';
+import { documentCategoriesForDisplay, documentCategoryId } from '@/lib/document-categories';
 import { nativeAdminCall, nativeAdminDeleteDocument, nativeAdminUpdateDocument, nativeAdminUploadLeadDocument } from '@/lib/native-admin-data';
 import { documentValidationError } from '@/lib/native-document-status';
 
@@ -161,21 +162,9 @@ export default function DocumentValidationComplete({
       setUnimportedAttachments(workspace.unimported_attachments || []);
       setClassifiedDocs(documents.map(doc => ({
         ...doc,
-        document_type: doc.document_type === 'custom' && doc.custom_label
-          ? `custom_${doc.custom_label}`
-          : doc.document_type
+        document_type: documentCategoryId(doc)
       })));
-      setCategories([
-        ...DOCUMENT_CATEGORIES,
-        ...documents
-          .filter(doc => doc.document_type === 'custom' && doc.custom_label)
-          .map(doc => ({
-            id: `custom_${doc.custom_label}`,
-            label: doc.custom_label!,
-            icon: '📎',
-            required: false
-          }))
-      ]);
+      setCategories(documentCategoriesForDisplay(DOCUMENT_CATEGORIES, documents));
     } catch (error) {
       console.error('Error loading documents:', error);
     } finally {
